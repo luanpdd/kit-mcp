@@ -6,6 +6,16 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-05-03
+
+### Changed
+- README rewritten: bundled workflow framed as the default install path; `--kit-root` framed as the escape hatch for users who want to replace it entirely.
+- "What ships in the box" lists actual bundled folders (19 agents, 60 commands, framework, hooks) instead of "example kit".
+- Quick start reordered: use bundled as-is first, replace with own kit second.
+- CLI examples updated with real counts.
+
+This release is content-equivalent to 0.3.0 plus the documentation overhaul. No code changes versus 0.3.0.
+
 ## [0.3.0] - 2026-05-03
 
 **Reverts the v0.2.0 cleanup.** kit-mcp goes back to shipping an opinionated, embedded workflow — installing `@luanpdd/kit-mcp` once again gives you the maintainer's brownfield planning workflow (PT-BR) ready to use. The "generic infrastructure, bring your own kit" framing of v0.2.0 was based on the wrong premise: the bundled content **is** the maintainer's workflow, intentionally distributed for anyone to inherit. The `--kit-root` / `KIT_MCP_KIT_ROOT` escape hatch from v0.2.0 stays — point it at your own folder if you want to replace the bundled workflow entirely.
@@ -140,7 +150,8 @@ npx -y @luanpdd/kit-mcp sync install claude-code --project-root .
 - CLI mirror of all MCP tools.
 - `install` command that registers kit-mcp into an IDE's MCP config (JSON for Claude/Cursor/Gemini/Windsurf, TOML for Codex).
 
-[Unreleased]: https://github.com/luanpdd/kit-mcp/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/luanpdd/kit-mcp/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/luanpdd/kit-mcp/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/luanpdd/kit-mcp/compare/v0.2.1...v0.3.0
 [0.2.0]: https://github.com/luanpdd/kit-mcp/compare/v0.1.6...v0.2.0
 [0.1.6]: https://github.com/luanpdd/kit-mcp/compare/v0.1.5...v0.1.6
