@@ -44,3 +44,31 @@ jobs:
           # After remove, the example stubs should be gone (they had STUB_MARKER)
           test ! -f .ci-test/.claude/agents/example-reviewer.md
           rm -rf .ci-test
+
+      - name: MCP server boot
+        shell: bash
+        run: |
+          # Detects import-time crashes (e.g. the DEFAULT_KIT_ROOT regression
+          # that made it to v0.4.0). Spawn the server with /dev/null on stdin —
+          # a healthy server either stays alive serving stdio, or exits cleanly
+          # (code 0) when the SDK detects EOF. An import-time crash exits with
+          # a non-zero code well before our 1s timeout.
+          node bin/mcp.js < /dev/null &
+          PID=$!
+          sleep 1
+          if kill -0 $PID 2>/dev/null; then
+            kill $PID 2>/dev/null || true
+            wait $PID 2>/dev/null || true
+            echo "OK: MCP server booted and stayed alive"
+          else
+            set +e
+            wait $PID
+            EXIT=$?
+            set -e
+            if [ "$EXIT" = "0" ]; then
+              echo "OK: MCP server booted and exited cleanly on stdin EOF"
+            else
+              echo "MCP server crashed (exit=$EXIT) — likely import-time error"
+              exit 1
+            fi
+          fi
