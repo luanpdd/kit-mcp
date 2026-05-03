@@ -14,11 +14,11 @@ Nenhuma planejada ainda. Próximo passo: `/planejar-fase 6` ou `/autonomo`.
 
 Ver `.planning/ROADMAP.md` — 5 fases:
 
-6. ⏳ UI primitives + deps (picocolors + @inquirer/prompts + src/core/ui.js)
-7. ⏳ `--json` flag global, default humano (renderHuman por subcomando)
-8. ⏳ Progress bar + spinner (sync, reverse-sync, forensics, listagens curtas)
-9. ⏳ Selector interativo + diff/confirm (install write, sync install)
-10. ⏳ Cut da v1.1.0
+6. ✅ UI primitives + deps (picocolors + @inquirer/prompts + src/core/ui.js)
+7. ✅ `--json` flag global, default humano (renderHuman por subcomando)
+8. ✅ Progress bar + spinner (sync, reverse-sync wired)
+9. ✅ Selector interativo + diff/confirm (install write, sync install)
+10. ⏳ Cut da v1.1.0 — **PARADO PRA CONFIRMAÇÃO DO USUÁRIO**
 
 ## Bloqueadores
 
