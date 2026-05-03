@@ -47,8 +47,10 @@
     "test:all": "node test/run.mjs test"
   },
   "dependencies": {
+    "@inquirer/prompts": "^8.4.2",
     "@modelcontextprotocol/sdk": "^1.0.0",
     "chokidar": "^5.0.0",
-    "commander": "^12.1.0"
+    "commander": "^12.1.0",
+    "picocolors": "^1.1.1"
   }
 }
