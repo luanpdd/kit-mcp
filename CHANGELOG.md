@@ -6,6 +6,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [0.4.1] - 2026-05-03
+
+### Fixed
+- `src/mcp-server/index.js` was importing `DEFAULT_KIT_ROOT` from `core/kit.js`, but that export was renamed to `BUNDLED_KIT_ROOT` / `resolveKitRoot` during the v0.2.0 refactor. The unused import wasn't caught by CI (which only smoke-tests CLI commands, not MCP server boot) and made the server crash on `npx -y @luanpdd/kit-mcp` for any sync/install command. Removed the dead import — server now boots cleanly.
+
+### Tests (suggestion)
+- CI should boot `node bin/mcp.js` and validate exit. Tracked in roadmap.
+
 ## [0.4.0] - 2026-05-03
 
 ### Changed
@@ -150,7 +158,8 @@ npx -y @luanpdd/kit-mcp sync install claude-code --project-root .
 - CLI mirror of all MCP tools.
 - `install` command that registers kit-mcp into an IDE's MCP config (JSON for Claude/Cursor/Gemini/Windsurf, TOML for Codex).
 
-[Unreleased]: https://github.com/luanpdd/kit-mcp/compare/v0.4.0...HEAD
+[Unreleased]: https://github.com/luanpdd/kit-mcp/compare/v0.4.1...HEAD
+[0.4.1]: https://github.com/luanpdd/kit-mcp/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/luanpdd/kit-mcp/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/luanpdd/kit-mcp/compare/v0.2.1...v0.3.0
 [0.2.0]: https://github.com/luanpdd/kit-mcp/compare/v0.1.6...v0.2.0

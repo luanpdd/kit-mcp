@@ -12,7 +12,7 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
-import { listKit, searchKit, findItem, DEFAULT_KIT_ROOT } from '../core/kit.js';
+import { listKit, searchKit, findItem } from '../core/kit.js';
 import { listTargets } from '../core/registry.js';
 import { syncTo, statusOf, removeFrom } from '../core/sync.js';
 import { detectReverse, applyReverse } from '../core/reverse-sync.js';
