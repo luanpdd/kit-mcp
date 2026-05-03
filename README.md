@@ -472,15 +472,26 @@ PRs welcome.
 
 ---
 
-## Smoke tests
+## Tests
+
+Built on `node:test` (zero dependencies). Two suites:
+
+```bash
+npm test                # unit — kit parser, sync (all modes), reverse-sync, gates, registry
+npm run test:integration  # integration — spawns bin/cli.js end-to-end on a temp project
+npm run test:all          # both
+```
+
+Plus the original quick smokes:
 
 ```bash
 node bin/cli.js kit list-agents | head -5         # 19 bundled agents
 node bin/cli.js sync targets                      # 8 IDEs
 node bin/cli.js gates list                        # 5 gates
 node bin/cli.js install dry-run claude-code --via npx
-node bin/mcp.js < /dev/null & sleep 1; kill %1    # MCP server boots and waits on stdio
 ```
+
+CI runs unit + integration + smoke + MCP boot on Ubuntu / macOS / Windows × Node 20 / 22 on every push and PR.
 
 ---
 

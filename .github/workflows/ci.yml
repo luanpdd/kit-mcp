@@ -24,6 +24,12 @@ jobs:
       - name: Install
         run: npm ci || npm install
 
+      - name: Tests (unit)
+        run: npm test
+
+      - name: Tests (integration)
+        run: npm run test:integration
+
       - name: CLI smoke
         run: |
           node bin/cli.js kit list-agents

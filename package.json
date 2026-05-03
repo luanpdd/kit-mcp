@@ -41,7 +41,10 @@
   "scripts": {
     "start": "node bin/mcp.js",
     "cli": "node bin/cli.js",
-    "smoke": "node bin/cli.js kit list-agents | head -5"
+    "smoke": "node bin/cli.js kit list-agents | head -5",
+    "test": "node --test \"test/unit/**/*.test.js\"",
+    "test:integration": "node --test \"test/integration/**/*.test.js\"",
+    "test:all": "node --test \"test/**/*.test.js\""
   },
   "dependencies": {
     "@modelcontextprotocol/sdk": "^1.0.0",
