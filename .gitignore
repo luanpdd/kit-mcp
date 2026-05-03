@@ -2,6 +2,7 @@ node_modules/
 .smoketest/
 .smoketest-*/
 .ci-test/
+.ci-safety/
 *.log
 .DS_Store
 .env
@@ -11,5 +12,8 @@ node_modules/
 .claude/agents/
 .claude/commands/
 .claude/skills/
+.claude/framework/
+.claude/hooks/
+.claude/settings.local.json
 CLAUDE.md
 
