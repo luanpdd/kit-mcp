@@ -14,7 +14,7 @@ Nenhuma planejada ainda. Próximo passo: `/planejar-fase 1`.
 
 Ver `.planning/ROADMAP.md` — 5 fases:
 
-1. ⏳ Débitos de tooling (Dependabot + GH Release v0.5.0)
+1. ✅ Débitos de tooling (Dependabot + GH Release v0.5.0)
 2. ⏳ Parser fix (`firstNonEmptyLine` ignora HTML comments)
 3. ⏳ Reverse-sync para framework/hooks
 4. ⏳ Infraestrutura de testes
