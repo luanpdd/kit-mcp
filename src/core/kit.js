@@ -9,9 +9,21 @@ import { fileURLToPath } from 'node:url';
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
-export const DEFAULT_KIT_ROOT = path.resolve(__dirname, '../../kit');
 
-export async function listKit(kitRoot = DEFAULT_KIT_ROOT) {
+// Resolution order for the kit root (re-evaluated on each call so env-var
+// overrides set after module load — e.g. by the CLI preAction hook — work):
+//   1. explicit `kitRoot` opt passed by caller
+//   2. KIT_MCP_KIT_ROOT env var (per-session override)
+//   3. ./kit relative to this package (the bundled example kit)
+export const BUNDLED_KIT_ROOT = path.resolve(__dirname, '../../kit');
+export function resolveKitRoot(kitRoot) {
+  if (kitRoot) return path.resolve(kitRoot);
+  if (process.env.KIT_MCP_KIT_ROOT) return path.resolve(process.env.KIT_MCP_KIT_ROOT);
+  return BUNDLED_KIT_ROOT;
+}
+
+export async function listKit(kitRoot) {
+  kitRoot = resolveKitRoot(kitRoot);
   const [agents, commands, skills, skillsExtras] = await Promise.all([
     readMdDir(path.join(kitRoot, 'agents'),    'agent'),
     readMdDir(path.join(kitRoot, 'commands'),  'command'),

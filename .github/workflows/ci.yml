@@ -36,7 +36,11 @@ jobs:
         run: |
           mkdir -p .ci-test
           node bin/cli.js sync install claude-code --project-root .ci-test
-          test -f .ci-test/.claude/agents/planner.md
+          test -f .ci-test/.claude/agents/example-reviewer.md
+          test -f .ci-test/.claude/commands/example-greeting.md
+          test -f .ci-test/.claude/skills/example-skill/SKILL.md
           test -f .ci-test/CLAUDE.md
           node bin/cli.js sync remove claude-code --project-root .ci-test
+          # After remove, the example stubs should be gone (they had STUB_MARKER)
+          test ! -f .ci-test/.claude/agents/example-reviewer.md
           rm -rf .ci-test

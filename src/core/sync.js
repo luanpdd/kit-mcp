@@ -12,14 +12,14 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { getTarget } from './registry.js';
-import { listKit, DEFAULT_KIT_ROOT } from './kit.js';
+import { listKit, resolveKitRoot } from './kit.js';
 
 const STUB_MARKER = '<!-- kit-mcp:reference -->';
 
 export async function syncTo(targetId, opts = {}) {
   const target      = getTarget(targetId);
   const projectRoot = path.resolve(opts.projectRoot ?? process.cwd());
-  const kitRoot     = path.resolve(opts.kitRoot ?? DEFAULT_KIT_ROOT);
+  const kitRoot     = resolveKitRoot(opts.kitRoot);
   const mode        = opts.mode ?? 'reference';
   const dryRun      = !!opts.dryRun;
 

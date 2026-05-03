@@ -13,7 +13,7 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import { getTarget } from './registry.js';
-import { listKit, DEFAULT_KIT_ROOT } from './kit.js';
+import { listKit, resolveKitRoot } from './kit.js';
 
 const STUB_MARKER     = '<!-- kit-mcp:reference -->';
 const STUB_FOOTER     = 'Edit the source file in the kit, not this stub.';
@@ -25,7 +25,7 @@ const STUB_CANONICAL  = 'Canonical source:';
 export async function detectReverse(targetId, opts = {}) {
   const target      = getTarget(targetId);
   const projectRoot = path.resolve(opts.projectRoot ?? process.cwd());
-  const kitRoot     = path.resolve(opts.kitRoot ?? DEFAULT_KIT_ROOT);
+  const kitRoot     = resolveKitRoot(opts.kitRoot);
   const kit         = await listKit(kitRoot);
 
   const candidates = [];

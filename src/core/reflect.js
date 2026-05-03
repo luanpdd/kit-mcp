@@ -18,7 +18,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output, stderr } from 'node:process';
-import { DEFAULT_KIT_ROOT } from './kit.js';
+import { resolveKitRoot } from './kit.js';
 
 const DEFAULT_MODEL      = process.env.KIT_REFLECT_MODEL ?? 'claude-sonnet-4-5-20250929';
 const DEFAULT_MAX_TOKENS = parseInt(process.env.KIT_REFLECT_MAX_TOKENS ?? '8000', 10);
@@ -28,7 +28,7 @@ export async function reflect(opts = {}) {
   if (!agent) return { error: 'reflect: agent required' };
 
   const projectRoot = path.resolve(opts.projectRoot ?? process.cwd());
-  const kitRoot     = path.resolve(opts.kitRoot ?? DEFAULT_KIT_ROOT);
+  const kitRoot     = resolveKitRoot(opts.kitRoot);
   const dryRun      = !!opts.dryRun;
   const apply       = !!opts.apply;
   const interactive = opts.interactive !== false && !apply;

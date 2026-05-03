@@ -24,7 +24,14 @@ import { installMcp, listInstallTargets } from '../mcp-server/install.js';
 const program = new Command()
   .name('kit')
   .description('Personal kit (agents/commands/skills) — CLI mirror of the kit-mcp server.')
-  .version('0.1.0');
+  .version('0.2.0')
+  .option('--kit-root <path>', 'Override the kit root (default: bundled example kit, or KIT_MCP_KIT_ROOT env)');
+
+// Apply --kit-root globally by setting the env so all helpers pick it up.
+program.hook('preAction', (thisCommand, actionCommand) => {
+  const opts = program.opts();
+  if (opts.kitRoot) process.env.KIT_MCP_KIT_ROOT = opts.kitRoot;
+});
 
 // --- kit ---
 const kit = program.command('kit').description('Browse the canonical kit.');

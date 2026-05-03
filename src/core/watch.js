@@ -14,11 +14,11 @@ import fs from 'node:fs/promises';
 import chokidar from 'chokidar';
 import { syncTo } from './sync.js';
 import { listTargets } from './registry.js';
-import { DEFAULT_KIT_ROOT } from './kit.js';
+import { resolveKitRoot } from './kit.js';
 
 export async function watchKit(targets, opts = {}) {
   const projectRoot = path.resolve(opts.projectRoot ?? process.cwd());
-  const kitRoot     = path.resolve(opts.kitRoot ?? DEFAULT_KIT_ROOT);
+  const kitRoot     = resolveKitRoot(opts.kitRoot);
   const mode        = opts.mode ?? 'reference';
   const debounceMs  = Number.isFinite(opts.debounceMs) ? opts.debounceMs : 300;
   const onLog       = opts.onLog ?? (() => {});
