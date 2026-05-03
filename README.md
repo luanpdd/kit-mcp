@@ -5,11 +5,11 @@
 [![CI](https://github.com/luanpdd/kit-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/luanpdd/kit-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-Generic infrastructure to ship **your personal kit** of agents, slash-commands and skills as an **MCP server**, with one-shot **sync** that projects the kit into every supported IDE's native layout — Claude Code, Cursor, Codex, Gemini CLI, Windsurf, Antigravity, Copilot, Trae.
+An opinionated **brownfield planning workflow** (in PT-BR) — agents, slash-commands, framework — shipped as an **MCP server**, with one-shot **sync** that projects the kit into every supported IDE's native layout — Claude Code, Cursor, Codex, Gemini CLI, Windsurf, Antigravity, Copilot, Trae.
 
 > **One canonical source. N IDEs. Edit once, everywhere updated.**
 >
-> Bring your own `kit/` folder, or extend the bundled example.
+> Install and inherit the bundled workflow, or point `--kit-root` at your own folder to replace it entirely.
 
 ---
 
@@ -27,11 +27,15 @@ Inspired by [vinilana/dotcontext](https://github.com/vinilana/dotcontext) — se
 
 ```
 kit-mcp/
-├── kit/                        ← bundled EXAMPLE kit (replace with your own)
-│   ├── agents/example-reviewer.md
-│   ├── commands/example-greeting.md
-│   ├── skills/example-skill/SKILL.md
-│   └── README.md               format guide
+├── kit/                        ← bundled brownfield workflow (PT-BR)
+│   ├── agents/                 19 agents (planner, executor, verifier, debugger,
+│   │                                      ui-auditor, codebase-mapper, …)
+│   ├── commands/               60 slash-commands (/novo-marco, /planejar-fase,
+│   │                                              /executar-fase, /publicar, …)
+│   ├── framework/              workflows + templates + bin libs the agents use
+│   ├── hooks/                  workflow guards, prompt guards, statusline
+│   ├── skills/example-skill/   single example skill (replace with your own)
+│   └── README.md               file-format guide
 │
 ├── gates/                      ← reusable workflow gates (regression, confidence, dep-check, …)
 │
@@ -53,6 +57,12 @@ kit-mcp/
 
 **Lines of source code:** ~1100. **Runtime dependencies:** 3 (`@modelcontextprotocol/sdk`, `commander`, `chokidar`). **Build step:** none — plain ESM Node.js 20+.
 
+### About the bundled workflow
+
+The bundled `kit/` is an opinionated **brownfield planning workflow** in Portuguese — milestones, phases, requirements, planning, execution with atomic commits and checkpoints, retrospective auditing. Installing `@luanpdd/kit-mcp` and syncing into your IDE gives you all 60 slash-commands, 19 agents, plus the framework templates that they delegate into.
+
+If that's not what you want, point `--kit-root` at your own folder and ignore everything under `kit/` — the infrastructure (registry, sync, gates, forensics, MCP server) works the same regardless of what kit you load.
+
 ---
 
 ## Prerequisites
@@ -65,14 +75,21 @@ kit-mcp/
 
 ## Quick start
 
-### 1. Try the example kit (no setup)
+### 1. Use the bundled workflow as-is (recommended)
 
 ```bash
-npx -y @luanpdd/kit-mcp kit list-agents     # see the bundled example agent
-npx -y @luanpdd/kit-mcp sync targets        # see all supported IDEs
+# Browse what's bundled
+npx -y @luanpdd/kit-mcp kit list-agents     # 19 agents
+npx -y @luanpdd/kit-mcp kit list-commands   # 60 commands
+npx -y @luanpdd/kit-mcp sync targets        # supported IDEs
+
+# Install into your project for Claude Code
+npx -y @luanpdd/kit-mcp sync install claude-code --project-root .
 ```
 
-### 2. Bring your own kit
+After that, open the project in Claude Code and the slash-commands (`/novo-marco`, `/planejar-fase`, `/executar-fase`, `/publicar`, …) and agents are immediately available.
+
+### 2. Replace the bundled workflow with your own kit
 
 Point kit-mcp at your own `kit/` folder via `--kit-root` or the `KIT_MCP_KIT_ROOT` env var:
 
@@ -86,7 +103,7 @@ export KIT_MCP_KIT_ROOT=~/my-kit
 npx -y @luanpdd/kit-mcp sync install claude-code --project-root .
 ```
 
-Your `~/my-kit/` follows the same layout as the bundled example:
+Your `~/my-kit/` follows the same layout as the bundled kit:
 
 ```
 my-kit/
@@ -116,11 +133,11 @@ The CLI mirrors the MCP tools 1:1. Output is always JSON to stdout. The global `
 ### `kit kit ...` — browse the kit
 
 ```bash
-kit kit list-agents               # bundled example: 1 agent
-kit kit list-commands             # bundled example: 1 command
-kit kit list-skills               # bundled example: 1 skill
-kit kit get agent example-reviewer
-kit kit search "review"           # fuzzy match across all kinds
+kit kit list-agents               # 19 agents (bundled workflow)
+kit kit list-commands             # 60 commands (bundled workflow)
+kit kit list-skills               # 1 skill (example only — bring your own)
+kit kit get agent planner
+kit kit search "milestone"        # fuzzy match across all kinds
 ```
 
 ### `kit sync ...` — project into an IDE
@@ -453,7 +470,7 @@ PRs welcome.
 ## Smoke tests
 
 ```bash
-node bin/cli.js kit list-agents | head -5         # bundled example agent
+node bin/cli.js kit list-agents | head -5         # 19 bundled agents
 node bin/cli.js sync targets                      # 8 IDEs
 node bin/cli.js gates list                        # 5 gates
 node bin/cli.js install dry-run claude-code --via npx
