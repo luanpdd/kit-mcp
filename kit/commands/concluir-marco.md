@@ -2,7 +2,7 @@
 type: prompt
 name: concluir-marco
 description: Arquiva milestone concluído e prepara para próxima versão
-argument-hint: <version>
+argument-hint: "<version>"
 allowed-tools:
   - Read
   - Write

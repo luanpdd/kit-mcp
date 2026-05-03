@@ -1,7 +1,7 @@
 ---
 name: adicionar-tarefa
 description: Captura ideia ou tarefa como todo a partir do contexto da conversa atual
-argument-hint: [descrição opcional]
+argument-hint: "[descrição opcional]"
 allowed-tools:
   - Read
   - Write

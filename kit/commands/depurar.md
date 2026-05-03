@@ -1,7 +1,7 @@
 ---
 name: depurar
 description: Depuração sistemática com estado persistente entre resets de contexto
-argument-hint: [descrição do problema]
+argument-hint: "[descrição do problema]"
 allowed-tools:
   - Read
   - Bash

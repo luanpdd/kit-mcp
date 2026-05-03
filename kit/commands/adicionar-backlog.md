@@ -1,7 +1,7 @@
 ---
 name: adicionar-backlog
 description: Adiciona uma ideia ao estacionamento de backlog (numeração 999.x)
-argument-hint: <description>
+argument-hint: "<description>"
 allowed-tools:
   - Read
   - Write

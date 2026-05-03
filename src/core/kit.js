@@ -135,7 +135,10 @@ function parseLooseYaml(text) {
 function firstNonEmptyLine(body) {
   for (const line of body.split(/\r?\n/)) {
     const t = line.trim();
-    if (t && !t.startsWith('#')) return t.slice(0, 200);
+    if (!t) continue;                      // blank
+    if (t.startsWith('#')) continue;       // markdown heading
+    if (t.startsWith('<!--')) continue;    // HTML comment (e.g. STUB_MARKER)
+    return t.slice(0, 200);
   }
   return '';
 }

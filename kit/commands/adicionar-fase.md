@@ -1,7 +1,7 @@
 ---
 name: adicionar-fase
 description: Adiciona fase ao final do milestone atual no roadmap
-argument-hint: <description>
+argument-hint: "<description>"
 allowed-tools:
   - Read
   - Write

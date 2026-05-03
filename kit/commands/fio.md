@@ -1,7 +1,7 @@
 ---
 name: fio
 description: Gerencia threads de contexto persistentes para trabalho entre sessões
-argument-hint: [nome | descrição]
+argument-hint: "[nome | descrição]"
 allowed-tools:
   - Read
   - Write
