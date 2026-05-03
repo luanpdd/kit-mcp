@@ -96,6 +96,25 @@ test('cli sync remove — cleans stubs and marker-managed dirs only', async () =
   assert.equal(userFile, 'mine');
 });
 
+test('cli install write — no target + non-TTY fails with helpful message', async () => {
+  const r = await runCli(['install', 'write']);
+  assert.notEqual(r.code, 0, `expected non-zero exit; stdout: ${r.stdout}`);
+  assert.match(r.stderr, /TTY|argument|target/i,
+    `stderr should hint about TTY/target flag; got: ${r.stderr}`);
+});
+
+test('cli install write --json without target fails fast', async () => {
+  const r = await runCli(['--json', 'install', 'write']);
+  assert.notEqual(r.code, 0);
+  assert.match(r.stderr, /target.*required.*json|json.*target.*required/i);
+});
+
+test('cli sync install [no target] in pipe fails with hint', async () => {
+  const r = await runCli(['sync', 'install', '--project-root', PROJECT]);
+  assert.notEqual(r.code, 0);
+  assert.match(r.stderr, /TTY|target/i);
+});
+
 test('cli mcp-server boots with /dev/null stdin (smoke)', async () => {
   // Mirrors the CI step that catches DEFAULT_KIT_ROOT-style import-time crashes.
   const child = spawn(process.execPath, [path.join(REPO, 'bin/mcp.js')], {

@@ -25,7 +25,7 @@ import { reflect } from '../core/reflect.js';
 import { listReplays, loadReplay } from '../core/replays.js';
 import { installMcp, listInstallTargets } from '../mcp-server/install.js';
 import * as render from './render.js';
-import { c, icons, spinner, progress } from '../core/ui.js';
+import { c, icons, spinner, progress, select, confirm } from '../core/ui.js';
 
 const program = new Command()
   .name('kit')
@@ -124,15 +124,15 @@ sync.command('targets').action(async () => {
 sync.command('status <target>')
   .option('--project-root <path>')
   .action(async (target, opts) => out(await statusOf(target, { projectRoot: opts.projectRoot }), render.renderSyncStatus));
-sync.command('install <target>')
+sync.command('install [target]')
   .option('--project-root <path>')
   .option('--mode <mode>', 'reference | copy', 'reference')
   .option('--dry-run')
   .action(async (target, opts) => {
-    // Estimate total ops upfront (~220 for the bundled kit) — just a hint for the bar
+    if (!target) target = await pickTarget(listTargets(), 'Which IDE do you want to sync the kit into?');
     const result = await withProgress(
       `Syncing kit → ${target}`,
-      300,  // upper-bound estimate; bar caps at 100% if real total < estimate
+      300,
       (onProgress) => syncTo(target, { projectRoot: opts.projectRoot, mode: opts.mode, dryRun: opts.dryRun, onProgress }),
     );
     out(result, render.renderSyncInstall);
@@ -249,7 +249,7 @@ install.command('dry-run <target>')
   .option('--pkg <name>', 'npm package name (only with --via npx)', '@luanpdd/kit-mcp')
   .option('--project-root <path>')
   .action(async (target, opts) => out(await installMcp(target, { ...opts, dryRun: true }), render.renderInstallResult));
-install.command('write <target>')
+install.command('write [target]')
   .option('--scope <scope>', 'user | project', 'user')
   .option('--name <name>', 'Server name in IDE config', 'kit')
   .option('--via <via>', 'local | npx | global', 'local')
@@ -257,6 +257,61 @@ install.command('write <target>')
   .option('--force')
   .option('--project-root <path>')
   .option('--yes', 'Skip confirmation prompt (CI mode)')
-  .action(async (target, opts) => out(await installMcp(target, opts), render.renderInstallResult));
+  .action(async (target, opts) => {
+    const globalOpts = program.opts();
+    if (!target) target = await pickTarget(listInstallTargets(), 'Where do you want to register kit-mcp?');
+
+    // Preview first (dry-run)
+    const preview = await installMcp(target, { ...opts, dryRun: true });
+    if (!preview.ok) {
+      out(preview, render.renderInstallResult);
+      process.exit(1);
+    }
+
+    // Show the preview unless --json
+    if (!globalOpts.json) {
+      process.stdout.write(`\n${c.bold('Preview:')} ${c.dim(preview.configPath)}\n\n`);
+      if (preview.preview) {
+        process.stdout.write(c.dim(JSON.stringify(preview.preview, null, 2)) + '\n');
+      } else if (preview.snippet) {
+        process.stdout.write(c.dim(preview.snippet) + '\n');
+      }
+    }
+
+    // Confirm unless --yes or --json (programmatic consumers must pass --yes)
+    if (!opts.yes && !globalOpts.json) {
+      let proceed;
+      try {
+        proceed = await confirm({ message: 'Apply these changes?', default: false });
+      } catch (e) {
+        return fail(`${e.message} (use --yes to skip)`);
+      }
+      if (!proceed) {
+        process.stdout.write(`${c.yellow(icons.warn)} Aborted by user.\n`);
+        process.exit(0);
+      }
+    }
+
+    out(await installMcp(target, opts), render.renderInstallResult);
+  });
+
+// pickTarget — interactive selector for IDE targets, falls back to error in non-TTY/--json
+async function pickTarget(targets, message) {
+  const globalOpts = program.opts();
+  if (globalOpts.json) {
+    return fail('--target is required when using --json mode');
+  }
+  try {
+    return await select({
+      message,
+      choices: targets.map(t => ({
+        name: `${t.label.padEnd(22)} ${c.dim(`(${t.id})`)}`,
+        value: t.id,
+      })),
+    });
+  } catch (e) {
+    return fail(`${e.message} (or pass <target> as argument)`);
+  }
+}
 
 program.parseAsync(process.argv);
