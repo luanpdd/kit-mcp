@@ -4,12 +4,21 @@
 
 ## Milestone ativo
 
-**Nenhum.** Último milestone concluído: **v1.0.0** (arquivado em `.planning/milestones/v1.0.0/`, ver `MILESTONE-AUDIT.md`).
+**v1.1.0 — Feedback visual no terminal** (iniciado 2026-05-03)
 
-## Próximo passo
+## Fase atual
 
-A definir. Quando começar o próximo milestone:
-- `/novo-marco "vX.Y nome do tema"` — abre o ciclo questionamento → requisitos → roadmap
+Nenhuma planejada ainda. Próximo passo: `/planejar-fase 6` ou `/autonomo`.
+
+## Roadmap
+
+Ver `.planning/ROADMAP.md` — 5 fases:
+
+6. ⏳ UI primitives + deps (picocolors + @inquirer/prompts + src/core/ui.js)
+7. ⏳ `--json` flag global, default humano (renderHuman por subcomando)
+8. ⏳ Progress bar + spinner (sync, reverse-sync, forensics, listagens curtas)
+9. ⏳ Selector interativo + diff/confirm (install write, sync install)
+10. ⏳ Cut da v1.1.0
 
 ## Bloqueadores
 
@@ -19,6 +28,6 @@ A definir. Quando começar o próximo milestone:
 
 (vazio — captura via `/adicionar-tarefa` ou `/nota`)
 
-## Backlog macro disponível
+## Histórico
 
-Ver `MILESTONES.md → Backlog macro (não-priorizado)` para itens parados pra v1.1+.
+- v1.0.0 — concluído 2026-05-03 (`.planning/milestones/v1.0.0/`)
