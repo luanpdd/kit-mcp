@@ -18,7 +18,7 @@ Ver `.planning/ROADMAP.md` — 5 fases:
 2. ✅ Parser fix (renderReference reordering + firstNonEmptyLine + quote argument-hints)
 3. ✅ Reverse-sync para framework/hooks
 4. ✅ Infraestrutura de testes (37 unit + 5 integration, CI integrado)
-5. ⏳ Cut da v1.0.0 — **PARADO PRA CONFIRMAÇÃO DO USUÁRIO**
+5. ✅ Cut da v1.0.0 (publish.yml auto GH Release + CHANGELOG stable API)
 
 ## Bloqueadores
 

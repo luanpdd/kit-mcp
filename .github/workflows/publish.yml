@@ -21,7 +21,7 @@ jobs:
   publish:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+      contents: write   # to create GitHub Release objects after publish
       id-token: write   # for npm provenance
 
     steps:
@@ -51,7 +51,35 @@ jobs:
           node bin/cli.js sync targets    | head -5
           node bin/cli.js gates list      | head -5
 
-      - name: Publish
+      - name: Publish to npm
         run: npm publish --access public --provenance
         env:
           NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Extract notes from CHANGELOG for this tag
+        id: notes
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          NOTES_FILE="$RUNNER_TEMP/release-notes-${TAG_VERSION}.md"
+          # Awk extracts the body between this version's heading and the next ## [ heading.
+          awk -v ver="## [${TAG_VERSION}]" '
+            $0 ~ ver { found=1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > "$NOTES_FILE"
+          if [ ! -s "$NOTES_FILE" ]; then
+            echo "::warning::No CHANGELOG entry found for ## [$TAG_VERSION] — falling back to tag-derived notes"
+            echo "Release v${TAG_VERSION}." > "$NOTES_FILE"
+          fi
+          echo "notes_file=$NOTES_FILE" >> "$GITHUB_OUTPUT"
+          echo "--- notes preview ---"
+          head -30 "$NOTES_FILE"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME} — kit-mcp" \
+            --notes-file "${{ steps.notes.outputs.notes_file }}" \
+            --latest
