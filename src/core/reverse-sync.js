@@ -171,17 +171,21 @@ async function walkRel(root) {
 
 export async function applyReverse(targetId, opts = {}) {
   const strategy = opts.strategy ?? 'skip';
+  const onProgress = opts.onProgress ?? (() => {});
   const { candidates } = await detectReverse(targetId, opts);
   const results = [];
 
-  for (const c of candidates) {
+  for (let i = 0; i < candidates.length; i++) {
+    const c = candidates[i];
     if (opts.only && !opts.only.includes(`${c.kind}/${c.name}`)) {
       results.push({ ...c, action: 'skipped (filter)' });
+      onProgress({ phase: c.kind, current: i + 1, total: candidates.length, label: c.name });
       continue;
     }
 
     const action = await applyOne(c, strategy, opts);
     results.push({ ...c, action });
+    onProgress({ phase: c.kind, current: i + 1, total: candidates.length, label: c.name });
   }
 
   return { target: targetId, strategy, results };

@@ -24,6 +24,7 @@ export async function syncTo(targetId, opts = {}) {
   const kitRoot     = resolveKitRoot(opts.kitRoot);
   const mode        = opts.mode ?? 'reference';
   const dryRun      = !!opts.dryRun;
+  const onProgress  = opts.onProgress ?? (() => {});
 
   const kit  = await listKit(kitRoot);
   const ops  = [];
@@ -82,6 +83,7 @@ export async function syncTo(targetId, opts = {}) {
   }
 
   if (!dryRun) {
+    let i = 0;
     for (const op of ops) {
       await fs.mkdir(path.dirname(op.path), { recursive: true });
       if (op.treeCopy) {
@@ -89,6 +91,8 @@ export async function syncTo(targetId, opts = {}) {
       } else {
         await fs.writeFile(op.path, op.content, 'utf8');
       }
+      i++;
+      onProgress({ phase: op.kind, current: i, total: ops.length, label: path.basename(op.path) });
     }
   }
 

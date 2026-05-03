@@ -25,7 +25,7 @@ import { reflect } from '../core/reflect.js';
 import { listReplays, loadReplay } from '../core/replays.js';
 import { installMcp, listInstallTargets } from '../mcp-server/install.js';
 import * as render from './render.js';
-import { c, icons } from '../core/ui.js';
+import { c, icons, spinner, progress } from '../core/ui.js';
 
 const program = new Command()
   .name('kit')
@@ -51,6 +51,38 @@ function out(value, humanRenderer) {
   }
 }
 
+// withSpinner wraps a short opaque op with a spinner; auto-disabled in --json mode.
+async function withSpinner(text, fn) {
+  const opts = program.opts();
+  if (opts.json) return fn();
+  const sp = spinner({ text });
+  try {
+    const r = await fn();
+    sp.succeed();
+    return r;
+  } catch (e) {
+    sp.fail(e.message);
+    throw e;
+  }
+}
+
+// withProgress wraps a long op; passes onProgress callback to the core fn.
+async function withProgress(label, total, fn) {
+  const opts = program.opts();
+  if (opts.json) return fn(() => {});
+  const p = progress({ total, label });
+  let last = '';
+  const onProgress = ({ current, label }) => { last = label || last; p.tick({ label: last }); };
+  try {
+    const r = await fn(onProgress);
+    p.finish(label);
+    return r;
+  } catch (e) {
+    p.finish();
+    throw e;
+  }
+}
+
 function fail(msg) {
   process.stderr.write(`${c.red(icons.cross)} ${msg}\n`);
   process.exit(1);
@@ -62,10 +94,16 @@ function slim(x) {
 
 // --- kit ---
 const kit = program.command('kit').description('Browse the canonical kit.');
-kit.command('list-agents').action(async () => out((await listKit()).agents.map(slim), v => render.renderKitList(v, 'agent')));
-kit.command('list-commands').action(async () => out((await listKit()).commands.map(slim), v => render.renderKitList(v, 'command')));
+kit.command('list-agents').action(async () => {
+  const k = await withSpinner('Loading kit...', () => listKit());
+  out(k.agents.map(slim), v => render.renderKitList(v, 'agent'));
+});
+kit.command('list-commands').action(async () => {
+  const k = await withSpinner('Loading kit...', () => listKit());
+  out(k.commands.map(slim), v => render.renderKitList(v, 'command'));
+});
 kit.command('list-skills').action(async () => {
-  const k = await listKit();
+  const k = await withSpinner('Loading kit...', () => listKit());
   out([...k.skills, ...k.skillsExtras].map(slim), v => render.renderKitList(v, 'skill'));
 });
 kit.command('get <kind> <name>').action(async (kind, name) => {
@@ -79,7 +117,10 @@ kit.command('search <query>').action(async (q) => out(searchKit(await listKit(),
 
 // --- sync ---
 const sync = program.command('sync').description('Project the kit into an IDE.');
-sync.command('targets').action(async () => out(listTargets(), render.renderSyncTargets));
+sync.command('targets').action(async () => {
+  const targets = await withSpinner('Loading capability matrix...', async () => listTargets());
+  out(targets, render.renderSyncTargets);
+});
 sync.command('status <target>')
   .option('--project-root <path>')
   .action(async (target, opts) => out(await statusOf(target, { projectRoot: opts.projectRoot }), render.renderSyncStatus));
@@ -87,7 +128,15 @@ sync.command('install <target>')
   .option('--project-root <path>')
   .option('--mode <mode>', 'reference | copy', 'reference')
   .option('--dry-run')
-  .action(async (target, opts) => out(await syncTo(target, { projectRoot: opts.projectRoot, mode: opts.mode, dryRun: opts.dryRun }), render.renderSyncInstall));
+  .action(async (target, opts) => {
+    // Estimate total ops upfront (~220 for the bundled kit) — just a hint for the bar
+    const result = await withProgress(
+      `Syncing kit → ${target}`,
+      300,  // upper-bound estimate; bar caps at 100% if real total < estimate
+      (onProgress) => syncTo(target, { projectRoot: opts.projectRoot, mode: opts.mode, dryRun: opts.dryRun, onProgress }),
+    );
+    out(result, render.renderSyncInstall);
+  });
 sync.command('remove <target>')
   .option('--project-root <path>')
   .action(async (target, opts) => out(await removeFrom(target, { projectRoot: opts.projectRoot }), render.renderSyncRemove));
@@ -127,7 +176,14 @@ reverse.command('apply <target>')
   .option('--strategy <s>', 'skip | overwrite | merge | rename', 'skip')
   .option('--only <items...>', 'Limit to these kind/name pairs (e.g. agent/planner skill/paperclip framework/workflows/foo.md)')
   .option('--dry-run')
-  .action(async (target, opts) => out(await applyReverse(target, { projectRoot: opts.projectRoot, strategy: opts.strategy, only: opts.only, dryRun: opts.dryRun }), render.renderReverseApply));
+  .action(async (target, opts) => {
+    const result = await withProgress(
+      `Applying reverse-sync (${opts.strategy})`,
+      50,
+      (onProgress) => applyReverse(target, { projectRoot: opts.projectRoot, strategy: opts.strategy, only: opts.only, dryRun: opts.dryRun, onProgress }),
+    );
+    out(result, render.renderReverseApply);
+  });
 
 // --- gates ---
 const gates = program.command('gates').description('Reusable workflow gates.');
