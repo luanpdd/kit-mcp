@@ -6,6 +6,54 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.1.0] - 2026-05-03
+
+**Visual feedback in the terminal.** Running `kit ...` now prints colored tables, progress bars, summary panels and interactive selectors instead of the raw JSON-to-stdout default of v1.0. Programmatic consumers add `--json` to restore the previous behavior.
+
+### Added — Phase 6: UI primitives
+- `src/core/ui.js` — single module exposing `c` (color helpers), `icons`, `spinner`, `progress`, `select`, `confirm`, `summary`. Respects `NO_COLOR`, `FORCE_COLOR`, `process.stdout.isTTY`. Animations write to stderr so stdout stays clean for `--json` piping.
+- Deps: `picocolors` (~3KB, zero subdeps) and `@inquirer/prompts` (modular — only `select`+`confirm` imported).
+
+### Added — Phase 7: `--json` flag, default human
+- `--json` global flag preserves v1.0's JSON-to-stdout behavior for programmatic consumers.
+- Without `--json`: every subcommand renders a human-readable table or summary panel via `src/cli/render.js`.
+- `kit get` is unchanged (still raw, cat-like).
+
+### Added — Phase 8: Progress + spinner
+- `syncTo` and `applyReverse` accept an `opts.onProgress({ phase, current, total, label })` callback. Default no-op preserves backward compat.
+- CLI wraps long ops in `withProgress(label, total, fn)` and short ops in `withSpinner(text, fn)`. TTY animates; pipes/CI emit linear status text (`10%, 20%, ...`).
+
+### Added — Phase 9: Interactive selectors + diff confirm
+- `install write [target]` and `sync install [target]` — when target argument is omitted in TTY mode, opens a select prompt listing all 8 IDEs with labels.
+- `install write` always previews the JSON/TOML to be written and asks `Apply these changes? (y/N)` before applying. `--yes` or `--json` bypasses the prompt for CI/programmatic use.
+- In non-TTY mode without target: exits with a helpful message ("pass the value as a flag instead").
+
+### Stable API additions (1.x compatible)
+
+The 1.0 commitment is unchanged. These additions become part of the contract:
+
+- **`--json` global flag.** Behavior locked: JSON-to-stdout, no ANSI codes, no progress on stderr, prompts replaced by descriptive errors.
+- **`onProgress` callback signature** on `syncTo` and `applyReverse`: `({ phase, current, total, label }) => void`. Adding optional fields is non-breaking.
+- **Interactive selectors fall back to errors in non-TTY**, not to defaults — programs MUST pass the target as argument or use `--json`.
+
+### Migration
+
+Programs and scripts that piped `kit ... | jq` need to add `--json` explicitly:
+```bash
+# Before (v1.0):
+kit list-agents | jq '.[].name'
+
+# After (v1.1):
+kit list-agents --json | jq '.[].name'
+```
+
+Interactive shell users get the new visual output automatically — no flags needed.
+
+### Tests
+- `test/unit/ui.test.js` — 6 new tests covering `summary` rendering, `NO_COLOR` honored, icons set.
+- `test/integration/cli-roundtrip.test.js` — 4 new tests covering `--json` opt-in, default human output, selector fallback in non-TTY for `install write` / `sync install`.
+- Total: 49 unit + 9 integration = **58 tests** in ~4s. CI verde 6/6 (Ubuntu/macOS/Windows × Node 20/22).
+
 ## [1.0.0] - 2026-05-03
 
 **First stable release.** kit-mcp now commits to backwards compatibility on the surfaces listed under "Stable API" below; breaking changes there require a 2.0.0 bump.
@@ -219,7 +267,8 @@ npx -y @luanpdd/kit-mcp sync install claude-code --project-root .
 - CLI mirror of all MCP tools.
 - `install` command that registers kit-mcp into an IDE's MCP config (JSON for Claude/Cursor/Gemini/Windsurf, TOML for Codex).
 
-[Unreleased]: https://github.com/luanpdd/kit-mcp/compare/v1.0.0...HEAD
+[Unreleased]: https://github.com/luanpdd/kit-mcp/compare/v1.1.0...HEAD
+[1.1.0]: https://github.com/luanpdd/kit-mcp/compare/v1.0.0...v1.1.0
 [1.0.0]: https://github.com/luanpdd/kit-mcp/compare/v0.5.0...v1.0.0
 [0.5.0]: https://github.com/luanpdd/kit-mcp/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/luanpdd/kit-mcp/compare/v0.4.0...v0.4.1

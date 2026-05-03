@@ -55,7 +55,7 @@ kit-mcp/
 └── README.md                   ← you are here
 ```
 
-**Lines of source code:** ~1100. **Runtime dependencies:** 3 (`@modelcontextprotocol/sdk`, `commander`, `chokidar`). **Build step:** none — plain ESM Node.js 20+.
+**Lines of source code:** ~1300. **Runtime dependencies:** 5 (`@modelcontextprotocol/sdk`, `commander`, `chokidar`, `picocolors`, `@inquirer/prompts`). **Build step:** none — plain ESM Node.js 20+.
 
 ### About the bundled workflow
 
@@ -128,7 +128,17 @@ For other IDEs, swap `claude-code` for `cursor`, `codex`, `gemini-cli`, `windsur
 
 ## CLI reference
 
-The CLI mirrors the MCP tools 1:1. Output is always JSON to stdout. The global `--kit-root` flag overrides the kit source for any subcommand.
+The CLI mirrors the MCP tools 1:1. **By default the CLI prints colored, human-readable tables and summary panels.** Add `--json` to restore raw JSON-to-stdout (machine-readable, the default in v1.0). The global `--kit-root` flag overrides the kit source for any subcommand.
+
+```bash
+kit list-agents              # human: colored table, name + description
+kit list-agents --json       # machine: JSON array
+
+kit sync install claude-code # human: progress bar + summary panel
+kit sync install claude-code --json  # machine: full result object
+```
+
+In non-TTY mode (pipes, CI), animations degrade to linear status lines automatically. `NO_COLOR=1` disables colors entirely; `FORCE_COLOR=1` forces them on even in pipes.
 
 ### `kit kit ...` — browse the kit
 
@@ -182,7 +192,11 @@ kit install dry-run claude-code --scope user --via npx        # preview the JSON
 kit install write claude-code   --scope user --via npx        # portable: uses `npx @luanpdd/kit-mcp`
 kit install write claude-code   --scope project --via local   # local clone: uses ./bin/mcp.js absolute path
 kit install write claude-code   --scope user --via global     # assumes `npm install -g @luanpdd/kit-mcp`
+kit install write                                             # no target: opens an interactive selector (TTY)
+kit install write claude-code --yes                           # CI: skip the confirm prompt
 ```
+
+Since v1.1, `install write` always **previews** the JSON/TOML it's about to write and asks you to confirm. Pass `--yes` (CI mode) or `--json` to bypass the prompt. Without a target argument in TTY mode, you get an arrow-key selector listing all 8 IDEs.
 
 `--via` decides how the IDE will invoke the server:
 
