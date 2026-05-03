@@ -6,6 +6,36 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [0.2.0] - 2026-05-03
+
+**BREAKING.** kit-mcp is now generic infrastructure. The bundled "personal kit" content was removed — bring your own via `--kit-root` or `KIT_MCP_KIT_ROOT`.
+
+### Removed
+- All third-party content from the bundled `kit/`:
+  - 13 skills (paperclip, design-guide, company-creator, paperclip-create-agent, paperclip-create-plugin, release, release-changelog, prcheckloop, pr-report, doc-maintenance, deal-with-security-advisory, create-agent-adapter, para-memory-files) — these were Anthropic Cowork ecosystem skills, not authored by the package owner.
+  - 18 agents and 59 commands previously bundled — these depended on a third-party Portuguese framework that's not redistributed here.
+  - `kit/framework/`, `kit/hooks/`, `kit/COMANDOS.md`, `kit/file-manifest.json`, `kit/settings.json` — same reason.
+- Internal references (Trynux Notion page IDs, private repo URLs) that leaked from the user's personal projects.
+
+### Added
+- `LICENSE` — MIT, Copyright © 2026 luanpdd.
+- Bundled **example kit** with 1 agent, 1 command, 1 skill demonstrating the file format. Replace with your own.
+- `kit/README.md` documenting the kit file format (frontmatter + body) and structure.
+- `--kit-root <path>` global CLI flag to point at any kit folder.
+- `KIT_MCP_KIT_ROOT` env var for sticky session-wide override.
+- `resolveKitRoot(kitRoot)` exported from `core/kit.js` — lazy resolution so env var changes after import are honored.
+
+### Migration
+
+If you were using 0.1.x with the bundled kit, **the kit content was never yours and is no longer included**. Author your own kit/ folder following the format in [`kit/README.md`](kit/README.md), and point kit-mcp at it:
+
+```bash
+npx -y @luanpdd/kit-mcp --kit-root ~/my-kit sync install claude-code --project-root .
+# or
+export KIT_MCP_KIT_ROOT=~/my-kit
+npx -y @luanpdd/kit-mcp sync install claude-code --project-root .
+```
+
 ## [0.1.6] - 2026-05-03
 
 ### Added
@@ -80,7 +110,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 - CLI mirror of all MCP tools.
 - `install` command that registers kit-mcp into an IDE's MCP config (JSON for Claude/Cursor/Gemini/Windsurf, TOML for Codex).
 
-[Unreleased]: https://github.com/luanpdd/kit-mcp/compare/v0.1.6...HEAD
+[Unreleased]: https://github.com/luanpdd/kit-mcp/compare/v0.2.0...HEAD
+[0.2.0]: https://github.com/luanpdd/kit-mcp/compare/v0.1.6...v0.2.0
 [0.1.6]: https://github.com/luanpdd/kit-mcp/compare/v0.1.5...v0.1.6
 [0.1.5]: https://github.com/luanpdd/kit-mcp/compare/v0.1.4...v0.1.5
 [0.1.4]: https://github.com/luanpdd/kit-mcp/compare/v0.1.3...v0.1.4

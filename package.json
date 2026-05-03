@@ -1,7 +1,7 @@
 {
   "name": "@luanpdd/kit-mcp",
-  "version": "0.1.6",
-  "description": "Personal kit (agents/commands/skills) exposed as MCP server with cross-IDE sync.",
+  "version": "0.2.0",
+  "description": "Generic infrastructure to ship YOUR personal kit of agents/commands/skills as an MCP server, with cross-IDE sync (Claude Code, Cursor, Codex, Gemini, Windsurf, Antigravity, Copilot, Trae).",
   "type": "module",
   "bin": {
     "kit-mcp": "bin/mcp.js",
@@ -16,7 +16,8 @@
     "kit/",
     "gates/",
     "README.md",
-    "CHANGELOG.md"
+    "CHANGELOG.md",
+    "LICENSE"
   ],
   "keywords": [
     "mcp",
