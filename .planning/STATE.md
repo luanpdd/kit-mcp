@@ -4,21 +4,14 @@
 
 ## Milestone ativo
 
-**v1.1.0 — Feedback visual no terminal** (iniciado 2026-05-03)
+**Nenhum.** Último milestone concluído: **v1.1.0** (arquivado em `.planning/milestones/v1.1.0/`, ver `MILESTONE-AUDIT.md`).
 
-## Fase atual
+## Próximo passo
 
-Nenhuma planejada ainda. Próximo passo: `/planejar-fase 6` ou `/autonomo`.
+A definir. Quando começar o próximo milestone:
+- `/novo-marco "v1.2 — tema"` — abre o ciclo questionamento → requisitos → roadmap
 
-## Roadmap
-
-Ver `.planning/ROADMAP.md` — 5 fases:
-
-6. ✅ UI primitives + deps (picocolors + @inquirer/prompts + src/core/ui.js)
-7. ✅ `--json` flag global, default humano (renderHuman por subcomando)
-8. ✅ Progress bar + spinner (sync, reverse-sync wired)
-9. ✅ Selector interativo + diff/confirm (install write, sync install)
-10. ⏳ Cut da v1.1.0 — **PARADO PRA CONFIRMAÇÃO DO USUÁRIO**
+Sugestão registrada na audit da v1.1.0: **v1.2.0 — GUI sidecar de acompanhamento** (janela paralela mostrando processos kit-mcp ao vivo enquanto IDE roda comandos). Escopo a discutir.
 
 ## Bloqueadores
 
@@ -31,3 +24,4 @@ Ver `.planning/ROADMAP.md` — 5 fases:
 ## Histórico
 
 - v1.0.0 — concluído 2026-05-03 (`.planning/milestones/v1.0.0/`)
+- v1.1.0 — concluído 2026-05-03 (`.planning/milestones/v1.1.0/`)

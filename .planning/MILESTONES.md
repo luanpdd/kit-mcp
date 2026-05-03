@@ -43,9 +43,21 @@
 - Stable API commitment: TARGETS, MCP actions, CLI surface, core exports, stub format, marker semantics.
 - Detalhes: `.planning/milestones/v1.0.0/`.
 
+### v1.1.0 — Feedback visual no terminal (2026-05-03) 🎨 Visual UX
+- 10/10 REQs entregues em 5 fases (UI primitives, --json flag, progress, selectors, cut).
+- `src/core/ui.js` (~167 LOC) — color/icons/spinner/progress/select/confirm/summary, respeita NO_COLOR + isTTY.
+- Default output muda de JSON para human-readable; `--json` global flag preserva v1.0.
+- Progress bar em ops longas (sync install, reverse-sync apply); spinner em curtas (kit list-*, sync targets).
+- Selector interativo em `install write` e `sync install` quando target ausente em TTY.
+- `install write` sempre faz dry-run + preview + confirm (`--yes`/`--json` bypass).
+- Tests +16 (49 unit + 9 integration = 58 total).
+- Deps adicionadas: picocolors, @inquirer/prompts (selectivamente importado).
+- Stable API additions: --json semantics, onProgress callback signature, non-TTY error fallback.
+- Detalhes: `.planning/milestones/v1.1.0/`.
+
 ## Em andamento
 
-(nada — milestone v1.0.0 concluído e arquivado)
+(nada — milestone v1.1.0 concluído e arquivado)
 
 ## Backlog macro (não-priorizado)
 
