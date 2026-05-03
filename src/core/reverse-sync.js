@@ -35,6 +35,11 @@ export async function detectReverse(targetId, opts = {}) {
   if (target.agents)   await scanCapability(candidates, 'agent',   target.agents,   projectRoot, kit.agents,   kitRoot);
   if (target.commands) await scanCapability(candidates, 'command', target.commands, projectRoot, kit.commands, kitRoot);
   if (target.skills)   await scanSkills    (candidates,            target.skills,   projectRoot, [...kit.skills, ...kit.skillsExtras], kitRoot);
+  for (const cap of ['framework', 'hooks']) {
+    const spec = target[cap];
+    if (!spec || spec.mode !== 'mirror-tree') continue;
+    await scanMirrorTree(candidates, cap, spec, projectRoot, kitRoot);
+  }
 
   return { target: targetId, projectRoot, kitRoot, candidates };
 }
@@ -117,6 +122,51 @@ async function scanSkills(candidates, capCfg, projectRoot, kitSkills, kitRoot) {
   }
 }
 
+async function scanMirrorTree(candidates, cap, spec, projectRoot, kitRoot) {
+  const dstRoot = path.join(projectRoot, spec.path);
+  const srcRoot = path.join(kitRoot, spec.source);
+  const files = await walkRel(dstRoot);
+  for (const rel of files) {
+    if (rel === '.kit-mcp-managed' || path.basename(rel) === '.kit-mcp-managed') continue;
+    const dstPath = path.join(dstRoot, rel);
+    const srcPath = path.join(srcRoot, rel);
+    let dstBuf, srcBuf;
+    try { dstBuf = await fs.readFile(dstPath); } catch { continue; }
+    try { srcBuf = await fs.readFile(srcPath); } catch { srcBuf = null; }
+    if (!srcBuf) {
+      candidates.push({
+        kind: cap, name: rel, target: spec.path, destPath: dstPath, kitPath: srcPath,
+        reason: 'new-in-ide',
+        diffSummary: `+${dstBuf.length} bytes (no kit source)`,
+      });
+      continue;
+    }
+    if (dstBuf.equals(srcBuf)) continue;
+    candidates.push({
+      kind: cap, name: rel, target: spec.path, destPath: dstPath, kitPath: srcPath,
+      reason: 'modified-in-ide',
+      diffSummary: `${dstBuf.length} bytes vs ${srcBuf.length} canonical (${dstBuf.length - srcBuf.length >= 0 ? '+' : ''}${dstBuf.length - srcBuf.length})`,
+    });
+  }
+}
+
+async function walkRel(root) {
+  const out = [];
+  async function visit(current, prefix) {
+    let entries;
+    try { entries = await fs.readdir(current, { withFileTypes: true }); }
+    catch { return; }
+    for (const e of entries) {
+      const abs = path.join(current, e.name);
+      const rel = prefix ? `${prefix}/${e.name}` : e.name;
+      if (e.isDirectory()) await visit(abs, rel);
+      else if (e.isFile()) out.push(rel);
+    }
+  }
+  await visit(root, '');
+  return out;
+}
+
 // --- apply ---
 
 export async function applyReverse(targetId, opts = {}) {
@@ -139,6 +189,13 @@ export async function applyReverse(targetId, opts = {}) {
 
 async function applyOne(c, strategy, opts) {
   const dryRun = !!opts.dryRun;
+  const isMirrorTree = c.kind === 'framework' || c.kind === 'hooks';
+
+  // Mirror-tree files don't have stub boilerplate — copy bytes verbatim.
+  if (isMirrorTree) {
+    return applyMirrorTreeOne(c, strategy, dryRun);
+  }
+
   const destContent = await fs.readFile(c.destPath, 'utf8');
   const stripped = stripStubBoilerplate(destContent);
 
@@ -147,7 +204,6 @@ async function applyOne(c, strategy, opts) {
       return 'skipped';
 
     case 'overwrite': {
-      // Replace canonical with the destination content (stripped of stub boilerplate)
       if (!dryRun) {
         await fs.mkdir(path.dirname(c.kitPath), { recursive: true });
         await fs.writeFile(c.kitPath, stripped, 'utf8');
@@ -156,8 +212,6 @@ async function applyOne(c, strategy, opts) {
     }
 
     case 'merge': {
-      // Frontmatter from canonical (if present), body from destination.
-      // If canonical doesn't exist (new-in-ide), this degenerates to overwrite.
       let merged = stripped;
       if (c.reason === 'modified-in-ide') {
         try {
@@ -173,13 +227,48 @@ async function applyOne(c, strategy, opts) {
     }
 
     case 'rename': {
-      // Write next to canonical with a -from-<targetfolder>.md suffix
       const base = c.kitPath.replace(/\.md$/, '');
       const tag = path.basename(path.dirname(path.dirname(c.destPath))).replace(/^\./, '');
       const out = `${base}-from-${tag || 'ide'}.md`;
       if (!dryRun) {
         await fs.mkdir(path.dirname(out), { recursive: true });
         await fs.writeFile(out, stripped, 'utf8');
+      }
+      return dryRun ? `rename → ${out} (dry-run)` : `renamed → ${out}`;
+    }
+
+    default:
+      return `unknown strategy: ${strategy}`;
+  }
+}
+
+async function applyMirrorTreeOne(c, strategy, dryRun) {
+  switch (strategy) {
+    case 'skip':
+      return 'skipped';
+
+    case 'overwrite':
+    case 'merge': {
+      // For framework/hooks files there's no frontmatter to preserve,
+      // so 'merge' degenerates to overwrite. Returning a verb that
+      // signals the degradation.
+      const verb = strategy === 'merge' ? 'merged (overwrite, no frontmatter)' : 'overwritten';
+      if (!dryRun) {
+        await fs.mkdir(path.dirname(c.kitPath), { recursive: true });
+        await fs.copyFile(c.destPath, c.kitPath);
+      }
+      return dryRun ? `${strategy} (dry-run)` : verb;
+    }
+
+    case 'rename': {
+      // Write to kit/<source>/<rel>.from-<tag> preserving extension after the tag.
+      const ext = path.extname(c.kitPath);
+      const stem = c.kitPath.slice(0, c.kitPath.length - ext.length);
+      const tag = path.basename(path.dirname(path.dirname(c.destPath))).replace(/^\./, '') || 'ide';
+      const out = `${stem}.from-${tag}${ext}`;
+      if (!dryRun) {
+        await fs.mkdir(path.dirname(out), { recursive: true });
+        await fs.copyFile(c.destPath, out);
       }
       return dryRun ? `rename → ${out} (dry-run)` : `renamed → ${out}`;
     }

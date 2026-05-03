@@ -194,16 +194,19 @@ kit install write claude-code   --scope user --via global     # assumes `npm ins
 
 ### `kit reverse-sync ...` — bring IDE edits back to the canonical kit
 
-If you edited an agent/command/skill **directly inside the IDE's folder** (`.claude/agents/foo.md`, `.cursor/agents/bar.md`, …) instead of in your kit, this brings those edits back so the canonical absorbs them.
+If you edited an agent/command/skill/framework/hook **directly inside the IDE's folder** (`.claude/agents/foo.md`, `.claude/framework/workflows/bar.md`, `.claude/hooks/baz.js`, …) instead of in your kit, this brings those edits back so the canonical absorbs them.
 
 ```bash
 kit reverse-sync detect claude-code --project-root .
 kit reverse-sync apply  claude-code --project-root . --strategy merge --dry-run
 kit reverse-sync apply  claude-code --project-root . --strategy merge
 kit reverse-sync apply  claude-code --project-root . --strategy overwrite --only agent/foo
+kit reverse-sync apply  claude-code --project-root . --strategy overwrite --only framework/workflows/new-milestone.md
 ```
 
-**Strategies:** `skip` (list-only), `merge` (canonical frontmatter + edited body), `overwrite`, `rename` (preserve both as `-from-{ide}.md`).
+**Strategies:** `skip` (list-only), `merge` (canonical frontmatter + edited body — for agents/commands/skills), `overwrite`, `rename` (preserve both as `-from-{ide}.md`).
+
+**Mirror-tree caps (`framework`, `hooks`):** files have no frontmatter, so `merge` degenerates to `overwrite` (with a note). The `.kit-mcp-managed` marker is automatically excluded from candidates. Filter individual files with `--only framework/<rel>` or `--only hooks/<file>`.
 
 ### `kit gates ...` — reusable workflow gates
 

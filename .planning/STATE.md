@@ -16,7 +16,7 @@ Ver `.planning/ROADMAP.md` — 5 fases:
 
 1. ✅ Débitos de tooling (Dependabot + GH Release v0.5.0)
 2. ✅ Parser fix (renderReference reordering + firstNonEmptyLine + quote argument-hints)
-3. ⏳ Reverse-sync para framework/hooks
+3. ✅ Reverse-sync para framework/hooks
 4. ⏳ Infraestrutura de testes
 5. ⏳ Cut da v1.0.0
 
