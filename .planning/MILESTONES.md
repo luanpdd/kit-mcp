@@ -61,6 +61,7 @@
 
 ## Backlog macro (não-priorizado)
 
+- **CLI awkwardness do double-`kit`**: `kit kit list-agents`, `kit kit search`, `kit kit get` — o grupo "kit" repete o nome do binário. Considerar achatar (alias top-level: `kit list-agents` direto, mantendo `kit kit ...` como compatibilidade) ou renomear o grupo (`kit browse list-agents`?). Detectado em smoke da v1.1.0.
 - **HTTP transport** para IDEs que não falam stdio MCP.
 - **forensics reflect com diff visual** em vez de full content.
 - **`kit gates run --all`** agregando vereditos de todas as gates de um stage.
