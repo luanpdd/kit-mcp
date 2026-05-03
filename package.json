@@ -1,0 +1,50 @@
+{
+  "name": "@luanpdd/kit-mcp",
+  "version": "0.1.6",
+  "description": "Personal kit (agents/commands/skills) exposed as MCP server with cross-IDE sync.",
+  "type": "module",
+  "bin": {
+    "kit-mcp": "bin/mcp.js",
+    "kit": "bin/cli.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "kit/",
+    "gates/",
+    "README.md",
+    "CHANGELOG.md"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "cursor",
+    "codex",
+    "gemini",
+    "agents",
+    "skills"
+  ],
+  "author": "luanpdd",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luanpdd/kit-mcp.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node bin/mcp.js",
+    "cli": "node bin/cli.js",
+    "smoke": "node bin/cli.js kit list-agents | head -5"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "chokidar": "^5.0.0",
+    "commander": "^12.1.0"
+  }
+}

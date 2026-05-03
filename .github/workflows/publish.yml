@@ -1,0 +1,57 @@
+name: Publish to npm
+
+# Triggered by pushing a tag like v0.1.6, v1.0.0, etc.
+# Setup (one-time):
+#   1. Generate an npm Granular Access Token with bypass-2FA enabled at
+#      https://www.npmjs.com/settings/<user>/tokens
+#   2. Add it to this repo's secrets as NPM_TOKEN
+#      (gh secret set NPM_TOKEN  ← paste token when prompted)
+#
+# Release flow:
+#   npm version patch          (or minor/major) — bumps + commits + tags
+#   git push --follow-tags     — pushes the commit AND the tag
+#   ↑ this workflow runs and publishes the new version
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # for npm provenance
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install
+        run: npm ci || npm install
+
+      - name: Sanity — version in package.json matches tag
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::package.json version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
+            exit 1
+          fi
+          echo "✓ version $PKG_VERSION matches tag v$TAG_VERSION"
+
+      - name: Smoke test
+        run: |
+          node bin/cli.js kit list-agents | head -5
+          node bin/cli.js sync targets    | head -5
+          node bin/cli.js gates list      | head -5
+
+      - name: Publish
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}

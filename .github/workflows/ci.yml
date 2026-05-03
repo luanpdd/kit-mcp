@@ -1,0 +1,42 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  smoke:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+        node: ['20', '22']
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: ${{ matrix.node }}
+
+      - name: Install
+        run: npm ci || npm install
+
+      - name: CLI smoke
+        run: |
+          node bin/cli.js kit list-agents
+          node bin/cli.js sync targets
+          node bin/cli.js gates list
+          node bin/cli.js install dry-run claude-code --scope project --project-root . --via npx
+
+      - name: Sync round-trip
+        shell: bash
+        run: |
+          mkdir -p .ci-test
+          node bin/cli.js sync install claude-code --project-root .ci-test
+          test -f .ci-test/.claude/agents/planner.md
+          test -f .ci-test/CLAUDE.md
+          node bin/cli.js sync remove claude-code --project-root .ci-test
+          rm -rf .ci-test
