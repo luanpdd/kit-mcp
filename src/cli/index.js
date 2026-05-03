@@ -7,6 +7,10 @@
 //   kit gates list
 //   kit forensics collect --project-root /path/to/project
 //   kit install dry-run claude-code
+//
+// Default output: human-readable colored panels + summaries.
+// `--json` flag (global) restores the v1.0 JSON-to-stdout behavior for
+// programmatic consumers.
 
 import { Command } from 'commander';
 import { listKit, searchKit, findItem } from '../core/kit.js';
@@ -20,49 +24,73 @@ import { collectFailures, summarizeByAgent, writeLearnings } from '../core/failu
 import { reflect } from '../core/reflect.js';
 import { listReplays, loadReplay } from '../core/replays.js';
 import { installMcp, listInstallTargets } from '../mcp-server/install.js';
+import * as render from './render.js';
+import { c, icons } from '../core/ui.js';
 
 const program = new Command()
   .name('kit')
   .description('Personal kit (agents/commands/skills) — CLI mirror of the kit-mcp server.')
-  .version('0.2.0')
-  .option('--kit-root <path>', 'Override the kit root (default: bundled example kit, or KIT_MCP_KIT_ROOT env)');
+  .version('1.0.0')
+  .option('--kit-root <path>', 'Override the kit root (default: bundled example kit, or KIT_MCP_KIT_ROOT env)')
+  .option('--json', 'Output JSON to stdout (machine-readable, restores pre-1.1 default)');
 
-// Apply --kit-root globally by setting the env so all helpers pick it up.
 program.hook('preAction', (thisCommand, actionCommand) => {
   const opts = program.opts();
   if (opts.kitRoot) process.env.KIT_MCP_KIT_ROOT = opts.kitRoot;
 });
 
+// `out(value, humanRenderer)` — uses the human renderer unless --json is set.
+function out(value, humanRenderer) {
+  const opts = program.opts();
+  if (opts.json) {
+    process.stdout.write(JSON.stringify(value, null, 2) + '\n');
+  } else if (typeof humanRenderer === 'function') {
+    process.stdout.write(humanRenderer(value));
+  } else {
+    process.stdout.write(render.renderFallback(value));
+  }
+}
+
+function fail(msg) {
+  process.stderr.write(`${c.red(icons.cross)} ${msg}\n`);
+  process.exit(1);
+}
+
+function slim(x) {
+  return { kind: x.kind, name: x.name, description: x.description, absPath: x.absPath };
+}
+
 // --- kit ---
 const kit = program.command('kit').description('Browse the canonical kit.');
-kit.command('list-agents').action(async () => print((await listKit()).agents.map(slim)));
-kit.command('list-commands').action(async () => print((await listKit()).commands.map(slim)));
+kit.command('list-agents').action(async () => out((await listKit()).agents.map(slim), v => render.renderKitList(v, 'agent')));
+kit.command('list-commands').action(async () => out((await listKit()).commands.map(slim), v => render.renderKitList(v, 'command')));
 kit.command('list-skills').action(async () => {
   const k = await listKit();
-  print([...k.skills, ...k.skillsExtras].map(slim));
+  out([...k.skills, ...k.skillsExtras].map(slim), v => render.renderKitList(v, 'skill'));
 });
 kit.command('get <kind> <name>').action(async (kind, name) => {
   const k = await listKit();
   const item = findItem(k, kind, name);
   if (!item) return fail(`Not found: ${kind}/${name}`);
+  // Always raw for `kit get` — it's intended to be cat-like
   process.stdout.write(item.content ?? item.skillContent);
 });
-kit.command('search <query>').action(async (q) => print(searchKit(await listKit(), q)));
+kit.command('search <query>').action(async (q) => out(searchKit(await listKit(), q), render.renderKitSearch));
 
 // --- sync ---
 const sync = program.command('sync').description('Project the kit into an IDE.');
-sync.command('targets').action(async () => print(listTargets()));
+sync.command('targets').action(async () => out(listTargets(), render.renderSyncTargets));
 sync.command('status <target>')
   .option('--project-root <path>')
-  .action(async (target, opts) => print(await statusOf(target, { projectRoot: opts.projectRoot })));
+  .action(async (target, opts) => out(await statusOf(target, { projectRoot: opts.projectRoot }), render.renderSyncStatus));
 sync.command('install <target>')
   .option('--project-root <path>')
   .option('--mode <mode>', 'reference | copy', 'reference')
   .option('--dry-run')
-  .action(async (target, opts) => print(await syncTo(target, { projectRoot: opts.projectRoot, mode: opts.mode, dryRun: opts.dryRun })));
+  .action(async (target, opts) => out(await syncTo(target, { projectRoot: opts.projectRoot, mode: opts.mode, dryRun: opts.dryRun }), render.renderSyncInstall));
 sync.command('remove <target>')
   .option('--project-root <path>')
-  .action(async (target, opts) => print(await removeFrom(target, { projectRoot: opts.projectRoot })));
+  .action(async (target, opts) => out(await removeFrom(target, { projectRoot: opts.projectRoot }), render.renderSyncRemove));
 sync.command('watch [targets...]')
   .description('Watch kit/ and re-sync to one or more IDEs on every change. Use --all to pick up every IDE that already has files in the project.')
   .option('--project-root <path>')
@@ -93,50 +121,50 @@ sync.command('watch [targets...]')
 const reverse = program.command('reverse-sync').description('Detect and apply edits made directly in an IDE back to the canonical kit/.');
 reverse.command('detect <target>')
   .option('--project-root <path>')
-  .action(async (target, opts) => print(await detectReverse(target, { projectRoot: opts.projectRoot })));
+  .action(async (target, opts) => out(await detectReverse(target, { projectRoot: opts.projectRoot }), render.renderReverseDetect));
 reverse.command('apply <target>')
   .option('--project-root <path>')
   .option('--strategy <s>', 'skip | overwrite | merge | rename', 'skip')
-  .option('--only <items...>', 'Limit to these kind/name pairs (e.g. agent/planner skill/paperclip)')
+  .option('--only <items...>', 'Limit to these kind/name pairs (e.g. agent/planner skill/paperclip framework/workflows/foo.md)')
   .option('--dry-run')
-  .action(async (target, opts) => print(await applyReverse(target, { projectRoot: opts.projectRoot, strategy: opts.strategy, only: opts.only, dryRun: opts.dryRun })));
+  .action(async (target, opts) => out(await applyReverse(target, { projectRoot: opts.projectRoot, strategy: opts.strategy, only: opts.only, dryRun: opts.dryRun }), render.renderReverseApply));
 
 // --- gates ---
 const gates = program.command('gates').description('Reusable workflow gates.');
-gates.command('list').action(async () => print(await listGates()));
+gates.command('list').action(async () => out(await listGates(), render.renderGatesList));
 gates.command('get <id>').action(async (id) => process.stdout.write((await getGate(id)).content));
-gates.command('for-stage <stage>').action(async (stage) => print(await gatesForStage(stage)));
+gates.command('for-stage <stage>').action(async (stage) => out(await gatesForStage(stage), render.renderGatesList));
 gates.command('run <id>')
   .description('Execute a gate (with confirmation in interactive mode). Returns a structured verdict.')
   .option('--project-root <path>')
   .option('--yes', 'Skip confirmation (CI/non-interactive)')
   .option('--no-interactive', 'Never prompt; manual gates return verdict=manual')
-  .action(async (id, opts) => print(await runGate(id, {
+  .action(async (id, opts) => out(await runGate(id, {
     projectRoot: opts.projectRoot,
     yes: opts.yes,
     interactive: opts.interactive !== false,
-  })));
+  }), render.renderGateRun));
 
 // --- forensics ---
 const forensics = program.command('forensics').description('Failure dataset & replays.');
 forensics.command('collect')
   .option('--project-root <path>')
-  .action(async (opts) => print(await collectFailures({ projectRoot: opts.projectRoot })));
+  .action(async (opts) => out(await collectFailures({ projectRoot: opts.projectRoot }), render.renderForensicsCollect));
 forensics.command('summarize')
   .option('--project-root <path>')
   .action(async (opts) => {
     const f = await collectFailures({ projectRoot: opts.projectRoot });
-    print(await summarizeByAgent(f));
+    out(await summarizeByAgent(f), render.renderForensicsSummarize);
   });
 forensics.command('write-learnings')
   .option('--project-root <path>')
   .action(async (opts) => {
     const f = await collectFailures({ projectRoot: opts.projectRoot });
-    print(await writeLearnings(f, { projectRoot: opts.projectRoot }));
+    out(await writeLearnings(f, { projectRoot: opts.projectRoot }), render.renderFallback);
   });
 forensics.command('list-replays')
   .option('--project-root <path>')
-  .action(async (opts) => print(await listReplays({ projectRoot: opts.projectRoot })));
+  .action(async (opts) => out(await listReplays({ projectRoot: opts.projectRoot }), render.renderListReplays));
 forensics.command('reflect')
   .description('LLM-pass: read learnings + current agent, propose minimal prompt edits, optionally apply.')
   .requiredOption('--agent <name>', 'Agent name (matches kit/agents/<name>.md)')
@@ -144,27 +172,27 @@ forensics.command('reflect')
   .option('--dry-run', 'Save the assembled prompt without calling the LLM')
   .option('--apply', 'Skip confirmation; apply the proposal directly')
   .option('--no-interactive', 'Save proposal but never prompt to apply')
-  .action(async (opts) => print(await reflect({
+  .action(async (opts) => out(await reflect({
     agent: opts.agent,
     projectRoot: opts.projectRoot,
     dryRun: opts.dryRun,
     apply: opts.apply,
     interactive: opts.interactive !== false,
-  })));
+  }), render.renderFallback));
 forensics.command('load-replay <id>')
   .option('--project-root <path>')
-  .action(async (id, opts) => print(await loadReplay(id, { projectRoot: opts.projectRoot })));
+  .action(async (id, opts) => out(await loadReplay(id, { projectRoot: opts.projectRoot }), render.renderFallback));
 
 // --- install (the MCP server itself into an IDE) ---
 const install = program.command('install').description('Register kit-mcp into an IDE\'s MCP config.');
-install.command('targets').action(async () => print(listInstallTargets()));
+install.command('targets').action(async () => out(listInstallTargets(), render.renderInstallTargets));
 install.command('dry-run <target>')
   .option('--scope <scope>', 'user | project', 'user')
   .option('--name <name>', 'Server name in IDE config', 'kit')
   .option('--via <via>', 'local | npx | global  (how the IDE will invoke the server)', 'local')
   .option('--pkg <name>', 'npm package name (only with --via npx)', '@luanpdd/kit-mcp')
   .option('--project-root <path>')
-  .action(async (target, opts) => print(await installMcp(target, { ...opts, dryRun: true })));
+  .action(async (target, opts) => out(await installMcp(target, { ...opts, dryRun: true }), render.renderInstallResult));
 install.command('write <target>')
   .option('--scope <scope>', 'user | project', 'user')
   .option('--name <name>', 'Server name in IDE config', 'kit')
@@ -172,11 +200,7 @@ install.command('write <target>')
   .option('--pkg <name>', 'npm package name (only with --via npx)', '@luanpdd/kit-mcp')
   .option('--force')
   .option('--project-root <path>')
-  .action(async (target, opts) => print(await installMcp(target, opts)));
-
-// --- helpers ---
-function print(x) { process.stdout.write(JSON.stringify(x, null, 2) + '\n'); }
-function fail(msg) { process.stderr.write(msg + '\n'); process.exit(1); }
-function slim(x) { return { kind: x.kind, name: x.name, description: x.description, absPath: x.absPath }; }
+  .option('--yes', 'Skip confirmation prompt (CI mode)')
+  .action(async (target, opts) => out(await installMcp(target, opts), render.renderInstallResult));
 
 program.parseAsync(process.argv);

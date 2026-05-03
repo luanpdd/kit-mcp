@@ -36,16 +36,25 @@ function runCli(args, opts = {}) {
   });
 }
 
-test('cli kit list-agents — finds the fixture agent', async () => {
-  const r = await runCli(['kit', 'list-agents']);
+test('cli kit list-agents --json — outputs valid JSON for parsing', async () => {
+  const r = await runCli(['--json', 'kit', 'list-agents']);
   assert.equal(r.code, 0, `stderr: ${r.stderr}`);
   const out = JSON.parse(r.stdout);
   assert.ok(Array.isArray(out));
   assert.ok(out.find(a => a.name === 'sample-agent'));
 });
 
+test('cli kit list-agents (default human) — outputs table-like text, not raw JSON', async () => {
+  const r = await runCli(['kit', 'list-agents']);
+  assert.equal(r.code, 0, `stderr: ${r.stderr}`);
+  // Should NOT start with [ (JSON) but should contain the agent name
+  assert.doesNotMatch(r.stdout.trim(), /^\[/);
+  assert.match(r.stdout, /sample-agent/);
+});
+
 test('cli sync install — projects all caps incl framework + hooks', async () => {
-  const r = await runCli(['sync', 'install', 'claude-code', '--project-root', PROJECT]);
+  // Use --json so we can assert against the result structure
+  const r = await runCli(['--json', 'sync', 'install', 'claude-code', '--project-root', PROJECT]);
   assert.equal(r.code, 0, `stderr: ${r.stderr}`);
   await fs.access(path.join(PROJECT, '.claude/agents/sample-agent.md'));
   await fs.access(path.join(PROJECT, '.claude/commands/sample-command.md'));
@@ -57,15 +66,15 @@ test('cli sync install — projects all caps incl framework + hooks', async () =
   await fs.access(path.join(PROJECT, 'CLAUDE.md'));
 });
 
-test('cli reverse-sync detect — picks up edits across all kinds', async () => {
-  await runCli(['sync', 'install', 'claude-code', '--project-root', PROJECT]);
+test('cli reverse-sync detect --json — picks up edits across all kinds', async () => {
+  await runCli(['--json', 'sync', 'install', 'claude-code', '--project-root', PROJECT]);
   // Edit one of each kind that the dest supports
   const fwPath = path.join(PROJECT, '.claude/framework/workflows/sample-workflow.md');
   await fs.writeFile(fwPath, '# DIRTY\n');
   const hookPath = path.join(PROJECT, '.claude/hooks/sample-hook.js');
   await fs.writeFile(hookPath, '// DIRTY\n');
 
-  const r = await runCli(['reverse-sync', 'detect', 'claude-code', '--project-root', PROJECT]);
+  const r = await runCli(['--json', 'reverse-sync', 'detect', 'claude-code', '--project-root', PROJECT]);
   assert.equal(r.code, 0, `stderr: ${r.stderr}`);
   const out = JSON.parse(r.stdout);
   const kinds = out.candidates.map(c => c.kind);
@@ -74,10 +83,10 @@ test('cli reverse-sync detect — picks up edits across all kinds', async () => 
 });
 
 test('cli sync remove — cleans stubs and marker-managed dirs only', async () => {
-  await runCli(['sync', 'install', 'claude-code', '--project-root', PROJECT]);
+  await runCli(['--json', 'sync', 'install', 'claude-code', '--project-root', PROJECT]);
   // User-authored file in agents/ should survive
   await fs.writeFile(path.join(PROJECT, '.claude/agents/user.md'), 'mine');
-  const r = await runCli(['sync', 'remove', 'claude-code', '--project-root', PROJECT]);
+  const r = await runCli(['--json', 'sync', 'remove', 'claude-code', '--project-root', PROJECT]);
   assert.equal(r.code, 0, `stderr: ${r.stderr}`);
   await assert.rejects(fs.access(path.join(PROJECT, '.claude/agents/sample-agent.md')));
   await assert.rejects(fs.access(path.join(PROJECT, '.claude/framework')));
