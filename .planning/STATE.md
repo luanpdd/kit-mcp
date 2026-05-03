@@ -4,21 +4,12 @@
 
 ## Milestone ativo
 
-**v1.0.0 — Estabilização para 1.0** (iniciado 2026-05-03)
+**Nenhum.** Último milestone concluído: **v1.0.0** (arquivado em `.planning/milestones/v1.0.0/`, ver `MILESTONE-AUDIT.md`).
 
-## Fase atual
+## Próximo passo
 
-Nenhuma planejada ainda. Próximo passo: `/planejar-fase 1`.
-
-## Roadmap
-
-Ver `.planning/ROADMAP.md` — 5 fases:
-
-1. ✅ Débitos de tooling (Dependabot + GH Release v0.5.0)
-2. ✅ Parser fix (renderReference reordering + firstNonEmptyLine + quote argument-hints)
-3. ✅ Reverse-sync para framework/hooks
-4. ✅ Infraestrutura de testes (37 unit + 5 integration, CI integrado)
-5. ✅ Cut da v1.0.0 (publish.yml auto GH Release + CHANGELOG stable API)
+A definir. Quando começar o próximo milestone:
+- `/novo-marco "vX.Y nome do tema"` — abre o ciclo questionamento → requisitos → roadmap
 
 ## Bloqueadores
 
@@ -27,3 +18,7 @@ Ver `.planning/ROADMAP.md` — 5 fases:
 ## Todos pendentes
 
 (vazio — captura via `/adicionar-tarefa` ou `/nota`)
+
+## Backlog macro disponível
+
+Ver `MILESTONES.md → Backlog macro (não-priorizado)` para itens parados pra v1.1+.

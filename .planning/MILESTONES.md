@@ -33,9 +33,19 @@
 - CI cobre projection + safety (preserva user files sem marker).
 - **Resolve a regressão estrutural** que fazia commands tipo `/novo-marco` aparecerem na IDE mas falharem em runtime ao tentar ler templates.
 
+### v1.0.0 — Estabilização para 1.0 (2026-05-03) 🎉 First stable
+- 12/12 REQs entregues em 5 fases (tooling, parser, reverse-sync, tests, cut).
+- Tests: 42 automatizados (37 unit + 5 integration) via `node:test`, zero deps.
+- CI: 6/6 combinações verdes (Ubuntu/macOS/Windows × Node 20/22) em todo push.
+- Reverse-sync simétrico: detect/apply para framework + hooks (mirror-tree).
+- Parser fixes coordenados: stub reorder + HTML-comment skip + YAML quoting.
+- publish.yml cria GitHub Release object automaticamente em todo `v*`.
+- Stable API commitment: TARGETS, MCP actions, CLI surface, core exports, stub format, marker semantics.
+- Detalhes: `.planning/milestones/v1.0.0/`.
+
 ## Em andamento
 
-(nada — encerrar planejamento de v1.x abaixo)
+(nada — milestone v1.0.0 concluído e arquivado)
 
 ## Backlog macro (não-priorizado)
 
