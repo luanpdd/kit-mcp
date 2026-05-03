@@ -40,10 +40,32 @@ jobs:
           test -f .ci-test/.claude/commands/example-greeting.md
           test -f .ci-test/.claude/skills/example-skill/SKILL.md
           test -f .ci-test/CLAUDE.md
+          # framework + hooks (mirror-tree) — must be projected, not just listed
+          test -f .ci-test/.claude/framework/.kit-mcp-managed
+          test -f .ci-test/.claude/framework/workflows/new-milestone.md
+          test -f .ci-test/.claude/framework/templates/project.md
+          test -f .ci-test/.claude/hooks/.kit-mcp-managed
+          test -f .ci-test/.claude/hooks/workflow-guard.js
           node bin/cli.js sync remove claude-code --project-root .ci-test
           # After remove, the example stubs should be gone (they had STUB_MARKER)
           test ! -f .ci-test/.claude/agents/example-reviewer.md
+          # Mirror-tree dirs should be gone too (they had .kit-mcp-managed marker)
+          test ! -d .ci-test/.claude/framework
+          test ! -d .ci-test/.claude/hooks
           rm -rf .ci-test
+
+      - name: Mirror-tree safety — preserves user files
+        shell: bash
+        run: |
+          # Verify sync remove DOES NOT delete framework/hooks dirs that lack our marker
+          # (i.e. the user managed them manually; we never wrote a marker there)
+          mkdir -p .ci-safety/.claude/framework .ci-safety/.claude/hooks
+          echo "user content" > .ci-safety/.claude/framework/user-file.md
+          echo "user hook"     > .ci-safety/.claude/hooks/user-hook.js
+          node bin/cli.js sync remove claude-code --project-root .ci-safety
+          test -f .ci-safety/.claude/framework/user-file.md
+          test -f .ci-safety/.claude/hooks/user-hook.js
+          rm -rf .ci-safety
 
       - name: MCP server boot
         shell: bash

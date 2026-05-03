@@ -6,6 +6,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [0.5.0] - 2026-05-03
+
+### Added
+- **Mirror-tree sync for `framework` and `hooks`.** `kit/framework/` (124 files: workflows, templates, references, libs) and `kit/hooks/` (5 files) are now projected into `.claude/framework/` and `.claude/hooks/` on every `sync install claude-code`. Without this, the bundled slash-commands like `/novo-marco` were broken-by-design — they referenced `@./.claude/framework/workflows/new-milestone.md` and similar paths that never existed in the destination project. Now they resolve correctly end-to-end.
+- New `mode: 'mirror-tree'` capability spec in `src/core/registry.js`. Each mirror-tree entry has a `source` (relative path inside `kit/`) and a `path` (destination path in the target project).
+- A `.kit-mcp-managed` marker file is written at the root of each managed tree so `kit sync remove` can recursively clean up the directory **only** when the marker is present. Trees you authored yourself (without the marker) are never touched.
+- CI smoke test asserts `.claude/framework/workflows/new-milestone.md`, `.claude/framework/templates/project.md`, and `.claude/hooks/workflow-guard.js` are projected, and that `sync remove` cleans them up.
+- New CI safety test: `sync remove` against a `.claude/framework/` directory with no marker preserves user content.
+
+### Changed
+- `statusOf` now reports `framework` and `hooks` capability paths.
+- README capability matrix gained two columns (`framework`, `hooks`) and a paragraph explaining the mirror-tree semantics.
+
+### Migration
+No action needed — `npx -y @luanpdd/kit-mcp@latest sync install claude-code --project-root .` projects the new directories automatically. If you had a manually-created `.claude/framework/` or `.claude/hooks/`, kit-mcp will overwrite individual files but won't delete user files; `sync remove` continues to leave them alone.
+
 ## [0.4.1] - 2026-05-03
 
 ### Fixed
@@ -158,7 +174,8 @@ npx -y @luanpdd/kit-mcp sync install claude-code --project-root .
 - CLI mirror of all MCP tools.
 - `install` command that registers kit-mcp into an IDE's MCP config (JSON for Claude/Cursor/Gemini/Windsurf, TOML for Codex).
 
-[Unreleased]: https://github.com/luanpdd/kit-mcp/compare/v0.4.1...HEAD
+[Unreleased]: https://github.com/luanpdd/kit-mcp/compare/v0.5.0...HEAD
+[0.5.0]: https://github.com/luanpdd/kit-mcp/compare/v0.4.1...v0.5.0
 [0.4.1]: https://github.com/luanpdd/kit-mcp/compare/v0.4.0...v0.4.1
 [0.4.0]: https://github.com/luanpdd/kit-mcp/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/luanpdd/kit-mcp/compare/v0.2.1...v0.3.0

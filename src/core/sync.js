@@ -15,6 +15,8 @@ import { getTarget } from './registry.js';
 import { listKit, resolveKitRoot } from './kit.js';
 
 const STUB_MARKER = '<!-- kit-mcp:reference -->';
+const MANAGED_MARKER_FILE = '.kit-mcp-managed';
+const MANAGED_MARKER_BODY = '# Managed by @luanpdd/kit-mcp — this directory is overwritten on every `kit sync install`.\n# Do not edit files here directly; edit the canonical source under kit/ and re-run sync.\n# Removing this file disables `kit sync remove` cleanup of this tree.\n';
 
 export async function syncTo(targetId, opts = {}) {
   const target      = getTarget(targetId);
@@ -62,21 +64,62 @@ export async function syncTo(targetId, opts = {}) {
     }
   }
 
+  // Mirror-tree capabilities (framework, hooks) — copy a whole subtree of kit/<source>
+  // into target.<cap>.path, preserving relative structure. Dropped a marker file at the
+  // root so `kit sync remove` can clean up the tree safely.
+  for (const cap of ['framework', 'hooks']) {
+    const spec = target[cap];
+    if (!spec || spec.mode !== 'mirror-tree') continue;
+    const srcRoot = path.join(kitRoot, spec.source);
+    const dstRoot = path.join(projectRoot, spec.path);
+    const files = await walkTree(srcRoot);
+    if (files.length === 0) continue;
+    ops.push({ path: path.join(dstRoot, MANAGED_MARKER_FILE), content: MANAGED_MARKER_BODY, kind: cap });
+    for (const f of files) {
+      const dst = path.join(dstRoot, f.rel);
+      ops.push({ path: dst, srcAbs: f.abs, kind: cap, treeCopy: true });
+    }
+  }
+
   if (!dryRun) {
     for (const op of ops) {
       await fs.mkdir(path.dirname(op.path), { recursive: true });
-      await fs.writeFile(op.path, op.content, 'utf8');
+      if (op.treeCopy) {
+        await fs.copyFile(op.srcAbs, op.path);
+      } else {
+        await fs.writeFile(op.path, op.content, 'utf8');
+      }
     }
   }
 
   return { target: targetId, mode, projectRoot, kitRoot, written: ops.map(o => o.path), dryRun };
 }
 
+async function walkTree(dir) {
+  const out = [];
+  async function visit(current, relPrefix) {
+    let entries;
+    try { entries = await fs.readdir(current, { withFileTypes: true }); }
+    catch { return; }
+    for (const e of entries) {
+      const abs = path.join(current, e.name);
+      const rel = relPrefix ? `${relPrefix}/${e.name}` : e.name;
+      if (e.isDirectory()) {
+        await visit(abs, rel);
+      } else if (e.isFile()) {
+        out.push({ abs, rel });
+      }
+    }
+  }
+  await visit(dir, '');
+  return out;
+}
+
 export async function statusOf(targetId, opts = {}) {
   const target      = getTarget(targetId);
   const projectRoot = path.resolve(opts.projectRoot ?? process.cwd());
   const checks = [];
-  for (const cap of ['rules', 'agents', 'commands', 'skills']) {
+  for (const cap of ['rules', 'agents', 'commands', 'skills', 'framework', 'hooks']) {
     if (!target[cap]) continue;
     const probe = path.join(projectRoot, target[cap].path);
     let exists = false;
@@ -103,6 +146,18 @@ export async function removeFrom(targetId, opts = {}) {
           removed.push(full);
         }
       }
+    } catch {}
+  }
+  // Mirror-tree capabilities: only remove if our marker is present (we manage the whole subtree).
+  for (const cap of ['framework', 'hooks']) {
+    const spec = target[cap];
+    if (!spec || spec.mode !== 'mirror-tree') continue;
+    const dir = path.join(projectRoot, spec.path);
+    const marker = path.join(dir, MANAGED_MARKER_FILE);
+    try {
+      await fs.access(marker);
+      await fs.rm(dir, { recursive: true, force: true });
+      removed.push(dir);
     } catch {}
   }
   return { target: targetId, projectRoot, removed };

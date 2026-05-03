@@ -159,18 +159,20 @@ kit sync watch --all                          # watch + auto-detect every IDE al
 
 **Per-IDE projection** — what each target receives:
 
-| IDE | rules → | agents → | commands → | skills → |
-|---|---|---|---|---|
-| Claude Code | `CLAUDE.md` | `.claude/agents/*.md` | `.claude/commands/*.md` | `.claude/skills/*/` |
-| Cursor | `.cursor/rules/*.mdc` | `.cursor/agents/*.md` | — | — |
-| Codex | `AGENTS.md` | — | — | `.codex/skills/*/` |
-| Gemini CLI | `GEMINI.md` | — | — | `.gemini/skills/*/` |
-| Copilot | `.github/copilot-instructions.md` | `.github/agents/*.agent` | — | `.github/skills/*/` |
-| Windsurf | `.windsurf/rules/*.md` | `.windsurf/agents/*.md` | — | `.windsurf/skills/*/` |
-| Antigravity | `.agents/rules/*.md` | `.agents/agents/*.md` | — | `.agents/workflows/*/` |
-| Trae | `.trae/rules/*.md` | `.trae/agents/*.md` | — | — |
+| IDE | rules → | agents → | commands → | skills → | framework → | hooks → |
+|---|---|---|---|---|---|---|
+| Claude Code | `CLAUDE.md` | `.claude/agents/*.md` | `.claude/commands/*.md` | `.claude/skills/*/` | `.claude/framework/**` | `.claude/hooks/**` |
+| Cursor | `.cursor/rules/*.mdc` | `.cursor/agents/*.md` | — | — | — | — |
+| Codex | `AGENTS.md` | — | — | `.codex/skills/*/` | — | — |
+| Gemini CLI | `GEMINI.md` | — | — | `.gemini/skills/*/` | — | — |
+| Copilot | `.github/copilot-instructions.md` | `.github/agents/*.agent` | — | `.github/skills/*/` | — | — |
+| Windsurf | `.windsurf/rules/*.md` | `.windsurf/agents/*.md` | — | `.windsurf/skills/*/` | — | — |
+| Antigravity | `.agents/rules/*.md` | `.agents/agents/*.md` | — | `.agents/workflows/*/` | — | — |
+| Trae | `.trae/rules/*.md` | `.trae/agents/*.md` | — | — | — | — |
 
 A capability marked `—` is not supported by that IDE. Adding a new IDE = one entry in [`src/core/registry.js`](src/core/registry.js).
+
+**About `framework` and `hooks`:** these are *mirror-tree* capabilities — the entire `kit/framework/` and `kit/hooks/` subtrees are copied verbatim into `.claude/framework/` and `.claude/hooks/`. They're needed by the bundled workflow because slash-commands like `/novo-marco` reference framework files via paths like `@./.claude/framework/workflows/new-milestone.md`. A `.kit-mcp-managed` marker is written at the root of each managed tree so `kit sync remove` can clean up safely without touching directories you authored yourself.
 
 ### `kit install ...` — register kit-mcp into an IDE's MCP config
 

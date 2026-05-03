@@ -20,6 +20,8 @@ export const TARGETS = {
     agents:   { path: '.claude/agents/',                   mode: 'multi',     extension: '.md' },
     commands: { path: '.claude/commands/',                 mode: 'multi',     extension: '.md' },
     skills:   { path: '.claude/skills/',                   mode: 'multi-dir' },
+    framework:{ path: '.claude/framework/',                mode: 'mirror-tree', source: 'framework' },
+    hooks:    { path: '.claude/hooks/',                    mode: 'mirror-tree', source: 'hooks' },
     mcpConfig:{ path: '.mcp.json',                         strategy: 'merge-mcpServers-json',
                 userPath: '~/.claude.json',                userKey: 'mcpServers' },
   },
@@ -92,11 +94,13 @@ export function listTargets() {
     id,
     label: t.label,
     capabilities: {
-      rules:    !!t.rules,
-      agents:   !!t.agents,
-      commands: !!t.commands,
-      skills:   !!t.skills,
-      mcpConfig:!!t.mcpConfig,
+      rules:     !!t.rules,
+      agents:    !!t.agents,
+      commands:  !!t.commands,
+      skills:    !!t.skills,
+      framework: !!t.framework,
+      hooks:     !!t.hooks,
+      mcpConfig: !!t.mcpConfig,
     },
   }));
 }
