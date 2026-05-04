@@ -1,6 +1,26 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
+> Última atualização: 2026-05-04 — abertura de v1.2.0.
+
+## Milestone Atual: v1.2 GUI sidecar de acompanhamento
+
+**Objetivo:** Janela web localhost paralela mostrando ao vivo os processos kit-mcp executando dentro da IDE (Claude Code, Cursor, etc), via SSE.
+
+**Funcionalidades alvo:**
+- Servidor HTTP localhost embutido (`/` página + `/events` SSE)
+- UI web mínima sem build (HTML/JS estático servido pelo próprio kit-mcp)
+- CLI `kit ui` (start/stop/status) — abertura manual
+- Flag `--auto-spawn` opt-in nas tools MCP pesadas — abertura automática
+- Hook nos `onProgress` callbacks existentes (sync, reverse-sync) emitindo via SSE
+- Detecção de porta livre com lockfile, encerramento gracioso
+
+**Decisões de stack já feitas:**
+- HTTP + SSE puro Node — sem Express, sem Vite, sem framework de UI
+- Máx 1 dep nova se inevitável; preferir zero
+- Cross-platform (Windows/macOS/Linux): `open`/`xdg-open`/`start` pra browser
+
+**Contrato preservado:** Stable API v1.0+ permanece. Apenas adições. Sidecar é opt-in — quem não invoca `kit ui` nem `--auto-spawn` mantém experiência v1.1 idêntica.
 
 ## Visão de uma frase
 
@@ -44,3 +64,20 @@ Sync grava stubs markdown-reference por padrão (`.claude/agents/foo.md` aponta 
 - **Sem 2FA bypass nas chaves npm além do necessário pra publicação automática.**
 - **Não embarcar conteúdo de terceiros** (Anthropic Cowork skills, Notion IDs privados, URLs de repos privados).
 - **Cross-platform sempre.** Windows, macOS e Linux têm que funcionar igual.
+
+## Evolução
+
+Este documento evolui nas transições de fase e limites de milestone.
+
+**Após cada transição de fase** (via `/transicao`):
+1. Requisitos invalidados? → Mover para Fora do Escopo com motivo
+2. Requisitos validados? → Mover para Validados com referência de fase
+3. Novos requisitos surgiram? → Adicionar em Ativos
+4. Decisões a registrar? → Adicionar em Decisões-chave
+5. "O Que É" ainda está preciso? → Atualizar se driftar
+
+**Após cada milestone** (via `/concluir-marco`):
+1. Revisão completa de todas as seções
+2. Verificação do Valor Central — ainda é a prioridade certa?
+3. Auditar Fora do Escopo — motivos ainda são válidos?
+4. Atualizar Contexto com estado atual
