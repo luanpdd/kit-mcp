@@ -67,12 +67,11 @@ test('kit list-agents still works (sanity for stable API)', () => {
   assert.match(r.stdout, /advisor-researcher|example-reviewer/);
 });
 
-test('kit --version is wired (REL-01 not yet applied — expects 1.0.0 hardcoded)', () => {
-  // This test pins the current bug for Phase 18 to fix as REL-01.
+test('kit --version reads from package.json (REL-01 fix)', () => {
   const r = runCli(['--version']);
   assert.equal(r.status, 0);
-  // Phase 18 will switch this to read from package.json.
-  assert.match(r.stdout.trim(), /^1\.\d+\.\d+$/);
+  const pkg = JSON.parse(fs.readFileSync('package.json', 'utf8'));
+  assert.equal(r.stdout.trim(), pkg.version);
 });
 
 // End-to-end with a sidecar: spawn `kit ui start --no-open --idle-ms 0` in a child,

@@ -13,6 +13,9 @@
 // programmatic consumers.
 
 import { Command } from 'commander';
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
 import { listKit, searchKit, findItem } from '../core/kit.js';
 import { listTargets } from '../core/registry.js';
 import { syncTo, statusOf, removeFrom } from '../core/sync.js';
@@ -32,10 +35,22 @@ import { wrapProgressForUi } from '../ui/wrapper.js';
 import { openBrowser } from '../ui/browser.js';
 import http from 'node:http';
 
+// Read package.json version at boot so `--version` is always accurate. Falls
+// back to a string if the file lookup fails (e.g. unusual install layout).
+function readPkgVersion() {
+  try {
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const pkgPath = path.resolve(here, '..', '..', 'package.json');
+    return JSON.parse(readFileSync(pkgPath, 'utf8')).version;
+  } catch {
+    return 'unknown';
+  }
+}
+
 const program = new Command()
   .name('kit')
   .description('Personal kit (agents/commands/skills) — CLI mirror of the kit-mcp server.')
-  .version('1.0.0')
+  .version(readPkgVersion())
   .option('--kit-root <path>', 'Override the kit root (default: bundled example kit, or KIT_MCP_KIT_ROOT env)')
   .option('--json', 'Output JSON to stdout (machine-readable, restores pre-1.1 default)')
   .option('--no-ui', 'Suppress sidecar event publishing for this run (default: auto-detect lockfile)');

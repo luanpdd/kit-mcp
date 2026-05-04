@@ -52,6 +52,37 @@ jobs:
             exit 1
           fi
 
+      - name: Audit — npm pack includes UI assets (REQ OPS-06)
+        shell: bash
+        run: |
+          npm install --no-audit --no-fund --silent
+          # `npm pack --dry-run --json` lists every file the tarball would contain.
+          PACK=$(npm pack --dry-run --json)
+          echo "$PACK" | node -e "
+            const fs = require('fs');
+            const list = JSON.parse(fs.readFileSync(0, 'utf8'));
+            const files = list[0]?.files?.map(f => f.path) ?? [];
+            const required = [
+              'src/ui/static/index.html',
+              'src/ui/server.js',
+              'src/ui/client.js',
+              'src/ui/wrapper.js',
+              'src/ui/browser.js',
+              'src/ui/auto-spawn.js',
+              'src/ui/lockfile.js',
+              'src/ui/port.js',
+              'src/ui/events.js',
+              'bin/ui.js',
+            ];
+            const missing = required.filter(r => !files.includes(r));
+            if (missing.length) {
+              console.error('::error::npm pack is missing required v1.2 files:');
+              missing.forEach(m => console.error('  - ' + m));
+              process.exit(1);
+            }
+            console.error('OK: all v1.2 UI assets included in tarball ('+files.length+' files total)');
+          "
+
   smoke:
     runs-on: ${{ matrix.os }}
     strategy:

@@ -6,6 +6,106 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.2.0] - 2026-05-04
+
+**GUI sidecar de acompanhamento.** Janela web localhost paralela mostra ao vivo (via Server-Sent Events) o que kit-mcp está fazendo enquanto sua IDE chama tools — `sync install`, `reverse-sync apply`, `gates run`. Sidecar é totalmente opt-in: quem não invoca `kit ui` continua com a experiência v1.1 idêntica.
+
+### Adicionado — Phase 11: Lock arquitetural
+- ADR consolidado em `.planning/decisions.md` (porta 7100-7199, lockfile em `os.tmpdir()` keyed por sha1(projectRoot), idle 30min default, sem auth no v1.2 com mitigação compensatória)
+- Threat model em `docs/sidecar-security.md`
+- 2 audit gates novos no CI: stdout discipline em `src/ui/` (proíbe `console.log`/`process.stdout.write`) e dep budget (≤ baseline+1)
+
+### Adicionado — Phase 12: Fundações
+- `src/ui/events.js` — schema de evento, validador puro, `makeEvent`, `newRunId`
+- `src/ui/port.js` — `findFreePort` na faixa 7100-7199 com retry-loop
+- `src/ui/lockfile.js` — `acquireLock` atômico via `O_EXCL`, `probeStale` via `process.kill(pid, 0)` + healthz HTTP
+
+### Adicionado — Phase 13: Servidor HTTP + SSE
+- `src/ui/server.js` — http.Server nativo, bind 127.0.0.1 literal, 5 rotas (`/`, `/events` SSE, `/healthz`, `/state`, `/publish`, `/shutdown`)
+- Heartbeat `: ping\n\n` cada 15s; reconnect auto via EventSource native + `retry: 3000`
+- Ring buffer in-memory de 200 eventos (FIFO; sem persistência em disco)
+- Cap de 32 conexões SSE; cleanup quádruplo (req+res × close+error)
+- Idle shutdown 30min default (`--idle-ms 0` desabilita)
+- Encerramento gracioso em SIGINT/SIGTERM com active sockets destruídos
+- Validação de `Host` header (mitiga DNS rebinding) e `Origin` em endpoints non-GET
+- `bin/ui.js` entry detached
+
+### Adicionado — Phase 14: UI estática single-file
+- `src/ui/static/index.html` (~470 LOC) — vanilla DOM + EventSource, sem build step
+- Lista cronológica + auto-scroll + `<details>` expand
+- Badges coloridos por tipo (`run.start`, `run.end`, `tool_invocation`, `progress`, `milestone`, `error`, `shutdown`)
+- Status conexão (CONNECTING/OPEN/CLOSED) + reconexão automática
+- Filter por tipo (chips) + substring search
+- Pause/resume com buffer + autoscroll toggle
+- Dark mode automático via `prefers-color-scheme`
+- Banner de shutdown PT-BR em CLOSED >5s ou evento `shutdown`
+- CSP estrito (`default-src 'self'; ...; frame-ancestors 'none'`)
+
+### Adicionado — Phase 15: Publisher + wrapper + browser-open
+- `src/ui/client.js` — `publish(event, {projectRoot})` fire-and-forget, cache TTL 5s, falha silenciosa em ECONNREFUSED
+- `src/ui/wrapper.js` — `wrapProgressForUi(onProgress, ctx)` multiplexa terminal + sidecar; helpers `.done/.error/.emit`; `redactPath` central scrubando `$HOME → ~` e `projectRoot → <project>` em TODO payload
+- `src/ui/browser.js` — wrapper sobre `open@11` com detection de headless (CI, DISPLAY, SSH, WSL, sandbox); fallback "imprime URL no stderr"
+- Nova dep: `open@^11.0.0` (única adição; budget atingido em 6/6)
+
+### Adicionado — Phase 16: CLI integration
+- `kit ui start` — sobe sidecar foreground (Ctrl+C mata); flags `--port`, `--idle-ms`, `--no-open`
+- `kit ui stop` — POST /shutdown
+- `kit ui status` — exibe pid, port, uptime, eventos, subscribers
+- `kit ui open` — reabre browser na sidecar atual
+- Auto-detect: `kit sync install` e `kit reverse-sync apply` checam lockfile e wrappam `onProgress` automaticamente quando sidecar está rodando
+- Opt-out global via `--no-ui` flag ou `KIT_MCP_NO_UI=1` env var
+
+### Adicionado — Phase 17: MCP --auto-spawn
+- `src/ui/auto-spawn.js` — `ensureSidecar({projectRoot})` checa lockfile + healthz; se ausente, spawna `bin/ui.js` em **detached** com `windowsHide: true` e `stdio: ['ignore', 'ignore', 'inherit']` (fecha stdout completamente — não pode poluir canal MCP do parent)
+- 3 tools MCP ganham campo opcional `autoSpawn: boolean` no inputSchema:
+  - `sync` (action=install)
+  - `reverse-sync` (action=apply)
+  - `gates` (nova action `run`, com autoSpawn)
+- Tools triviais (`kit`, `forensics`, `install`) **não** ganham autoSpawn — explicit-out por design
+
+### Adicionado — Phase 18: Hardening + release
+- 3 hardening tests novos: kill -9 recovery, multi-publisher race, MCP stdio uncorrupted (validação rigorosa do REQ SEC-04 em produção)
+- README seção "Live UI" com primeiros passos
+- `npm pack --dry-run` valida que `src/ui/static/index.html` é incluído no tarball
+
+### Corrigido
+- **REL-01 (bug pré-existente):** `kit --version` agora lê de `package.json` em vez de retornar string hardcoded `1.0.0`. Em v1.0/v1.1 o comando exibia versão errada — corrigido nesta release.
+
+### Stable API additions (1.x compatible)
+
+A v1.0 commitment continua válida. Estas adições são parte do contrato:
+
+- **MCP tool `sync` inputSchema:** campo opcional `autoSpawn: boolean` em action=install. Tools que não passam mantêm comportamento idêntico.
+- **MCP tool `reverse-sync` inputSchema:** campo opcional `autoSpawn: boolean` em action=apply.
+- **MCP tool `gates` inputSchema:** campo opcional `autoSpawn: boolean` E nova action `run` com `id`/`projectRoot`/`autoSpawn` campos.
+- **CLI subgroup `kit ui`:** novo grupo com `start | stop | status | open` subcommands.
+- **CLI flag `--no-ui` global** + env var `KIT_MCP_NO_UI=1` — opt-out do auto-detect de sidecar.
+- **Stable runtime guarantee:** core (`syncTo`, `applyReverse`, `runGate`) é literalmente intocado. Wrapper de `onProgress` é montado APENAS no callsite (CLI handler ou MCP tool handler).
+
+### Migration
+
+**Usuários v1.1 não precisam fazer nada.** Sidecar é estritamente opt-in.
+
+Para experimentar a UI:
+```bash
+# 1. Em um terminal:
+kit ui start
+
+# 2. Em outro (ou via Claude Code/Cursor):
+kit sync install claude-code
+
+# A janela mostra o progresso em tempo real.
+```
+
+Para tools MCP, passe `autoSpawn: true` quando quiser auto-abrir:
+```jsonc
+{ "tool": "sync", "arguments": { "action": "install", "target": "claude-code", "autoSpawn": true } }
+```
+
+### Threat model resumido
+
+Sidecar é **localhost only**, single-user, dev workstation. Sem auth (mitigado por bind 127.0.0.1 + Host/Origin check + CSP estrito + path scrubbing). Sem persistência. Sem TLS (loopback). Detalhes em [`docs/sidecar-security.md`](docs/sidecar-security.md).
+
 ## [1.1.0] - 2026-05-03
 
 **Visual feedback in the terminal.** Running `kit ...` now prints colored tables, progress bars, summary panels and interactive selectors instead of the raw JSON-to-stdout default of v1.0. Programmatic consumers add `--json` to restore the previous behavior.

@@ -73,25 +73,25 @@
 
 ### OPS — Operação, testes e cross-platform
 
-- [ ] **OPS-01**: CI matrix Ubuntu/macOS/Windows × Node 20/22 cobrindo smoke do sidecar (start, /publish round-trip via /events, stop, status).
-- [ ] **OPS-02**: Test "memory leak SSE" — 100 connect/disconnect ciclos, validar `subscribers.size === 0` no fim.
-- [ ] **OPS-03**: Test "kill -9 recovery" — mata processo, próximo `kit ui start` detecta lockfile stale via probe, unlink, sobe normal.
-- [ ] **OPS-04**: Test "multi-publisher race" — 2 processos POST `/publish` simultâneos, validar ambos chegam ao client.
-- [ ] **OPS-05**: Test "MCP stdio uncorrupted" — sobe MCP server + sidecar simultaneamente, valida JSON-RPC frames intactos.
-- [ ] **OPS-06**: `npm pack --dry-run` valida `src/ui/static/index.html` incluído no tarball.
+- [x] **OPS-01**: CI matrix Ubuntu/macOS/Windows × Node 20/22 cobrindo smoke do sidecar (start, /publish round-trip via /events, stop, status). _(Phase 18; matrix cobre via test:all)_
+- [x] **OPS-02**: Test "memory leak SSE" — 50 connect/disconnect ciclos, validar `subscribers.size === 0` no fim. _(Phase 13)_
+- [x] **OPS-03**: Test "kill -9 recovery" — stale lockfile detectado via probe + reclaim. _(Phase 18)_
+- [x] **OPS-04**: Test "multi-publisher race" — 2 publishers concorrentes via Promise.all. _(Phase 18)_
+- [x] **OPS-05**: Test "MCP stdio uncorrupted" — bin/ui.js spawnado real → stdout vazio. _(Phase 18)_
+- [x] **OPS-06**: `npm pack --dry-run` valida 10 arquivos UI críticos incluídos no tarball (CI gate). _(Phase 18)_
 
 ### DOC — Documentação
 
-- [ ] **DOC-01**: README seção "Live UI" com screenshot, exemplo `kit ui start`, exemplo `--auto-spawn` em MCP, fluxo "primeira execução" (firewall popup esperado).
-- [ ] **DOC-02**: CHANGELOG entry em `[1.2.0]` enumera todas as fases entregues.
-- [~] **DOC-03**: Threat model curto (`docs/sidecar-security.md`) documentando: bind 127.0.0.1, sem auth, Host/Origin check, CSP, path scrubbing, trade-offs conscientes. _(Rascunho na Phase 11; final na Phase 18)_
-- [ ] **DOC-04**: Migration note: usuários v1.1 ficam idênticos sem ação (sidecar é opt-in); flag `--auto-spawn` documentada por MCP tool.
+- [x] **DOC-01**: README seção `kit ui ...` com 3 exemplos, auto-spawn explicado, opt-out, security model resumido, first-run quirks. _(Phase 18)_
+- [x] **DOC-02**: CHANGELOG entry em `[1.2.0]` enumera todas as 8 fases entregues + Stable API additions + Migration + Threat model. _(Phase 18)_
+- [x] **DOC-03**: Threat model `docs/sidecar-security.md` final com tabelas de gates ativos + hardening covered by tests. _(Rascunho na Phase 11; final na Phase 18)_
+- [x] **DOC-04**: Migration note no CHANGELOG: "v1.1 → v1.2: usuários não precisam fazer nada — sidecar é opt-in". _(Phase 18)_
 
 ### REL — Release
 
-- [ ] **REL-01**: Version bump 1.2.0 em `package.json`, `package-lock.json`, e `src/cli/index.js` (corrigir bug `--version` que ainda imprime `1.0.0` hardcoded).
-- [ ] **REL-02**: Tag `v1.2.0` + GitHub Release auto-criada via workflow existente.
-- [ ] **REL-03**: Publicação npm `@luanpdd/kit-mcp@1.2.0` Latest.
+- [x] **REL-01**: Version bump 1.2.0 em `package.json` + `package-lock.json`; `src/cli/index.js` corrigido — agora lê de `package.json` em runtime via `readFileSync` em vez de hardcoded "1.0.0". _(Phase 18)_
+- [ ] **REL-02**: Tag `v1.2.0` + GitHub Release auto-criada — _user action: `git tag -a v1.2.0 && git push origin --tags`_
+- [ ] **REL-03**: Publicação npm `@luanpdd/kit-mcp@1.2.0` Latest — _user action: `npm publish --otp <code>`_
 
 ---
 

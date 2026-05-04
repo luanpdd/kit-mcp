@@ -272,6 +272,38 @@ kit forensics load-replay <id> --project-root .
 
 The proposal is always saved to `.planning/learnings/{agent}.proposal.md` first; the canonical is only modified after explicit confirmation (or `--apply`). MCP `forensics.reflect` never auto-applies.
 
+### `kit ui ...` — live process viewer (sidecar) — _new in 1.2_
+
+A tiny localhost web app that streams what kit-mcp is doing while your IDE drives it. Strictly opt-in: ignore it and v1.1 behavior is unchanged.
+
+```bash
+# In one terminal — keeps running until Ctrl+C
+kit ui start
+
+# In another terminal (or via Claude Code / Cursor) — runs as before, but events
+# are now also broadcast to the sidecar window
+kit sync install claude-code
+
+# Tools too: pass autoSpawn:true on the MCP side, or just `kit ui start` first
+kit ui status
+kit ui stop
+```
+
+What you get:
+
+- A single browser tab at `http://127.0.0.1:7100` (or the next free port up to 7199)
+- Live event stream over Server-Sent Events — `tool_invocation`, `progress`, `error`, `milestone`, `run.start`, `run.end`
+- Filters by event type and substring; pause/resume; auto-scroll; dark mode tracks the OS
+- The sidecar shuts itself down after 30 minutes of idle; `--idle-ms 0` disables that
+
+**Auto-spawn from MCP tools.** Pass `autoSpawn: true` in the inputSchema of `sync` (action=install), `reverse-sync` (action=apply), or `gates` (action=run). The MCP server will spawn `bin/ui.js` detached, wait for it to come online, open your default browser, and stream that tool's progress. Trivial tools (`kit list-*`, `forensics`, `install`) deliberately don't accept `autoSpawn` — the overhead isn't worth it.
+
+**Opt-out always available.** From the CLI: pass `--no-ui` or set `KIT_MCP_NO_UI=1`. The sidecar is never started behind your back; it's only used when a lockfile is already present (someone ran `kit ui start` or `autoSpawn: true`).
+
+**Security model.** Sidecar binds to `127.0.0.1` literally — never `0.0.0.0`, never `localhost` (which resolves to `::1` on Windows). Every route validates the `Host` header to mitigate DNS rebinding. CSP is strict (`default-src 'self'; …; frame-ancestors 'none'`). Paths in payloads are scrubbed (`$HOME → ~`, `<projectRoot> → <project>`) so screenshots don't leak directory structure. No persistence, no TLS, no auth — single-user dev workstation only. Full threat model in [`docs/sidecar-security.md`](docs/sidecar-security.md).
+
+**First-run quirks.** Windows Defender / macOS firewall may prompt the first time `kit ui start` binds. Approving "Private networks" is enough — the server doesn't accept anything from outside loopback regardless. On WSL, `kit ui start` opens the URL in the Windows host browser via `wslview`. In CI / SSH / `TERM=dumb`, browser launch is suppressed and the URL is printed to stderr instead.
+
 ---
 
 ## MCP usage

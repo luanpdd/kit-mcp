@@ -1,6 +1,6 @@
 # Sidecar Threat Model — kit-mcp v1.2
 
-> **Status:** Rascunho (Phase 11, 2026-05-04). Versão final escrita na Phase 18 quando todas as mitigações estiverem implementadas.
+> **Status:** Final (Phase 18, 2026-05-04). Todas as mitigações implementadas e testadas — referências aos REQs/tests abaixo.
 
 Este documento descreve o modelo de ameaça do sidecar de acompanhamento (web localhost + SSE) introduzido em v1.2. Aqui estão os ataques que mitigamos, os que conscientemente aceitamos, e o que vem a seguir.
 
@@ -103,17 +103,27 @@ Lista prospectiva, sem timeline:
 
 Esses gates rodam no CI em todo PR e são parte da política de segurança do projeto:
 
-| Gate | Onde | O que checa | REQ |
-|---|---|---|---|
-| stdout discipline | `.github/workflows/ci.yml` | nenhum `console.log`/`process.stdout.write` em `src/ui/` | SEC-04 |
-| dep size | `.github/workflows/ci.yml` | runtime deps ≤ baseline+1 | (princípio do PROJECT.md) |
-| Host/Origin check | unit/integration tests | rotas rejeitam Host malicioso → 403 | SEC-01, SEC-02 |
-| CSP presente | smoke test | HTML serve CSP esperado | SEC-03 |
-| Path redaction | snapshot test | nenhum `/home/`, `/Users/`, `C:\Users\` em payloads | SEC-05 |
+| Gate | Onde | O que checa | REQ | Test |
+|---|---|---|---|---|
+| stdout discipline | `.github/workflows/ci.yml` job `audit` | nenhum `console.log`/`process.stdout.write` em `src/ui/` | SEC-04 | gate falha PR antes do code review |
+| stdout in production | `test/integration/ui-hardening.test.js` | sidecar real spawnado não escreve nada em stdout | SEC-04 (runtime) | OPS-05 |
+| dep size | `.github/workflows/ci.yml` job `audit` | runtime deps ≤ baseline+1 (= 6) | (princípio do PROJECT.md) | gate falha PR |
+| Host check | `test/integration/ui-server.test.js` | rotas rejeitam Host malicioso → 403 | SEC-01 | "Host header validation: rejects malicious Host" |
+| Origin check | `test/integration/ui-server.test.js` | endpoints non-GET rejeitam Origin estrangeiro → 403 | SEC-02 | "Origin validation: rejects cross-origin POST" |
+| CSP presente | `test/integration/ui-static.test.js` | HTML serve CSP estrito | SEC-03 | "served with strict CSP header" |
+| Path redaction | `test/unit/ui-wrapper.test.js` | redactPath substitui $HOME e projectRoot uniformemente | SEC-05 | 5 tests cobrindo strings, objetos, arrays, regex specials |
 
-(Os 3 últimos serão ativados em fases subsequentes — Fase 13 e 15.)
+Todos os 7 gates verde no momento do cut da v1.2.0 (commit `<cut hash>`).
+
+## Hardening cobertos por test (Phase 18)
+
+| Pitfall | Test |
+|---|---|
+| stale lockfile reclaim (Pitfall 4) | `test/integration/ui-hardening.test.js` "OPS-03: stale lockfile" |
+| multi-publisher race (Pitfall 12) | `test/integration/ui-hardening.test.js` "OPS-04: 2 concurrent publishers" |
+| stdout poisoning MCP (Pitfall 1) | `test/integration/ui-hardening.test.js` "OPS-05: bin/ui.js does not write to stdout" |
+| connection leak (Pitfall 3) | `test/integration/ui-server.test.js` "Connection cleanup: 50 connect/disconnect cycles" |
 
 ---
 
-**Última atualização:** 2026-05-04 (Phase 11 — rascunho).
-**Próxima revisão:** Phase 18 (cut da v1.2.0).
+**Última atualização:** 2026-05-04 (Phase 18 — versão final pre-cut).
