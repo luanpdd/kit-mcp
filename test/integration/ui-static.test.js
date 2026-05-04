@@ -131,12 +131,76 @@ test('static UI: includes shutdown banner copy in PT-BR', async () => {
   });
 });
 
+test('static UI: humanizer maps technical event types to PT-BR labels (1.2.3)', async () => {
+  await withServer(async (srv) => {
+    const r = await fetchHtml(srv.port);
+    // Dictionaries present
+    assert.match(r.body, /EVENT_TYPE_LABEL/);
+    assert.match(r.body, /'run\.start':\s*'Iniciado'/);
+    assert.match(r.body, /'run\.end':\s*'Finalizado'/);
+    assert.match(r.body, /'progress':\s*'Em andamento'/);
+    assert.match(r.body, /'error':\s*'Erro'/);
+    // Tool name humanizer
+    assert.match(r.body, /TOOL_LABEL/);
+    assert.match(r.body, /'sync\.install':\s*'Sincronizando kit'/);
+    // Path humanizer
+    assert.match(r.body, /humanizePath/);
+    assert.match(r.body, /agente\s\$\{m\[1\]\}/);
+    // Wired into render functions
+    assert.match(r.body, /humanizeEventType\(evt\.type\)/);
+    assert.match(r.body, /humanizeTool\(run\.tool\)/);
+    assert.match(r.body, /humanizeStatus\(run\.status\)/);
+    // Connection labels translated
+    assert.match(r.body, /CONN_LABEL/);
+    assert.match(r.body, /OPEN:\s+'CONECTADO'/);
+    assert.match(r.body, /CLOSED:\s+'DESCONECTADO'/);
+  });
+});
+
+test('static UI: PT-BR copy in toolbar + footer (1.2.3)', async () => {
+  await withServer(async (srv) => {
+    const r = await fetchHtml(srv.port);
+    assert.match(r.body, /placeholder="filtrar/);
+    assert.match(r.body, /pausar/);
+    assert.match(r.body, /rolagem auto/);
+    assert.match(r.body, /limpar tela/);
+    assert.match(r.body, /Em execução agora/);
+    assert.match(r.body, /eventos:/);
+    assert.match(r.body, /fonte: ao vivo/);
+  });
+});
+
 test('static UI: eventLabel reads payload.name (1.2.1 fix)', async () => {
   // Regression guard for the cosmetic bug where milestone events with
   // `payload.name` rendered as bare "milestone" instead of the supplied label.
   await withServer(async (srv) => {
     const r = await fetchHtml(srv.port);
     assert.match(r.body, /typeof p\.name === 'string'/);
+  });
+});
+
+test('static UI: active runs panel renders cards with progress bar (1.2.2)', async () => {
+  // The "Active runs" zone is what makes the sidecar feel like a process
+  // viewer rather than just a chronological log. It must:
+  //   - exist in the markup
+  //   - have a count chip
+  //   - render via upsertActiveRun keyed by runId
+  //   - show a progress bar that reflects `payload.percent`
+  await withServer(async (srv) => {
+    const r = await fetchHtml(srv.port);
+    // Markup
+    assert.match(r.body, /id="active-runs"/);
+    assert.match(r.body, /id="active-runs-list"/);
+    assert.match(r.body, /id="active-runs-count"/);
+    // Logic
+    assert.match(r.body, /upsertActiveRun/);
+    assert.match(r.body, /renderActiveRuns/);
+    assert.match(r.body, /activeRuns\s*=\s*new Map\(\)/);
+    // Progress bar driven by percent
+    assert.match(r.body, /run\.percent\s*=\s*clampPercent/);
+    assert.match(r.body, /\.run-bar/);
+    // Per-second elapsed tick keeps cards live
+    assert.match(r.body, /setInterval\(\(\) => \{[\s\S]*activeRuns\.size === 0/);
   });
 });
 

@@ -275,6 +275,147 @@
     max-height: 280px;
   }
 
+  /* Active runs panel — current executions with live progress bars */
+  .runs {
+    margin: 12px 0 16px;
+    display: grid;
+    gap: 10px;
+  }
+  .runs[hidden] { display: none; }
+  .runs-header {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    color: var(--fg-subtle);
+    font-family: var(--mono);
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: .8px;
+  }
+  .runs-header .count {
+    background: var(--accent);
+    color: white;
+    padding: 1px 8px;
+    border-radius: 999px;
+    font-weight: 700;
+  }
+
+  .run-card {
+    background: var(--bg-elev);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    padding: 14px 16px;
+    box-shadow: var(--shadow);
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 10px 16px;
+    align-items: baseline;
+    position: relative;
+    overflow: hidden;
+    transition: opacity .25s ease;
+    min-width: 0;
+  }
+  .run-card > * { min-width: 0; }
+  .run-card[data-status="running"] {
+    border-color: var(--accent);
+    border-left-width: 4px;
+  }
+  .run-card[data-status="done"] {
+    border-color: var(--ok);
+    border-left-width: 4px;
+  }
+  .run-card[data-status="error"] {
+    border-color: var(--err);
+    border-left-width: 4px;
+    background: color-mix(in srgb, var(--err) 5%, var(--bg-elev));
+  }
+  .run-card.fading { opacity: .4; }
+
+  .run-card .run-title {
+    font-family: var(--sans);
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--fg);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .run-card .run-kind {
+    font-size: 11px;
+    font-family: var(--mono);
+    color: var(--fg-subtle);
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    background: var(--bg-row);
+    padding: 1px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+  }
+  .run-card .run-percent {
+    font-family: var(--mono);
+    font-size: 22px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+    color: var(--accent);
+    line-height: 1;
+  }
+  .run-card[data-status="done"] .run-percent { color: var(--ok); }
+  .run-card[data-status="error"] .run-percent { color: var(--err); font-size: 13px; }
+
+  .run-card .run-bar-wrap {
+    grid-column: 1 / -1;
+    height: 8px;
+    background: var(--bg-row);
+    border-radius: 4px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    position: relative;
+  }
+  .run-card .run-bar {
+    height: 100%;
+    background: var(--accent);
+    border-radius: 3px;
+    transition: width .25s ease;
+    position: relative;
+  }
+  .run-card[data-status="done"] .run-bar { background: var(--ok); }
+  .run-card[data-status="error"] .run-bar { background: var(--err); }
+  .run-card[data-status="running"] .run-bar::after {
+    /* Subtle moving stripe so the bar feels alive even when % stays put briefly */
+    content: '';
+    position: absolute; inset: 0;
+    background-image: linear-gradient(
+      90deg,
+      transparent 0%, transparent 40%,
+      color-mix(in srgb, white 25%, transparent) 50%,
+      transparent 60%, transparent 100%
+    );
+    background-size: 200% 100%;
+    animation: shimmer 1.6s linear infinite;
+  }
+  @keyframes shimmer {
+    0%   { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+  }
+
+  .run-card .run-step {
+    grid-column: 1 / -1;
+    color: var(--fg-muted);
+    font-family: var(--mono);
+    font-size: 12px;
+    word-break: break-word;
+  }
+  .run-card .run-meta {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 12px;
+    color: var(--fg-subtle);
+    font-family: var(--mono);
+    font-size: 10px;
+  }
+  .run-card .run-meta .runid { letter-spacing: .5px; }
+  .run-card[data-status="error"] .run-step { color: var(--err); }
+
   .banner {
     margin: 12px 0 0;
     padding: 12px 16px;
@@ -309,37 +450,46 @@
 <body>
   <header>
     <h1>kit-mcp sidecar</h1>
-    <span class="meta" id="meta-port">port —</span>
+    <span class="meta" id="meta-port">porta —</span>
     <span class="grow"></span>
-    <span class="conn-status" id="conn" data-state="CONNECTING"><span class="dot"></span><span id="conn-text">CONNECTING</span></span>
+    <span class="conn-status" id="conn" data-state="CONNECTING"><span class="dot"></span><span id="conn-text">CONECTANDO</span></span>
   </header>
 
   <div class="toolbar">
-    <input type="search" id="search" placeholder="filter by label or payload…" autocomplete="off">
-    <fieldset class="filters" id="type-filters" aria-label="Event types">
+    <input type="search" id="search" placeholder="filtrar por nome ou conteúdo…" autocomplete="off">
+    <fieldset class="filters" id="type-filters" aria-label="Tipos de evento">
       <!-- populated from EVENT_TYPES at runtime -->
     </fieldset>
-    <button id="pause-btn" aria-pressed="false">⏸ pause</button>
-    <button id="autoscroll-btn" aria-pressed="true">↧ autoscroll</button>
-    <button id="clear-btn" title="Clear visible events (ring buffer untouched)">clear view</button>
+    <button id="pause-btn" aria-pressed="false">⏸ pausar</button>
+    <button id="autoscroll-btn" aria-pressed="true">↧ rolagem auto</button>
+    <button id="clear-btn" title="Limpa o que está visível (histórico no servidor preservado)">limpar tela</button>
   </div>
 
   <main>
     <div class="banner" id="shutdown-banner" hidden>
       <strong>Sidecar encerrou.</strong> Recarregue depois de <code>kit ui start</code>.
     </div>
+
+    <section class="runs" id="active-runs" hidden aria-label="Em execução agora">
+      <div class="runs-header">
+        <span>Em execução agora</span>
+        <span class="count" id="active-runs-count">0</span>
+      </div>
+      <div id="active-runs-list"></div>
+    </section>
+
     <ul class="ev-list" id="events" hidden></ul>
     <div class="empty" id="empty">
       <strong>Aguardando primeiro evento…</strong>
       Rode <code>kit sync install</code>, <code>kit reverse-sync apply</code>, ou
-      invoke uma tool MCP com <code>autoSpawn: true</code> em outra janela.
+      chame uma ferramenta MCP com <code>autoSpawn: true</code> em outra janela.
     </div>
   </main>
 
   <div class="footer">
-    <span id="footer-events">events: 0</span>
-    <span id="footer-paused" hidden>paused: 0 buffered</span>
-    <span id="footer-source">source: live</span>
+    <span id="footer-events">eventos: 0</span>
+    <span id="footer-paused" hidden>pausado: 0 em fila</span>
+    <span id="footer-source">fonte: ao vivo</span>
   </div>
 
 <script>
@@ -351,6 +501,105 @@
 
   const EVENT_TYPES = ['run.start', 'run.end', 'tool_invocation', 'progress', 'milestone', 'error', 'shutdown'];
   const RING_DISPLAY_MAX = 500;
+
+  // ------- Humanization (PT-BR friendly labels) ------------------------
+  // Maps raw technical event types and tool ids to short human-readable
+  // labels. The technical values stay in the data attributes (so CSS colors
+  // and filters still key off the raw type) — only the display text changes.
+
+  const EVENT_TYPE_LABEL = {
+    'run.start':        'Iniciado',
+    'run.end':          'Finalizado',
+    'tool_invocation':  'Comando',
+    'progress':         'Em andamento',
+    'milestone':        'Marco',
+    'error':            'Erro',
+    'shutdown':         'Desligado',
+  };
+
+  const TOOL_LABEL = {
+    'sync.install':       'Sincronizando kit',
+    'sync.watch':         'Vigiando kit (watch)',
+    'reverse-sync.apply': 'Importando edições do IDE',
+    'gates.run':          'Executando gate',
+    'sidecar':            'Servidor sidecar',
+  };
+
+  const STATUS_LABEL = {
+    running: 'em execução',
+    done:    'concluído',
+    error:   'erro',
+  };
+
+  const CONN_LABEL = {
+    CONNECTING: 'CONECTANDO',
+    OPEN:       'CONECTADO',
+    CLOSED:     'DESCONECTADO',
+  };
+
+  const PATH_VERB = {
+    reading:    'lendo',
+    writing:    'criando',
+    projecting: 'projetando',
+    merging:    'mesclando',
+    copying:    'copiando',
+    deleting:   'removendo',
+    creating:   'criando',
+    updating:   'atualizando',
+    syncing:    'sincronizando',
+    'sync':     'sincronizando',
+    applying:   'aplicando',
+    fetching:   'buscando',
+  };
+
+  function humanizeEventType(t) { return EVENT_TYPE_LABEL[t] || t; }
+  function humanizeTool(t) { return TOOL_LABEL[t] || t; }
+  function humanizeStatus(s) { return STATUS_LABEL[s] || s; }
+
+  // Turn a path / file reference inside a label into a friendlier description.
+  // Examples:
+  //   .claude/agents/planner.md  → agente planner
+  //   kit/commands/novo-marco.md → comando novo-marco
+  //   kit/skills/limpeza/SKILL.md → skill limpeza
+  //   .claude/framework/templates/codebase/x.md → template framework
+  //   CLAUDE.md                  → manifesto CLAUDE.md
+  function humanizePath(p) {
+    if (typeof p !== 'string' || !p.length) return '';
+    const norm = p.replace(/\\/g, '/');
+
+    let m;
+    if ((m = norm.match(/(?:\.claude|kit)\/agents\/([^/]+)\.md$/))) return `agente ${m[1]}`;
+    if ((m = norm.match(/(?:\.claude|kit)\/commands\/([^/]+)\.md$/))) return `comando ${m[1]}`;
+    if ((m = norm.match(/(?:\.claude|kit)\/skills\/([^/]+)/))) return `skill ${m[1]}`;
+    if ((m = norm.match(/(?:\.claude|kit)\/framework\//))) return 'framework';
+    if ((m = norm.match(/(?:\.claude|kit)\/hooks\//))) return 'hooks';
+    if (norm === 'CLAUDE.md' || norm.endsWith('/CLAUDE.md')) return 'manifesto CLAUDE.md';
+    if ((m = norm.match(/(?:\.claude|kit)\/([^/]+)\/([^/]+\.md)$/))) return `${m[1]} ${m[2].replace(/\.md$/, '')}`;
+    return norm; // fall back to the raw path if no rule matched
+  }
+
+  // Translate a raw progress label like "writing .claude/agents/planner.md"
+  // into "criando agente planner". The function is best-effort: if no rule
+  // matches, returns the original label so we never lose information.
+  function humanizeLabel(raw) {
+    if (typeof raw !== 'string' || !raw.length) return raw;
+
+    // verb + path (single token after verb)
+    const verbMatch = raw.match(/^(reading|writing|projecting|merging|copying|deleting|creating|updating|syncing|sync|applying|fetching)\s+(.+?)(?:\s+\(.+\))?$/i);
+    if (verbMatch) {
+      const verb = PATH_VERB[verbMatch[1].toLowerCase()] || verbMatch[1];
+      const target = humanizePath(verbMatch[2].trim());
+      return `${verb} ${target}`;
+    }
+
+    // bare path
+    if (/^[^\s]+\.md$/.test(raw) || /^(?:\.claude|kit)\//.test(raw)) {
+      return humanizePath(raw);
+    }
+
+    // pure technical action, no path: leave as-is
+    return raw;
+  }
 
   const $ = (id) => document.getElementById(id);
   const dom = {
@@ -368,6 +617,9 @@
     footerEvents: $('footer-events'),
     footerPaused: $('footer-paused'),
     footerSource: $('footer-source'),
+    activeRuns: $('active-runs'),
+    activeRunsList: $('active-runs-list'),
+    activeRunsCount: $('active-runs-count'),
   };
 
   const state = {
@@ -404,16 +656,17 @@
   }
 
   function eventLabel(evt) {
-    // Best-effort short label from payload; fallback to type.
+    // Best-effort short label from payload; humanizes paths and tool ids;
+    // falls back to the humanized event type when payload has nothing useful.
     const p = evt.payload;
-    if (!p || typeof p !== 'object') return evt.type;
-    if (typeof p.label === 'string') return p.label;
+    if (!p || typeof p !== 'object') return humanizeEventType(evt.type);
+    if (typeof p.label === 'string') return humanizeLabel(p.label);
     if (typeof p.name === 'string') return p.name;
-    if (typeof p.tool === 'string') return `tool: ${p.tool}`;
+    if (typeof p.tool === 'string') return humanizeTool(p.tool);
     if (typeof p.percent === 'number') return `${p.percent}%${p.kind ? ' · ' + p.kind : ''}`;
     if (typeof p.message === 'string') return p.message;
     if (typeof p.reason === 'string') return p.reason;
-    return evt.type;
+    return humanizeEventType(evt.type);
   }
 
   function eventMeta(evt) {
@@ -427,7 +680,8 @@
 
   function renderEventRow(evt) {
     const time = el('div', { class: 'ev-time', text: fmtTime(evt.ts) });
-    const badge = el('span', { class: 'ev-badge', data: { type: evt.type }, text: evt.type });
+    // data-type stays raw so CSS color rules continue to apply; display text is humanized.
+    const badge = el('span', { class: 'ev-badge', data: { type: evt.type }, text: humanizeEventType(evt.type) });
     const summary = el('summary', {}, [
       el('span', { class: 'label', text: eventLabel(evt) }),
       el('span', { class: 'meta', text: eventMeta(evt) }),
@@ -466,7 +720,7 @@
       dom.empty.hidden = true;
       dom.list.hidden = false;
     }
-    dom.footerEvents.textContent = `events: ${state.events.length}` + (visible !== state.events.length ? ` (showing ${visible})` : '');
+    dom.footerEvents.textContent = `eventos: ${state.events.length}` + (visible !== state.events.length ? ` (mostrando ${visible})` : '');
   }
 
   function pushVisibleEvent(evt) {
@@ -483,10 +737,14 @@
   }
 
   function ingestEvent(evt) {
+    // Always update the active-runs panel — that view is the live "what's
+    // happening NOW" and shouldn't be affected by the pause toggle below.
+    upsertActiveRun(evt);
+
     if (state.paused) {
       state.pausedBuffer.push(evt);
       dom.footerPaused.hidden = false;
-      dom.footerPaused.textContent = `paused: ${state.pausedBuffer.length} buffered`;
+      dom.footerPaused.textContent = `pausado: ${state.pausedBuffer.length} em fila`;
       return;
     }
     pushVisibleEvent(evt);
@@ -494,6 +752,144 @@
       dom.banner.hidden = false;
     }
   }
+
+  // ------- Active runs ---------------------------------------------------
+  // Maintain a Map<runId, ActiveRun> that tracks currently-executing tools.
+  // Updated from run.start / progress / run.end / error events that share a
+  // runId. Renders as cards above the event log so the user sees CURRENT
+  // state at a glance instead of having to scan the chronological feed.
+
+  const activeRuns = new Map(); // runId -> {tool, label, percent, current, total, startedAt, status, pendingRemove}
+  const fadeTimers = new Map(); // runId -> setTimeout handle
+
+  function upsertActiveRun(evt) {
+    if (!evt.runId) return;
+    const id = evt.runId;
+    const p = evt.payload || {};
+    let run = activeRuns.get(id);
+
+    if (evt.type === 'run.start') {
+      // Cancel any pending fade-out for a stale entry with the same id (rare).
+      if (fadeTimers.has(id)) { clearTimeout(fadeTimers.get(id)); fadeTimers.delete(id); }
+      activeRuns.set(id, {
+        runId: id,
+        tool: p.tool || p.server || 'run',
+        label: 'iniciando…',
+        percent: 0,
+        current: null,
+        total: null,
+        startedAt: evt.ts,
+        status: 'running',
+      });
+    } else if (evt.type === 'progress' && run && run.status === 'running') {
+      if (typeof p.percent === 'number') run.percent = clampPercent(p.percent);
+      if (typeof p.current === 'number') run.current = p.current;
+      if (typeof p.total === 'number')   run.total   = p.total;
+      if (typeof p.label === 'string' && p.label.length > 0) run.label = humanizeLabel(p.label);
+      // If the wrapper sent current/total but no percent, derive it.
+      if (typeof p.percent !== 'number' && typeof p.current === 'number' && typeof p.total === 'number' && p.total > 0) {
+        run.percent = clampPercent(Math.round((p.current / p.total) * 100));
+      }
+    } else if (evt.type === 'tool_invocation' && run && run.status === 'running') {
+      // tool_invocation events refine the title if it arrived after run.start.
+      if (typeof p.tool === 'string') run.tool = p.tool;
+    } else if (evt.type === 'run.end' && run) {
+      run.status = (p && p.ok === false) ? 'error' : 'done';
+      run.percent = run.status === 'done' ? 100 : run.percent;
+      run.label = run.status === 'done' ? 'concluído com sucesso' : (p?.message || 'falhou');
+      // Fade the card out a few seconds after completion so the user sees
+      // the 100% and "done" before it disappears.
+      const t = setTimeout(() => {
+        activeRuns.delete(id);
+        fadeTimers.delete(id);
+        renderActiveRuns();
+      }, 4000);
+      fadeTimers.set(id, t);
+    } else if (evt.type === 'error' && run && run.status === 'running') {
+      run.status = 'error';
+      run.label = p?.message || 'error';
+      // Errors stay visible longer (8s) so the user has time to read.
+      const t = setTimeout(() => {
+        activeRuns.delete(id);
+        fadeTimers.delete(id);
+        renderActiveRuns();
+      }, 8000);
+      fadeTimers.set(id, t);
+    }
+    renderActiveRuns();
+  }
+
+  function clampPercent(n) {
+    if (!Number.isFinite(n)) return 0;
+    return Math.max(0, Math.min(100, n));
+  }
+
+  function fmtElapsed(startTs) {
+    const sec = Math.max(0, Math.round((Date.now() - startTs) / 1000));
+    if (sec < 60) return `${sec}s`;
+    const m = Math.floor(sec / 60);
+    const s = sec % 60;
+    return `${m}m ${s.toString().padStart(2, '0')}s`;
+  }
+
+  function renderActiveRuns() {
+    const runs = [...activeRuns.values()].sort((a, b) => a.startedAt - b.startedAt);
+    if (runs.length === 0) {
+      dom.activeRuns.hidden = true;
+      dom.activeRunsList.replaceChildren();
+      return;
+    }
+    dom.activeRuns.hidden = false;
+    dom.activeRunsCount.textContent = String(runs.length);
+
+    // Use a stable key (runId) so we update existing cards in place rather than
+    // recreating them (preserves the CSS transition on the progress bar width).
+    const existing = new Map();
+    for (const child of dom.activeRunsList.children) {
+      existing.set(child.dataset.runid, child);
+    }
+
+    const frag = document.createDocumentFragment();
+    for (const run of runs) {
+      let card = existing.get(run.runId);
+      if (!card) {
+        card = el('div', { class: 'run-card', data: { runid: run.runId } });
+        card.innerHTML = `
+          <div class="run-title">
+            <span class="run-name"></span>
+            <span class="run-kind"></span>
+          </div>
+          <div class="run-percent"></div>
+          <div class="run-bar-wrap"><div class="run-bar"></div></div>
+          <div class="run-step"></div>
+          <div class="run-meta"><span class="elapsed"></span><span class="runid"></span></div>
+        `;
+      }
+      card.dataset.status = run.status;
+      card.querySelector('.run-name').textContent = humanizeTool(run.tool);
+      card.querySelector('.run-kind').textContent = humanizeStatus(run.status);
+      card.querySelector('.run-percent').textContent = run.status === 'error' ? 'ERRO' : `${run.percent}%`;
+      card.querySelector('.run-bar').style.width = `${run.percent}%`;
+      card.querySelector('.run-step').textContent = run.label;
+      const elapsed = card.querySelector('.elapsed');
+      elapsed.textContent = `há ${fmtElapsed(run.startedAt)}`;
+      const ridEl = card.querySelector('.runid');
+      const progressTotalText = (run.current !== null && run.total !== null) ? ` · ${run.current}/${run.total}` : '';
+      ridEl.textContent = `id ${run.runId.slice(0, 8)}${progressTotalText}`;
+      frag.appendChild(card);
+    }
+    dom.activeRunsList.replaceChildren(frag);
+  }
+
+  // Tick the elapsed-time labels every second so they stay live.
+  setInterval(() => {
+    if (activeRuns.size === 0) return;
+    for (const card of dom.activeRunsList.children) {
+      const id = card.dataset.runid;
+      const run = activeRuns.get(id);
+      if (run) card.querySelector('.elapsed').textContent = `há ${fmtElapsed(run.startedAt)}`;
+    }
+  }, 1000);
 
   function flushPaused() {
     for (const evt of state.pausedBuffer) pushVisibleEvent(evt);
@@ -511,7 +907,9 @@
       else state.typeFilter.delete(t);
       applyFilter();
     });
-    const lbl = el('label', {}, [cb, document.createTextNode(t)]);
+    // Show humanized text but keep the data-type as the raw event name so
+    // power users (and tests) can still target the underlying value.
+    const lbl = el('label', { data: { type: t } }, [cb, document.createTextNode(humanizeEventType(t))]);
     dom.typeFilters.appendChild(lbl);
   }
 
@@ -523,7 +921,7 @@
   dom.pauseBtn.addEventListener('click', () => {
     state.paused = !state.paused;
     dom.pauseBtn.setAttribute('aria-pressed', String(state.paused));
-    dom.pauseBtn.textContent = state.paused ? '▶ resume' : '⏸ pause';
+    dom.pauseBtn.textContent = state.paused ? '▶ retomar' : '⏸ pausar';
     if (!state.paused) flushPaused();
   });
 
@@ -546,7 +944,7 @@
 
   function setConnState(s) {
     dom.conn.dataset.state = s;
-    dom.connText.textContent = s;
+    dom.connText.textContent = CONN_LABEL[s] || s;
   }
 
   function scheduleClosedBanner() {
@@ -564,7 +962,7 @@
       const res = await fetch('/state', { credentials: 'omit' });
       if (!res.ok) return;
       const j = await res.json();
-      if (j.port) dom.metaPort.textContent = `port ${j.port}`;
+      if (j.port) dom.metaPort.textContent = `porta ${j.port}`;
       if (Array.isArray(j.events)) {
         for (const evt of j.events) ingestEvent(evt);
       }

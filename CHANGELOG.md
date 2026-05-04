@@ -6,6 +6,69 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.2.3] - 2026-05-04
+
+UI inteira agora fala português e usa termos que fazem sentido pra quem não conhece o código por dentro. Os tipos de evento técnicos viraram nomes legíveis, os caminhos absolutos viraram descrições do tipo "agente planner" / "comando novo-marco" / "skill limpeza", e o status badge da conexão agora lê "CONECTADO/CONECTANDO/DESCONECTADO".
+
+### Adicionado — humanização de labels
+
+- `EVENT_TYPE_LABEL` mapeia `run.start → Iniciado`, `run.end → Finalizado`, `progress → Em andamento`, `tool_invocation → Comando`, `milestone → Marco`, `error → Erro`, `shutdown → Desligado`. O `data-type` raw continua na markup (CSS de cor + filtros funcionam igual), apenas o texto exibido muda.
+- `TOOL_LABEL` mapeia ids técnicos pra descrições amigáveis: `sync.install → Sincronizando kit`, `reverse-sync.apply → Importando edições do IDE`, `gates.run → Executando gate`, `sync.watch → Vigiando kit (watch)`, `sidecar → Servidor sidecar`.
+- `STATUS_LABEL` traduz `running → em execução`, `done → concluído`, `error → erro`. Usado nos badges dos cards de active runs e no label de fade-out.
+- `CONN_LABEL` traduz `CONNECTING → CONECTANDO`, `OPEN → CONECTADO`, `CLOSED → DESCONECTADO`.
+- `humanizePath()` reconhece padrões comuns e devolve descrições amigáveis:
+  - `.claude/agents/planner.md` → `agente planner`
+  - `kit/commands/novo-marco.md` → `comando novo-marco`
+  - `kit/skills/limpeza/SKILL.md` → `skill limpeza`
+  - `.claude/framework/...` → `framework`
+  - `CLAUDE.md` → `manifesto CLAUDE.md`
+- `humanizeLabel()` reconhece o padrão "verbo + caminho" comum em payloads de progresso e traduz: `writing .claude/agents/planner.md` → `criando agente planner`, `merging kit/commands/foo.md` → `mesclando comando foo`. Verbos suportados: reading, writing, projecting, merging, copying, deleting, creating, updating, syncing, applying, fetching.
+
+### Adicionado — copy PT-BR
+
+Toda a interface está em português:
+- Placeholder do search: `filtrar por nome ou conteúdo…`
+- Botões: `⏸ pausar` / `▶ retomar`, `↧ rolagem auto`, `limpar tela`
+- Header active runs: `Em execução agora`
+- Footer: `eventos: N`, `pausado: N em fila`, `fonte: ao vivo`
+- Header port: `porta NNNN`
+- Estados de timing: `há 2m 15s` (substitui `started 2m 15s`)
+- Status do card: `em execução` / `concluído` / `erro`
+- Fim de run: `concluído com sucesso` / `falhou` (em vez de `done` / `failed`)
+- Início de run: `iniciando…` (em vez de `starting…`)
+
+### Por que
+
+A v1.2.2 tinha layout bonito mas linguagem técnica — `RUN.START`, `writing .claude/agents/example-reviewer.md`, `RUNNING`. Pra quem usa o sidecar pra primeira vez ou não conhece a arquitetura interna do kit, esses labels eram opacos. Agora o painel diz "Sincronizando kit · em execução · criando agente example-reviewer · 34/100 · 12s" em vez de jogar paths absolutos e enums no usuário.
+
+### Sem mudanças de API
+
+Pure UI patch, ainda. Stable API v1.0+ preservada. Sem deps novas. `data-type` no DOM continua raw (filtros e CSS não quebram). Apenas `src/ui/static/index.html` mudou.
+
+## [1.2.2] - 2026-05-04
+
+UX upgrade da sidecar: o feed cronológico continua, mas agora a janela mostra TAMBÉM um painel "Active runs" no topo com cards visuais pra cada execução em andamento — barra de progresso animada, percentual grande, label do passo atual, runId truncado e tempo decorrido tickando ao vivo.
+
+### Adicionado
+
+- **Active runs panel** em `src/ui/static/index.html` — uma `<section id="active-runs">` antes do log de eventos. Para cada `runId` ativo, renderiza um card com:
+  - Nome do tool (de `payload.tool` no `run.start`) com badge de status (running/done/error)
+  - Percentual grande (22px tabular-nums) à direita
+  - Barra de progresso 8px com transição suave + shimmer animado em estado `running`
+  - Label do passo atual (último `payload.label` ou `current/total` derivado)
+  - Footer com tempo decorrido (tick a cada 1s) + runId truncado + current/total
+- Estado consolidado via `Map<runId, ActiveRun>`, atualizado por `run.start` (cria), `progress` (incrementa), `tool_invocation` (refina título), `run.end` (marca done, fade-out em 4s), `error` (marca erro, fade-out em 8s).
+- Cards são **atualizados in-place** via `dataset.runid` matching — preserva a transição CSS da barra em vez de recriar o DOM a cada update.
+- Painel some quando 0 runs ativos; aparece automaticamente quando o primeiro `run.start` chega.
+
+### Por que
+
+A v1.2.0 mostrava progresso, mas misturado no feed cronológico — pra saber "tô em quanto" você precisava scanar o último `progress`. O painel novo mostra o estado atual sem rolagem, com afordância visual: barra cresce, percentual sobe, shimmer anda. Quando termina, o card vira verde e some 4s depois (vermelho 8s pra erro). Pareceu "log do servidor", agora parece "process viewer".
+
+### Sem mudanças de API
+
+Pure UI patch. Stable API v1.0+ preservada. Sem deps novas. Apenas `src/ui/static/index.html` (~120 LOC adicionados — CSS dos cards + lógica do `upsertActiveRun` + tick interval).
+
 ## [1.2.1] - 2026-05-04
 
 Cosmetic + UX patches descobertos durante o smoke da v1.2.0. Sem mudanças de comportamento de API.
