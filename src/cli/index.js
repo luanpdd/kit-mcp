@@ -26,13 +26,19 @@ import { listReplays, loadReplay } from '../core/replays.js';
 import { installMcp, listInstallTargets } from '../mcp-server/install.js';
 import * as render from './render.js';
 import { c, icons, spinner, progress, select, confirm } from '../core/ui.js';
+import { createServer } from '../ui/server.js';
+import { readLock, lockPathFor } from '../ui/lockfile.js';
+import { wrapProgressForUi } from '../ui/wrapper.js';
+import { openBrowser } from '../ui/browser.js';
+import http from 'node:http';
 
 const program = new Command()
   .name('kit')
   .description('Personal kit (agents/commands/skills) — CLI mirror of the kit-mcp server.')
   .version('1.0.0')
   .option('--kit-root <path>', 'Override the kit root (default: bundled example kit, or KIT_MCP_KIT_ROOT env)')
-  .option('--json', 'Output JSON to stdout (machine-readable, restores pre-1.1 default)');
+  .option('--json', 'Output JSON to stdout (machine-readable, restores pre-1.1 default)')
+  .option('--no-ui', 'Suppress sidecar event publishing for this run (default: auto-detect lockfile)');
 
 program.hook('preAction', (thisCommand, actionCommand) => {
   const opts = program.opts();
@@ -67,20 +73,55 @@ async function withSpinner(text, fn) {
 }
 
 // withProgress wraps a long op; passes onProgress callback to the core fn.
-async function withProgress(label, total, fn) {
+// Also auto-detects a running sidecar (via lockfile) and multiplexes events to
+// it when present. Opt-out via --no-ui or KIT_MCP_NO_UI=1.
+async function withProgress(label, total, fn, { tool, projectRoot } = {}) {
   const opts = program.opts();
-  if (opts.json) return fn(() => {});
-  const p = progress({ total, label });
-  let last = '';
-  const onProgress = ({ current, label }) => { last = label || last; p.tick({ label: last }); };
+  let onProgress;
+  let p = null;
+  if (opts.json) {
+    onProgress = () => {};
+  } else {
+    p = progress({ total, label });
+    let last = '';
+    onProgress = ({ current, label }) => { last = label || last; p.tick({ label: last }); };
+  }
+
+  // Auto-wrap if a sidecar is running for this projectRoot.
+  const wrapper = maybeWrapForUi(onProgress, { tool, projectRoot });
   try {
-    const r = await fn(onProgress);
-    p.finish(label);
+    const r = await fn(wrapper);
+    if (p) p.finish(label);
+    if (wrapper.done) wrapper.done({ ok: true });
     return r;
   } catch (e) {
-    p.finish();
+    if (p) p.finish();
+    if (wrapper.error) wrapper.error(e);
     throw e;
   }
+}
+
+// maybeWrapForUi — returns the original callback unchanged when no sidecar is up
+// or the user opted out. Otherwise returns a wrapped callback with .done/.error.
+function maybeWrapForUi(onProgress, { tool, projectRoot } = {}) {
+  const globalOpts = program.opts();
+  // commander stores `--no-ui` as opts.ui === false
+  if (globalOpts.ui === false || process.env.KIT_MCP_NO_UI === '1') {
+    return passthroughWrapper(onProgress);
+  }
+  const root = projectRoot || process.cwd();
+  if (!readLock(root)) {
+    return passthroughWrapper(onProgress);
+  }
+  return wrapProgressForUi(onProgress, { projectRoot: root, tool: tool ?? null });
+}
+
+function passthroughWrapper(onProgress) {
+  const cb = (p) => { if (typeof onProgress === 'function') onProgress(p); };
+  cb.done = () => {};
+  cb.error = () => {};
+  cb.emit = () => {};
+  return cb;
 }
 
 function fail(msg) {
@@ -134,6 +175,7 @@ sync.command('install [target]')
       `Syncing kit → ${target}`,
       300,
       (onProgress) => syncTo(target, { projectRoot: opts.projectRoot, mode: opts.mode, dryRun: opts.dryRun, onProgress }),
+      { tool: 'sync.install', projectRoot: opts.projectRoot },
     );
     out(result, render.renderSyncInstall);
   });
@@ -181,6 +223,7 @@ reverse.command('apply <target>')
       `Applying reverse-sync (${opts.strategy})`,
       50,
       (onProgress) => applyReverse(target, { projectRoot: opts.projectRoot, strategy: opts.strategy, only: opts.only, dryRun: opts.dryRun, onProgress }),
+      { tool: 'reverse-sync.apply', projectRoot: opts.projectRoot },
     );
     out(result, render.renderReverseApply);
   });
@@ -312,6 +355,149 @@ async function pickTarget(targets, message) {
   } catch (e) {
     return fail(`${e.message} (or pass <target> as argument)`);
   }
+}
+
+// --- ui (sidecar process viewer) ---
+const ui = program.command('ui').description('Live process viewer in a localhost browser tab.');
+
+ui.command('start')
+  .description('Start the sidecar HTTP server in foreground (Ctrl+C to stop). Prints URL on stderr.')
+  .option('--project-root <path>', 'Project root for lockfile keying (default: cwd)')
+  .option('--port <n>', 'Bind to a specific port (default: auto-pick 7100-7199)')
+  .option('--idle-ms <ms>', 'Idle shutdown timeout (default 30min; 0 = never)')
+  .option('--no-open', 'Skip auto-opening the browser')
+  .action(async (opts) => {
+    const projectRoot = opts.projectRoot || process.cwd();
+    const port = opts.port ? Number(opts.port) : undefined;
+    const idleMs = opts.idleMs !== undefined ? Number(opts.idleMs) : undefined;
+    const srv = createServer({ projectRoot, idleMs });
+    try {
+      const { port: actualPort } = await srv.start({ port });
+      const url = `http://127.0.0.1:${actualPort}/`;
+      process.stderr.write(`${c.cyan(icons.info)} kit-mcp ui listening on ${url}\n`);
+      process.stderr.write(`${c.dim(`  project: ${projectRoot}`)}\n`);
+      if (opts.open !== false) {
+        await openBrowser(url);
+      }
+      // The server's own SIGINT handler will perform shutdown + cleanup.
+      // We just stay alive — server is foreground.
+    } catch (err) {
+      if (err.code === 'ELIVE') {
+        process.stderr.write(`${c.yellow(icons.warn)} sidecar already running for this project\n`);
+        process.stderr.write(`  pid: ${err.lock?.pid}, port: ${err.lock?.port}\n`);
+        process.stderr.write(`  use 'kit ui status' or 'kit ui open' to inspect\n`);
+        process.exit(2);
+      }
+      fail(err.message);
+    }
+  });
+
+ui.command('stop')
+  .description('Stop the sidecar running for this project (POST /shutdown).')
+  .option('--project-root <path>')
+  .action(async (opts) => {
+    const projectRoot = opts.projectRoot || process.cwd();
+    const lock = readLock(projectRoot);
+    if (!lock) return out({ ok: false, reason: 'no_sidecar' }, () => `${icons.warn} no sidecar running for this project\n`);
+    try {
+      await postShutdown(lock.port);
+      out({ ok: true, port: lock.port }, () => `${icons.check} sidecar at port ${lock.port} stopped\n`);
+    } catch (err) {
+      fail(`could not stop sidecar at port ${lock.port}: ${err.message}`);
+    }
+  });
+
+ui.command('status')
+  .description('Show whether a sidecar is running for this project.')
+  .option('--project-root <path>')
+  .action(async (opts) => {
+    const projectRoot = opts.projectRoot || process.cwd();
+    const lock = readLock(projectRoot);
+    if (!lock) {
+      out({ running: false, reason: 'no_lockfile' }, () => `${icons.warn} no sidecar running\n`);
+      process.exit(1);
+    }
+    try {
+      const health = await getHealthz(lock.port);
+      out({ running: true, ...health, lockfile: lockPathFor(projectRoot) }, render.renderUiStatus ?? renderUiStatusFallback);
+    } catch (err) {
+      out({ running: false, reason: 'unreachable', lockfile: lockPathFor(projectRoot), error: err.message },
+          () => `${icons.cross} lockfile present but sidecar unreachable: ${err.message}\n`);
+      process.exit(1);
+    }
+  });
+
+ui.command('open')
+  .description('Open the running sidecar in a browser. Fails if no sidecar is up.')
+  .option('--project-root <path>')
+  .action(async (opts) => {
+    const projectRoot = opts.projectRoot || process.cwd();
+    const lock = readLock(projectRoot);
+    if (!lock) return fail('no sidecar running — start one with `kit ui start`');
+    const url = `http://127.0.0.1:${lock.port}/`;
+    const r = await openBrowser(url, { force: true });
+    if (!r.opened) {
+      process.stderr.write(`${c.yellow(icons.warn)} could not open browser (${r.reason}); copy the URL above\n`);
+      process.exit(1);
+    }
+  });
+
+// Helpers for kit ui (live in cli/ — stdout/console allowed here)
+async function postShutdown(port) {
+  return new Promise((resolve, reject) => {
+    const req = http.request({
+      method: 'POST',
+      host: '127.0.0.1',
+      port,
+      path: '/shutdown',
+      agent: false,
+      headers: { host: `127.0.0.1:${port}`, origin: `http://127.0.0.1:${port}`, 'content-length': 0, connection: 'close' },
+    }, (res) => {
+      res.resume();
+      res.on('end', () => res.statusCode < 400 ? resolve() : reject(new Error(`http_${res.statusCode}`)));
+    });
+    req.on('error', reject);
+    req.setTimeout(2000, () => { try { req.destroy(); } catch {} ; reject(new Error('timeout')); });
+    req.end();
+  });
+}
+
+async function getHealthz(port) {
+  return new Promise((resolve, reject) => {
+    const req = http.request({
+      method: 'GET',
+      host: '127.0.0.1',
+      port,
+      path: '/healthz',
+      agent: false,
+      headers: { host: `127.0.0.1:${port}`, connection: 'close' },
+    }, (res) => {
+      const chunks = [];
+      res.on('data', (c) => chunks.push(c));
+      res.on('end', () => {
+        if (res.statusCode >= 400) return reject(new Error(`http_${res.statusCode}`));
+        try { resolve(JSON.parse(Buffer.concat(chunks).toString('utf8'))); }
+        catch (e) { reject(e); }
+      });
+    });
+    req.on('error', reject);
+    req.setTimeout(2000, () => { try { req.destroy(); } catch {} ; reject(new Error('timeout')); });
+    req.end();
+  });
+}
+
+function renderUiStatusFallback(v) {
+  if (!v.running) return `${icons.warn} not running\n`;
+  return [
+    `${icons.check} sidecar running`,
+    `  port:        ${v.port}`,
+    `  pid (sdcr):  ${v.lockfile ? readLock(process.cwd())?.pid : '?'}`,
+    `  uptime:      ${Math.round((v.uptime || 0) / 1000)}s`,
+    `  events:      ${v.eventsTotal}`,
+    `  subscribers: ${v.subscribers}`,
+    `  url:         http://127.0.0.1:${v.port}/`,
+    '',
+  ].join('\n');
 }
 
 program.parseAsync(process.argv);

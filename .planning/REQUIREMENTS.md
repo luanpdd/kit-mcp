@@ -50,11 +50,11 @@
 
 ### CLI — Subcomando `kit ui` + auto-detect
 
-- [ ] **CLI-01**: Subcomando `kit ui start` sobe servidor em **foreground** (Ctrl+C mata); aceita `--port <n>`, `--idle-ms <ms>`, `--no-open`, `--json`.
-- [ ] **CLI-02**: Subcomando `kit ui stop` lê lockfile, faz `POST /shutdown`, aguarda fechamento, retorna status.
-- [ ] **CLI-03**: Subcomando `kit ui status` lê lockfile e exibe `{pid, port, uptime, subscribers, eventsTotal}`; retorna exit code não-zero se nada rodando.
-- [ ] **CLI-04**: Subcomando `kit ui open` reabre browser na porta atual sem reiniciar servidor; falha se sidecar não estiver up.
-- [ ] **CLI-05**: Auto-detect lockfile em `kit sync install`, `kit sync watch`, `kit reverse-sync apply`; se presente, wrappa onProgress automaticamente. Comportamento opt-out via `--no-ui` ou env `KIT_MCP_NO_UI=1`.
+- [x] **CLI-01**: Subcomando `kit ui start` sobe servidor em **foreground** (Ctrl+C mata); aceita `--port <n>`, `--idle-ms <ms>`, `--no-open`, `--json`. _(Phase 16)_
+- [x] **CLI-02**: Subcomando `kit ui stop` lê lockfile, faz `POST /shutdown`, aguarda fechamento, retorna status. _(Phase 16)_
+- [x] **CLI-03**: Subcomando `kit ui status` lê lockfile e exibe `{pid, port, uptime, subscribers, eventsTotal}`; retorna exit code não-zero se nada rodando. _(Phase 16)_
+- [x] **CLI-04**: Subcomando `kit ui open` reabre browser na porta atual sem reiniciar servidor; falha se sidecar não estiver up. _(Phase 16)_
+- [x] **CLI-05**: Auto-detect lockfile em `kit sync install`, `kit sync watch`, `kit reverse-sync apply`; se presente, wrappa onProgress automaticamente. Comportamento opt-out via `--no-ui` ou env `KIT_MCP_NO_UI=1`. _(Phase 16)_
 
 ### MCP — Flag `autoSpawn` em tools selecionadas
 
