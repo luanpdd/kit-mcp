@@ -18,7 +18,7 @@ Adicionar uma janela web localhost (`http://127.0.0.1:7100-7199`) que mostra ao 
 
 ---
 
-## Fase 11 — Lock arquitetural & gates de PR
+## Phase 11: Lock arquitetural & gates de PR
 
 **Tipo:** Decisão pura (sem código de runtime)
 **Por que primeiro:** decisões trade-off ainda abertas (porta, idle timeout, default foreground/detach, lockfile location, escopo de `--auto-spawn`) precisam estar fixas antes de qualquer fase escrever código. Audit gates precisam estar ativos no CI antes que `src/ui/` exista para falhar imediatamente em violações.
@@ -39,7 +39,7 @@ Adicionar uma janela web localhost (`http://127.0.0.1:7100-7199`) que mostra ao 
 
 ---
 
-## Fase 12 — Fundações sem I/O (events + port + lockfile)
+## Phase 12: Fundações sem I/O (events + port + lockfile)
 
 **Tipo:** Pure utilities, testáveis sem rede e sem fs cross-process
 **Por que aqui:** componentes puros, sem dependências externas; servem todas as outras fases. Pitfalls 4 (stale lockfile) e 8/11/12 (port/lockfile correctness) abordados aqui.
@@ -61,7 +61,7 @@ Adicionar uma janela web localhost (`http://127.0.0.1:7100-7199`) que mostra ao 
 
 ---
 
-## Fase 13 — Servidor HTTP standalone + SSE endpoint
+## Phase 13: Servidor HTTP standalone + SSE endpoint
 
 **Tipo:** Servidor + entry detached + smoke via curl
 **Por que aqui:** depende de events/port/lockfile (Fase 12), mas precede UI (precisa de algo pra consumir). Aborda Pitfalls 1 (stdio→stderr), 2 (bind 127.0.0.1 literal), 3 (SSE leak cleanup), 5 (DNS rebinding) — **early, não no hardening**.
@@ -87,7 +87,7 @@ Adicionar uma janela web localhost (`http://127.0.0.1:7100-7199`) que mostra ao 
 
 ---
 
-## Fase 14 — UI estática (HTML/CSS/JS single-file)
+## Phase 14: UI estática (HTML/CSS/JS single-file)
 
 **Tipo:** Frontend puro, sem build
 **Por que aqui:** servidor da Fase 13 já serve `/state` e `/events`; UI consome. Independente de publishers (Fase 15) — testável abrindo o file no browser e curl-injetando eventos.
@@ -118,7 +118,7 @@ Adicionar uma janela web localhost (`http://127.0.0.1:7100-7199`) que mostra ao 
 
 ---
 
-## Fase 15 — Cliente publisher + wrapper + browser-open
+## Phase 15: Cliente publisher + wrapper + browser-open
 
 **Tipo:** Glue layer + nova dep
 **Por que aqui:** servidor (Fase 13) e UI (Fase 14) prontos; agora os publishers podem emitir. Adiciona única dep nova `open@11`. Aborda Pitfalls 6 (path leak), 7 (browser-open headless).
@@ -142,7 +142,7 @@ Adicionar uma janela web localhost (`http://127.0.0.1:7100-7199`) que mostra ao 
 
 ---
 
-## Fase 16 — Integração CLI (`kit ui` subcomando + auto-detect)
+## Phase 16: Integração CLI (`kit ui` subcomando + auto-detect)
 
 **Tipo:** CLI surface
 **Por que aqui:** usa client (Fase 15) e server (Fase 13). Auto-detect em `kit sync install` etc fecha o loop "manual start funciona". Aborda Pitfall 21 (env var opt-out).
@@ -167,7 +167,7 @@ Adicionar uma janela web localhost (`http://127.0.0.1:7100-7199`) que mostra ao 
 
 ---
 
-## Fase 17 — Integração MCP server (`--auto-spawn` flag)
+## Phase 17: Integração MCP server (`--auto-spawn` flag)
 
 **Tipo:** Param em tools MCP existentes
 **Por que aqui:** depende de CLI (Fase 16) e bin/ui.js (Fase 13). Última peça de integração. Aborda Pitfall 1 (regressão potencial: spawning sidecar não pode poluir stdio do MCP).
@@ -190,7 +190,7 @@ Adicionar uma janela web localhost (`http://127.0.0.1:7100-7199`) que mostra ao 
 
 ---
 
-## Fase 18 — Hardening + smoke cross-platform + release
+## Phase 18: Hardening + smoke cross-platform + release
 
 **Tipo:** Test surface + docs + cut
 **Por que aqui:** tudo construído; agora valida em matriz CI completa, fecha docs, bumpa versão. Inclui REL-01 (correção do bug pré-existente `--version` hardcoded "1.0.0" em `src/cli/index.js`).
