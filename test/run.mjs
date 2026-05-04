@@ -31,5 +31,13 @@ if (files.length === 0) {
   process.exit(2);
 }
 
-const r = spawnSync(process.execPath, ['--test', ...files], { stdio: 'inherit' });
+// --test-force-exit guarantees the runner exits even if some test forgot to
+// release a handle (added in Node 20.10/21.4/22+). Required for the integration
+// tests in test/integration/ui-server.test.js — http.Server keep-alive sockets
+// can otherwise stall process exit by a few seconds, which CI interprets as a hang.
+const r = spawnSync(
+  process.execPath,
+  ['--test', '--test-force-exit', ...files],
+  { stdio: 'inherit' },
+);
 process.exit(r.status ?? 1);

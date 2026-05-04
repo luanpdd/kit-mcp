@@ -12,20 +12,20 @@
 
 ### SRV — Servidor HTTP localhost & SSE
 
-- [ ] **SRV-01**: Servidor HTTP escuta em `127.0.0.1` literal (nunca `'localhost'`, nunca `'0.0.0.0'`), porta auto-detectada na faixa **7100-7199** com fallback até a primeira livre.
-- [ ] **SRV-02**: Endpoint `GET /events` emite stream Server-Sent Events com headers `Content-Type: text/event-stream`, `Cache-Control: no-cache`, `Connection: keep-alive`, `X-Accel-Buffering: no`, e dispara `flushHeaders()` imediatamente.
-- [ ] **SRV-03**: Heartbeat `: ping\n\n` enviado a cada 15s pra manter conexão viva atrás de proxies/AV.
-- [ ] **SRV-04**: Endpoint `POST /publish` aceita JSON de evento e o emite no bus interno; valida payload contra schema mínimo `{type, ts, ...}`; rejeita >64KB com 413.
-- [ ] **SRV-05**: Endpoint `GET /healthz` retorna `200 OK` com `{version, uptime, port, subscribers}` pra probe.
-- [ ] **SRV-06**: Endpoint `POST /shutdown` (auth via Host header check) drena conexões SSE, libera lockfile, encerra processo.
-- [ ] **SRV-07**: Endpoint `GET /state` retorna ring buffer atual (últimos 200 eventos) pra hydrate-on-load do client.
+- [x] **SRV-01**: Servidor HTTP escuta em `127.0.0.1` literal (nunca `'localhost'`, nunca `'0.0.0.0'`), porta auto-detectada na faixa **7100-7199** com fallback até a primeira livre. _(Phase 13)_
+- [x] **SRV-02**: Endpoint `GET /events` emite stream Server-Sent Events com headers `Content-Type: text/event-stream`, `Cache-Control: no-cache`, `Connection: keep-alive`, `X-Accel-Buffering: no`, e dispara `flushHeaders()` imediatamente. _(Phase 13)_
+- [x] **SRV-03**: Heartbeat `: ping\n\n` enviado a cada 15s pra manter conexão viva atrás de proxies/AV. _(Phase 13)_
+- [x] **SRV-04**: Endpoint `POST /publish` aceita JSON de evento e o emite no bus interno; valida payload contra schema mínimo `{type, ts, ...}`; rejeita >64KB com 413. _(Phase 13)_
+- [x] **SRV-05**: Endpoint `GET /healthz` retorna `200 OK` com `{version, uptime, port, subscribers}` pra probe. _(Phase 13)_
+- [x] **SRV-06**: Endpoint `POST /shutdown` (auth via Host header check) drena conexões SSE, libera lockfile, encerra processo. _(Phase 13)_
+- [x] **SRV-07**: Endpoint `GET /state` retorna ring buffer atual (últimos 200 eventos) pra hydrate-on-load do client. _(Phase 13)_
 - [x] **SRV-08**: Lockfile single-instance em `os.tmpdir()/kit-mcp-ui-<sha1(projectRoot)>.lock`, criado com `fs.openSync('wx')` (atômico), conteúdo `{pid, port, version, startedAt}`. _(Phase 12)_
 - [x] **SRV-09**: Stale lockfile detectado via `process.kill(pid, 0)` + healthz HTTP probe; ESRCH/EPERM ou healthz fail → unlink + retry start. _(Phase 12)_
-- [ ] **SRV-10**: Idle shutdown automático após **30min** sem eventos novos E sem clientes SSE conectados; flag `--idle-ms` permite customização (`0` = nunca).
-- [ ] **SRV-11**: Encerramento gracioso em SIGINT/SIGTERM: envia evento final `shutdown` aos clients, fecha conexões SSE, libera lockfile.
-- [ ] **SRV-12**: Ring buffer in-memory de **200 eventos** (FIFO); sem persistência em disco.
-- [ ] **SRV-13**: Cap de **32 conexões SSE simultâneas**; conexão 33+ recebe 503.
-- [ ] **SRV-14**: Cleanup de subscriber ouve `req.on('close')` E `req.on('error')` E `res.on('close')` (todos os três pra confiabilidade cross-runtime).
+- [x] **SRV-10**: Idle shutdown automático após **30min** sem eventos novos E sem clientes SSE conectados; flag `--idle-ms` permite customização (`0` = nunca). _(Phase 13)_
+- [x] **SRV-11**: Encerramento gracioso em SIGINT/SIGTERM: envia evento final `shutdown` aos clients, fecha conexões SSE, libera lockfile. _(Phase 13)_
+- [x] **SRV-12**: Ring buffer in-memory de **200 eventos** (FIFO); sem persistência em disco. _(Phase 13)_
+- [x] **SRV-13**: Cap de **32 conexões SSE simultâneas**; conexão 33+ recebe 503. _(Phase 13)_
+- [x] **SRV-14**: Cleanup de subscriber ouve `req.on('close')` E `req.on('error')` E `res.on('close')` (todos os três pra confiabilidade cross-runtime). _(Phase 13)_
 
 ### UI — Página HTML estática single-file
 
@@ -65,8 +65,8 @@
 
 ### SEC — Hardening de segurança
 
-- [ ] **SEC-01**: Validação de `Host` header em todas as rotas HTTP: aceita `127.0.0.1:port` e `localhost:port` literal; qualquer outro → 403 (mitiga DNS rebinding).
-- [ ] **SEC-02**: Validação de `Origin` em endpoints non-GET: aceita `http://127.0.0.1:port` e `http://localhost:port`; reject 403 caso contrário.
+- [x] **SEC-01**: Validação de `Host` header em todas as rotas HTTP: aceita `127.0.0.1:port` e `localhost:port` literal; qualquer outro → 403 (mitiga DNS rebinding). _(Phase 13)_
+- [x] **SEC-02**: Validação de `Origin` em endpoints non-GET: aceita `http://127.0.0.1:port` e `http://localhost:port`; reject 403 caso contrário. _(Phase 13)_
 - [ ] **SEC-03**: HTML estático envia CSP `default-src 'self'; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'`.
 - [x] **SEC-04**: Audit gate de PR: grep proíbe `console.log` e `process.stdout.write` em todo `src/ui/`; logs vão pra stderr ou arquivo. Falha CI se violado. _(Phase 11)_
 - [ ] **SEC-05**: Path scrubbing (PUB-03) aplicado uniformemente; smoke test snapshot valida ausência de `/home/` `/Users/` `C:\Users\` em payloads.
