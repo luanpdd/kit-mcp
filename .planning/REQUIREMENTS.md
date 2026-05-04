@@ -58,10 +58,10 @@
 
 ### MCP — Flag `autoSpawn` em tools selecionadas
 
-- [ ] **MCP-01**: Tool `sync` (install/watch) ganha param opcional `autoSpawn: boolean` no inputSchema; quando true e lockfile ausente, spawna `bin/ui.js` detached, aguarda healthz, abre browser, e wrappa onProgress.
-- [ ] **MCP-02**: Tool `reverse-sync apply` recebe mesmo tratamento `autoSpawn`.
-- [ ] **MCP-03**: Tool `gates run` recebe mesmo tratamento `autoSpawn`.
-- [ ] **MCP-04**: Tools triviais (`list-*`, `search`, `get`, `forensics`, `install`) **NÃO** ganham `autoSpawn` — overhead injustificável.
+- [x] **MCP-01**: Tool `sync` (install/watch) ganha param opcional `autoSpawn: boolean` no inputSchema; quando true e lockfile ausente, spawna `bin/ui.js` detached, aguarda healthz, abre browser, e wrappa onProgress. _(Phase 17)_
+- [x] **MCP-02**: Tool `reverse-sync apply` recebe mesmo tratamento `autoSpawn`. _(Phase 17)_
+- [x] **MCP-03**: Tool `gates run` recebe mesmo tratamento `autoSpawn`. _(Phase 17)_
+- [x] **MCP-04**: Tools triviais (`list-*`, `search`, `get`, `forensics`, `install`) **NÃO** ganham `autoSpawn` — overhead injustificável. _(Phase 17)_
 
 ### SEC — Hardening de segurança
 

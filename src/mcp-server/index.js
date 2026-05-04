@@ -17,10 +17,13 @@ import { listTargets } from '../core/registry.js';
 import { syncTo, statusOf, removeFrom } from '../core/sync.js';
 import { detectReverse, applyReverse } from '../core/reverse-sync.js';
 import { listGates, getGate, gatesForStage } from '../core/gates.js';
+import { runGate } from '../core/gate-runner.js';
 import { collectFailures, summarizeByAgent, writeLearnings } from '../core/failures.js';
 import { reflect } from '../core/reflect.js';
 import { recordReplay, listReplays, loadReplay, annotateReplay } from '../core/replays.js';
 import { installMcp, listInstallTargets } from './install.js';
+import { ensureSidecar } from '../ui/auto-spawn.js';
+import { wrapProgressForUi } from '../ui/wrapper.js';
 
 const TOOLS = [
   {
@@ -48,6 +51,7 @@ const TOOLS = [
         projectRoot: { type: 'string', description: 'Defaults to cwd' },
         mode:        { type: 'string', enum: ['reference', 'copy'], description: 'Default: reference' },
         dryRun:      { type: 'boolean' },
+        autoSpawn:   { type: 'boolean', description: 'On action=install: auto-start the sidecar UI (kit ui) if not running and stream progress to it.' },
       },
       required: ['action'],
     },
@@ -64,19 +68,22 @@ const TOOLS = [
         strategy:    { type: 'string', enum: ['skip', 'overwrite', 'merge', 'rename'], description: 'For action=apply' },
         only:        { type: 'array', items: { type: 'string' }, description: 'For action=apply: limit to these kind/name pairs' },
         dryRun:      { type: 'boolean' },
+        autoSpawn:   { type: 'boolean', description: 'On action=apply: auto-start the sidecar UI (kit ui) if not running and stream progress to it.' },
       },
       required: ['action', 'target'],
     },
   },
   {
     name: 'gates',
-    description: 'List or fetch reusable workflow gates (regression, confidence, etc).',
+    description: 'List, fetch, or execute reusable workflow gates (regression, confidence, etc).',
     inputSchema: {
       type: 'object',
       properties: {
-        action: { type: 'string', enum: ['list', 'get', 'for-stage'] },
-        id:     { type: 'string', description: 'For action=get' },
-        stage:  { type: 'string', enum: ['pre-plan', 'pre-execute', 'pre-verify', 'post-verify', 'any'], description: 'For action=for-stage' },
+        action:      { type: 'string', enum: ['list', 'get', 'for-stage', 'run'] },
+        id:          { type: 'string', description: 'For action=get or action=run' },
+        stage:       { type: 'string', enum: ['pre-plan', 'pre-execute', 'pre-verify', 'post-verify', 'any'], description: 'For action=for-stage' },
+        projectRoot: { type: 'string', description: 'For action=run' },
+        autoSpawn:   { type: 'boolean', description: 'On action=run: auto-start the sidecar UI (kit ui) if not running and stream progress to it.' },
       },
       required: ['action'],
     },
@@ -136,11 +143,38 @@ async function handleKit(args) {
   }
 }
 
+// withAutoSpawn — if args.autoSpawn is set, ensure the sidecar is up and wrap
+// the user-supplied onProgress so events flow there. Otherwise pass-through.
+async function withAutoSpawn(args, tool, run) {
+  const projectRoot = args.projectRoot || process.cwd();
+  let wrapped = null;
+  let sidecarInfo = null;
+
+  if (args.autoSpawn) {
+    sidecarInfo = await ensureSidecar({ projectRoot, openBrowserOnSpawn: true });
+    if (sidecarInfo?.ready) {
+      wrapped = wrapProgressForUi(null, { projectRoot, tool });
+    }
+  }
+
+  // run(onProgress) — pass our wrapped callback (or undefined to no-op)
+  try {
+    const result = await run(wrapped);
+    if (wrapped?.done) wrapped.done({ ok: true });
+    return sidecarInfo ? { ...result, _sidecar: sidecarInfo } : result;
+  } catch (err) {
+    if (wrapped?.error) wrapped.error(err);
+    throw err;
+  }
+}
+
 async function handleSync(args) {
   switch (args.action) {
     case 'targets': return listTargets();
     case 'status':  return statusOf(args.target, { projectRoot: args.projectRoot });
-    case 'install': return syncTo(args.target,  { projectRoot: args.projectRoot, mode: args.mode, dryRun: args.dryRun });
+    case 'install':
+      return withAutoSpawn(args, 'sync.install', (onProgress) =>
+        syncTo(args.target, { projectRoot: args.projectRoot, mode: args.mode, dryRun: args.dryRun, onProgress }));
     case 'remove':  return removeFrom(args.target, { projectRoot: args.projectRoot });
     default: return { error: `Unknown action: ${args.action}` };
   }
@@ -149,7 +183,13 @@ async function handleSync(args) {
 async function handleReverseSync(args) {
   switch (args.action) {
     case 'detect': return detectReverse(args.target, { projectRoot: args.projectRoot });
-    case 'apply':  return applyReverse(args.target,  { projectRoot: args.projectRoot, strategy: args.strategy, only: args.only, dryRun: args.dryRun });
+    case 'apply':
+      return withAutoSpawn(args, 'reverse-sync.apply', (onProgress) =>
+        applyReverse(args.target, {
+          projectRoot: args.projectRoot,
+          strategy: args.strategy, only: args.only, dryRun: args.dryRun,
+          onProgress,
+        }));
     default: return { error: `Unknown action: ${args.action}` };
   }
 }
@@ -159,6 +199,13 @@ async function handleGates(args) {
     case 'list':      return listGates();
     case 'get':       return getGate(args.id);
     case 'for-stage': return gatesForStage(args.stage);
+    case 'run':
+      return withAutoSpawn(args, 'gates.run', () =>
+        runGate(args.id, {
+          projectRoot: args.projectRoot,
+          yes: true,            // MCP context: never prompt
+          interactive: false,   // MCP never prompts
+        }));
     default: return { error: `Unknown action: ${args.action}` };
   }
 }
