@@ -43,10 +43,10 @@
 
 ### PUB — Cliente publisher, wrapper de progress, browser-open
 
-- [ ] **PUB-01**: `src/ui/client.js` exporta `publish(event)` fire-and-forget; resolve port via lockfile, faz POST `/publish`, falha silenciosamente em ECONNREFUSED ou ENOENT.
-- [ ] **PUB-02**: `src/ui/wrapper.js` exporta `wrapProgressForUi(onProgress, ctx)` que retorna callback multiplexando terminal (chamada original) + publish; usado APENAS por callsites (CLI, MCP handler), nunca pelo core (`syncTo`, `applyReverse`).
-- [ ] **PUB-03**: Helper central `redactPath(p, projectRoot)` substitui `$HOME → ~` e `projectRoot → <project>` em TODO payload antes de publish; aplicado uniformemente em `wrapper.js`.
-- [ ] **PUB-04**: `src/ui/browser.js` envolve `open@11` com detection de headless (`!DISPLAY && !WAYLAND_DISPLAY`, `CI=true`, `TERM=dumb`), WSL e macOS sandbox; sempre imprime URL no stderr como fallback visível; respeita flag `--no-open`.
+- [x] **PUB-01**: `src/ui/client.js` exporta `publish(event)` fire-and-forget; resolve port via lockfile, faz POST `/publish`, falha silenciosamente em ECONNREFUSED ou ENOENT. _(Phase 15)_
+- [x] **PUB-02**: `src/ui/wrapper.js` exporta `wrapProgressForUi(onProgress, ctx)` que retorna callback multiplexando terminal (chamada original) + publish; usado APENAS por callsites (CLI, MCP handler), nunca pelo core (`syncTo`, `applyReverse`). _(Phase 15)_
+- [x] **PUB-03**: Helper central `redactPath(p, projectRoot)` substitui `$HOME → ~` e `projectRoot → <project>` em TODO payload antes de publish; aplicado uniformemente em `wrapper.js`. _(Phase 15)_
+- [x] **PUB-04**: `src/ui/browser.js` envolve `open@11` com detection de headless (`!DISPLAY && !WAYLAND_DISPLAY`, `CI=true`, `TERM=dumb`), WSL e macOS sandbox; sempre imprime URL no stderr como fallback visível; respeita flag `--no-open`. _(Phase 15)_
 
 ### CLI — Subcomando `kit ui` + auto-detect
 
@@ -69,7 +69,7 @@
 - [x] **SEC-02**: Validação de `Origin` em endpoints non-GET: aceita `http://127.0.0.1:port` e `http://localhost:port`; reject 403 caso contrário. _(Phase 13)_
 - [x] **SEC-03**: HTML estático envia CSP `default-src 'self'; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'`. _(Phase 14)_
 - [x] **SEC-04**: Audit gate de PR: grep proíbe `console.log` e `process.stdout.write` em todo `src/ui/`; logs vão pra stderr ou arquivo. Falha CI se violado. _(Phase 11)_
-- [ ] **SEC-05**: Path scrubbing (PUB-03) aplicado uniformemente; smoke test snapshot valida ausência de `/home/` `/Users/` `C:\Users\` em payloads.
+- [x] **SEC-05**: Path scrubbing (PUB-03) aplicado uniformemente; smoke test snapshot valida ausência de `/home/` `/Users/` `C:\Users\` em payloads. _(Phase 15)_
 
 ### OPS — Operação, testes e cross-platform
 
