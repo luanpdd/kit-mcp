@@ -43,6 +43,18 @@
 - Stable API commitment: TARGETS, MCP actions, CLI surface, core exports, stub format, marker semantics.
 - Detalhes: `.planning/milestones/v1.0.0/`.
 
+### v1.2.0 — GUI sidecar de acompanhamento (2026-05-04) 🪟 Live process viewer
+- 56/56 REQs entregues em 8 fases (lock arquitetural, fundações, servidor HTTP+SSE, UI estática, publisher+wrapper, CLI integration, MCP auto-spawn, hardening+release).
+- Sidecar web localhost (porta 7100-7199) com SSE; abre via `kit ui start` ou `autoSpawn:true` em tools MCP de sync/reverse-sync/gates.
+- Stable API v1.0+ preservada — apenas adições. `src/core/` literalmente intocado (`git diff` vazio).
+- 1 dep nova: `open@11` (única; budget atingido em 6/6).
+- Tests: 151 (49 u + 9 i baseline → ~80 u + ~71 i = 151). +93 vs v1.1.
+- 7 audit gates ativos no CI: stdout discipline em `src/ui/`, dep budget, npm pack UI assets, Host check, Origin check, CSP shape, path redaction.
+- Threat model finalizado em `docs/sidecar-security.md`: bind 127.0.0.1, CSP estrito, path scrubbing central, sem auth (mitigado).
+- Bug pré-existente corrigido: `kit --version` agora lê de `package.json` (era hardcoded 1.0.0).
+- Ship readiness: working tree clean, todos os tests verde, REL-02 (tag) e REL-03 (npm publish) requerem user action.
+- Detalhes: `.planning/milestones/v1.2.0/`.
+
 ### v1.1.0 — Feedback visual no terminal (2026-05-03) 🎨 Visual UX
 - 10/10 REQs entregues em 5 fases (UI primitives, --json flag, progress, selectors, cut).
 - `src/core/ui.js` (~167 LOC) — color/icons/spinner/progress/select/confirm/summary, respeita NO_COLOR + isTTY.
@@ -57,7 +69,7 @@
 
 ## Em andamento
 
-(nada — milestone v1.1.0 concluído e arquivado)
+(nada — milestone v1.2.0 concluído e arquivado em 2026-05-04, pendente apenas tag/publish via user action)
 
 ## Backlog macro (não-priorizado)
 
