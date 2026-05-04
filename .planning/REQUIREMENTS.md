@@ -118,4 +118,67 @@
 
 ## Rastreabilidade
 
-(preenchido pelo roadmapper na próxima fase — mapa REQ-ID → Fase)
+> Mapeamento REQ-ID → Fase. 100% coverage validada (56/56 REQs, cada um em exatamente uma fase). Detalhes de critérios de sucesso em `ROADMAP.md`.
+
+| REQ-ID  | Fase | Categoria |
+|---------|------|-----------|
+| SRV-01  | 13   | Servidor (bind 127.0.0.1) |
+| SRV-02  | 13   | Servidor (SSE headers) |
+| SRV-03  | 13   | Servidor (heartbeat) |
+| SRV-04  | 13   | Servidor (POST /publish) |
+| SRV-05  | 13   | Servidor (/healthz) |
+| SRV-06  | 13   | Servidor (/shutdown) |
+| SRV-07  | 13   | Servidor (/state) |
+| SRV-08  | 12   | Lockfile (atômico) |
+| SRV-09  | 12   | Lockfile (stale detection) |
+| SRV-10  | 13   | Servidor (idle shutdown) |
+| SRV-11  | 13   | Servidor (graceful SIGINT) |
+| SRV-12  | 13   | Servidor (ring buffer) |
+| SRV-13  | 13   | Servidor (cap 32 conn) |
+| SRV-14  | 13   | Servidor (cleanup triplo) |
+| UI-01   | 14   | UI single-file |
+| UI-02   | 14   | UI lista cronológica |
+| UI-03   | 14   | UI badges |
+| UI-04   | 14   | UI status conexão |
+| UI-05   | 14   | UI reconnect |
+| UI-06   | 14   | UI estado vazio |
+| UI-07   | 14   | UI filter |
+| UI-08   | 14   | UI pause/resume |
+| UI-09   | 14   | UI dark mode |
+| UI-10   | 14   | UI banner shutdown |
+| UI-11   | 14   | UI hydrate /state |
+| PUB-01  | 15   | Publisher client |
+| PUB-02  | 15   | Wrapper onProgress |
+| PUB-03  | 15   | redactPath |
+| PUB-04  | 15   | browser-open |
+| CLI-01  | 16   | kit ui start |
+| CLI-02  | 16   | kit ui stop |
+| CLI-03  | 16   | kit ui status |
+| CLI-04  | 16   | kit ui open |
+| CLI-05  | 16   | Auto-detect em sync/reverse-sync |
+| MCP-01  | 17   | autoSpawn em sync |
+| MCP-02  | 17   | autoSpawn em reverse-sync |
+| MCP-03  | 17   | autoSpawn em gates run |
+| MCP-04  | 17   | Tools triviais sem autoSpawn |
+| SEC-01  | 13   | Host header check |
+| SEC-02  | 13   | Origin check |
+| SEC-03  | 14   | CSP no HTML |
+| SEC-04  | 11   | Audit gate console.log |
+| SEC-05  | 15   | Path scrubbing snapshot |
+| OPS-01  | 18   | CI matrix smoke |
+| OPS-02  | 18   | Memory leak test |
+| OPS-03  | 18   | kill -9 recovery |
+| OPS-04  | 18   | Multi-publisher race |
+| OPS-05  | 18   | MCP stdio uncorrupted |
+| OPS-06  | 18   | npm pack dry-run |
+| DOC-01  | 18   | README Live UI |
+| DOC-02  | 18   | CHANGELOG [1.2.0] |
+| DOC-03  | 11+18| Threat model (rascunho 11, final 18) |
+| DOC-04  | 18   | Migration note |
+| REL-01  | 18   | Version bump 1.2.0 + fix --version |
+| REL-02  | 18   | Tag + GitHub Release |
+| REL-03  | 18   | npm publish |
+
+**Validação de cobertura:** 56/56 REQs mapeados. Cada REQ aparece em exatamente uma fase, exceto DOC-03 que é dividido entre Fase 11 (rascunho do threat model) e Fase 18 (versão final) — split intencional documentado no roadmap.
+
+**Distribuição:** Fase 11 (2) + Fase 12 (2) + Fase 13 (14) + Fase 14 (12) + Fase 15 (5) + Fase 16 (5) + Fase 17 (4) + Fase 18 (12) = **56**.
