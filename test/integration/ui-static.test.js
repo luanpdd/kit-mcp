@@ -130,3 +130,26 @@ test('static UI: includes shutdown banner copy in PT-BR', async () => {
     assert.match(r.body, /Recarregue/);
   });
 });
+
+test('static UI: eventLabel reads payload.name (1.2.1 fix)', async () => {
+  // Regression guard for the cosmetic bug where milestone events with
+  // `payload.name` rendered as bare "milestone" instead of the supplied label.
+  await withServer(async (srv) => {
+    const r = await fetchHtml(srv.port);
+    assert.match(r.body, /typeof p\.name === 'string'/);
+  });
+});
+
+test('static UI: visibilitychange listener reconnects from CLOSED (1.2.1 fix)', async () => {
+  // Regression guard for SSE staying in CLOSED when Chrome throttles a
+  // background tab. We can't drive the DOM from this test without JSDOM,
+  // so we assert the listener and the reconnect logic are present.
+  await withServer(async (srv) => {
+    const r = await fetchHtml(srv.port);
+    assert.match(r.body, /visibilitychange/);
+    assert.match(r.body, /document\.visibilityState !== 'visible'/);
+    // The handler must call hydrate + connect, not just connect, so that
+    // events that arrived while we were dropped get rendered too.
+    assert.match(r.body, /hydrateFromState\(\)\.then\(connect\)/);
+  });
+});

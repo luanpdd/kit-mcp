@@ -408,6 +408,7 @@
     const p = evt.payload;
     if (!p || typeof p !== 'object') return evt.type;
     if (typeof p.label === 'string') return p.label;
+    if (typeof p.name === 'string') return p.name;
     if (typeof p.tool === 'string') return `tool: ${p.tool}`;
     if (typeof p.percent === 'number') return `${p.percent}%${p.kind ? ' · ' + p.kind : ''}`;
     if (typeof p.message === 'string') return p.message;
@@ -597,6 +598,20 @@
     for (const t of EVENT_TYPES) evtSource.addEventListener(t, handler);
     evtSource.onmessage = handler; // fallback for events without type field
   }
+
+  // ------- Background-tab recovery -------------------------------------
+  // Chrome aggressively throttles background tabs; the native EventSource
+  // retry timer can get suspended, leaving the connection stuck in CLOSED
+  // when the user comes back. The Page Visibility API lets us force a fresh
+  // connect() when the tab becomes visible again and we know we're CLOSED.
+  document.addEventListener('visibilitychange', () => {
+    if (document.visibilityState !== 'visible') return;
+    if (dom.conn.dataset.state === 'CLOSED') {
+      // Re-hydrate from /state in case events arrived while we were dropped,
+      // then reopen the SSE stream.
+      hydrateFromState().then(connect);
+    }
+  });
 
   // ------- Boot ---------------------------------------------------------
 
