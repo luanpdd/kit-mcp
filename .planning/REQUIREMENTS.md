@@ -68,7 +68,7 @@
 - [ ] **SEC-01**: Validação de `Host` header em todas as rotas HTTP: aceita `127.0.0.1:port` e `localhost:port` literal; qualquer outro → 403 (mitiga DNS rebinding).
 - [ ] **SEC-02**: Validação de `Origin` em endpoints non-GET: aceita `http://127.0.0.1:port` e `http://localhost:port`; reject 403 caso contrário.
 - [ ] **SEC-03**: HTML estático envia CSP `default-src 'self'; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'`.
-- [ ] **SEC-04**: Audit gate de PR: grep proíbe `console.log` e `process.stdout.write` em todo `src/ui/`; logs vão pra stderr ou arquivo. Falha CI se violado.
+- [x] **SEC-04**: Audit gate de PR: grep proíbe `console.log` e `process.stdout.write` em todo `src/ui/`; logs vão pra stderr ou arquivo. Falha CI se violado. _(Phase 11)_
 - [ ] **SEC-05**: Path scrubbing (PUB-03) aplicado uniformemente; smoke test snapshot valida ausência de `/home/` `/Users/` `C:\Users\` em payloads.
 
 ### OPS — Operação, testes e cross-platform
@@ -84,7 +84,7 @@
 
 - [ ] **DOC-01**: README seção "Live UI" com screenshot, exemplo `kit ui start`, exemplo `--auto-spawn` em MCP, fluxo "primeira execução" (firewall popup esperado).
 - [ ] **DOC-02**: CHANGELOG entry em `[1.2.0]` enumera todas as fases entregues.
-- [ ] **DOC-03**: Threat model curto (`docs/sidecar-security.md`) documentando: bind 127.0.0.1, sem auth, Host/Origin check, CSP, path scrubbing, trade-offs conscientes.
+- [~] **DOC-03**: Threat model curto (`docs/sidecar-security.md`) documentando: bind 127.0.0.1, sem auth, Host/Origin check, CSP, path scrubbing, trade-offs conscientes. _(Rascunho na Phase 11; final na Phase 18)_
 - [ ] **DOC-04**: Migration note: usuários v1.1 ficam idênticos sem ação (sidecar é opt-in); flag `--auto-spawn` documentada por MCP tool.
 
 ### REL — Release

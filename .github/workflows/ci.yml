@@ -6,6 +6,52 @@ on:
   pull_request:
 
 jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Audit — stdout discipline in src/ui/ (REQ SEC-04)
+        shell: bash
+        run: |
+          # Sidecar logs must go to stderr or to a file, never stdout —
+          # collides with the MCP server's JSON-RPC frame channel.
+          # Gate is armed even before src/ui/ exists, so the very first
+          # offending file fails CI.
+          if [ -d src/ui ]; then
+            HITS=$(grep -rn 'console\.log\|process\.stdout\.write' src/ui/ 2>/dev/null || true)
+            if [ -n "$HITS" ]; then
+              echo "::error::REQ SEC-04 violated — stdout writes found in src/ui/"
+              echo "$HITS"
+              echo ""
+              echo "Sidecar code MUST log to stderr (console.error) or to a file (~/.kit-mcp/ui.log)."
+              echo "stdout collides with MCP JSON-RPC frames and breaks the protocol."
+              exit 1
+            fi
+            echo "OK: no stdout writes in src/ui/"
+          else
+            echo "OK: src/ui/ does not exist yet — gate is armed for when it does"
+          fi
+
+      - name: Audit — runtime deps budget (max v1.1.0 baseline + 1)
+        shell: bash
+        run: |
+          # v1.2 budget: 5 baseline (@modelcontextprotocol/sdk, commander,
+          # chokidar, picocolors, @inquirer/prompts) + 1 new (open@11) = 6 max.
+          BASELINE=5
+          BUDGET=$((BASELINE + 1))
+          CURRENT=$(node -e "console.log(Object.keys(require('./package.json').dependencies || {}).length)")
+          echo "Runtime deps: $CURRENT / $BUDGET"
+          if [ "$CURRENT" -gt "$BUDGET" ]; then
+            echo "::error::Runtime deps grew to $CURRENT — v1.2 budget is $BUDGET (baseline $BASELINE + 1)"
+            echo "If a new dep is genuinely necessary, update this gate and the v1.2 ADR consciously."
+            exit 1
+          fi
+
   smoke:
     runs-on: ${{ matrix.os }}
     strategy:
