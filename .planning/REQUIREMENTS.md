@@ -29,17 +29,17 @@
 
 ### UI — Página HTML estática single-file
 
-- [ ] **UI-01**: Arquivo único `src/ui/static/index.html` com HTML+CSS+JS inline, ~300 LOC, sem build step, sem deps externas no client.
-- [ ] **UI-02**: Lista cronológica de eventos com auto-scroll (desativável via toggle); item exibe timestamp, badge tipo, label legível, payload colapsável (`<details>` HTML nativo).
-- [ ] **UI-03**: Badges coloridos por tipo de evento: `tool_invocation`, `progress`, `error`, `milestone`, `run.start`, `run.end`.
-- [ ] **UI-04**: Status de conexão SSE visível: `CONNECTING` (cinza), `OPEN` (verde), `CLOSED` (vermelho com retry visível).
-- [ ] **UI-05**: Reconnect automático nativo via `EventSource`; retry timing exponencial padrão do browser.
-- [ ] **UI-06**: Estado vazio ("Aguardando primeiro evento... rode `kit sync install` ou abra outra IDE") quando 0 eventos.
-- [ ] **UI-07**: Filter por tipo (multi-select dropdown) + filter por substring no label/payload (input).
-- [ ] **UI-08**: Pause/resume do feed (botão); enquanto pausado, contador "N novos" cresce.
-- [ ] **UI-09**: Dark mode automático via `@media (prefers-color-scheme: dark)`.
-- [ ] **UI-10**: Banner de shutdown ("Sidecar foi encerrado. Recarregue a página depois de `kit ui start`.") quando recebe evento `shutdown` ou conexão CLOSED por >5s.
-- [ ] **UI-11**: Hidrata via `GET /state` no load pra mostrar últimos 200 eventos antes do primeiro SSE chegar.
+- [x] **UI-01**: Arquivo único `src/ui/static/index.html` com HTML+CSS+JS inline, ~300 LOC, sem build step, sem deps externas no client. _(Phase 14)_
+- [x] **UI-02**: Lista cronológica de eventos com auto-scroll (desativável via toggle); item exibe timestamp, badge tipo, label legível, payload colapsável (`<details>` HTML nativo). _(Phase 14)_
+- [x] **UI-03**: Badges coloridos por tipo de evento: `tool_invocation`, `progress`, `error`, `milestone`, `run.start`, `run.end`. _(Phase 14)_
+- [x] **UI-04**: Status de conexão SSE visível: `CONNECTING` (cinza), `OPEN` (verde), `CLOSED` (vermelho com retry visível). _(Phase 14)_
+- [x] **UI-05**: Reconnect automático nativo via `EventSource`; retry timing exponencial padrão do browser. _(Phase 14)_
+- [x] **UI-06**: Estado vazio ("Aguardando primeiro evento... rode `kit sync install` ou abra outra IDE") quando 0 eventos. _(Phase 14)_
+- [x] **UI-07**: Filter por tipo (multi-select dropdown) + filter por substring no label/payload (input). _(Phase 14)_
+- [x] **UI-08**: Pause/resume do feed (botão); enquanto pausado, contador "N novos" cresce. _(Phase 14)_
+- [x] **UI-09**: Dark mode automático via `@media (prefers-color-scheme: dark)`. _(Phase 14)_
+- [x] **UI-10**: Banner de shutdown ("Sidecar foi encerrado. Recarregue a página depois de `kit ui start`.") quando recebe evento `shutdown` ou conexão CLOSED por >5s. _(Phase 14)_
+- [x] **UI-11**: Hidrata via `GET /state` no load pra mostrar últimos 200 eventos antes do primeiro SSE chegar. _(Phase 14)_
 
 ### PUB — Cliente publisher, wrapper de progress, browser-open
 
@@ -67,7 +67,7 @@
 
 - [x] **SEC-01**: Validação de `Host` header em todas as rotas HTTP: aceita `127.0.0.1:port` e `localhost:port` literal; qualquer outro → 403 (mitiga DNS rebinding). _(Phase 13)_
 - [x] **SEC-02**: Validação de `Origin` em endpoints non-GET: aceita `http://127.0.0.1:port` e `http://localhost:port`; reject 403 caso contrário. _(Phase 13)_
-- [ ] **SEC-03**: HTML estático envia CSP `default-src 'self'; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'`.
+- [x] **SEC-03**: HTML estático envia CSP `default-src 'self'; connect-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'`. _(Phase 14)_
 - [x] **SEC-04**: Audit gate de PR: grep proíbe `console.log` e `process.stdout.write` em todo `src/ui/`; logs vão pra stderr ou arquivo. Falha CI se violado. _(Phase 11)_
 - [ ] **SEC-05**: Path scrubbing (PUB-03) aplicado uniformemente; smoke test snapshot valida ausência de `/home/` `/Users/` `C:\Users\` em payloads.
 

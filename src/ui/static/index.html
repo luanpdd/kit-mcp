@@ -1,0 +1,609 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>kit-mcp sidecar</title>
+<style>
+  /* Design tokens */
+  :root {
+    color-scheme: light dark;
+    --bg: #f8fafc;
+    --bg-elev: #ffffff;
+    --bg-row: #ffffff;
+    --bg-row-hover: #f1f5f9;
+    --fg: #0f172a;
+    --fg-muted: #475569;
+    --fg-subtle: #64748b;
+    --border: #e2e8f0;
+    --accent: #3b82f6;
+    --ok: #10b981;
+    --warn: #f59e0b;
+    --err: #ef4444;
+    --info: #6366f1;
+    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 10px rgba(0,0,0,.04);
+    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
+    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Inter, "Helvetica Neue", sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #0b1120;
+      --bg-elev: #111827;
+      --bg-row: #0f172a;
+      --bg-row-hover: #1e293b;
+      --fg: #e2e8f0;
+      --fg-muted: #94a3b8;
+      --fg-subtle: #64748b;
+      --border: #1f2937;
+      --accent: #60a5fa;
+      --ok: #34d399;
+      --warn: #fbbf24;
+      --err: #f87171;
+      --info: #818cf8;
+      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 10px rgba(0,0,0,.3);
+    }
+  }
+
+  * { box-sizing: border-box; }
+  html, body { margin: 0; padding: 0; height: 100%; }
+  body {
+    font-family: var(--sans);
+    font-size: 14px;
+    line-height: 1.5;
+    color: var(--fg);
+    background: var(--bg);
+    display: flex;
+    flex-direction: column;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elev);
+    box-shadow: var(--shadow);
+    position: sticky;
+    top: 0;
+    z-index: 10;
+  }
+  header h1 {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 600;
+    letter-spacing: .2px;
+  }
+  header h1::before {
+    content: "◆";
+    color: var(--accent);
+    margin-right: 6px;
+  }
+  header .meta {
+    color: var(--fg-subtle);
+    font-family: var(--mono);
+    font-size: 12px;
+  }
+  header .grow { flex: 1; }
+
+  .conn-status {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 3px 10px;
+    border-radius: 999px;
+    font-family: var(--mono);
+    font-size: 11px;
+    font-weight: 600;
+    border: 1px solid var(--border);
+    background: var(--bg-row);
+  }
+  .conn-status .dot {
+    display: inline-block;
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--fg-subtle);
+  }
+  .conn-status[data-state="CONNECTING"] .dot { background: var(--warn); animation: pulse 1.4s infinite; }
+  .conn-status[data-state="OPEN"]      .dot { background: var(--ok); }
+  .conn-status[data-state="CLOSED"]    .dot { background: var(--err); animation: pulse 1s infinite; }
+  @keyframes pulse { 50% { opacity: .35; } }
+
+  .toolbar {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 16px;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg-elev);
+    flex-wrap: wrap;
+  }
+  .toolbar input[type="search"] {
+    flex: 1 1 240px;
+    min-width: 180px;
+    padding: 6px 10px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-row);
+    color: var(--fg);
+    font-family: var(--sans);
+    font-size: 13px;
+  }
+  .toolbar input[type="search"]:focus {
+    outline: 2px solid var(--accent);
+    outline-offset: -1px;
+  }
+  .filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px;
+  }
+  .filters label {
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    padding: 3px 8px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-row);
+    cursor: pointer;
+    user-select: none;
+    font-size: 11px;
+    font-family: var(--mono);
+  }
+  .filters input { display: none; }
+  .filters label:has(input:checked) {
+    background: var(--accent);
+    color: white;
+    border-color: var(--accent);
+  }
+
+  button {
+    padding: 5px 12px;
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    background: var(--bg-row);
+    color: var(--fg);
+    font-family: var(--sans);
+    font-size: 12px;
+    cursor: pointer;
+  }
+  button:hover { background: var(--bg-row-hover); }
+  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
+  button[aria-pressed="true"] { background: var(--accent); color: white; border-color: var(--accent); }
+
+  main {
+    flex: 1;
+    overflow: auto;
+    padding: 0 16px 24px;
+  }
+
+  .empty {
+    text-align: center;
+    color: var(--fg-subtle);
+    padding: 64px 16px;
+    font-size: 14px;
+  }
+  .empty strong { display: block; color: var(--fg-muted); margin-bottom: 6px; }
+  .empty code {
+    font-family: var(--mono);
+    background: var(--bg-row);
+    padding: 1px 6px;
+    border-radius: 4px;
+    font-size: 12px;
+    border: 1px solid var(--border);
+  }
+
+  .ev-list {
+    list-style: none;
+    margin: 12px 0 0;
+    padding: 0;
+    border: 1px solid var(--border);
+    border-radius: 8px;
+    overflow: hidden;
+    background: var(--bg-elev);
+  }
+  .ev-row {
+    display: grid;
+    grid-template-columns: 92px 110px 1fr;
+    gap: 12px;
+    padding: 8px 12px;
+    border-bottom: 1px solid var(--border);
+    font-size: 13px;
+    align-items: start;
+  }
+  .ev-row:last-child { border-bottom: 0; }
+  .ev-row:hover { background: var(--bg-row-hover); }
+
+  .ev-time {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-subtle);
+    padding-top: 1px;
+  }
+
+  .ev-badge {
+    display: inline-block;
+    padding: 2px 8px;
+    border-radius: 999px;
+    background: var(--bg-row);
+    color: var(--fg-muted);
+    font-family: var(--mono);
+    font-size: 10px;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: .5px;
+    border: 1px solid var(--border);
+    white-space: nowrap;
+    text-align: center;
+  }
+  .ev-badge[data-type="run.start"]      { color: var(--info);  border-color: var(--info); }
+  .ev-badge[data-type="run.end"]        { color: var(--info);  border-color: var(--info); }
+  .ev-badge[data-type="tool_invocation"]{ color: var(--accent); border-color: var(--accent); }
+  .ev-badge[data-type="progress"]       { color: var(--ok);    border-color: var(--ok); }
+  .ev-badge[data-type="milestone"]      { color: var(--warn);  border-color: var(--warn); }
+  .ev-badge[data-type="error"]          { color: var(--err);   border-color: var(--err); background: color-mix(in srgb, var(--err) 8%, transparent); }
+  .ev-badge[data-type="shutdown"]       { color: var(--err);   border-color: var(--err); }
+
+  .ev-body { min-width: 0; word-wrap: break-word; }
+  .ev-body summary {
+    list-style: none;
+    cursor: pointer;
+  }
+  .ev-body summary::-webkit-details-marker { display: none; }
+  .ev-body summary .label {
+    color: var(--fg);
+    font-family: var(--sans);
+  }
+  .ev-body summary .meta {
+    color: var(--fg-subtle);
+    font-family: var(--mono);
+    font-size: 11px;
+    margin-left: 6px;
+  }
+  .ev-body pre {
+    margin: 6px 0 0;
+    padding: 8px 10px;
+    background: var(--bg-row);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--fg-muted);
+    overflow-x: auto;
+    max-height: 280px;
+  }
+
+  .banner {
+    margin: 12px 0 0;
+    padding: 12px 16px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--err) 8%, var(--bg-elev));
+    border: 1px solid var(--err);
+    color: var(--err);
+    font-size: 13px;
+  }
+  .banner[hidden] { display: none; }
+  .banner code {
+    font-family: var(--mono);
+    background: var(--bg-row);
+    padding: 1px 5px;
+    border-radius: 4px;
+    color: var(--fg-muted);
+  }
+
+  .footer {
+    padding: 8px 16px;
+    border-top: 1px solid var(--border);
+    background: var(--bg-elev);
+    color: var(--fg-subtle);
+    font-family: var(--mono);
+    font-size: 11px;
+    display: flex;
+    gap: 16px;
+    flex-wrap: wrap;
+  }
+</style>
+</head>
+<body>
+  <header>
+    <h1>kit-mcp sidecar</h1>
+    <span class="meta" id="meta-port">port —</span>
+    <span class="grow"></span>
+    <span class="conn-status" id="conn" data-state="CONNECTING"><span class="dot"></span><span id="conn-text">CONNECTING</span></span>
+  </header>
+
+  <div class="toolbar">
+    <input type="search" id="search" placeholder="filter by label or payload…" autocomplete="off">
+    <fieldset class="filters" id="type-filters" aria-label="Event types">
+      <!-- populated from EVENT_TYPES at runtime -->
+    </fieldset>
+    <button id="pause-btn" aria-pressed="false">⏸ pause</button>
+    <button id="autoscroll-btn" aria-pressed="true">↧ autoscroll</button>
+    <button id="clear-btn" title="Clear visible events (ring buffer untouched)">clear view</button>
+  </div>
+
+  <main>
+    <div class="banner" id="shutdown-banner" hidden>
+      <strong>Sidecar encerrou.</strong> Recarregue depois de <code>kit ui start</code>.
+    </div>
+    <ul class="ev-list" id="events" hidden></ul>
+    <div class="empty" id="empty">
+      <strong>Aguardando primeiro evento…</strong>
+      Rode <code>kit sync install</code>, <code>kit reverse-sync apply</code>, ou
+      invoke uma tool MCP com <code>autoSpawn: true</code> em outra janela.
+    </div>
+  </main>
+
+  <div class="footer">
+    <span id="footer-events">events: 0</span>
+    <span id="footer-paused" hidden>paused: 0 buffered</span>
+    <span id="footer-source">source: live</span>
+  </div>
+
+<script>
+  // src/ui/static/index.html — vanilla DOM client for the kit-mcp sidecar.
+  // Connects to /events (SSE) and hydrates from /state on load.
+  // No build step. No deps.
+
+  'use strict';
+
+  const EVENT_TYPES = ['run.start', 'run.end', 'tool_invocation', 'progress', 'milestone', 'error', 'shutdown'];
+  const RING_DISPLAY_MAX = 500;
+
+  const $ = (id) => document.getElementById(id);
+  const dom = {
+    conn: $('conn'),
+    connText: $('conn-text'),
+    metaPort: $('meta-port'),
+    list: $('events'),
+    empty: $('empty'),
+    banner: $('shutdown-banner'),
+    pauseBtn: $('pause-btn'),
+    autoscrollBtn: $('autoscroll-btn'),
+    clearBtn: $('clear-btn'),
+    search: $('search'),
+    typeFilters: $('type-filters'),
+    footerEvents: $('footer-events'),
+    footerPaused: $('footer-paused'),
+    footerSource: $('footer-source'),
+  };
+
+  const state = {
+    events: [],         // currently rendered events (buffered while paused)
+    pausedBuffer: [],   // events captured while paused
+    paused: false,
+    autoscroll: true,
+    typeFilter: new Set(EVENT_TYPES), // all enabled
+    search: '',
+    closedAt: null,
+  };
+
+  // ------- DOM helpers --------------------------------------------------
+
+  function el(tag, props = {}, kids = []) {
+    const e = document.createElement(tag);
+    for (const [k, v] of Object.entries(props)) {
+      if (k === 'class') e.className = v;
+      else if (k === 'data') for (const [dk, dv] of Object.entries(v)) e.dataset[dk] = dv;
+      else if (k.startsWith('on')) e.addEventListener(k.slice(2).toLowerCase(), v);
+      else if (k === 'text') e.textContent = v;
+      else if (v !== undefined && v !== null) e.setAttribute(k, v);
+    }
+    for (const k of kids) if (k) e.appendChild(typeof k === 'string' ? document.createTextNode(k) : k);
+    return e;
+  }
+
+  function fmtTime(ts) {
+    const d = new Date(ts);
+    const hh = String(d.getHours()).padStart(2, '0');
+    const mm = String(d.getMinutes()).padStart(2, '0');
+    const ss = String(d.getSeconds()).padStart(2, '0');
+    return `${hh}:${mm}:${ss}`;
+  }
+
+  function eventLabel(evt) {
+    // Best-effort short label from payload; fallback to type.
+    const p = evt.payload;
+    if (!p || typeof p !== 'object') return evt.type;
+    if (typeof p.label === 'string') return p.label;
+    if (typeof p.tool === 'string') return `tool: ${p.tool}`;
+    if (typeof p.percent === 'number') return `${p.percent}%${p.kind ? ' · ' + p.kind : ''}`;
+    if (typeof p.message === 'string') return p.message;
+    if (typeof p.reason === 'string') return p.reason;
+    return evt.type;
+  }
+
+  function eventMeta(evt) {
+    const p = evt.payload;
+    if (evt.type === 'progress' && p && typeof p.total === 'number' && typeof p.current === 'number') {
+      return `${p.current}/${p.total}`;
+    }
+    if (evt.runId) return evt.runId.slice(0, 6);
+    return '';
+  }
+
+  function renderEventRow(evt) {
+    const time = el('div', { class: 'ev-time', text: fmtTime(evt.ts) });
+    const badge = el('span', { class: 'ev-badge', data: { type: evt.type }, text: evt.type });
+    const summary = el('summary', {}, [
+      el('span', { class: 'label', text: eventLabel(evt) }),
+      el('span', { class: 'meta', text: eventMeta(evt) }),
+    ]);
+    const pre = el('pre', { text: JSON.stringify(evt.payload ?? null, null, 2) });
+    const details = el('details', {}, [summary, pre]);
+    const body = el('div', { class: 'ev-body' }, [details]);
+    return el('li', { class: 'ev-row', data: { type: evt.type, label: eventLabel(evt).toLowerCase() } }, [time, badge, body]);
+  }
+
+  function shouldShow(evt) {
+    if (!state.typeFilter.has(evt.type)) return false;
+    if (state.search) {
+      const haystack = (evt.type + ' ' + eventLabel(evt) + ' ' + JSON.stringify(evt.payload ?? '')).toLowerCase();
+      if (!haystack.includes(state.search.toLowerCase())) return false;
+    }
+    return true;
+  }
+
+  function applyFilter() {
+    const rows = dom.list.children;
+    let visible = 0;
+    for (let i = 0; i < rows.length; i += 1) {
+      const row = rows[i];
+      const evt = state.events[i];
+      const show = evt && shouldShow(evt);
+      row.style.display = show ? '' : 'none';
+      if (show) visible += 1;
+    }
+    dom.empty.hidden = visible > 0 || state.events.length > 0;
+    dom.list.hidden = visible === 0 && state.events.length > 0 ? false : visible === 0;
+    if (state.events.length === 0) {
+      dom.empty.hidden = false;
+      dom.list.hidden = true;
+    } else {
+      dom.empty.hidden = true;
+      dom.list.hidden = false;
+    }
+    dom.footerEvents.textContent = `events: ${state.events.length}` + (visible !== state.events.length ? ` (showing ${visible})` : '');
+  }
+
+  function pushVisibleEvent(evt) {
+    state.events.push(evt);
+    while (state.events.length > RING_DISPLAY_MAX) state.events.shift();
+    while (dom.list.children.length > RING_DISPLAY_MAX - 1) dom.list.removeChild(dom.list.firstChild);
+    const row = renderEventRow(evt);
+    dom.list.appendChild(row);
+    if (!shouldShow(evt)) row.style.display = 'none';
+    applyFilter();
+    if (state.autoscroll) {
+      requestAnimationFrame(() => row.scrollIntoView({ block: 'end' }));
+    }
+  }
+
+  function ingestEvent(evt) {
+    if (state.paused) {
+      state.pausedBuffer.push(evt);
+      dom.footerPaused.hidden = false;
+      dom.footerPaused.textContent = `paused: ${state.pausedBuffer.length} buffered`;
+      return;
+    }
+    pushVisibleEvent(evt);
+    if (evt.type === 'shutdown') {
+      dom.banner.hidden = false;
+    }
+  }
+
+  function flushPaused() {
+    for (const evt of state.pausedBuffer) pushVisibleEvent(evt);
+    state.pausedBuffer.length = 0;
+    dom.footerPaused.hidden = true;
+  }
+
+  // ------- Filter UI ----------------------------------------------------
+
+  for (const t of EVENT_TYPES) {
+    const cb = el('input', { type: 'checkbox', checked: '' });
+    cb.checked = true;
+    cb.addEventListener('change', () => {
+      if (cb.checked) state.typeFilter.add(t);
+      else state.typeFilter.delete(t);
+      applyFilter();
+    });
+    const lbl = el('label', {}, [cb, document.createTextNode(t)]);
+    dom.typeFilters.appendChild(lbl);
+  }
+
+  dom.search.addEventListener('input', () => {
+    state.search = dom.search.value;
+    applyFilter();
+  });
+
+  dom.pauseBtn.addEventListener('click', () => {
+    state.paused = !state.paused;
+    dom.pauseBtn.setAttribute('aria-pressed', String(state.paused));
+    dom.pauseBtn.textContent = state.paused ? '▶ resume' : '⏸ pause';
+    if (!state.paused) flushPaused();
+  });
+
+  dom.autoscrollBtn.addEventListener('click', () => {
+    state.autoscroll = !state.autoscroll;
+    dom.autoscrollBtn.setAttribute('aria-pressed', String(state.autoscroll));
+  });
+
+  dom.clearBtn.addEventListener('click', () => {
+    state.events.length = 0;
+    while (dom.list.firstChild) dom.list.removeChild(dom.list.firstChild);
+    applyFilter();
+  });
+
+  // ------- Connection lifecycle ----------------------------------------
+
+  let evtSource = null;
+  let closedTimer = null;
+  let lastConnectedAt = 0;
+
+  function setConnState(s) {
+    dom.conn.dataset.state = s;
+    dom.connText.textContent = s;
+  }
+
+  function scheduleClosedBanner() {
+    if (closedTimer) clearTimeout(closedTimer);
+    closedTimer = setTimeout(() => {
+      // Only show shutdown banner if still closed after 5s
+      if (dom.conn.dataset.state === 'CLOSED') {
+        dom.banner.hidden = false;
+      }
+    }, 5000);
+  }
+
+  async function hydrateFromState() {
+    try {
+      const res = await fetch('/state', { credentials: 'omit' });
+      if (!res.ok) return;
+      const j = await res.json();
+      if (j.port) dom.metaPort.textContent = `port ${j.port}`;
+      if (Array.isArray(j.events)) {
+        for (const evt of j.events) ingestEvent(evt);
+      }
+    } catch (_) {
+      // Ignore — SSE may still work
+    }
+  }
+
+  function connect() {
+    setConnState('CONNECTING');
+    if (evtSource) try { evtSource.close(); } catch (_) { /* noop */ }
+    evtSource = new EventSource('/events');
+    evtSource.onopen = () => {
+      setConnState('OPEN');
+      lastConnectedAt = Date.now();
+      if (closedTimer) { clearTimeout(closedTimer); closedTimer = null; }
+      // Don't hide banner if we already received a 'shutdown' event
+    };
+    evtSource.onerror = () => {
+      setConnState('CLOSED');
+      scheduleClosedBanner();
+      // EventSource will retry automatically (we send retry: 3000 from server)
+    };
+    // Listen for each known event type so 'event:' lines get routed to the same handler
+    const handler = (msg) => {
+      try {
+        const data = JSON.parse(msg.data);
+        ingestEvent(data);
+      } catch (_) { /* swallow malformed */ }
+    };
+    for (const t of EVENT_TYPES) evtSource.addEventListener(t, handler);
+    evtSource.onmessage = handler; // fallback for events without type field
+  }
+
+  // ------- Boot ---------------------------------------------------------
+
+  hydrateFromState().then(() => {
+    connect();
+    applyFilter();
+  });
+</script>
+</body>
+</html>
