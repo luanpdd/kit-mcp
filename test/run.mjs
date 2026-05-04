@@ -35,9 +35,14 @@ if (files.length === 0) {
 // release a handle (added in Node 20.10/21.4/22+). Required for the integration
 // tests in test/integration/ui-server.test.js — http.Server keep-alive sockets
 // can otherwise stall process exit by a few seconds, which CI interprets as a hang.
+//
+// --test-concurrency=1 serializes tests. Several integration tests bind to the
+// 7100-7199 range; without serialization they race for ports and intermittently
+// hit EADDRINUSE. Tests already finish in ~3s total, so concurrency adds nothing
+// here — and races are not a hypothetical risk we want CI to occasionally surface.
 const r = spawnSync(
   process.execPath,
-  ['--test', '--test-force-exit', ...files],
+  ['--test', '--test-force-exit', '--test-concurrency=1', ...files],
   { stdio: 'inherit' },
 );
 process.exit(r.status ?? 1);
