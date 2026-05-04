@@ -19,8 +19,8 @@
 - [ ] **SRV-05**: Endpoint `GET /healthz` retorna `200 OK` com `{version, uptime, port, subscribers}` pra probe.
 - [ ] **SRV-06**: Endpoint `POST /shutdown` (auth via Host header check) drena conexões SSE, libera lockfile, encerra processo.
 - [ ] **SRV-07**: Endpoint `GET /state` retorna ring buffer atual (últimos 200 eventos) pra hydrate-on-load do client.
-- [ ] **SRV-08**: Lockfile single-instance em `os.tmpdir()/kit-mcp-ui-<sha1(projectRoot)>.lock`, criado com `fs.openSync('wx')` (atômico), conteúdo `{pid, port, version, startedAt}`.
-- [ ] **SRV-09**: Stale lockfile detectado via `process.kill(pid, 0)` + healthz HTTP probe; ESRCH/EPERM ou healthz fail → unlink + retry start.
+- [x] **SRV-08**: Lockfile single-instance em `os.tmpdir()/kit-mcp-ui-<sha1(projectRoot)>.lock`, criado com `fs.openSync('wx')` (atômico), conteúdo `{pid, port, version, startedAt}`. _(Phase 12)_
+- [x] **SRV-09**: Stale lockfile detectado via `process.kill(pid, 0)` + healthz HTTP probe; ESRCH/EPERM ou healthz fail → unlink + retry start. _(Phase 12)_
 - [ ] **SRV-10**: Idle shutdown automático após **30min** sem eventos novos E sem clientes SSE conectados; flag `--idle-ms` permite customização (`0` = nunca).
 - [ ] **SRV-11**: Encerramento gracioso em SIGINT/SIGTERM: envia evento final `shutdown` aos clients, fecha conexões SSE, libera lockfile.
 - [ ] **SRV-12**: Ring buffer in-memory de **200 eventos** (FIFO); sem persistência em disco.
