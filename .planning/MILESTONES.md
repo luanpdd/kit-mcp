@@ -67,9 +67,19 @@
 - Stable API additions: --json semantics, onProgress callback signature, non-TTY error fallback.
 - Detalhes: `.planning/milestones/v1.1.0/`.
 
+### v1.3.0 → v1.5.3 — Patches ad-hoc (2026-05-04 → 2026-05-05)
+Série de patches feitos fora do framework — UI redesign, framework velocity, UI tokens display, auto-reconnect, idle-default fix, audit bundle. Todos em `CHANGELOG.md` (canônico). Resumo:
+- v1.2.3 — humanize labels (PT-BR, caminhos amigáveis)
+- v1.3.0 — UI redesign Claude Design (active hero, timeline rail, tweaks panel)
+- v1.4.0 — framework velocity (publicar-rapido, main-sync, auto-detects, schema-checker, post-migration hook)
+- v1.5.0 — UI tokens display + sessão history + defensive labels
+- v1.5.1 — UI auto-reconnect via /healthz + bordas com respiro
+- v1.5.2 — sidecar idle-default = 0 (não encerra sozinho)
+- v1.5.3 — bundle audit quick-wins (POST /shutdown Origin check, awk regex em publish.yml, drop absPath de list-*, trim Vago/Correto)
+
 ## Em andamento
 
-(nada — milestone v1.2.0 concluído e arquivado em 2026-05-04, pendente apenas tag/publish via user action)
+**v1.6.0 — perf+lean** (em planejamento). Auditoria de codebase 2026-05-05 produziu 20 itens; bundle 1.5.3 entregou 4. Os 16 restantes estão no roadmap de v1.6 (3 fases, 19→21).
 
 ## Backlog macro (não-priorizado)
 

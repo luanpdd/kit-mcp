@@ -2,29 +2,22 @@
 
 > Atualizado por workflows e mantido entre sessões. Source of truth para "onde paramos".
 
+## Posição Atual
+
+Fase: Não iniciada (definindo requisitos)
+Plano: —
+Status: Definindo requisitos
+Última atividade: 2026-05-05 — Milestone v1.6 iniciado
+
 ## Milestone ativo
 
-**Nenhum.** Último milestone concluído: **v1.2.0** (arquivado em `.planning/milestones/v1.2.0/`, ver `MILESTONE-AUDIT.md`).
+**v1.6.0 — perf+lean (interno).** Auditoria de codebase produziu 20 itens; 4 foram entregues no bundle 1.5.3 (I1, S1, T3, T5). Os 16 restantes formam o escopo desta milestone.
 
 ## Próximo passo
 
-Cut da v1.2.0 está pendente de **user action**:
+`/discutir-fase 19` — Quick-wins de baixo esforço (P1+P2+P3+S5+I3+I4+I5+T4)
 
-```bash
-git tag -a v1.2.0 -m "v1.2.0 — GUI sidecar de acompanhamento"
-git push origin main --tags
-# publish.yml workflow auto-cria GitHub Release
-npm publish --otp <code>
-```
-
-Após cut, próximo ciclo:
-- `/novo-marco "v1.3 — tema"` — abre o ciclo questionamento → requisitos → roadmap
-
-Sugestões pra v1.3 (do MILESTONE-AUDIT.md):
-- Aggregation multi-projeto numa janela
-- Token-based auth via lockfile (multi-user / dev container)
-- "CLI awkwardness do double-`kit`" (backlog macro persistido)
-- Eventos expandidos + keyboard shortcuts + copy-to-clipboard
+Ou pular discussão: `/planejar-fase 19`.
 
 ## Bloqueadores
 
@@ -32,10 +25,16 @@ Sugestões pra v1.3 (do MILESTONE-AUDIT.md):
 
 ## Todos pendentes
 
-(vazio — captura via `/adicionar-tarefa` ou `/nota`)
+(vazio)
 
 ## Histórico
 
 - v1.0.0 — concluído 2026-05-03 (`.planning/milestones/v1.0.0/`)
 - v1.1.0 — concluído 2026-05-03 (`.planning/milestones/v1.1.0/`)
-- v1.2.0 — concluído 2026-05-04 (`.planning/milestones/v1.2.0/`); cut pendente de user action
+- v1.2.0 — concluído 2026-05-04 (`.planning/milestones/v1.2.0/`)
+- v1.2.3 → v1.5.3 — patches ad-hoc fora do framework (CHANGELOG é canônico)
+- v1.6.0 — **em planejamento** (este milestone)
+
+## Contexto Acumulado
+
+Auditoria de codebase (2026-05-05, executada via 4 agentes Explore paralelos cobrindo perf/security/infra/tokens) produziu 20 melhorias tabuladas. Bundle v1.5.3 entregou as 4 mais ROI-positivas (I1, S1, T3, T5). Os 16 restantes são endereçados nesta milestone.

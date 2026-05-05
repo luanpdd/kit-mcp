@@ -1,26 +1,24 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-04 — abertura de v1.2.0.
+> Última atualização: 2026-05-05 — abertura de v1.6.0.
 
-## Milestone Atual: v1.2 GUI sidecar de acompanhamento
+## Milestone Atual: v1.6 perf+lean (interno — saúde de codebase)
 
-**Objetivo:** Janela web localhost paralela mostrando ao vivo os processos kit-mcp executando dentro da IDE (Claude Code, Cursor, etc), via SSE.
+**Objetivo:** Endereçar 16 itens identificados pela auditoria de codebase (executada após v1.5.3) que ficaram fora do bundle quick-win. Foco: tornar o servidor mais barato de rodar, mais seguro, com release pipeline mais robusto e prompts mais enxutos.
 
-**Funcionalidades alvo:**
-- Servidor HTTP localhost embutido (`/` página + `/events` SSE)
-- UI web mínima sem build (HTML/JS estático servido pelo próprio kit-mcp)
-- CLI `kit ui` (start/stop/status) — abertura manual
-- Flag `--auto-spawn` opt-in nas tools MCP pesadas — abertura automática
-- Hook nos `onProgress` callbacks existentes (sync, reverse-sync) emitindo via SSE
-- Detecção de porta livre com lockfile, encerramento gracioso
+**Funcionalidades alvo (todas internas, zero superfície de API nova):**
+- **Performance** — listKit caching, compilação top-level de regex, reuso de kit em sync/reverse-sync, healthz probe com timeout local, paginação opcional em /state
+- **Segurança** — TOCTOU em acquireLockOrReclaim, normalização de path em walkTree, redactPath case-insensitive (Windows), audit periódico de open@11
+- **Infra** — `prepublishOnly` script, `.npmignore` explícito, Node 24 na matriz CI, mensagem do deps-budget gate sincronizada com count real
+- **Tokens** — compactar `planner.md` (53 KB → ~30 KB), lazy-load CLAUDE.md gerado, consolidar headers recursivos em agents grandes
 
-**Decisões de stack já feitas:**
-- HTTP + SSE puro Node — sem Express, sem Vite, sem framework de UI
-- Máx 1 dep nova se inevitável; preferir zero
-- Cross-platform (Windows/macOS/Linux): `open`/`xdg-open`/`start` pra browser
+**Decisões de stack:**
+- Continua zero deps novas. Otimização interna sem ampliar superfície.
+- Sem mudanças de API runtime (`Stable API v1.0+` preservada). Reduções em outputs de tool MCP são "remoções de campo opcional" — clientes ainda funcionam.
+- Roadmap começa em **Phase 19** (continuando de v1.2 que terminou em Phase 18; v1.3-v1.5.x foram patches ad-hoc fora do framework).
 
-**Contrato preservado:** Stable API v1.0+ permanece. Apenas adições. Sidecar é opt-in — quem não invoca `kit ui` nem `--auto-spawn` mantém experiência v1.1 idêntica.
+**Contrato preservado:** Quem usa kit-mcp em produção (sync/reverse-sync/MCP via npx ou global) não percebe nada além de menor latência e menor consumo de tokens. CI permanece 6/6 verde, smoke tests inalterados.
 
 ## Visão de uma frase
 
