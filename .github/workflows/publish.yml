@@ -62,8 +62,11 @@ jobs:
           TAG_VERSION="${GITHUB_REF_NAME#v}"
           NOTES_FILE="$RUNNER_TEMP/release-notes-${TAG_VERSION}.md"
           # Awk extracts the body between this version's heading and the next ## [ heading.
-          awk -v ver="## [${TAG_VERSION}]" '
-            $0 ~ ver { found=1; next }
+          # Note: ver passes only the version string; we wrap with [[] and []] (bracket
+          # classes that match a literal `[` and `]`) so the heading regex doesn't
+          # collapse `[1.5.2]` into a char-class of digits-and-dots (the v1.5.2-and-prior bug).
+          awk -v ver="${TAG_VERSION}" '
+            $0 ~ "^## [[]" ver "[]]" { found=1; next }
             found && /^## \[/ { exit }
             found { print }
           ' CHANGELOG.md > "$NOTES_FILE"

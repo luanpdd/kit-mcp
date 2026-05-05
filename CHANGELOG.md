@@ -6,6 +6,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.5.3] - 2026-05-05
+
+Patch bundle de auditoria — 4 melhorias quick-win (1 segurança, 1 infra, 2 token-economy).
+
+### Segurança
+
+- **POST /shutdown agora valida Origin** ([src/ui/server.js](src/ui/server.js)). Antes, qualquer página local podia derrubar o sidecar via fetch cross-origin (CSRF local por DNS rebinding). Agora retorna 403 em Origin não permitido — alinha com o comportamento de POST /publish. Novo teste em [test/integration/ui-server.test.js](test/integration/ui-server.test.js) cobre o caso.
+
+### Infraestrutura
+
+- **Fix do extrator de release notes** ([.github/workflows/publish.yml](.github/workflows/publish.yml)). O awk regex `## [VERSION]` interpretava `[…]` como bracket class em vez de literal — todo release desde a v1.0.0 caía em fallback `Release vX.Y.Z.` em vez de pegar o body do CHANGELOG. Corrigido com `[[]VERSION[]]` (POSIX char-class trick para casar `[` e `]` literais). Validado localmente contra o CHANGELOG da v1.5.2.
+
+### Economia de tokens
+
+- **`mcp__kit__kit list-*` não retorna mais `absPath`** ([src/mcp-server/index.js](src/mcp-server/index.js), [src/cli/index.js](src/cli/index.js)). Caminhos absolutos do filesystem (especialmente em Windows com Long Paths) custam tokens em todo turn que liste agents/commands/skills sem trazer benefício para o consumidor IA. Para o caminho específico de um item, use `action=get`.
+- **Tabela "Vago/Correto" do `planner.md` reduzida de 5 → 2 linhas** ([kit/agents/planner.md](kit/agents/planner.md)). Mantém a heurística de teste sem repetir 5 exemplos didáticos. Cada agente carregado paga menos.
+
+### Sem mudanças de API runtime
+
+`absPath` segue disponível via `mcp__kit__kit action=get`. Stable API v1.0+ preservada.
+
 ## [1.5.2] - 2026-05-05
 
 Patch de lifecycle: sidecar não desliga mais sozinho por idle.

@@ -253,7 +253,9 @@ const HANDLERS = {
 };
 
 function slim(x) {
-  return { kind: x.kind, name: x.name, description: x.description, absPath: x.absPath };
+  // absPath omitted by design — list-* tools are AI-consumed in tight context budgets.
+  // Use action=get to fetch the absPath (and content) for a specific item.
+  return { kind: x.kind, name: x.name, description: x.description };
 }
 
 // --- server bootstrap ---

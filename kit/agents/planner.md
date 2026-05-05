@@ -242,11 +242,8 @@ Isso evita o anti-padrão de "caça ao tesouro" onde executores exploram a base 
 
 | VAGO DEMAIS | CORRETO |
 |-------------|---------|
-| "Adicionar autenticação" | "Adicionar auth JWT com rotação de refresh usando biblioteca jose, armazenar em cookie httpOnly, 15min acesso / 7dias refresh" |
-| "Criar a API" | "Criar endpoint POST /api/projects aceitando {name, description}, valida comprimento do nome 3-50 chars, retorna 201 com objeto project" |
-| "Estilizar o dashboard" | "Adicionar classes Tailwind ao Dashboard.tsx: layout grid (3 colunas no lg, 1 no mobile), sombras nos cards, estados hover nos botões de ação" |
-| "Tratar erros" | "Envolver chamadas de API em try/catch, retornar {error: string} em 4xx/5xx, exibir toast via sonner no cliente" |
-| "Configurar o banco de dados" | "Adicionar modelos User e Project ao schema.prisma com UUIDs, constraint unique no email, timestamps createdAt/updatedAt, executar prisma db push" |
+| "Adicionar autenticação" | "Adicionar auth JWT com rotação de refresh usando jose, cookie httpOnly, 15min/7d" |
+| "Criar a API" | "POST /api/projects aceitando {name, description}, valida nome 3-50 chars, retorna 201" |
 
 **Teste:** Outra instância do Claude poderia executar sem fazer perguntas esclarecedoras? Se não, adicione especificidade.
 

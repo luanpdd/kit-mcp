@@ -145,7 +145,7 @@ function fail(msg) {
 }
 
 function slim(x) {
-  return { kind: x.kind, name: x.name, description: x.description, absPath: x.absPath };
+  return { kind: x.kind, name: x.name, description: x.description };
 }
 
 // --- kit ---

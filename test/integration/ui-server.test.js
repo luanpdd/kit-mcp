@@ -151,6 +151,18 @@ test('Origin validation: rejects cross-origin POST', async () => {
   });
 });
 
+test('Origin validation: rejects cross-origin POST /shutdown', async () => {
+  await withServer({}, async (srv) => {
+    const r = await fetch('POST', srv.port, '/shutdown', {
+      body: '',
+      headers: { origin: 'https://evil.example.com' },
+    });
+    assert.equal(r.status, 403);
+    const j = JSON.parse(r.body);
+    assert.equal(j.error, 'origin_not_allowed');
+  });
+});
+
 test('SSE: receives published events live on /events', async () => {
   await withServer({}, async (srv) => {
     // open an SSE connection, then publish, then look for the published event in the stream

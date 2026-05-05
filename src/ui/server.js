@@ -320,7 +320,11 @@ export function createServer({
     });
   }
 
-  async function handleShutdownRequest(res) {
+  async function handleShutdownRequest(req, res) {
+    if (!isOriginAllowed(req, listeningPort)) {
+      sendJson(res, 403, { error: 'origin_not_allowed' });
+      return;
+    }
     sendJson(res, 200, { ok: true, draining: true });
     setImmediate(() => {
       shutdown('explicit').catch((err) => logErr('shutdown error:', err.message));
@@ -360,7 +364,7 @@ export function createServer({
         case 'POST /publish':
           return handlePublish(req, res);
         case 'POST /shutdown':
-          return handleShutdownRequest(res);
+          return handleShutdownRequest(req, res);
         default:
           return sendJson(res, 404, { error: 'not_found', route });
       }
