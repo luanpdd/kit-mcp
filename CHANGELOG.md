@@ -6,6 +6,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.5.2] - 2026-05-05
+
+Patch de lifecycle: sidecar não desliga mais sozinho por idle.
+
+### Corrigido
+
+- **Sidecar encerrava sozinho após 30min** mesmo com a aba aberta sem eventos. Default de `idleMs` mudou de `30 * 60 * 1000` (30min) para `0` (nunca encerra). Resolve "abro a sidecar pra acompanhar trabalho longo, saio almoçar, volto e tá morta". Quem quiser o comportamento antigo: `kit ui start --idle-ms 1800000`.
+
+### Sem mudanças de API
+
+Patch isolado em `src/ui/server.js`. Stable API v1.0+ preservada.
+
+### Heads-up
+
+Se você tem `@luanpdd/kit-mcp` instalado globalmente (`npm i -g`) e `kit ui start` está dando "unknown command 'ui'", a versão global está stale. Atualize com `npm i -g @luanpdd/kit-mcp@latest`.
+
 ## [1.5.1] - 2026-05-05
 
 Patch da UI sidecar: auto-reconnect quando o server reinicia + bordas com respiro.

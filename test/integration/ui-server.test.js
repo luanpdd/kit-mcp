@@ -278,10 +278,10 @@ test('Unknown route returns 404', async () => {
   });
 });
 
-test('Constants exposed: ring=200, maxSubs=32, idle=30min, heartbeat=15s', () => {
+test('Constants exposed: ring=200, maxSubs=32, idle=0 (never), heartbeat=15s', () => {
   assert.equal(serverConst.RING_BUFFER_SIZE, 200);
   assert.equal(serverConst.MAX_SSE_SUBSCRIBERS, 32);
-  assert.equal(serverConst.DEFAULT_IDLE_MS, 30 * 60 * 1000);
+  assert.equal(serverConst.DEFAULT_IDLE_MS, 0);
   assert.equal(serverConst.HEARTBEAT_INTERVAL_MS, 15000);
 });
 

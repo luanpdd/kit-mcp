@@ -33,7 +33,7 @@ const HOST = '127.0.0.1';
 const HEARTBEAT_INTERVAL_MS = 15_000;
 const RING_BUFFER_SIZE = 200;
 const MAX_SSE_SUBSCRIBERS = 32;
-const DEFAULT_IDLE_MS = 30 * 60 * 1000; // 30 minutes
+const DEFAULT_IDLE_MS = 0; // never auto-shutdown by default — pass --idle-ms 1800000 to opt back in
 
 const SSE_HEADERS = {
   'Content-Type': 'text/event-stream; charset=utf-8',

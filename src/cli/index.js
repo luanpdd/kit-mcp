@@ -379,7 +379,7 @@ ui.command('start')
   .description('Start the sidecar HTTP server in foreground (Ctrl+C to stop). Prints URL on stderr.')
   .option('--project-root <path>', 'Project root for lockfile keying (default: cwd)')
   .option('--port <n>', 'Bind to a specific port (default: auto-pick 7100-7199)')
-  .option('--idle-ms <ms>', 'Idle shutdown timeout (default 30min; 0 = never)')
+  .option('--idle-ms <ms>', 'Idle shutdown timeout (default 0 = never; e.g. 1800000 for 30min)')
   .option('--no-open', 'Skip auto-opening the browser')
   .action(async (opts) => {
     const projectRoot = opts.projectRoot || process.cwd();

@@ -33,7 +33,7 @@ if (args.help) {
     'Usage: node bin/ui.js [options]',
     '  --project-root <path>   project root for lockfile keying (default: cwd)',
     '  --port <n>              bind to a specific port (default: auto-pick 7100-7199)',
-    '  --idle-ms <ms>          idle shutdown timeout (default: 1800000 = 30min; 0 = never)',
+    '  --idle-ms <ms>          idle shutdown timeout (default: 0 = never; pass e.g. 1800000 for 30min)',
     '  --version               print version and exit',
     '  --help                  this text',
     '',
