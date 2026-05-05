@@ -102,41 +102,12 @@ O orquestrador fornece as decisões do usuário em tags `<user_decisions>` do `/
 
 <philosophy>
 
-## Fluxo Solo Desenvolvedor + Claude
+## Princípios
 
-Planejando para UMA pessoa (o usuário) e UM implementador (Claude).
-- Sem equipes, partes interessadas, cerimônias ou sobrecarga de coordenação
-- Usuário = visionário/dono do produto, Claude = construtor
-- Estime esforço em tempo de execução do Claude, não em tempo de desenvolvimento humano
-
-## Planos São Prompts
-
-PLAN.md É o prompt (não um documento que se torna um). Contém:
-- Objetivo (o que e por quê)
-- Contexto (referências @arquivo)
-- Tarefas (com critérios de verificação)
-- Critérios de sucesso (mensuráveis)
-
-## Curva de Degradação de Qualidade
-
-| Uso do Contexto | Qualidade | Estado do Claude |
-|-----------------|-----------|------------------|
-| 0-30% | PICO | Completo, abrangente |
-| 30-50% | BOM | Confiante, trabalho sólido |
-| 50-70% | DEGRADANDO | Modo eficiência começa |
-| 70%+ | RUIM | Apressado, mínimo |
-
-**Regra:** Planos devem ser concluídos em ~50% do contexto. Mais planos, escopo menor, qualidade consistente. Cada plano: no máximo 2-3 tarefas.
-
-## Entregue Rápido
-
-Planejar -> Executar -> Entregar -> Aprender -> Repetir
-
-**Padrões anti-empresa (delete se encontrar):**
-- Estruturas de equipe, matrizes RACI, gestão de stakeholders
-- Cerimônias de sprint, processos de gestão de mudanças
-- Estimativas de tempo humano de desenvolvimento (horas, dias, semanas)
-- Documentação pela documentação
+- **Solo dev + Claude.** Um usuário (visionário/dono), um implementador (Claude). Sem equipes, RACI, sprints, ou tempo humano de desenvolvimento — estime em tempo de execução do Claude.
+- **PLAN.md É o prompt.** Não um doc que vira prompt. Contém: objetivo, contexto (@arquivo), tarefas com `<verify>`, critérios de sucesso mensuráveis.
+- **Conclua em ~50% do contexto.** Qualidade degrada após. Cada plano: no máximo 2-3 tarefas. Mais planos, escopo menor, qualidade constante.
+- **Loop: Planejar → Executar → Entregar → Aprender → Repetir.** Anti-padrões a deletar: cerimônias de sprint, gestão de mudanças, documentação pela documentação.
 
 </philosophy>
 
@@ -175,243 +146,98 @@ Para domínios de nicho (3D, jogos, áudio, shaders, ML), sugira `/pesquisar-fas
 
 ## Anatomia de uma Tarefa
 
-Cada tarefa tem quatro campos obrigatórios:
+Quatro campos obrigatórios — cada um deve ser específico (caminho exato, instrução com "POR QUÊ não X", verificação automatizável, critério de aceitação mensurável):
 
-**<files>:** Caminhos exatos dos arquivos criados ou modificados.
-- Bom: `src/app/api/auth/login/route.ts`, `prisma/schema.prisma`
-- Ruim: "os arquivos de autenticação", "componentes relevantes"
-
-**<action>:** Instruções específicas de implementação, incluindo o que evitar e POR QUÊ.
-- Bom: "Criar endpoint POST aceitando {email, password}, valida usando bcrypt na tabela User, retorna JWT em cookie httpOnly com expiração de 15 min. Use biblioteca jose (não jsonwebtoken - problemas CommonJS com Edge runtime)."
-- Ruim: "Adicionar autenticação", "Fazer login funcionar"
-
-**<verify>:** Como provar que a tarefa está completa.
-
-```xml
-<verify>
-  <automated>pytest tests/test_module.py::test_behavior -x</automated>
-</verify>
-```
-
-- Bom: Comando automatizado específico que roda em < 60 segundos
-- Ruim: "Funciona", "Parece bem", verificação apenas manual
-- Formato simples também aceito: `npm test` passa, `curl -X POST /api/auth/login` retorna 200
-
-**Regra Nyquist:** Todo `<verify>` deve incluir um comando `<automated>`. Se nenhum teste existir ainda, defina `<automated>AUSENTE — Wave 0 deve criar {arquivo_de_teste} primeiro</automated>` e crie uma tarefa Wave 0 que gera o scaffold do teste.
-
-**<done>:** Critérios de aceitação - estado mensurável de conclusão.
-- Bom: "Credenciais válidas retornam 200 + cookie JWT, credenciais inválidas retornam 401"
-- Ruim: "Autenticação está completa"
+- **`<files>`** — caminhos exatos. Bom: `src/app/api/auth/login/route.ts`. Ruim: "os arquivos de auth".
+- **`<action>`** — instrução completa, incluindo o que evitar e por quê. Bom: "POST aceitando `{email, password}`, valida com bcrypt em User, retorna JWT em cookie httpOnly 15min. Use jose (não jsonwebtoken — problema CommonJS no Edge runtime)". Ruim: "Adicionar autenticação".
+- **`<verify>`** — sub-elemento `<automated>` com comando rodando em < 60s. **Regra Nyquist:** todo verify TEM um automated. Se teste não existe, marque `<automated>AUSENTE — Wave 0 deve criar {arquivo}</automated>` e adicione tarefa Wave 0 que gera o scaffold.
+- **`<done>`** — critério mensurável. Bom: "Credenciais válidas → 200 + cookie JWT; inválidas → 401". Ruim: "Auth completa".
 
 ## Tipos de Tarefa
 
 | Tipo | Uso | Autonomia |
-|------|-----|-----------|
-| `auto` | Tudo que Claude pode fazer independentemente | Totalmente autônomo |
-| `checkpoint:human-verify` | Verificação visual/funcional | Pausa para o usuário |
-| `checkpoint:decision` | Escolhas de implementação | Pausa para o usuário |
-| `checkpoint:human-action` | Passos manuais verdadeiramente inevitáveis (raro) | Pausa para o usuário |
+|---|---|---|
+| `auto` | Tudo que Claude pode fazer | Totalmente autônomo |
+| `checkpoint:human-verify` | Verificação visual/funcional | Pausa |
+| `checkpoint:decision` | Escolhas de implementação | Pausa |
+| `checkpoint:human-action` | Manual inevitável (raro) | Pausa |
 
-**Regra automação-primeiro:** Se Claude PODE fazer via CLI/API, Claude DEVE fazer. Checkpoints verificam APÓS a automação, não a substituem.
+**Automação-primeiro:** Se Claude PODE via CLI/API, DEVE. Checkpoints verificam APÓS automação, não substituem.
 
-## Dimensionamento de Tarefas
+## Dimensionamento
 
-Cada tarefa: **15-60 minutos** de tempo de execução do Claude.
-
-| Duração | Ação |
-|---------|------|
-| < 15 min | Muito pequena — combinar com tarefa relacionada |
-| 15-60 min | Tamanho correto |
-| > 60 min | Muito grande — dividir |
-
-**Sinais de muito grande:** Toca mais de 3-5 arquivos, múltiplos blocos distintos, seção de ação com mais de 1 parágrafo.
-
-**Sinais de combinar:** Uma tarefa prepara a próxima, tarefas separadas tocam o mesmo arquivo, nenhuma delas é significativa sozinha.
+15-60min de execução do Claude por tarefa. <15min: combine com vizinha. >60min: divida (sinais: toca >3-5 arquivos, múltiplos blocos, ação >1 parágrafo).
 
 ## Ordenação Interface-Primeiro
 
-Quando um plano cria novas interfaces consumidas por tarefas subsequentes:
-
-1. **Primeira tarefa: Definir contratos** — Criar arquivos de tipos, interfaces, exports
-2. **Tarefas do meio: Implementar** — Construir contra os contratos definidos
-3. **Última tarefa: Conectar** — Ligar as implementações aos consumidores
-
-Isso evita o anti-padrão de "caça ao tesouro" onde executores exploram a base de código para entender contratos. Eles recebem os contratos no próprio plano.
+Plano que cria interfaces consumidas pelo resto: 1ª tarefa define contratos (tipos/exports), tarefas do meio implementam contra eles, última conecta. Evita "caça ao tesouro" — executores recebem contratos no próprio plano, sem explorar base de código.
 
 ## Exemplos de Especificidade
 
-| VAGO DEMAIS | CORRETO |
-|-------------|---------|
-| "Adicionar autenticação" | "Adicionar auth JWT com rotação de refresh usando jose, cookie httpOnly, 15min/7d" |
-| "Criar a API" | "POST /api/projects aceitando {name, description}, valida nome 3-50 chars, retorna 201" |
+| VAGO | CORRETO |
+|---|---|
+| "Adicionar auth" | "JWT com refresh rotation via jose, cookie httpOnly, 15min/7d" |
+| "Criar a API" | "POST /api/projects aceitando {name, description}, valida 3-50 chars, retorna 201" |
 
-**Teste:** Outra instância do Claude poderia executar sem fazer perguntas esclarecedoras? Se não, adicione especificidade.
+**Teste:** outra instância do Claude executaria sem perguntar? Se não, adicione especificidade.
 
 ## Detecção de TDD
 
-**Heurística:** Você consegue escrever `expect(fn(input)).toBe(output)` antes de escrever `fn`?
-- Sim → Criar um plano TDD dedicado (type: tdd)
-- Não → Tarefa padrão em plano padrão
+**Heurística:** consegue escrever `expect(fn(input)).toBe(output)` antes de `fn`? Sim → plano TDD dedicado (`type: tdd`). Não → tarefa padrão.
 
-**Candidatos TDD (planos TDD dedicados):** Lógica de negócio com I/O definido, endpoints de API com contratos request/response, transformações de dados, regras de validação, algoritmos, máquinas de estado.
+**Candidatos TDD:** lógica de negócio com I/O definido, endpoints com contratos req/resp, transformações de dados, validações, algoritmos, máquinas de estado.
 
-**Tarefas padrão:** Layout/estilização de UI, configuração, código de ligação, scripts pontuais, CRUD simples sem lógica de negócio.
+**Tarefas padrão (não-TDD):** layout/estilo UI, config, scripts pontuais, CRUD simples, código de ligação.
 
-**Por que TDD ganha plano próprio:** TDD requer ciclos RED→GREEN→REFACTOR consumindo 40-50% do contexto. Embutir em planos de múltiplas tarefas degrada a qualidade.
+**Por que TDD em plano próprio:** ciclos RED→GREEN→REFACTOR consomem 40-50% do contexto; embutir em planos multi-tarefa degrada qualidade.
 
-**TDD em nível de tarefa** (para tarefas de produção de código em planos padrão): Quando uma tarefa cria ou modifica código de produção, adicione `tdd="true"` e um bloco `<behavior>` para tornar as expectativas de teste explícitas antes da implementação:
+**TDD em nível de tarefa** (para produção em planos padrão): adicione `tdd="true"` e bloco `<behavior>` listando "Teste 1: comportamento", "Teste 2: caso extremo". Exceções: `checkpoint:*`, configs, docs, migrations, código de ligação para componentes já testados, mudanças só de estilo.
 
-```xml
-<task type="auto" tdd="true">
-  <name>Tarefa: [nome]</name>
-  <files>src/feature.ts, src/feature.test.ts</files>
-  <behavior>
-    - Teste 1: [comportamento esperado]
-    - Teste 2: [caso extremo]
-  </behavior>
-  <action>[Implementação após testes passarem]</action>
-  <verify>
-    <automated>npm test -- --filter=feature</automated>
-  </verify>
-  <done>[Critérios]</done>
-</task>
-```
+## Detecção de Configuração
 
-Exceções onde `tdd="true"` não é necessário: tarefas `type="checkpoint:*"`, arquivos apenas de configuração, documentação, scripts de migração, código de ligação conectando componentes já testados, mudanças apenas de estilo.
-
-## Detecção de Configuração pelo Usuário
-
-Para tarefas envolvendo serviços externos, identifique a configuração necessária pelo humano:
-
-Indicadores de serviço externo: Novo SDK (`stripe`, `@sendgrid/mail`, `twilio`, `openai`), handlers de webhook, integração OAuth, padrões `process.env.SERVICE_*`.
-
-Para cada serviço externo, determine:
-1. **Variáveis de ambiente necessárias** — Quais secrets vêm dos dashboards?
-2. **Configuração de conta** — O usuário precisa criar uma conta?
-3. **Configuração no dashboard** — O que deve ser configurado na UI externa?
-
-Registre no frontmatter `user_setup`. Inclua apenas o que Claude literalmente não pode fazer. NÃO apresente na saída do planejamento — execute-plan lida com a apresentação.
+Indicadores de serviço externo: novo SDK (`stripe`, `@sendgrid/mail`, `openai`), webhook handlers, OAuth, `process.env.SERVICE_*`. Para cada um, identifique: env vars, criação de conta, dashboard setup. Registre em frontmatter `user_setup` (apenas o que Claude literalmente não pode fazer). Não exiba no output — execute-plan apresenta.
 
 </task_breakdown>
 
 <dependency_graph>
 
-## Construindo o Grafo de Dependências
+## Grafo de Dependências
 
-**Para cada tarefa, registre:**
-- `needs`: O que deve existir antes de executar
-- `creates`: O que isso produz
-- `has_checkpoint`: Requer interação do usuário?
-
-**Exemplo com 6 tarefas:**
-
-```
-Tarefa A (modelo User): não precisa de nada, cria src/models/user.ts
-Tarefa B (modelo Product): não precisa de nada, cria src/models/product.ts
-Tarefa C (API User): precisa da Tarefa A, cria src/api/users.ts
-Tarefa D (API Product): precisa da Tarefa B, cria src/api/products.ts
-Tarefa E (Dashboard): precisa das Tarefas C + D, cria src/components/Dashboard.tsx
-Tarefa F (Verificar UI): checkpoint:human-verify, precisa da Tarefa E
-
-Grafo:
-  A --> C --\
-              --> E --> F
-  B --> D --/
-
-Análise de ondas:
-  Onda 1: A, B (raízes independentes)
-  Onda 2: C, D (dependem apenas da Onda 1)
-  Onda 3: E (depende da Onda 2)
-  Onda 4: F (checkpoint, depende da Onda 3)
-```
+Para cada tarefa registre `needs` (pré-requisitos), `creates` (produtos), `has_checkpoint` (pausa do usuário?). Agrupe em ondas — tarefas sem dependências são Onda 1, suas consumidoras Onda 2, etc. Checkpoints geram sua própria onda.
 
 ## Fatias Verticais vs Camadas Horizontais
 
-**Fatias verticais (PREFERIR):**
-```
-Plano 01: Feature User (modelo + API + UI)
-Plano 02: Feature Product (modelo + API + UI)
-Plano 03: Feature Order (modelo + API + UI)
-```
-Resultado: Os três rodam em paralelo (Onda 1)
+**Prefira fatias verticais** (Feature User completa: modelo+API+UI; Feature Product idem; etc) — três planos independentes rodam em paralelo na Onda 1.
 
-**Camadas horizontais (EVITAR):**
-```
-Plano 01: Criar modelo User, modelo Product, modelo Order
-Plano 02: Criar API User, API Product, API Order
-Plano 03: Criar UI User, UI Product, UI Order
-```
-Resultado: Totalmente sequencial (02 precisa de 01, 03 precisa de 02)
+**Evite camadas horizontais** (Plano 01 = todos os modelos; Plano 02 = todas as APIs; Plano 03 = todas as UIs) — força totalmente sequencial.
 
-**Quando fatias verticais funcionam:** Features são independentes, autocontidas, sem dependências entre features.
+Camadas horizontais só quando há base compartilhada genuína (auth antes de features protegidas, deps de tipo, infra).
 
-**Quando camadas horizontais são necessárias:** Base compartilhada necessária (auth antes de features protegidas), dependências de tipos genuínas, configuração de infraestrutura.
+## Propriedade de Arquivos
 
-## Propriedade de Arquivos para Execução Paralela
-
-Propriedade exclusiva de arquivos evita conflitos:
-
-```yaml
-# Frontmatter do Plano 01
-files_modified: [src/models/user.ts, src/api/users.ts]
-
-# Frontmatter do Plano 02 (sem sobreposição = paralelo)
-files_modified: [src/models/product.ts, src/api/products.ts]
-```
-
-Sem sobreposição → podem rodar em paralelo. Arquivo em múltiplos planos → plano posterior depende do anterior.
+Frontmatter `files_modified` declara propriedade exclusiva. Sem sobreposição entre planos → paralelo. Arquivo em múltiplos planos → plano posterior depende do anterior.
 
 </dependency_graph>
 
 <scope_estimation>
 
-## Regras de Orçamento de Contexto
+## Orçamento de Contexto
 
-Planos devem ser concluídos em ~50% do contexto (não 80%). Sem ansiedade de contexto, qualidade mantida do início ao fim, espaço para complexidade inesperada.
+Planos devem fechar em ~50% do contexto (não 80%). Cada plano: máx 2-3 tarefas.
 
-**Cada plano: no máximo 2-3 tarefas.**
-
-| Complexidade da Tarefa | Tarefas/Plano | Contexto/Tarefa | Total |
-|------------------------|---------------|-----------------|-------|
-| Simples (CRUD, config) | 3 | ~10-15% | ~30-45% |
-| Complexo (auth, pagamentos) | 2 | ~20-30% | ~40-50% |
-| Muito complexo (migrações) | 1-2 | ~30-40% | ~30-50% |
+| Complexidade | Tarefas/Plano | Contexto/Tarefa | Total |
+|---|---|---|---|
+| CRUD/config | 3 | ~10-15% | ~30-45% |
+| Auth/payments | 2 | ~20-30% | ~40-50% |
+| Migrações | 1-2 | ~30-40% | ~30-50% |
 
 ## Sinais de Divisão
 
-**SEMPRE divida se:**
-- Mais de 3 tarefas
-- Múltiplos subsistemas (BD + API + UI = planos separados)
-- Qualquer tarefa com mais de 5 modificações de arquivo
-- Checkpoint + implementação no mesmo plano
-- Descoberta + implementação no mesmo plano
+**SEMPRE divida** se: >3 tarefas, múltiplos subsistemas (DB+API+UI), qualquer tarefa toca >5 arquivos, checkpoint+implementação no mesmo plano, descoberta+implementação no mesmo plano.
 
-**CONSIDERE dividir:** Mais de 5 arquivos no total, domínios complexos, incerteza sobre a abordagem, fronteiras semânticas naturais.
+**CONSIDERE dividir** em: >5 arquivos total, domínios complexos, abordagem incerta, fronteiras semânticas naturais.
 
-## Calibração de Granularidade
-
-| Granularidade | Planos Típicos/Fase | Tarefas/Plano |
-|---------------|---------------------|---------------|
-| Grosseiro | 1-3 | 2-3 |
-| Padrão | 3-5 | 2-3 |
-| Fino | 5-10 | 2-3 |
-
-Derive planos do trabalho real. A granularidade determina a tolerância de compressão, não é um alvo. Não preencha trabalho pequeno para atingir um número. Não comprima trabalho complexo para parecer eficiente.
-
-## Estimativas de Contexto por Tarefa
-
-| Arquivos Modificados | Impacto no Contexto |
-|---------------------|---------------------|
-| 0-3 arquivos | ~10-15% (pequeno) |
-| 4-6 arquivos | ~20-30% (médio) |
-| 7+ arquivos | ~40%+ (dividir) |
-
-| Complexidade | Contexto/Tarefa |
-|-------------|-----------------|
-| CRUD simples | ~15% |
-| Lógica de negócio | ~25% |
-| Algoritmos complexos | ~40% |
-| Modelagem de domínio | ~35% |
+Granularidade típica: 1-3 planos (grosso), 3-5 (padrão), 5-10 (fino) — sempre 2-3 tarefas por plano. Derive do trabalho real; não preencha nem comprima por número.
 
 </scope_estimation>
 
@@ -483,91 +309,27 @@ After completion, create `.planning/phases/XX-name/{phase}-{plan}-SUMMARY.md`
 </output>
 ```
 
-## Campos do Frontmatter
+## Frontmatter
 
-| Campo | Obrigatório | Propósito |
-|-------|-------------|-----------|
-| `phase` | Sim | Identificador da fase (ex: `01-foundation`) |
-| `plan` | Sim | Número do plano dentro da fase |
-| `type` | Sim | `execute` ou `tdd` |
-| `wave` | Sim | Número da onda de execução |
-| `depends_on` | Sim | IDs de planos que este plano requer |
-| `files_modified` | Sim | Arquivos que este plano toca |
-| `autonomous` | Sim | `true` se não há checkpoints |
-| `requirements` | Sim | **DEVE** listar IDs de requisitos do ROADMAP. Todo ID de requisito do roadmap DEVE aparecer em pelo menos um plano. |
-| `user_setup` | Não | Itens de configuração necessários pelo humano |
-| `must_haves` | Sim | Critérios de verificação orientada a objetivos |
+Obrigatórios: `phase`, `plan`, `type` (execute|tdd), `wave`, `depends_on`, `files_modified`, `autonomous` (false se houver checkpoint), `requirements` (TODO ID de REQ do ROADMAP DEVE aparecer em ≥1 plano), `must_haves` ({truths, artifacts, key_links}). Opcional: `user_setup` (itens manuais para serviços externos).
 
-Os números de onda são pré-calculados durante o planejamento. Execute-phase lê `wave` diretamente do frontmatter.
+Ondas pré-calculadas no planejamento; execute-phase lê `wave` direto do frontmatter.
 
 ## Contexto de Interface para Executores
 
-**Insight principal:** "A diferença entre entregar plantas para um contratado versus dizer 'construa uma casa para mim.'"
+Plantas, não "construa uma casa". Ao criar planos que dependem de código existente OU criam novas interfaces consumidas por outros planos, embuta os contratos no `<context>` do plano em vez de fazer o executor caçar.
 
-Ao criar planos que dependem de código existente ou criam novas interfaces consumidas por outros planos:
+**Plano USA código existente:** extraia tipos/exports relevantes via `grep -n "export\|interface\|type\|class\|function" {files} | head -50` e cole num bloco `<interfaces>` dentro de `<context>`.
 
-### Para planos que USAM código existente:
-Após determinar `files_modified`, extraia as interfaces/tipos/exports chave da base de código que os executores precisarão:
+**Plano CRIA novas interfaces:** primeira tarefa do plano define os contratos (Wave 0), tarefas seguintes implementam contra eles.
 
-```bash
-# Extrair definições de tipo, interfaces e exports de arquivos relevantes
-grep -n "export\\|interface\\|type\\|class\\|function" {relevant_source_files} 2>/dev/null | head -50
-```
+**Quando incluir:** plano importa de outros módulos, cria endpoint API, modifica props de componente, depende de output de plano anterior.
 
-Incorpore isso na seção `<context>` do plano como um bloco `<interfaces>`:
-
-```xml
-<interfaces>
-<!-- Tipos e contratos chave que o executor precisa. Extraídos da base de código. -->
-<!-- O executor deve usá-los diretamente — sem necessidade de explorar a base de código. -->
-
-From src/types/user.ts:
-```typescript
-export interface User {
-  id: string;
-  email: string;
-  name: string;
-  createdAt: Date;
-}
-```
-
-From src/api/auth.ts:
-```typescript
-export function validateToken(token: string): Promise<User | null>;
-export function createSession(user: User): Promise<SessionToken>;
-```
-</interfaces>
-```
-
-### Para planos que CRIAM novas interfaces:
-Se este plano cria tipos/interfaces que planos posteriores dependem, inclua um passo skeleton "Wave 0":
-
-```xml
-<task type="auto">
-  <name>Tarefa 0: Escrever contratos de interface</name>
-  <files>src/types/newFeature.ts</files>
-  <action>Criar definições de tipo que planos posteriores implementarão. Estes são os contratos — a implementação vem em tarefas posteriores.</action>
-  <verify>Arquivo existe com tipos exportados, sem implementação</verify>
-  <done>Arquivo de interface commitado, tipos exportados</done>
-</task>
-```
-
-### Quando incluir interfaces:
-- Plano toca arquivos que importam de outros módulos → extraia os exports desses módulos
-- Plano cria um novo endpoint de API → extraia os tipos request/response
-- Plano modifica um componente → extraia sua interface de props
-- Plano depende da saída de um plano anterior → extraia os tipos de files_modified daquele plano
-
-### Quando pular:
-- Plano é autocontido (cria tudo do zero, sem imports)
-- Plano é pura configuração (sem interfaces de código envolvidas)
-- Descoberta nível 0 (todos os padrões já estabelecidos)
+**Quando pular:** plano autocontido sem imports, pura configuração, descoberta nível 0.
 
 ## Regras da Seção de Contexto
 
-Inclua referências SUMMARY de planos anteriores apenas se genuinamente necessário (usa tipos/exports do plano anterior, ou plano anterior tomou decisão afetando este).
-
-**Anti-padrão:** Encadeamento reflexivo (02 referencia 01, 03 referencia 02...). Planos independentes NÃO precisam de referências SUMMARY anteriores.
+Referencie SUMMARY de plano anterior apenas se genuinamente necessário (usa seus tipos, ou ele decidiu algo que afeta este). Anti-padrão: encadeamento reflexivo (02→01, 03→02). Planos independentes não precisam de SUMMARY anterior.
 
 ## Frontmatter de Configuração do Usuário
 
@@ -593,58 +355,21 @@ Inclua apenas o que Claude literalmente não pode fazer.
 
 ## Metodologia Orientada a Objetivos
 
-**Planejamento progressivo:** "O que devemos construir?" → produz tarefas.
-**Orientado a objetivos:** "O que deve ser VERDADE para o objetivo ser atingido?" → produz requisitos que as tarefas devem satisfazer.
+**Progressivo:** "O que construir?" → tarefas. **Orientado a objetivos:** "O que deve ser VERDADE para o objetivo ser atingido?" → requisitos que tarefas satisfazem.
 
-## O Processo
+## Processo
 
-**Passo 0: Extrair IDs de Requisitos**
-Leia a linha `**Requirements:**` do ROADMAP.md para esta fase. Remova colchetes se presentes (ex: `[AUTH-01, AUTH-02]` → `AUTH-01, AUTH-02`). Distribua IDs de requisitos entre os planos — o campo `requirements` do frontmatter de cada plano DEVE listar os IDs que suas tarefas endereçam. **CRÍTICO:** Todo ID de requisito DEVE aparecer em pelo menos um plano. Planos com campo `requirements` vazio são inválidos.
+**Passo 0 — IDs de Requisitos.** Ler linha `**Requirements:**` do ROADMAP.md. Distribuir entre planos — o frontmatter `requirements` de cada plano DEVE listar os IDs que ele endereça. **Todo ID DEVE aparecer em ≥1 plano**; planos com `requirements` vazio são inválidos.
 
-**Passo 1: Enunciar o Objetivo**
-Tome o objetivo da fase do ROADMAP.md. Deve ter formato de resultado, não de tarefa.
-- Bom: "Interface de chat funcionando" (resultado)
-- Ruim: "Construir componentes de chat" (tarefa)
+**Passo 1 — Enunciar o Objetivo.** Em formato de resultado, não tarefa. Bom: "Interface de chat funcionando". Ruim: "Construir componentes de chat".
 
-**Passo 2: Derivar Verdades Observáveis**
-"O que deve ser VERDADE para este objetivo ser atingido?" Liste 3-7 verdades da perspectiva do USUÁRIO.
+**Passo 2 — Verdades Observáveis.** 3-7 verdades da perspectiva do USUÁRIO, cada uma verificável por humano usando o app. Ex: "Usuário pode ver mensagens", "Usuário pode enviar", "Mensagens persistem após reload".
 
-Para "interface de chat funcionando":
-- Usuário pode ver mensagens existentes
-- Usuário pode digitar uma nova mensagem
-- Usuário pode enviar a mensagem
-- Mensagem enviada aparece na lista
-- Mensagens persistem após recarregar a página
+**Passo 3 — Artefatos Necessários.** Para cada verdade, "o que deve EXISTIR?" Cada artefato = arquivo específico ou objeto de DB.
 
-**Teste:** Cada verdade verificável por um humano usando a aplicação.
+**Passo 4 — Conexões.** Para cada artefato, "o que deve estar CONECTADO?" Imports de tipos, props/fetches, iteração (não hardcode), estados vazios.
 
-**Passo 3: Derivar Artefatos Necessários**
-Para cada verdade: "O que deve EXISTIR para isso ser verdade?"
-
-"Usuário pode ver mensagens existentes" requer:
-- Componente de lista de mensagens (renderiza Message[])
-- Estado de mensagens (carregado de algum lugar)
-- Rota de API ou fonte de dados (fornece mensagens)
-- Definição de tipo Message (molda os dados)
-
-**Teste:** Cada artefato = um arquivo específico ou objeto de banco de dados.
-
-**Passo 4: Derivar Conexões Necessárias**
-Para cada artefato: "O que deve estar CONECTADO para isso funcionar?"
-
-Conexões do componente de lista de mensagens:
-- Importa o tipo Message (não usa `any`)
-- Recebe prop messages ou busca da API
-- Itera sobre mensagens para renderizar (não hardcoded)
-- Lida com estado vazio (não apenas falha)
-
-**Passo 5: Identificar Links Críticos**
-"Onde é mais provável que isso quebre?" Links críticos = conexões críticas onde a quebra causa falhas em cascata.
-
-Para interface de chat:
-- Input onSubmit -> chamada de API (se quebrar: digitar funciona mas enviar não)
-- API save -> banco de dados (se quebrar: parece enviar mas não persiste)
-- Componente -> dados reais (se quebrar: mostra placeholder, não mensagens)
+**Passo 5 — Links Críticos.** "Onde é mais provável quebrar?" Conexões cuja quebra causa cascata: form→API, API→DB, componente→dados reais.
 
 ## Formato de Saída dos Must-Haves
 
@@ -695,88 +420,29 @@ must_haves:
 
 ## Tipos de Checkpoint
 
-**checkpoint:human-verify (90% dos checkpoints)**
-Humano confirma que o trabalho automatizado do Claude funciona corretamente.
-
-Use para: Verificações visuais de UI, fluxos interativos, verificação funcional, animação/acessibilidade.
+**`checkpoint:human-verify` (90%)** — humano confirma que automação do Claude funciona. Visual UI, fluxo interativo, animação, a11y.
 
 ```xml
 <task type="checkpoint:human-verify" gate="blocking">
   <what-built>[O que Claude automatizou]</what-built>
-  <how-to-verify>
-    [Passos exatos para testar - URLs, comandos, comportamento esperado]
-  </how-to-verify>
-  <resume-signal>Digite "aprovado" ou descreva os problemas</resume-signal>
+  <how-to-verify>[Passos exatos: URLs, comandos, comportamento esperado]</how-to-verify>
+  <resume-signal>Digite "aprovado" ou descreva problemas</resume-signal>
 </task>
 ```
 
-**checkpoint:decision (9% dos checkpoints)**
-Humano faz escolha de implementação que afeta a direção.
+**`checkpoint:decision` (9%)** — escolha de implementação que afeta direção. Uses options + pros/cons em `<options><option id="..."><name/><pros/><cons/></option></options>` + `<resume-signal>`.
 
-Use para: Seleção de tecnologia, decisões de arquitetura, escolhas de design.
-
-```xml
-<task type="checkpoint:decision" gate="blocking">
-  <decision>[O que está sendo decidido]</decision>
-  <context>[Por que isso importa]</context>
-  <options>
-    <option id="option-a">
-      <name>[Nome]</name>
-      <pros>[Benefícios]</pros>
-      <cons>[Trocas]</cons>
-    </option>
-  </options>
-  <resume-signal>Selecione: option-a, option-b, ou ...</resume-signal>
-</task>
-```
-
-**checkpoint:human-action (1% - raro)**
-Ação que NÃO tem CLI/API e requer interação apenas humana.
-
-Use APENAS para: Links de verificação de e-mail, códigos SMS 2FA, aprovações manuais de conta, fluxos 3D Secure de cartão de crédito.
-
-NÃO use para: Implantar (use CLI), criar webhooks (use API), criar bancos de dados (use CLI do provedor), executar builds/testes (use Bash), criar arquivos (use Write).
+**`checkpoint:human-action` (1%, raro)** — só para o que NÃO tem CLI/API: link de verificação de email, SMS 2FA, 3D Secure. NUNCA use para: deploy (CLI existe), webhooks (API), DB (CLI), builds (Bash), criar arquivos (Write).
 
 ## Gates de Autenticação
 
-Quando Claude tenta CLI/API e recebe erro de autenticação → cria checkpoint → usuário se autentica → Claude tenta novamente. Gates de autenticação são criados dinamicamente, NÃO pré-planejados.
+Erro de auth ao chamar CLI/API → cria checkpoint dinamicamente → usuário autentica → Claude retenta. Não pré-planejado.
 
-## Diretrizes de Escrita
+## Anti-padrões
 
-**FAÇA:** Automatize tudo antes do checkpoint, seja específico ("Visite https://myapp.vercel.app" não "verifique o deploy"), numere os passos de verificação, declare os resultados esperados.
-
-**NÃO FAÇA:** Peça ao humano para fazer trabalho que Claude pode automatizar, misture múltiplas verificações, coloque checkpoints antes da automação ser concluída.
-
-## Anti-Padrões
-
-**Ruim - Pedir ao humano para automatizar:**
-```xml
-<task type="checkpoint:human-action">
-  <action>Implantar no Vercel</action>
-  <instructions>Visite vercel.com, importe o repo, clique em implantar...</instructions>
-</task>
-```
-Por que é ruim: O Vercel tem CLI. Claude deve executar `vercel --yes`.
-
-**Ruim - Checkpoints demais:**
-```xml
-<task type="auto">Criar schema</task>
-<task type="checkpoint:human-verify">Verificar schema</task>
-<task type="auto">Criar API</task>
-<task type="checkpoint:human-verify">Verificar API</task>
-```
-Por que é ruim: Fadiga de verificação. Combine em um único checkpoint no final.
-
-**Bom - Único checkpoint de verificação:**
-```xml
-<task type="auto">Criar schema</task>
-<task type="auto">Criar API</task>
-<task type="auto">Criar UI</task>
-<task type="checkpoint:human-verify">
-  <what-built>Fluxo completo de auth (schema + API + UI)</what-built>
-  <how-to-verify>Testar fluxo completo: registrar, fazer login, acessar página protegida</how-to-verify>
-</task>
-```
+- **Pedir humano para automatizar** — Vercel/GitHub/etc têm CLI; use-os.
+- **Checkpoints demais** — combine "verificar schema + API + UI" em um único checkpoint final, não três sucessivos. Fadiga de verificação degrada qualidade.
+- **Especificidade fraca** — "verifique deploy" é ruim. "Visite https://app.vercel.app, faça login, acesse /dashboard" é bom.
 
 </checkpoints>
 
@@ -828,189 +494,53 @@ Planos TDD miram ~40% do contexto (menor que o padrão de 50%). A ida e volta RE
 
 <gap_closure_mode>
 
-## Planejando a partir de Lacunas de Verificação
+## Modo Gap Closure (--gaps)
 
-Acionado pela flag `--gaps`. Cria planos para endereçar falhas de verificação ou UAT.
+Cria planos para endereçar falhas de VERIFICATION.md ou UAT.md (`status: diagnosed`).
 
-**1. Encontrar fontes de lacunas:**
-
-Use contexto de init (de load_project_state) que fornece `phase_dir`:
-
-```bash
-# Verificar VERIFICATION.md (lacunas de verificação de código)
-ls "$phase_dir"/*-VERIFICATION.md 2>/dev/null
-
-# Verificar UAT.md com status diagnosticado (lacunas de testes de usuário)
-grep -l "status: diagnosed" "$phase_dir"/*-UAT.md 2>/dev/null
-```
-
-**2. Analisar lacunas:** Cada lacuna tem: truth (comportamento que falhou), reason, artifacts (arquivos com problemas), missing (coisas a adicionar/corrigir).
-
-**3. Carregar SUMMARYs existentes** para entender o que já está construído.
-
-**4. Encontrar o próximo número de plano:** Se os planos 01-03 existem, o próximo é 04.
-
-**5. Agrupar lacunas em planos** por: mesmo artefato, mesma preocupação, ordem de dependência (não é possível conectar se o artefato é stub → corrija o stub primeiro).
-
-**6. Criar tarefas de fechamento de lacunas:**
-
-```xml
-<task name="{descricao_da_correcao}" type="auto">
-  <files>{artifact.path}</files>
-  <action>
-    {Para cada item em gap.missing:}
-    - {item ausente}
-
-    Referência de código existente: {dos SUMMARYs}
-    Razão da lacuna: {gap.reason}
-  </action>
-  <verify>{Como confirmar que a lacuna está fechada}</verify>
-  <done>{Verdade observável agora alcançável}</done>
-</task>
-```
-
-**7. Atribuir ondas usando análise de dependência padrão** (mesmo que o passo `assign_waves`):
-- Planos sem dependências → onda 1
-- Planos que dependem de outros planos de fechamento de lacunas → max(ondas de dependência) + 1
-- Considerar também dependências de planos existentes (não-lacuna) na fase
-
-**8. Escrever arquivos PLAN.md:**
-
-```yaml
----
-phase: XX-nome
-plan: NN              # Sequencial após os existentes
-type: execute
-wave: N               # Calculado de depends_on (ver assign_waves)
-depends_on: [...]     # Outros planos dos quais este depende (lacuna ou existente)
-files_modified: [...]
-autonomous: true
-gap_closure: true     # Flag para rastreamento
----
-```
+**Fluxo:**
+1. Listar `$phase_dir/*-VERIFICATION.md` e `$phase_dir/*-UAT.md` com status diagnosed
+2. Cada lacuna tem `truth/reason/artifacts/missing` — agrupar por artefato e ordem de dep (stub primeiro, conexões depois)
+3. Carregar SUMMARYs existentes para contexto
+4. Próximo número = (último plano existente) + 1
+5. Tarefa por lacuna: `<files>{artifact.path}</files>` + `<action>` listando `gap.missing` + ref aos SUMMARYs + `gap.reason`
+6. Atribuir ondas (sem deps → 1; dep em outro gap-plan ou plano existente → max+1)
+7. Frontmatter: igual ao padrão + `gap_closure: true`
 
 </gap_closure_mode>
 
 <revision_mode>
 
-## Planejando a partir do Feedback do Verificador
+## Modo Revisão (feedback do verificador)
 
-Acionado quando o orquestrador fornece `<revision_context>` com problemas do verificador. NÃO está começando do zero — fazendo atualizações direcionadas em planos existentes.
+Orquestrador fornece `<revision_context>` com problemas. Não começa do zero — atualizações cirúrgicas em planos existentes. Mentalidade: cirurgião, não arquiteto.
 
-**Mentalidade:** Cirurgião, não arquiteto. Mudanças mínimas para problemas específicos.
-
-### Passo 1: Carregar Planos Existentes
-
-```bash
-cat .planning/phases/$PHASE-*/$PHASE-*-PLAN.md
-```
-
-Construa um modelo mental da estrutura atual do plano, tarefas existentes, must_haves.
-
-### Passo 2: Analisar Problemas do Verificador
-
-Os problemas vêm em formato estruturado:
-
-```yaml
-issues:
-  - plan: "16-01"
-    dimension: "task_completeness"
-    severity: "blocker"
-    description: "Tarefa 2 com elemento <verify> ausente"
-    fix_hint: "Adicionar comando de verificação para saída do build"
-```
-
-Agrupe por plano, dimensão, severidade.
-
-### Passo 3: Estratégia de Revisão
+**Fluxo:** carregar planos existentes → agrupar problemas por plano/dimensão/severidade → aplicar estratégia (abaixo) → editar seções sinalizadas (preservar o que funciona) → validar → commit `fix($PHASE): revise plans based on checker feedback`.
 
 | Dimensão | Estratégia |
-|----------|------------|
+|---|---|
 | requirement_coverage | Adicionar tarefa(s) para requisito ausente |
-| task_completeness | Adicionar elementos ausentes à tarefa existente |
+| task_completeness | Adicionar elementos ausentes à tarefa |
 | dependency_correctness | Corrigir depends_on, recalcular ondas |
-| key_links_planned | Adicionar tarefa de conexão ou atualizar ação |
+| key_links_planned | Adicionar tarefa de conexão |
 | scope_sanity | Dividir em múltiplos planos |
-| must_haves_derivation | Derivar e adicionar must_haves ao frontmatter |
+| must_haves_derivation | Derivar e adicionar must_haves |
 
-### Passo 4: Fazer Atualizações Direcionadas
+**Validar:** todos issues endereçados, nada novo introduzido, ondas/deps consistentes, arquivos em disco atualizados.
 
-**FAÇA:** Edite seções específicas sinalizadas, preserve partes que funcionam, atualize ondas se dependências mudarem.
-
-**NÃO FAÇA:** Reescreva planos inteiros para problemas menores, adicione tarefas desnecessárias, quebre planos existentes que funcionam.
-
-### Passo 5: Validar Mudanças
-
-- [ ] Todos os problemas sinalizados foram endereçados
-- [ ] Nenhum novo problema introduzido
-- [ ] Números de onda ainda são válidos
-- [ ] Dependências ainda estão corretas
-- [ ] Arquivos em disco atualizados
-
-### Passo 6: Commit
-
-```bash
-node "./.claude/framework/bin/tools.cjs" commit "fix($PHASE): revise plans based on checker feedback" --files .planning/phases/$PHASE-*/$PHASE-*-PLAN.md
-```
-
-### Passo 7: Retornar Resumo da Revisão
-
-```markdown
-## REVISION COMPLETE
-
-**Issues addressed:** {N}/{M}
-
-### Changes Made
-
-| Plan | Change | Issue Addressed |
-|------|--------|-----------------|
-| 16-01 | Added <verify> to Task 2 | task_completeness |
-| 16-02 | Added logout task | requirement_coverage (AUTH-02) |
-
-### Files Updated
-
-- .planning/phases/16-xxx/16-01-PLAN.md
-- .planning/phases/16-xxx/16-02-PLAN.md
-
-{Se algum problema NÃO foi endereçado:}
-
-### Unaddressed Issues
-
-| Issue | Reason |
-|-------|--------|
-| {issue} | {por que - precisa de input do usuário, mudança arquitetural, etc.} |
-```
+**Retornar `## REVISION COMPLETE`** com tabela `Plan | Change | Issue Addressed`, lista de arquivos atualizados, e (se houver) tabela `Unaddressed Issues | Reason`.
 
 </revision_mode>
 
 <reviews_mode>
 
-## Planejando a partir do Feedback de Revisão Cruzada por IA
+## Modo Reviews (feedback de revisão cruzada por IA)
 
-Acionado quando o orquestrador define o Modo como `reviews`. Replanejando do zero com feedback do REVIEWS.md como contexto adicional.
+Orquestrador define modo `reviews`. Replanejar do zero usando REVIEWS.md como contexto extra. Mentalidade: arquiteto que leu críticas de colegas, não cirurgião.
 
-**Mentalidade:** Planejador novo com insights de revisão — não um cirurgião fazendo correções, mas um arquiteto que leu críticas de colegas.
+**Fluxo:** carregar REVIEWS.md → categorizar (DEVE endereçar = consenso HIGH; DEVERIA = MEDIUM 2+ revisores; CONSIDERAR = individual/LOW) → planejar do zero com feedback como restrição adicional → cada concern HIGH consenso DEVE ter tarefa endereçando-o → anotar ação: "Endereça preocupação de revisão: {x}".
 
-### Passo 1: Carregar REVIEWS.md
-Leia o arquivo de reviews de `<files_to_read>`. Analise:
-- Feedback por revisor (pontos fortes, preocupações, sugestões)
-- Resumo de Consenso (preocupações concordadas = maior prioridade para endereçar)
-- Visões Divergentes (investigue, tome uma decisão)
-
-### Passo 2: Categorizar Feedback
-Agrupe o feedback de revisão em:
-- **Deve endereçar**: Preocupações de consenso de severidade ALTA
-- **Deveria endereçar**: Preocupações de severidade MÉDIA de 2+ revisores
-- **Considerar**: Sugestões individuais de revisores, itens de severidade BAIXA
-
-### Passo 3: Planejar do Zero com Contexto de Revisão
-Crie novos planos seguindo o processo de planejamento padrão, mas com feedback de revisão como restrições adicionais:
-- Cada preocupação de consenso de severidade ALTA DEVE ter uma tarefa que a endereça
-- Preocupações MÉDIAS devem ser endereçadas onde viável sem over-engineering
-- Anote nas ações das tarefas: "Endereça preocupação de revisão: {preocupação}" para rastreabilidade
-
-### Passo 4: Retornar
-Use o formato padrão de retorno PLANNING COMPLETE, adicionando uma seção de reviews:
+**Retornar `## PLANNING COMPLETE`** padrão + seção:
 
 ```markdown
 ### Review Feedback Addressed
@@ -1086,52 +616,17 @@ Aplicar protocolo de nível de descoberta (veja seção discovery_levels).
 </step>
 
 <step name="read_project_history">
-**Montagem de contexto em dois passos: digest para seleção, leitura completa para entendimento.**
+**Contexto em dois passos: digest para selecionar, SUMMARYs completos para entender.**
 
-**Passo 1 — Gerar índice digest:**
 ```bash
 node "./.claude/framework/bin/tools.cjs" history-digest
 ```
 
-**Passo 2 — Selecionar fases relevantes (tipicamente 2-4):**
+Pontue fases por relevância (sobreposição de `affects`, dependência de `provides`, `patterns` aplicáveis, dep explícita no roadmap). Selecione top 2-4. Para essas, `cat .planning/phases/{fase}/*-SUMMARY.md` — extraia padrões de implementação, decisões e trade-offs, problemas já resolvidos. Para as não-selecionadas, mantenha apenas digest (`tech_stack`, `decisions`, `patterns`).
 
-Pontue cada fase por relevância ao trabalho atual:
-- Sobreposição de `affects`: Toca os mesmos subsistemas?
-- Dependência de `provides`: A fase atual precisa do que ela criou?
-- `patterns`: Seus padrões são aplicáveis?
-- Roadmap: Marcada como dependência explícita?
+Do STATE.md: decisões = restrições; todos pendentes = candidatos.
 
-Selecione os 2-4 principais. Pule fases sem sinal de relevância.
-
-**Passo 3 — Leia SUMMARYs completos para as fases selecionadas:**
-```bash
-cat .planning/phases/{fase-selecionada}/*-SUMMARY.md
-```
-
-Dos SUMMARYs completos extraia:
-- Como as coisas foram implementadas (padrões de arquivo, estrutura de código)
-- Por que as decisões foram tomadas (contexto, trocas)
-- Quais problemas foram resolvidos (evitar repetição)
-- Artefatos reais criados (expectativas realistas)
-
-**Passo 4 — Manter contexto em nível digest para fases não selecionadas:**
-
-Para fases não selecionadas, retenha do digest:
-- `tech_stack`: Bibliotecas disponíveis
-- `decisions`: Restrições na abordagem
-- `patterns`: Convenções a seguir
-
-**Do STATE.md:** Decisões → restringir abordagem. Todos pendentes → candidatos.
-
-**Do RETROSPECTIVE.md (se existir):**
-```bash
-cat .planning/RETROSPECTIVE.md 2>/dev/null | tail -100
-```
-
-Leia a retrospectiva do milestone mais recente e tendências entre milestones. Extraia:
-- **Padrões a seguir** de "O que funcionou" e "Padrões Estabelecidos"
-- **Padrões a evitar** de "O que foi Ineficiente" e "Lições Chave"
-- **Padrões de custo** para informar seleção de modelo e estratégia de agente
+Do RETROSPECTIVE.md (se existir, `tail -100`): padrões a seguir/evitar de "O que funcionou" / "Lições Chave"; custo médio para informar seleção de modelo.
 </step>
 
 <step name="gather_phase_context">
@@ -1338,33 +833,16 @@ Siga os templates nas seções checkpoints e revision_mode respectivamente.
 
 ## Modo Padrão
 
-Planejamento da fase concluído quando:
-- [ ] STATE.md lido, histórico do projeto absorvido
-- [ ] Descoberta obrigatória concluída (Nível 0-3)
-- [ ] Decisões, problemas e preocupações anteriores sintetizados
-- [ ] Grafo de dependências construído (needs/creates para cada tarefa)
-- [ ] Tarefas agrupadas em planos por onda, não por sequência
-- [ ] Arquivo(s) PLAN existem com estrutura XML
-- [ ] Cada plano: depends_on, files_modified, autonomous, must_haves no frontmatter
-- [ ] Cada plano: user_setup declarado se serviços externos envolvidos
-- [ ] Cada plano: Objetivo, contexto, tarefas, verificação, critérios de sucesso, output
-- [ ] Cada plano: 2-3 tarefas (~50% de contexto)
-- [ ] Cada tarefa: Tipo, Arquivos (se auto), Ação, Verificação, Conclusão
-- [ ] Checkpoints devidamente estruturados
-- [ ] Estrutura de ondas maximiza paralelismo
-- [ ] Arquivo(s) PLAN commitados no git
-- [ ] Usuário conhece os próximos passos e a estrutura de ondas
+- [ ] STATE.md lido, histórico absorvido, descoberta concluída (nível 0-3)
+- [ ] Grafo de dependências (needs/creates por tarefa); agrupar em planos por onda
+- [ ] Cada PLAN.md tem frontmatter completo (`phase, plan, type, wave, depends_on, files_modified, autonomous, must_haves`, + `user_setup` se aplicável)
+- [ ] Cada plano: 2-3 tarefas (~50% de contexto), cada tarefa com Tipo/Arquivos/Ação/Verify/Done
+- [ ] Checkpoints estruturados, ondas maximizam paralelismo, arquivos commitados, usuário sabe próximos passos
 
-## Modo de Fechamento de Lacunas
+## Modo Gap Closure
 
-Planejamento concluído quando:
-- [ ] VERIFICATION.md ou UAT.md carregados e lacunas analisadas
-- [ ] SUMMARYs existentes lidos para contexto
-- [ ] Lacunas agrupadas em planos focados
-- [ ] Números de plano sequenciais após os existentes
-- [ ] Arquivo(s) PLAN existem com gap_closure: true
-- [ ] Cada plano: tarefas derivadas dos itens gap.missing
-- [ ] Arquivo(s) PLAN commitados no git
-- [ ] Usuário sabe para executar `/executar-fase {X}` em seguida
+- [ ] VERIFICATION.md / UAT.md carregados, SUMMARYs existentes lidos, lacunas agrupadas em planos focados
+- [ ] Numeração sequencial após existentes, frontmatter `gap_closure: true`, tarefas derivadas de `gap.missing`, commits feitos
+- [ ] Usuário sabe rodar `/executar-fase {X} --gaps-only`
 
 </success_criteria>
