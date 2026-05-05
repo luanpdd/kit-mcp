@@ -77,9 +77,18 @@ Série de patches feitos fora do framework — UI redesign, framework velocity, 
 - v1.5.2 — sidecar idle-default = 0 (não encerra sozinho)
 - v1.5.3 — bundle audit quick-wins (POST /shutdown Origin check, awk regex em publish.yml, drop absPath de list-*, trim Vago/Correto)
 
+### v1.6.0 — Perf+lean (2026-05-05) 🧹 16 audit items + observability hook
+- 16/16 REQs entregues em 3 fases (Phase 19 quick wins / Phase 20 hardening / Phase 21 token economy) + Phase 19.5 inserida (observability hook).
+- planner.md compactado 53→35 KB (-34%); CLAUDE.md gerado 10→8.5 KB (-19%).
+- listKit cache TTL 30s, regex top-level, sync/reverse-sync aceitam kit pré-carregado.
+- Sidecar `/state` paginado, healthz timeout 500ms, TOCTOU re-probe, walkTree path traversal bloqueado, redactPath Windows-aware.
+- CI: Node 24 na matriz, npm audit gate, deps-budget mensagem dinâmica, prepublishOnly preflight.
+- Hook PostToolUse `sidecar-tool-publisher.js` publica `tool_invocation` events com source detection (multi-IDE pill na UI).
+- Stable API v1.0+ preservada. Tests: 102 unit + 67 integration verde.
+
 ## Em andamento
 
-**v1.6.0 — perf+lean** (em planejamento). Auditoria de codebase 2026-05-05 produziu 20 itens; bundle 1.5.3 entregou 4. Os 16 restantes estão no roadmap de v1.6 (3 fases, 19→21).
+(nada — v1.6.0 concluído)
 
 ## Backlog macro (não-priorizado)
 

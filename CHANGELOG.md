@@ -6,6 +6,40 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.6.0] - 2026-05-05
+
+Milestone v1.6 — perf+lean: 16 itens de auditoria de codebase entregues em 3 fases (Phase 19 quick wins, Phase 20 hardening, Phase 21 token economy) + observability hook (Phase 19.5).
+
+### Adicionado
+
+- **Hook PostToolUse para sidecar** (`kit/hooks/sidecar-tool-publisher.js`). Publica `tool_invocation` events no sidecar a cada tool use do Claude Code. Source detection (claude-code/cursor/vscode/jetbrains) + pid para multi-IDE. UI ganha `.tl-source` pill com cor por IDE e `renderArgsSummary` com hint de file_path/command. Resolve "sidecar não viu o que Claude estava fazendo".
+- **Sidecar `/state` aceita `?offset=N&limit=M`** para paginação (PERF-05). Comportamento default (ring inteiro) preservado.
+- **`prepublishOnly` script** (INF-01) — `npm publish` agora roda unit + integration tests como preflight.
+- **Node 24 no CI matrix** (INF-03) — 3 OS × 3 Node = 9 combos.
+- **`npm audit --audit-level=high --omit=dev` no CI** (SEC-04) — falha em CVEs Alto+ na única dep runtime (open@11).
+- **`.npmignore` explícito** (INF-02) — belt-and-braces alongside `package.json` files allowlist.
+
+### Corrigido
+
+- **listKit cache TTL 30s** (PERF-01) — repeated `mcp__kit__kit list-*` calls no longer re-walk 60+ files.
+- **Frontmatter regex top-level** (PERF-02) — was recompiled 60x per listKit.
+- **`opts.kit` em sync/reverse-sync** (PERF-03) — sequential sync+reverse-sync agora 1 walk em vez de 2.
+- **healthz probe timeout 500ms** (PERF-04) — sidecar travado não bloqueia mais startup de novo sidecar.
+- **TOCTOU re-probe em acquireLockOrReclaim** (SEC-01) — race entre releaseLock e retry-acquire fechado.
+- **walkTree path traversal block** (SEC-02) — `isSafeRel()` rejeita `../`, abs, drive-prefixed em mode=copy.
+- **redactPath case-insensitive + separator-agnostic** (SEC-03) — Windows paths com casing/slash variantes agora redatam.
+- **deps-budget message dinâmico** (INF-04) — "Runtime deps: $CURRENT / $BUDGET" em vez de baseline obsoleta.
+
+### Tokens
+
+- **`planner.md` compactado de 53 KB → 35 KB** (TOK-01) — -34%, mantendo specs core (anatomia, checkpoints, TDD, frontmatter).
+- **CLAUDE.md gerado por `kit sync` slim** (TOK-02) — descrições truncadas a 80 chars; 10.4 → 8.5 KB.
+- **planner.md headers de 72 → 47** (TOK-03 parcial) — meta era ≤25; consolidação adicional risco de perder navegação.
+
+### Sem mudanças de API runtime
+
+Stable API v1.0+ preservada. `mcp__kit__kit action=get` ainda retorna content/absPath completos. Hook é opt-in via `~/.claude/settings.json`.
+
 ## [1.5.3] - 2026-05-05
 
 Patch bundle de auditoria — 4 melhorias quick-win (1 segurança, 1 infra, 2 token-economy).
