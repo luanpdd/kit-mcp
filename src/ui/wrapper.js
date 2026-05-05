@@ -21,16 +21,26 @@ function escapeForReplace(s) {
   return s.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
 }
 
+// SEC-03: Match Windows-style paths (backslash) AND POSIX-style (forward slash)
+// AND case variants on case-insensitive filesystems. We swap each separator for
+// a placeholder, then regex-escape the rest, then put back a char class that
+// matches either separator. 'i' flag handles case-insensitive Windows drives.
+const PATH_SEP_PLACEHOLDER = 'KMSEP';
+function buildPathRegex(rawPath) {
+  const withPlaceholders = rawPath.replace(/[\\/]+/g, PATH_SEP_PLACEHOLDER);
+  const escaped = escapeForReplace(withPlaceholders);
+  const flexible = escaped.split(PATH_SEP_PLACEHOLDER).join('[\\\\/]+');
+  return new RegExp(flexible, 'gi');
+}
+
 export function redactPath(value, projectRoot) {
   if (typeof value === 'string') {
     let out = value;
     if (projectRoot) {
-      const re = new RegExp(escapeForReplace(projectRoot), 'g');
-      out = out.replace(re, '<project>');
+      out = out.replace(buildPathRegex(projectRoot), '<project>');
     }
     if (HOME) {
-      const re = new RegExp(escapeForReplace(HOME), 'g');
-      out = out.replace(re, '~');
+      out = out.replace(buildPathRegex(HOME), '~');
     }
     return out;
   }

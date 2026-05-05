@@ -17,6 +17,21 @@ test('redactPath: replaces projectRoot with <project>', () => {
   assert.equal(redactPath(input, root), 'building <project>/src/foo.js for <project>');
 });
 
+// SEC-03: Windows-style path with mixed separators / casing should still redact.
+test('redactPath: redacts Windows-style backslash paths case-insensitively', () => {
+  const root = 'C:\\Users\\Foo\\proj';
+  const variants = [
+    'C:\\Users\\Foo\\proj\\src\\bar.js',  // exact
+    'c:\\users\\foo\\proj\\src\\bar.js',  // lowercase
+    'C:/Users/Foo/proj/src/bar.js',       // forward slash
+    'C:\\users\\Foo\\proj/src\\bar.js',   // mixed
+  ];
+  for (const v of variants) {
+    const out = redactPath(v, root);
+    assert.ok(out.startsWith('<project>'), `expected <project> prefix in: ${v} → ${out}`);
+  }
+});
+
 test('redactPath: walks objects and arrays', () => {
   const root = '/proj/x';
   const input = {

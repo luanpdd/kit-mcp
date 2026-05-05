@@ -97,7 +97,26 @@ export function releaseLock(projectRoot) {
 //   { stale: false, reason: 'healthz_ok' }      — process exists AND healthz responded
 //   { stale: true,  reason: 'pid_gone' }        — pid is ESRCH
 //   { stale: true,  reason: 'healthz_failed' }  — pid alive but no healthz response (used when healthzProbe provided)
-export async function probeStale(lock, { healthzProbe } = {}) {
+// PERF-04: budget for healthz probe inside acquireLockOrReclaim. A misbehaving
+// sidecar that accepts the connection but never responds shouldn't block startup
+// of a fresh sidecar — we treat slow-as-dead and reclaim.
+const HEALTHZ_PROBE_TIMEOUT_MS = 500;
+
+function withTimeout(promise, ms, fallback) {
+  return new Promise((resolve) => {
+    let settled = false;
+    const timer = setTimeout(() => {
+      if (!settled) { settled = true; resolve(fallback); }
+    }, ms);
+    if (typeof timer.unref === 'function') timer.unref();
+    Promise.resolve(promise).then(
+      (v) => { if (!settled) { settled = true; clearTimeout(timer); resolve(v); } },
+      () => { if (!settled) { settled = true; clearTimeout(timer); resolve(fallback); } },
+    );
+  });
+}
+
+export async function probeStale(lock, { healthzProbe, probeTimeoutMs } = {}) {
   if (!lock || typeof lock.pid !== 'number') {
     return { stale: true, reason: 'invalid_lock' };
   }
@@ -115,26 +134,47 @@ export async function probeStale(lock, { healthzProbe } = {}) {
   if (!healthzProbe) {
     return { stale: false, reason: 'pid_alive' };
   }
-  try {
-    const ok = await healthzProbe(lock.port);
-    if (ok) return { stale: false, reason: 'healthz_ok' };
-    return { stale: true, reason: 'healthz_failed' };
-  } catch {
-    return { stale: true, reason: 'healthz_failed' };
-  }
+  // PERF-04: bound the probe so a hung sidecar can't stall startup forever.
+  const ms = probeTimeoutMs ?? HEALTHZ_PROBE_TIMEOUT_MS;
+  const ok = await withTimeout(healthzProbe(lock.port), ms, false);
+  if (ok) return { stale: false, reason: 'healthz_ok' };
+  return { stale: true, reason: 'healthz_failed' };
 }
 
 // Convenience: take + retry once if stale lock is detected.
+// SEC-01: re-prove staleness after releaseLock and before the retry acquire to
+// close the TOCTOU window where a competing process could have raced into the
+// lockfile between our probe and our retry.
 export async function acquireLockOrReclaim(opts) {
   try {
     return acquireLock(opts);
   } catch (err) {
     if (err.code !== 'ELOCKED') throw err;
     const existing = readLock(opts.projectRoot);
-    const probe = await probeStale(existing, { healthzProbe: opts.healthzProbe });
+    const probe = await probeStale(existing, { healthzProbe: opts.healthzProbe, probeTimeoutMs: opts.probeTimeoutMs });
     if (probe.stale) {
       releaseLock(opts.projectRoot);
-      return acquireLock(opts);
+      // SEC-01: second prove. If something raced into the lock between our
+      // releaseLock and our retry-acquire, surface ELIVE instead of clobbering.
+      try {
+        return acquireLock(opts);
+      } catch (retryErr) {
+        if (retryErr.code !== 'ELOCKED') throw retryErr;
+        const racer = readLock(opts.projectRoot);
+        const racerProbe = await probeStale(racer, { healthzProbe: opts.healthzProbe, probeTimeoutMs: opts.probeTimeoutMs });
+        if (racerProbe.stale) {
+          // Genuinely dead again — third try. If THIS fails too, give up.
+          releaseLock(opts.projectRoot);
+          return acquireLock(opts);
+        }
+        const liveErr = new Error(
+          `Sidecar reclaimed by another process during retry (pid=${racer?.pid}, port=${racer?.port}). ` +
+          `Use \`kit ui status\` to inspect.`,
+        );
+        liveErr.code = 'ELIVE';
+        liveErr.lock = racer;
+        throw liveErr;
+      }
     }
     const liveErr = new Error(
       `Sidecar already running for this project (pid=${existing?.pid}, port=${existing?.port}). ` +

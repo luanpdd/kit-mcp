@@ -177,3 +177,23 @@ test('releaseLock returns false when nothing to remove', () => {
   const root = mkProjectRoot();
   assert.equal(releaseLock(root), false);
 });
+
+// PERF-04: probeStale enforces a per-call timeout on healthzProbe.
+test('probeStale: healthzProbe timeout treats slow holder as stale', async () => {
+  const slowProbe = () => new Promise((resolve) => setTimeout(() => resolve(true), 5000));
+  const lock = { pid: process.pid, port: 7100 }; // pid is alive (us)
+  const t0 = Date.now();
+  const result = await probeStale(lock, { healthzProbe: slowProbe, probeTimeoutMs: 50 });
+  const elapsed = Date.now() - t0;
+  assert.equal(result.stale, true);
+  assert.equal(result.reason, 'healthz_failed');
+  assert.ok(elapsed < 500, `expected <500ms, took ${elapsed}ms`);
+});
+
+test('probeStale: healthzProbe under timeout returns ok', async () => {
+  const fastProbe = () => Promise.resolve(true);
+  const lock = { pid: process.pid, port: 7100 };
+  const result = await probeStale(lock, { healthzProbe: fastProbe, probeTimeoutMs: 500 });
+  assert.equal(result.stale, false);
+  assert.equal(result.reason, 'healthz_ok');
+});

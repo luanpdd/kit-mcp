@@ -101,6 +101,16 @@ export async function syncTo(targetId, opts = {}) {
   return { target: targetId, mode, projectRoot, kitRoot, written: ops.map(o => o.path), dryRun };
 }
 
+// SEC-02: walkTree refuses entries whose normalized rel-path escapes the root or
+// is absolute, blocking path-traversal via maliciously-named files in mode=copy.
+function isSafeRel(rel) {
+  if (!rel) return false;
+  const norm = path.posix.normalize(rel.replaceAll('\\', '/'));
+  if (norm.startsWith('..') || norm.startsWith('/') || /^[A-Za-z]:/.test(norm)) return false;
+  if (norm.split('/').some((seg) => seg === '..')) return false;
+  return true;
+}
+
 async function walkTree(dir) {
   const out = [];
   async function visit(current, relPrefix) {
@@ -110,6 +120,12 @@ async function walkTree(dir) {
     for (const e of entries) {
       const abs = path.join(current, e.name);
       const rel = relPrefix ? `${relPrefix}/${e.name}` : e.name;
+      // SEC-02: reject names that would compose into path-traversal.
+      if (!isSafeRel(rel)) {
+        const err = new Error(`walkTree refuses unsafe path: ${rel}`);
+        err.code = 'EUNSAFEPATH';
+        throw err;
+      }
       if (e.isDirectory()) {
         await visit(abs, rel);
       } else if (e.isFile()) {

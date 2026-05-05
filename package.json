@@ -44,7 +44,8 @@
     "smoke": "node bin/cli.js kit list-agents | head -5",
     "test": "node test/run.mjs test/unit",
     "test:integration": "node test/run.mjs test/integration",
-    "test:all": "node test/run.mjs test"
+    "test:all": "node test/run.mjs test",
+    "prepublishOnly": "node test/run.mjs test/unit && node test/run.mjs test/integration"
   },
   "dependencies": {
     "@inquirer/prompts": "^8.4.2",

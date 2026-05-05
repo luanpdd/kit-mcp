@@ -113,6 +113,35 @@ test('POST /publish: round-trip — published event is in /state', async () => {
   });
 });
 
+// PERF-05: pagination via offset/limit, with full-ring back-compat.
+test('GET /state?offset=N&limit=M paginates ring buffer', async () => {
+  await withServer({}, async (srv) => {
+    // Publish a known sequence so we can index it deterministically.
+    for (let i = 0; i < 5; i++) {
+      await fetch('POST', srv.port, '/publish', {
+        body: { type: 'progress', ts: Date.now(), runId: null, payload: { percent: i * 10 } },
+      });
+    }
+
+    // Default: full ring (back-compat).
+    const full = JSON.parse((await fetch('GET', srv.port, '/state')).body);
+    assert.ok(full.events.length >= 6, 'should include run.start + 5 progresses');
+    assert.equal(typeof full.ringSize, 'number');
+
+    // Pagination.
+    const paged = JSON.parse((await fetch('GET', srv.port, '/state?offset=2&limit=2')).body);
+    assert.equal(paged.events.length, 2);
+
+    // Limit only.
+    const limited = JSON.parse((await fetch('GET', srv.port, '/state?limit=1')).body);
+    assert.equal(limited.events.length, 1);
+
+    // Out-of-range clamps to empty without erroring.
+    const oor = JSON.parse((await fetch('GET', srv.port, '/state?offset=9999&limit=1')).body);
+    assert.equal(oor.events.length, 0);
+  });
+});
+
 test('POST /publish: rejects malformed JSON', async () => {
   await withServer({}, async (srv) => {
     const r = await fetch('POST', srv.port, '/publish', { body: '{ bad json' });

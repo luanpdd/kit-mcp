@@ -311,12 +311,30 @@ export function createServer({
     });
   }
 
-  function handleState(res) {
+  // PERF-05: optional pagination via ?offset=N&limit=M. No query → ring inteiro
+  // (back-compat preservada). Out-of-range values clamp to bounds rather than 4xx.
+  function handleState(res, url) {
+    let events = ring;
+    const offsetRaw = url?.searchParams?.get('offset');
+    const limitRaw  = url?.searchParams?.get('limit');
+    if (offsetRaw !== null && offsetRaw !== undefined) {
+      const offset = Math.max(0, Number.parseInt(offsetRaw, 10) || 0);
+      const limit  = limitRaw !== null && limitRaw !== undefined
+        ? Math.max(0, Number.parseInt(limitRaw, 10) || 0)
+        : ring.length - offset;
+      events = ring.slice(offset, offset + limit);
+    } else if (limitRaw !== null && limitRaw !== undefined) {
+      const limit = Math.max(0, Number.parseInt(limitRaw, 10) || 0);
+      events = ring.slice(0, limit);
+    } else {
+      events = ring.slice();
+    }
     sendJson(res, 200, {
       version,
       port: listeningPort,
       eventsTotal: nextSeq - 1,
-      events: ring.slice(),
+      ringSize: ring.length,
+      events,
     });
   }
 
@@ -360,7 +378,7 @@ export function createServer({
         case 'GET /healthz':
           return handleHealthz(res);
         case 'GET /state':
-          return handleState(res);
+          return handleState(res, url);
         case 'POST /publish':
           return handlePublish(req, res);
         case 'POST /shutdown':
