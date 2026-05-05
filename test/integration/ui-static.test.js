@@ -103,18 +103,60 @@ test('static UI: design tokens — pure-black bg, oklch accent, system fonts', a
   });
 });
 
-test('static UI: tweaks panel exposes accent / density / motion / scenario', async () => {
+test('static UI: tweaks panel exposes accent / density / motion (no mock scenarios in 1.5)', async () => {
   await withServer(async (srv) => {
     const r = await fetchHtml(srv.port);
     assert.match(r.body, /id="tw-accent"/);
     assert.match(r.body, /id="tw-density"/);
     assert.match(r.body, /id="tw-motion"/);
-    assert.match(r.body, /id="tw-scenario"/);
-    // Scenarios that mock real source for demo: sync, multi, error, idle
-    assert.match(r.body, /data-v="sync"/);
-    assert.match(r.body, /data-v="multi"/);
-    assert.match(r.body, /data-v="error"/);
-    assert.match(r.body, /data-v="idle"/);
+    // Mock scenarios were removed in 1.5 — only real SSE drives the UI.
+    assert.doesNotMatch(r.body, /id="tw-scenario"/);
+    assert.doesNotMatch(r.body, /id="tw-replay"/);
+  });
+});
+
+test('static UI: history drawer with sessionStorage (1.5)', async () => {
+  await withServer(async (srv) => {
+    const r = await fetchHtml(srv.port);
+    // Trigger button + drawer
+    assert.match(r.body, /id="history-btn"/);
+    assert.match(r.body, /id="history"/);
+    assert.match(r.body, /id="history-body"/);
+    assert.match(r.body, /id="history-close"/);
+    // Persistence layer
+    assert.match(r.body, /sessionStorage\.setItem\("kit-mcp-history"/);
+    assert.match(r.body, /function loadHistory\(\)/);
+    assert.match(r.body, /function archiveRun\(/);
+  });
+});
+
+test('static UI: tokens — chip + per-event + cumulative footer (1.5)', async () => {
+  await withServer(async (srv) => {
+    const r = await fetchHtml(srv.port);
+    // Helpers
+    assert.match(r.body, /function readTokens\(/);
+    assert.match(r.body, /function fmtTokens\(/);
+    // Chip CSS class
+    assert.match(r.body, /\.tokens-chip/);
+    // Footer aggregates
+    assert.match(r.body, /id="footer-tokens"/);
+    assert.match(r.body, /id="footer-runs"/);
+    // Wiring: state.totalTokens accumulates from readTokens(evt)
+    assert.match(r.body, /state\.totalTokens \+= tk/);
+  });
+});
+
+test('static UI: defensive label fallbacks — never empty rows (1.5)', async () => {
+  await withServer(async (srv) => {
+    const r = await fetchHtml(srv.port);
+    // Sanitization helper
+    assert.match(r.body, /function safeStr\(/);
+    // Cascade fallback in rowHtml
+    assert.match(r.body, /const fallback = \(\.\.\.candidates\)/);
+    // milestone reads name → title → label → "marco"
+    assert.match(r.body, /fallback\(evt\.payload\?\.name, evt\.payload\?\.title, evt\.payload\?\.label, "marco"\)/);
+    // active card cascade
+    assert.match(r.body, /function runTitle\(run\)/);
   });
 });
 

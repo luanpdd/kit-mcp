@@ -802,6 +802,154 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 }
 .tw-actions button:hover { color: var(--text); background: var(--surface-3); }
 
+/* ───────────── tokens chips ───────────── */
+.tokens-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tokens-chip::before {
+  content: "⌬";
+  color: var(--text-3);
+  font-size: 10px;
+}
+.rc-tokens {
+  margin-top: 6px;
+  font-family: var(--mono);
+  color: var(--text-3);
+  font-size: 11px;
+  display: flex; gap: 14px;
+  align-items: center;
+}
+.rc-tokens .num { color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+/* ───────────── history drawer ───────────── */
+.history {
+  position: fixed;
+  right: 16px; bottom: 16px;
+  width: 360px;
+  max-height: 70vh;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.02);
+  z-index: 50;
+  overflow: hidden;
+  display: none;
+  flex-direction: column;
+  animation: tweaks-in .25s var(--ease);
+}
+.history.open { display: flex; }
+.history h3 {
+  margin: 0;
+  padding: 12px 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--text-3);
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.history h3 .hist-meta {
+  color: var(--text-2);
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: .04em;
+  margin-left: auto;
+}
+.history h3 .close {
+  width: 18px; height: 18px;
+  display: grid; place-items: center;
+  border-radius: 4px;
+  color: var(--text-3);
+}
+.history h3 .close:hover { background: var(--surface-3); color: var(--text); }
+.history-body { padding: 8px; overflow-y: auto; flex: 1; }
+.hist-empty {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 12px;
+}
+.hist-row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 4px 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: var(--surface-1);
+  transition: border-color .15s var(--ease);
+  cursor: pointer;
+}
+.hist-row:hover { border-color: var(--line-strong); background: var(--surface-3); }
+.hist-row[data-status="error"] { border-left: 3px solid var(--err); }
+.hist-row[data-status="ok"]    { border-left: 3px solid var(--accent); }
+.hist-status {
+  width: 18px; height: 18px;
+  display: grid; place-items: center;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  grid-row: 1 / span 1;
+}
+.hist-row[data-status="ok"]    .hist-status { color: var(--accent); background: var(--accent-soft); }
+.hist-row[data-status="error"] .hist-status { color: var(--err); background: var(--err-soft); }
+.hist-row[data-status="running"] .hist-status { color: var(--text-2); background: var(--surface-3); }
+.hist-title {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+  min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hist-when {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  text-align: right;
+  grid-row: 1 / span 1;
+}
+.hist-meta-row {
+  grid-column: 2 / span 2;
+  display: flex; gap: 12px; flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+}
+.hist-meta-row .num { color: var(--text-2); font-variant-numeric: tabular-nums; }
+.hist-detail {
+  grid-column: 1 / -1;
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-2);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
+  max-height: 240px;
+  overflow-y: auto;
+  display: none;
+}
+.hist-row.expanded .hist-detail { display: block; }
+.hist-detail-row { padding: 2px 0; display: flex; gap: 6px; }
+.hist-detail-row .pct { color: var(--accent); flex-shrink: 0; min-width: 36px; font-variant-numeric: tabular-nums; }
+.hist-detail-row .lbl { color: var(--text-2); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.hist-detail-row .tok { color: var(--text-3); flex-shrink: 0; }
+
 /* density-driven log padding handled via --pad-tight above */
 
 /* ───────────────────────── reduced motion ───────────────────────── */
@@ -868,6 +1016,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
         <rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>
       </svg>
     </button>
+    <button class="iconbtn" id="history-btn" aria-pressed="false" aria-label="Histórico desta sessão" title="Histórico desta sessão">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 1 0 3-7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/>
+      </svg>
+    </button>
     <button class="iconbtn" id="tweaks-btn" aria-pressed="false" aria-label="Tweaks" title="Tweaks">
       <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
         <circle cx="12" cy="12" r="3"/>
@@ -910,6 +1063,10 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
     <span>fonte: <span class="live" id="src-label">ao vivo</span></span>
     <span class="sep">·</span>
     <span id="last-seen">aguardando…</span>
+    <span class="sep" id="footer-tokens-sep" hidden>·</span>
+    <span id="footer-tokens" hidden>0 tokens</span>
+    <span class="sep">·</span>
+    <span id="footer-runs">0 runs concluídas</span>
   </footer>
 
 </div>
@@ -953,20 +1110,23 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
       </div>
     </div>
 
-    <div class="tw-group">
-      <span class="tw-label">Cenário (mock)</span>
-      <div class="seg" id="tw-scenario">
-        <button data-v="sync" aria-pressed="true">Sync</button>
-        <button data-v="multi">Multi</button>
-        <button data-v="error">Erro</button>
-        <button data-v="idle">Idle</button>
-      </div>
-    </div>
-
     <div class="tw-actions">
-      <button id="tw-replay">▸ replay</button>
-      <button id="tw-clear">limpar</button>
+      <button id="tw-clear">limpar tela</button>
     </div>
+  </div>
+</aside>
+
+<!-- HISTORY DRAWER -->
+<aside class="history" id="history" role="dialog" aria-label="Histórico da sessão">
+  <h3>
+    Histórico desta sessão
+    <span class="hist-meta" id="hist-meta">0 runs</span>
+    <button class="close" id="history-close" aria-label="Fechar">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </h3>
+  <div class="history-body" id="history-body">
+    <div class="hist-empty">Nada por aqui ainda. Quando uma run terminar, ela aparece aqui.</div>
   </div>
 </aside>
 
@@ -1057,11 +1217,13 @@ function clockTime(ts) {
 /* ---------- state ---------- */
 const state = {
   events: [],          // newest first
-  runs: new Map(),     // runId → { startTs, tool, lastProgress, lastLabel, ended, ok, current, total }
+  runs: new Map(),     // runId → { startTs, tool, lastProgress, lastLabel, ended, ok, current, total, tokens, endTs }
   filterText: "",
   // tool_invocation + shutdown não têm chip de filtro, mas devem aparecer por default
   filters: new Set(["run.start","progress","milestone","run.end","error","tool_invocation","shutdown"]),
   paused: false,
+  totalTokens: 0,      // soma de payload.tokens em TODOS os eventos da sessão
+  history: [],         // runs já concluídas neste tab — persistido em sessionStorage
 };
 
 /* ---------- DOM refs ---------- */
@@ -1085,6 +1247,14 @@ const els = {
   tweaks: $("#tweaks"),
   tweaksClose: $("#tweaks-close"),
   srcLabel: $("#src-label"),
+  historyBtn: $("#history-btn"),
+  history: $("#history"),
+  historyClose: $("#history-close"),
+  historyBody: $("#history-body"),
+  histMeta: $("#hist-meta"),
+  footerTokens: $("#footer-tokens"),
+  footerTokensSep: $("#footer-tokens-sep"),
+  footerRuns: $("#footer-runs"),
 };
 
 /* ---------- ingest one event ---------- */
@@ -1093,16 +1263,24 @@ function ingest(evt) {
   state.events.unshift(evt);
   if (state.events.length > 200) state.events.length = 200;
 
+  // tokens — soma global da sessão + por run
+  const tk = readTokens(evt);
+  if (tk > 0) state.totalTokens += tk;
+
   // run tracking
   if (evt.runId) {
     let run = state.runs.get(evt.runId);
     if (!run) {
-      run = { runId: evt.runId, startTs: evt.ts, tool: null, lastProgress: 0, lastLabel: "", ended: false, ok: true, current: 0, total: 0, lastTs: evt.ts };
+      run = { runId: evt.runId, startTs: evt.ts, tool: null, lastProgress: 0, lastLabel: "", ended: false, ok: true, current: 0, total: 0, tokens: 0, events: [], lastTs: evt.ts };
       state.runs.set(evt.runId, run);
     }
     run.lastTs = evt.ts;
+    run.tokens = (run.tokens || 0) + tk;
+    // store a slimmed-down record of every event in the run so the history
+    // drawer can show what happened later
+    run.events.push({ ts: evt.ts, type: evt.type, percent: evt.payload?.percent, label: evt.payload?.label, name: evt.payload?.name, message: evt.payload?.message, tokens: tk });
     if (evt.type === "run.start") {
-      run.tool = evt.payload?.tool;
+      run.tool = evt.payload?.tool || run.tool;
       run.startTs = evt.ts;
     } else if (evt.type === "progress") {
       if (typeof evt.payload?.percent === "number") run.lastProgress = evt.payload.percent;
@@ -1112,14 +1290,67 @@ function ingest(evt) {
     } else if (evt.type === "run.end") {
       run.ended = true;
       run.ok = !!evt.payload?.ok;
+      run.endTs = evt.ts;
       run.lastProgress = run.ok ? 100 : run.lastProgress;
+      // arquive into history (client-only, sessionStorage)
+      archiveRun(run);
     } else if (evt.type === "error") {
-      // don't end the run on error event alone; matches server semantics
+      // não termina o run; só registra
+      run.lastError = evt.payload?.message || "erro";
     }
   }
 
   render();
   els.lastSeen.textContent = "último: " + clockTime(evt.ts);
+}
+
+/* ---------- helpers — tokens & history ---------- */
+function readTokens(evt) {
+  // Aceita várias chaves comuns: payload.tokens (preferido), payload.usage.total_tokens, payload.cost.tokens
+  const p = evt.payload || {};
+  if (typeof p.tokens === "number") return p.tokens;
+  if (p.usage && typeof p.usage.total_tokens === "number") return p.usage.total_tokens;
+  if (p.cost && typeof p.cost.tokens === "number") return p.cost.tokens;
+  return 0;
+}
+
+function fmtTokens(n) {
+  if (n < 1000) return String(n);
+  if (n < 10_000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+  if (n < 1_000_000) return Math.round(n / 1000) + "k";
+  return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+}
+
+function archiveRun(run) {
+  // Snapshot leve da run completa — o que vai pra sessionStorage tem que ser serializável.
+  const entry = {
+    runId: run.runId,
+    tool: run.tool,
+    startTs: run.startTs,
+    endTs: run.endTs,
+    durationMs: (run.endTs || Date.now()) - run.startTs,
+    ok: run.ok,
+    tokens: run.tokens || 0,
+    eventsCount: run.events.length,
+    events: run.events.slice(-100), // últimos 100 eventos da run pra detalhe
+  };
+  state.history.unshift(entry);
+  // cap em 50 runs pra não estourar sessionStorage
+  if (state.history.length > 50) state.history.length = 50;
+  saveHistory();
+}
+
+function saveHistory() {
+  try {
+    sessionStorage.setItem("kit-mcp-history", JSON.stringify(state.history));
+  } catch (_) { /* quota? sem espaço? sem stress. */ }
+}
+
+function loadHistory() {
+  try {
+    const raw = sessionStorage.getItem("kit-mcp-history");
+    if (raw) state.history = JSON.parse(raw) || [];
+  } catch (_) { state.history = []; }
 }
 
 /* ---------- render ---------- */
@@ -1137,6 +1368,64 @@ function render() {
   const total = state.events.length;
   els.evtCount.textContent = `${total} evento${total === 1 ? "" : "s"}`;
   els.logCount.textContent = `${total} evento${total === 1 ? "" : "s"}`;
+  // Tokens (mostra só quando algum evento da sessão veio com payload.tokens)
+  if (state.totalTokens > 0) {
+    els.footerTokens.hidden = false;
+    els.footerTokensSep.hidden = false;
+    els.footerTokens.textContent = `${fmtTokens(state.totalTokens)} tokens nesta sessão`;
+  } else {
+    els.footerTokens.hidden = true;
+    els.footerTokensSep.hidden = true;
+  }
+  const completed = state.history.length;
+  els.footerRuns.textContent = `${completed} run${completed === 1 ? "" : "s"} concluída${completed === 1 ? "" : "s"}`;
+  if (els.histMeta) els.histMeta.textContent = `${completed} run${completed === 1 ? "" : "s"}`;
+}
+
+/* ---------- history drawer renderer ---------- */
+function renderHistory() {
+  if (!els.historyBody) return;
+  if (state.history.length === 0) {
+    els.historyBody.innerHTML = `<div class="hist-empty">Nada por aqui ainda. Quando uma run terminar, ela aparece aqui.</div>`;
+    return;
+  }
+  const rows = state.history.map((h) => historyRowHtml(h)).join("");
+  els.historyBody.innerHTML = rows;
+  els.historyBody.querySelectorAll(".hist-row").forEach((row) => {
+    row.addEventListener("click", () => row.classList.toggle("expanded"));
+  });
+}
+
+function historyRowHtml(h) {
+  const status = h.ok === true ? "ok" : h.ok === false ? "error" : "running";
+  const statusGlyph = status === "ok" ? "✓" : status === "error" ? "✕" : "·";
+  const title = humanizeTool(safeStr(h.tool || "")) || safeStr(h.tool) || "Processo";
+  const dur = formatElapsed(h.durationMs || 0);
+  const when = clockTime(h.startTs);
+  const tokens = h.tokens > 0 ? `<span class="num">${fmtTokens(h.tokens)}</span> tokens` : "<span>sem tokens registrados</span>";
+  const detailRows = (h.events || [])
+    .filter((e) => e.type === "progress" || e.type === "milestone" || e.type === "error" || e.type === "run.end")
+    .map((e) => {
+      const pct = typeof e.percent === "number" ? `${Math.round(e.percent)}%` : "·";
+      const lbl = safeStr(e.label) || safeStr(e.name) || safeStr(e.message) || humanizeEventType(e.type);
+      const tk = e.tokens > 0 ? fmtTokens(e.tokens) : "";
+      return `<div class="hist-detail-row"><span class="pct">${escapeHtml(pct)}</span><span class="lbl">${escapeHtml(lbl)}</span>${tk ? `<span class="tok">${tk}t</span>` : ""}</div>`;
+    })
+    .join("");
+  return `
+    <div class="hist-row" data-status="${status}" data-runid="${h.runId}">
+      <div class="hist-status">${statusGlyph}</div>
+      <div class="hist-title">${escapeHtml(title)}</div>
+      <div class="hist-when">${when}</div>
+      <div class="hist-meta-row">
+        <span><span class="num">${dur}</span> dur</span>
+        <span>${tokens}</span>
+        <span><span class="num">${h.eventsCount || 0}</span> eventos</span>
+        <span class="num">id ${h.runId.slice(0,8)}</span>
+      </div>
+      <div class="hist-detail">${detailRows || '<div class="hist-detail-row"><span class="lbl">(sem progresso registrado)</span></div>'}</div>
+    </div>
+  `;
 }
 
 function renderActive() {
@@ -1165,18 +1454,44 @@ function renderActive() {
   });
 }
 
+/**
+ * Sanitização: remove o "U+FFFD replacement character" e variantes que
+ * indicam mojibake — eventos vindos de publishers em locale ruim podem
+ * vazar bytes corrompidos. Em vez de mostrar `�`, devolvemos string vazia
+ * e deixamos o fallback escolher um nome decente.
+ */
+function safeStr(s) {
+  if (typeof s !== "string") return "";
+  // remove FFFD (U+FFFD) e null bytes
+  const cleaned = s.replace(/�+/g, "").replace(/ +/g, "").trim();
+  return cleaned;
+}
+
+/**
+ * Resolve o melhor título legível para uma run, NUNCA devolve "—" sozinho.
+ * Cascata: humanizeTool(payload.tool) → payload.title → payload.label →
+ * payload.name → "Processo".
+ */
+function runTitle(run) {
+  const t = humanizeTool(safeStr(run.tool || ""));
+  if (t && t !== "—") return t;
+  const fallback = safeStr(run.lastTitle) || safeStr(run.lastLabel) || safeStr(run.lastName);
+  if (fallback) return fallback;
+  return "Processo";
+}
+
 function updateActiveCard(card, run) {
   const family = TOOL_FAMILIES[run.tool] || "sync";
   const percent = Math.max(0, Math.min(100, Math.round(run.lastProgress)));
   const elapsed = Date.now() - run.startTs;
   const longRunning = elapsed > 30_000;
-  const stepLabel = humanizePath(run.lastLabel) || "iniciando…";
+  const stepLabel = humanizePath(safeStr(run.lastLabel)) || "iniciando…";
   const stepCount = run.total ? `${run.current}/${run.total}` : "";
 
   const set = (sel, fn) => { const n = card.querySelector(sel); if (n) fn(n); };
   set(".rc-icon", (n) => { n.dataset.tool = family; n.querySelector("use")?.setAttribute("href", `#i-${family}`); });
-  set(".rc-tool", (n) => { n.textContent = run.tool || "—"; });
-  set(".rc-title", (n) => { n.textContent = humanizeTool(run.tool || "—"); });
+  set(".rc-tool", (n) => { n.textContent = safeStr(run.tool) || "processo"; });
+  set(".rc-title", (n) => { n.textContent = runTitle(run); });
   set(".rc-bar-fill", (n) => { n.style.width = percent + "%"; });
   set(".rc-pct", (n) => { n.textContent = percent + "%"; });
   set(".rc-step-text", (n) => { if (n.textContent !== stepLabel) n.textContent = stepLabel; });
@@ -1184,24 +1499,27 @@ function updateActiveCard(card, run) {
   set(".rc-elapsed-val", (n) => { n.textContent = formatElapsed(elapsed); });
   set(".rc-elapsed .em", (n) => n.classList.toggle("warn", longRunning));
   set(".rc-runid", (n) => { n.textContent = "id " + run.runId.slice(0, 8); });
+  set(".rc-tokens-val", (n) => { n.textContent = run.tokens > 0 ? fmtTokens(run.tokens) : "—"; });
+  set(".rc-tokens", (n) => { n.classList.toggle("hidden", !(run.tokens > 0)); });
 }
 
 function activeCardHtml(run) {
   const family = TOOL_FAMILIES[run.tool] || "sync";
   const iconHref = `#i-${family}`;
-  const title = humanizeTool(run.tool || "—");
-  const stepLabel = humanizePath(run.lastLabel) || "iniciando…";
+  const title = runTitle(run);
+  const stepLabel = humanizePath(safeStr(run.lastLabel)) || "iniciando…";
   const percent = Math.max(0, Math.min(100, Math.round(run.lastProgress)));
   const elapsed = Date.now() - run.startTs;
   const longRunning = elapsed > 30_000;
   const stepCount = run.total ? `${run.current}/${run.total}` : "";
+  const showTokens = run.tokens > 0;
   return `
     <article class="run-card" data-runid="${run.runId}">
       <div class="rc-head">
         <div class="rc-icon" data-tool="${family}"><svg><use href="${iconHref}"/></svg></div>
         <div class="rc-title-block">
-          <div class="rc-tool">${run.tool || "—"}</div>
-          <div class="rc-title">${title}</div>
+          <div class="rc-tool">${escapeHtml(safeStr(run.tool) || "processo")}</div>
+          <div class="rc-title">${escapeHtml(title)}</div>
         </div>
         <div class="rc-elapsed">
           <span class="em ${longRunning ? "warn" : ""}"><span class="rc-elapsed-val">${formatElapsed(elapsed)}</span></span>
@@ -1220,10 +1538,15 @@ function activeCardHtml(run) {
         ${stepCount ? `<span class="rc-step-count">${stepCount}</span>` : ""}
       </div>
 
+      <div class="rc-tokens" ${showTokens ? "" : "style=\"display:none\""}>
+        <span class="tokens-chip"><span class="rc-tokens-val">${showTokens ? fmtTokens(run.tokens) : "—"}</span></span>
+        <span>tokens nesta run</span>
+      </div>
+
       <div class="rc-foot">
         <span class="rc-runid">id ${run.runId.slice(0, 8)}</span>
         <span class="sep">·</span>
-        <span>${run.tool || ""}</span>
+        <span>${escapeHtml(safeStr(run.tool) || "")}</span>
       </div>
     </article>
   `;
@@ -1296,39 +1619,71 @@ function rowHtml(evt, idx, prev) {
   const time = clockTime(evt.ts);
   const rel = relTime(Date.now() - evt.ts);
   const badge = humanizeEventType(evt.type);
-  const isNew = (Date.now() - evt.ts) < 1500;
+  const tk = readTokens(evt);
+  const tokenChip = tk > 0 ? ` <span class="tokens-chip" title="tokens">${fmtTokens(tk)}</span>` : "";
+  /**
+   * Cascata defensiva pra NUNCA renderizar uma row sem texto:
+   * 1) campo específico do tipo (name pra milestone, message pra error, …)
+   * 2) payload.label
+   * 3) payload.title
+   * 4) humanizeTool(payload.tool)
+   * 5) o tipo humanizado em si (último recurso — "Marco", "Erro", "Iniciado")
+   */
+  const fallback = (...candidates) => {
+    for (const c of candidates) {
+      const s = safeStr(typeof c === "string" ? c : (c == null ? "" : String(c)));
+      if (s) return s;
+    }
+    return badge.toLowerCase();
+  };
+
   let msg = "";
   switch (evt.type) {
     case "run.start": {
-      msg = `<strong>${escapeHtml(humanizeTool(evt.payload?.tool))}</strong> <span class="ident">${escapeHtml(evt.payload?.tool || "")}</span>${evt.payload?.target ? ` <span class="arrow">→</span> <span class="ident">${escapeHtml(evt.payload.target)}</span>` : ""}`;
+      const tool = safeStr(evt.payload?.tool || "");
+      const title = humanizeTool(tool) || fallback(evt.payload?.title, evt.payload?.label, evt.payload?.name);
+      const ident = tool ? ` <span class="ident">${escapeHtml(tool)}</span>` : "";
+      const target = evt.payload?.target ? ` <span class="arrow">→</span> <span class="ident">${escapeHtml(safeStr(evt.payload.target))}</span>` : "";
+      msg = `<strong>${escapeHtml(title)}</strong>${ident}${target}`;
       break;
     }
     case "run.end": {
       const dur = evt.payload?.duration_ms;
-      msg = `<strong>${escapeHtml(humanizeTool(evt.payload?.tool))}</strong> ${ok ? "concluído" : "falhou"}${dur ? ` <span class="ident">${(dur/1000).toFixed(2)}s</span>` : ""}`;
+      const tool = safeStr(evt.payload?.tool || "");
+      const title = humanizeTool(tool) || fallback(evt.payload?.title, evt.payload?.label, evt.payload?.name);
+      msg = `<strong>${escapeHtml(title)}</strong> ${ok ? "concluído" : "falhou"}${dur ? ` <span class="ident">${(dur/1000).toFixed(2)}s</span>` : ""}`;
       break;
     }
     case "progress": {
       const pct = typeof evt.payload?.percent === "number" ? `${Math.round(evt.payload.percent)}%` : "";
-      const lbl = evt.payload?.label || "";
+      const lbl = fallback(evt.payload?.label, evt.payload?.title, evt.payload?.name, "em andamento");
       const ct = evt.payload?.current && evt.payload?.total ? ` <span class="ident">${evt.payload.current}/${evt.payload.total}</span>` : "";
       msg = `${pct ? `<strong>${pct}</strong> ` : ""}<span class="path">${escapeHtml(humanizePath(lbl))}</span>${ct}`;
       break;
     }
     case "milestone": {
-      msg = `<strong>${escapeHtml(evt.payload?.name || "")}</strong>`;
+      const lbl = fallback(evt.payload?.name, evt.payload?.title, evt.payload?.label, "marco");
+      msg = `<strong>${escapeHtml(lbl)}</strong>`;
       break;
     }
     case "error": {
-      msg = `<strong>${escapeHtml(evt.payload?.message || "erro")}</strong>${evt.payload?.code ? ` <span class="ident">${evt.payload.code}</span>` : ""}`;
+      const lbl = fallback(evt.payload?.message, evt.payload?.title, evt.payload?.label, evt.payload?.name, "erro");
+      const code = evt.payload?.code ? ` <span class="ident">${escapeHtml(safeStr(evt.payload.code))}</span>` : "";
+      msg = `<strong>${escapeHtml(lbl)}</strong>${code}`;
       break;
     }
     case "tool_invocation": {
-      msg = `<span class="ident">${escapeHtml(evt.payload?.tool || "")}</span>`;
+      const tool = safeStr(evt.payload?.tool || "");
+      const title = humanizeTool(tool) || fallback(evt.payload?.title, evt.payload?.label, "ferramenta invocada");
+      msg = `<strong>${escapeHtml(title)}</strong>${tool ? ` <span class="ident">${escapeHtml(tool)}</span>` : ""}`;
+      break;
+    }
+    case "shutdown": {
+      msg = `<strong>${escapeHtml(fallback(evt.payload?.message, "sidecar encerrado"))}</strong>`;
       break;
     }
     default:
-      msg = "";
+      msg = `<span class="ident">${escapeHtml(badge.toLowerCase())}</span>`;
   }
   return `
     <div class="tl-row" data-type="${evt.type}" data-ok="${ok}" data-grouped="${grouped}">
@@ -1337,6 +1692,7 @@ function rowHtml(evt, idx, prev) {
       <div class="tl-content">
         <span class="tl-badge">${badge}</span>
         <span class="tl-msg">${msg}</span>
+        ${tokenChip}
         ${evt.runId ? `<span class="tl-runid">${evt.runId.slice(0,6)}</span>` : ""}
       </div>
     </div>
@@ -1365,104 +1721,14 @@ setInterval(() => {
   });
 }, 1000);
 
-/* ───────────────────── mock event generator ───────────────────── */
-let mockTimers = [];
-function clearMock() {
-  mockTimers.forEach(clearTimeout);
-  mockTimers = [];
-}
-function later(ms, fn) { mockTimers.push(setTimeout(fn, ms)); }
-
-function genRunId() { return Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 8); }
-
-function scenarioSync(delay = 0) {
-  const runId = genRunId();
-  const tool = "sync.install";
-  const start = Date.now() + delay;
-  const target = "claude-code";
-  later(delay, () => ingest({ type: "run.start", ts: start, runId, payload: { tool, target } }));
-
-  const total = 19;
-  const labels = [
-    "lendo agente planner",
-    "analisando dependências",
-    "projetando framework",
-    "compilando templates",
-    "writing .claude/agents/planner.md",
-    "writing .claude/agents/builder.md",
-    "writing .claude/agents/reviewer.md",
-    "writing .claude/commands/sync.md",
-    "validando schema",
-    "merging com kit base",
-    "writing .claude/agents/coordinator.md",
-    "writing .claude/agents/specialist.md",
-    "configurando hooks",
-    "writing .claude/agents/architect.md",
-    "writing .claude/agents/qa.md",
-    "writing .claude/agents/docs.md",
-    "selando manifest",
-    "rodando linter final",
-    "gravando metadata",
-  ];
-  for (let i = 0; i < total; i++) {
-    const t = delay + 220 + i * 540;
-    later(t, () => ingest({
-      type: "progress", ts: Date.now(), runId,
-      payload: { percent: Math.round(((i + 1) / total) * 100), label: labels[i], current: i + 1, total, kind: "fs" }
-    }));
-  }
-  later(delay + 220 + total * 540 + 100, () => ingest({
-    type: "milestone", ts: Date.now(), runId, payload: { name: `✓ ${total} agentes projetados` }
-  }));
-  later(delay + 220 + total * 540 + 600, () => ingest({
-    type: "run.end", ts: Date.now(), runId, payload: { tool, ok: true, duration_ms: 220 + total * 540 + 400 }
-  }));
-}
-
-function scenarioMulti() {
-  scenarioSync(0);
-  // gates run starting in parallel
-  const runId = genRunId();
-  later(800, () => ingest({ type: "run.start", ts: Date.now(), runId, payload: { tool: "gates.run", target: "claude-code" } }));
-  const stages = ["lint", "typecheck", "schema", "smoke"];
-  stages.forEach((s, i) => {
-    later(800 + (i + 1) * 1100, () => ingest({
-      type: "progress", ts: Date.now(), runId,
-      payload: { percent: Math.round(((i + 1) / stages.length) * 100), label: `gate: ${s}`, current: i + 1, total: stages.length, kind: "task" }
-    }));
-  });
-  later(800 + stages.length * 1100 + 300, () => ingest({
-    type: "run.end", ts: Date.now(), runId, payload: { tool: "gates.run", ok: true, duration_ms: stages.length * 1100 }
-  }));
-}
-
-function scenarioError() {
-  const runId = genRunId();
-  later(0,    () => ingest({ type: "run.start", ts: Date.now(), runId, payload: { tool: "reverse.scan", target: "cursor" } }));
-  later(400,  () => ingest({ type: "progress",  ts: Date.now(), runId, payload: { percent: 18, label: "lendo .cursor/rules/", current: 2, total: 11, kind: "fs" } }));
-  later(900,  () => ingest({ type: "progress",  ts: Date.now(), runId, payload: { percent: 38, label: "scanning .cursor/rules/architecture.mdc", current: 4, total: 11, kind: "fs" } }));
-  later(1500, () => ingest({ type: "error",     ts: Date.now(), runId, payload: { message: "ENOENT: file not found", code: "ENOENT" } }));
-  later(1700, () => ingest({ type: "run.end",   ts: Date.now(), runId, payload: { tool: "reverse.scan", ok: false, duration_ms: 1700 } }));
-}
-
-function scenarioIdle() {
-  /* nothing */
-}
-
-let currentScenario = "sync";
-function runScenario(name) {
-  currentScenario = name;
-  if (name === "sync") scenarioSync();
-  else if (name === "multi") scenarioMulti();
-  else if (name === "error") scenarioError();
-  else if (name === "idle") scenarioIdle();
-}
-
+/* ───────────────────── view actions ───────────────────── */
+/* "limpar tela" zera o que está VISÍVEL (eventos correntes + cards ativos),
+   mas NUNCA toca o histórico de runs concluídas — esse é o ponto do drawer. */
 function clearAll() {
-  clearMock();
   state.events = [];
   state.runs.clear();
   state._seenKeys = new Set();
+  state.totalTokens = 0;
   els.active.innerHTML = "";
   render();
   els.lastSeen.textContent = "aguardando…";
@@ -1498,13 +1764,29 @@ function wireSeg(rootSel, attr, fn) {
 }
 wireSeg("#tw-density", "v", (v) => document.documentElement.dataset.density = v);
 wireSeg("#tw-motion",  "v", (v) => document.documentElement.dataset.motion = v);
-wireSeg("#tw-scenario","v", (v) => { clearAll(); runScenario(v); });
 
 document.documentElement.dataset.density = "normal";
 document.documentElement.dataset.motion = "medium";
 
-document.getElementById("tw-replay").addEventListener("click", () => { clearAll(); runScenario(currentScenario); });
 document.getElementById("tw-clear").addEventListener("click", clearAll);
+
+/* ───────────────────── history wiring ───────────────────── */
+els.historyBtn.addEventListener("click", () => {
+  const open = els.history.classList.toggle("open");
+  els.historyBtn.setAttribute("aria-pressed", open);
+  if (open) renderHistory();
+});
+els.historyClose.addEventListener("click", () => {
+  els.history.classList.remove("open");
+  els.historyBtn.setAttribute("aria-pressed", "false");
+});
+// Esc fecha o drawer se ele estiver aberto e nada mais focado
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && els.history.classList.contains("open") && document.activeElement !== els.q) {
+    els.history.classList.remove("open");
+    els.historyBtn.setAttribute("aria-pressed", "false");
+  }
+});
 
 /* ───────────────────── toolbar wiring ───────────────────── */
 els.q.addEventListener("input", (e) => { state.filterText = e.target.value.trim(); render(); });
@@ -1671,22 +1953,14 @@ function showShutdownBanner() {
 }
 
 /* ───────────────────── boot ───────────────────── */
-/* In production we DON'T auto-run the mock — the real /events stream is the
-   source of truth. The mock scenarios are still wired and accessible through
-   the tweaks panel for demo/dev. */
+/* `/events` SSE é a única fonte de verdade. Nenhum mock no boot. */
 
+loadHistory();          // restaura o histórico desta sessão (sessionStorage)
 (async () => {
   await hydrateFromState();
   connectRealSource();
+  render();             // pinta footer + drawer mesmo antes do primeiro evento real
 })();
-
-// Detect "we're being served via http(s)" — when not, we're probably the
-// design preview opened via file://; in that case fall back to the mock.
-if (location.protocol === "file:") {
-  setTimeout(() => {
-    if (state.events.length === 0) runScenario("sync");
-  }, 200);
-}
 </script>
 </body>
 </html>

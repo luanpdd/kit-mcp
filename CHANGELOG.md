@@ -6,6 +6,39 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.5.0] - 2026-05-05
+
+UI sidecar — bug fixes visuais + tokens + histórico de sessão.
+
+### Adicionado
+
+- **Tokens chip** em cada row da timeline e card de active run quando o evento traz `payload.tokens` (também aceita `payload.usage.total_tokens` e `payload.cost.tokens` para compatibilidade com diferentes wrappers). Formato `1.2k` / `5.3k` / `1.5M`.
+- **Soma cumulativa de tokens da sessão** no footer (`6.2k tokens nesta sessão`). Aparece só quando algum evento veio com tokens — quem não usa LLM continua vendo o footer enxuto.
+- **Histórico desta sessão** — drawer flutuante (botão de relógio na toolbar). Persiste em `sessionStorage` (não cross-tab, não cross-session); cada run terminada vira uma row com status (✓/✗/·), título, timestamp, duração, tokens, contagem de eventos e runId truncado. Click expande pra mostrar até os 100 últimos eventos da run com %, label e tokens. Cap em 50 runs (mais antigos são descartados).
+- **Footer mostra runs concluídas** total da sessão (`3 runs concluídas`).
+
+### Corrigido
+
+- **Mojibake (`�`) em payloads** — eventos publicados via shells com locale ruim podiam vazar U+FFFD. Helper `safeStr()` agora limpa esses bytes antes de qualquer renderização.
+- **Rows vazias na timeline** — `milestone` event que vinha com `payload.label` mas sem `payload.name` rendia em branco. Cascata defensiva agora tenta `name → title → label → name → tipo humanizado` em todos os tipos. Garantia: nenhuma row sai sem texto.
+- **Active card sem título** — antes mostrava `—` sozinho se `payload.tool` estava vazio. Helper `runTitle(run)` cascata `humanizeTool(tool) → lastTitle → lastLabel → lastName → "Processo"`.
+- **Tool inline mostrava `—` em vez de fallback** — `escapeHtml(safeStr(run.tool) || "processo")` no rc-tool, `escapeHtml(safeStr(run.tool) || "")` no rc-foot.
+
+### Removido
+
+- **Painel "Cenário (mock)" do Tweaks** — apenas cenários reais agora; sem botões de demo.
+- **Botão "▸ replay"** — dependia de mock.
+- **Funções `scenarioSync` / `scenarioMulti` / `scenarioError` / `scenarioIdle` / `runScenario` / `mockTimers` / `later` / `clearMock`** — toda infraestrutura de mock event generator (~80 LOC). `EventSource('/events')` é a única fonte de verdade.
+- **Fallback `file://` boot** — sidecar não é mais aberto via `file://`; só via servidor.
+
+### Sem mudanças de API runtime
+
+Mudanças concentradas em `src/ui/static/index.html`. `src/core/`, `src/cli/`, `src/mcp-server/`, `src/ui/server.js` intocados. Stable API v1.0+ preservada.
+
+### Migration
+
+Wrappers que quiserem expor cost/tokens podem agora popular `payload.tokens` (number) em qualquer evento. Quem não popula continua funcionando idêntico — chips não aparecem, footer não mostra a linha de tokens. Histórico é per-tab via `sessionStorage` — fechar a aba apaga (intencional, não persistir é a feature).
+
 ## [1.4.0] - 2026-05-05
 
 Framework velocity — 7 melhorias para os comandos / agentes do kit, focadas em reduzir fricção, evitar conflitos com main, e auto-detectar configs que hoje exigem env var manual.
