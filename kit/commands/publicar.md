@@ -20,10 +20,11 @@ Publica o milestone atual: cria documentação no Notion, abre PR no GitHub e in
 
 Após concluir e arquivar um milestone com `/concluir-marco`.
 
+**Heurística de gatilho (importante):** quando o usuário diz "publicar" depois de aplicar mudanças de código (commits novos, migration aplicada, branch atual com diff vs `main`), interprete como **pipeline completo** — não apenas `git push`. Faça Notion + PR + Obsidian. Para push isolado em outra branch sem cerimônia, o usuário deve pedir explicitamente "só fazer push" ou usar `git push` ele mesmo. Para fix expresso sem milestone, use `/publicar-rapido` (variante leve sem dependência de ROADMAP/MILESTONE-AUDIT).
+
 ## Dependências obrigatórias
 
-- `.claude/notion-config.json` presente e preenchido — se não existir, encerre com:
-  > "⛔ notion-config.json não encontrado. Execute /setup-notion para configurar o Notion deste projeto."
+- `.claude/notion-config.json` presente e preenchido — **fluxo de fallback novo (1.4):** se ausente, NÃO encerre. Em vez disso, vá para o **Passo 0.5 (auto-detect Notion)** abaixo: tente buscar a página do projeto via Notion MCP `notion-search` no workspace e ofereça gerar o config automaticamente. Encerrar é fallback de último recurso.
 - Notion MCP configurado na sessão Claude Code
 - `gh` CLI autenticado (`gh auth status`)
 - Milestone arquivado com `/concluir-marco`
@@ -31,9 +32,128 @@ Após concluir e arquivar um milestone com `/concluir-marco`.
 ## Dependências opcionais
 
 - `$OBSIDIAN_TEAM_VAULT` — caminho absoluto do cofre Obsidian do time (sincronizado via Git).
-  - Se ausente ou inválido: o **Passo 5 (Obsidian)** é pulado com aviso, sem quebrar PR/Notion.
+  - **Fallback novo (1.4):** se ausente, antes de pular o Passo 5, o **Passo 0.7 (auto-detect Obsidian)** tenta caminhos canônicos (`~/Documentos/Obsidian/chat-trynux/`, `~/Documents/Obsidian/chat-trynux/`, e variantes Windows). Só se nenhum bater é que o Passo 5 é pulado com aviso.
 
 ## Processo
+
+### Passo 0 — Pre-flight: sincronizar com `main` ⚠️ NOVO 1.4
+
+**Por que isso existe:** vários devs trabalhando no mesmo projeto significa que `origin/main` pode ter avançado desde sua última sincronização. Antes de abrir PR, descubra se há trabalho novo e dê ao dev a chance de integrar (evita conflitos grandes mais tarde).
+
+**Quando pular:** se `BRANCH = main` (vai pushar direto pra main, sem PR), pode pular este passo. Em qualquer outro fluxo, execute.
+
+#### 0.1 — Buscar atualizações de origin
+
+```bash
+git fetch origin main 2>&1
+```
+
+#### 0.2 — Detectar commits novos em main
+
+```bash
+NEW_COMMITS=$(git log HEAD..origin/main --oneline 2>/dev/null)
+COUNT=$(echo "$NEW_COMMITS" | grep -c . 2>/dev/null || echo 0)
+```
+
+#### 0.3 — Roteamento
+
+**Se `COUNT == 0`:** sem commits novos. Continue silenciosamente para o Passo 1.
+
+**Se `COUNT > 0`:** apresente a lista ao usuário e pergunte como prosseguir.
+
+```
+⚠️ {COUNT} commit(s) novo(s) em origin/main desde sua última sync:
+
+{lista dos commits, primeiros 10}
+
+Como deseja prosseguir?
+```
+
+Use `AskUserQuestion`:
+- **header:** "Sync"
+- **question:** "Há {COUNT} commit(s) novo(s) em main. Como prosseguir antes de abrir PR?"
+- **options:**
+  - **"Integrar agora (Recomendado)"** — `git rebase origin/main` na branch atual. Se conflito: pausa, instrui resolver, retoma.
+  - **"Mesclar via merge commit"** — `git merge origin/main` (preserva histórico ao custo de um merge commit no PR).
+  - **"Ignorar e continuar"** — segue direto para Passo 1 (assume responsabilidade pelo conflito tardio).
+  - **"Cancelar publicação"** — exit limpo. Dev integra manualmente, depois reroda /publicar.
+
+**Em "Integrar agora":**
+```bash
+git rebase origin/main
+```
+- Se exit 0: continue para Passo 1 com confirmação `✓ Rebase OK`.
+- Se conflito: imprima `⚠️ Conflito durante rebase. Resolva os arquivos listados, rode \`git rebase --continue\` (ou \`git rebase --abort\` para desfazer), e reinvoque /publicar.` e exit limpo.
+
+**Em "Mesclar":**
+```bash
+git merge origin/main --no-edit
+```
+- Mesmo tratamento de conflito.
+
+**Em "Ignorar":** registre `SYNC_SKIPPED = true` (será mencionado na descrição do PR como heads-up: "PR aberto sem sync com main — possível conflito ao revisar").
+
+**Em "Cancelar":** exit limpo, sem efeito colateral.
+
+### Passo 0.5 — Auto-detect notion-config.json (se ausente) ⚠️ NOVO 1.4
+
+Se `.claude/notion-config.json` existe, pule para Passo 0.7.
+
+Se ausente:
+
+#### 0.5.1 — Buscar página do projeto via Notion MCP
+
+```
+notion-search { query: "{NOME_PROJETO}", filter: "page" }
+```
+
+Onde `{NOME_PROJETO}` vem do `.planning/PROJECT.md` (campo `name` ou primeira frase).
+
+#### 0.5.2 — Apresentar candidatos
+
+Filtre resultados pra páginas com título que contenha o nome do projeto (case-insensitive). Mostre top 3 com URL e last-edited.
+
+Use `AskUserQuestion`:
+- **question:** "Encontrei essas páginas no Notion. Qual é a página raiz deste projeto?"
+- **options:** uma por candidato + "Nenhuma — abrir /setup-notion"
+
+Em candidato escolhido:
+- Use `notion-fetch` na página escolhida pra listar subpáginas (espera-se `changelog/`, `features/`, `adr/`, `runbooks/`).
+- Para cada subpágina conhecida, capture o ID.
+- Gere `.claude/notion-config.json` com o template do `/setup-notion`.
+- Confirme: "✓ notion-config.json criado a partir das páginas existentes."
+
+Em "Nenhuma": exit limpo com mensagem `⛔ Execute /setup-notion para criar a estrutura Notion deste projeto, depois rerun /publicar.`
+
+### Passo 0.7 — Auto-detect cofre Obsidian (se env var ausente) ⚠️ NOVO 1.4
+
+Se `$OBSIDIAN_TEAM_VAULT` está definida E o caminho existe, pule para Passo 1.
+
+Se ausente, tente caminhos canônicos em ordem (primeiro que existir vence):
+
+| Plataforma | Caminho |
+|---|---|
+| Linux/macOS | `$HOME/Documentos/Obsidian/chat-trynux` |
+| Linux/macOS | `$HOME/Documents/Obsidian/chat-trynux` |
+| Windows | `$USERPROFILE/Documentos/Obsidian/chat-trynux` |
+| Windows | `$USERPROFILE/Documents/Obsidian/chat-trynux` |
+| WSL | `/mnt/c/Users/$USER/Documents/Obsidian/chat-trynux` |
+
+```bash
+for CANDIDATE in \
+  "$HOME/Documentos/Obsidian/chat-trynux" \
+  "$HOME/Documents/Obsidian/chat-trynux" \
+  "$USERPROFILE/Documentos/Obsidian/chat-trynux" \
+  "$USERPROFILE/Documents/Obsidian/chat-trynux" \
+  "/mnt/c/Users/$USER/Documents/Obsidian/chat-trynux"; do
+  [ -n "$CANDIDATE" ] && [ -d "$CANDIDATE" ] && { export OBSIDIAN_TEAM_VAULT="$CANDIDATE"; break; }
+done
+```
+
+- Se uma das variantes bateu: registre `OBSIDIAN_AUTO_DETECTED = true` e prossiga normalmente para Passo 1.
+- Se nenhuma bateu: comportamento legado (Passo 5 será pulado com `OBSIDIAN_SKIP_REASON = "OBSIDIAN_TEAM_VAULT não configurada e nenhum caminho canônico encontrado"`).
+
+> **Nota:** o nome `chat-trynux` é o cofre canônico padrão. Para usar outro nome, defina `$OBSIDIAN_TEAM_VAULT` explicitamente — a auto-detecção não tenta diretórios alternativos.
 
 ### Passo 1 — Ler contexto
 

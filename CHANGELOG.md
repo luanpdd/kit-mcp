@@ -6,6 +6,36 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.4.0] - 2026-05-05
+
+Framework velocity — 7 melhorias para os comandos / agentes do kit, focadas em reduzir fricção, evitar conflitos com main, e auto-detectar configs que hoje exigem env var manual.
+
+### Adicionado
+
+- **`/publicar-rapido`** — variante leve de `/publicar` para hotfix / quick-task. Não exige ROADMAP arquivado, MILESTONE-AUDIT.md nem `STATE.md`. Infere `TIPO_MUDANCA` (`fix:`/`feat:`/`refactor:`/...) do prefix do commit, gera Notion enxuto + PR + nota Obsidian em ~30s. Pre-flight de sync com `main` herdado do `/publicar`. (REQ F-01) `kit/commands/publicar-rapido.md`, ~210 LOC.
+
+- **Pre-flight `main` sync no `/publicar` (Passo 0)** — antes de criar PR, faz `git fetch origin main` e detecta commits novos. Se houver, apresenta a lista e pergunta via `AskUserQuestion`: integrar via rebase (recomendado), via merge, ignorar (com flag `SYNC_SKIPPED` registrada na descrição do PR), ou cancelar. Trava de segurança contra conflitos tardios em times com vários devs em paralelo. (REQ F-07)
+
+- **Auto-detect `notion-config.json` (Passo 0.5)** — se o config está ausente, em vez de encerrar com erro, busca a página do projeto via `notion-search`, apresenta candidatos via `AskUserQuestion`, lista subpáginas via `notion-fetch`, e gera o config automaticamente. `/setup-notion` continua existindo para quando a estrutura Notion ainda não existe. (REQ F-02)
+
+- **Auto-detect cofre Obsidian (Passo 0.7)** — se `$OBSIDIAN_TEAM_VAULT` está ausente, tenta caminhos canônicos antes de pular o passo: `~/Documentos/Obsidian/chat-trynux`, `~/Documents/Obsidian/chat-trynux`, variantes `$USERPROFILE` (Windows), `/mnt/c/Users/$USER/...` (WSL). Funciona out-of-the-box em qualquer máquina (Linux/macOS/Windows/WSL) que siga o layout padrão `Documentos/Obsidian/chat-trynux`. (REQ F-03)
+
+- **`schema-checker` agent** — sub-agente novo invocável via `Task(subagent_type="schema-checker")`. Lê uma migration SQL, extrai FKs / JOINs / refs implícitas, consulta o schema real em produção via Supabase MCP (`information_schema` + `pg_constraint`), cruza, e devolve veredito GO / NO-GO / NEEDS-REVIEW com diff por referência. Pega o caso clássico do "comentário do dev errado" (`contact_id → conversations.id` em comentário, mas em prod aponta para `contacts.id`) ANTES de aplicar a migration e ver falhar silenciosamente. (REQ F-04) `kit/agents/schema-checker.md`, ~160 LOC.
+
+- **Hook `post-apply-migration` (PostToolUse)** — dispara automaticamente depois de qualquer `apply_migration` bem-sucedido via Supabase MCP e faz os 3 passos manuais que devs sempre esquecem: (a) escreve a SQL em `supabase/migrations/{TIMESTAMP}_{name}.sql`, (b) cria stub no cofre Obsidian em `07 - Banco de Dados/Migrations/{YYYY}/{TIMESTAMP}_{name}.md` (se vault detectado), (c) `git add` no projeto. Soft-fails — nunca bloqueia o tool call. (REQ F-05) `kit/hooks/post-apply-migration.js`, ~190 LOC.
+
+### Alterado
+
+- **Heurística de gatilho do `/publicar`** — documentada explicitamente: "publicar" depois de aplicar mudança = pipeline completo, NÃO apenas push. Para push isolado em outra branch sem cerimônia, dev precisa pedir explicitamente "só fazer push" OU usar `/publicar-rapido`. (REQ F-06)
+
+### Sem mudanças de API runtime
+
+Todas as adições são em `kit/` (templates de prompt distribuídos). `src/core/`, `src/cli/`, `src/mcp-server/`, e `src/ui/` permanecem intocados. Stable API v1.0+ preservada literalmente.
+
+### Migration
+
+Usuários da v1.3 não precisam fazer nada — re-rodar `kit sync install <ide>` no projeto puxa as adições. Quem usa `/publicar` em produção colhe os 3 passos novos automaticamente (pre-flight sync, auto-detect notion-config, auto-detect Obsidian) sem mudar workflow.
+
 ## [1.3.0] - 2026-05-05
 
 UI redesign completo entregue por handoff do Claude Design (claude.ai/design). Layout repensado, paleta OKLCH, painel de tweaks (acento/densidade/movimento) acessível, timeline com rail + nó por evento, hero card de active runs com borda cônica animada e barra com gradient + shimmer, empty state com heartbeat bars, e cenários de demo (`Sync` / `Multi` / `Erro` / `Idle`) mockáveis pelo painel de tweaks.
