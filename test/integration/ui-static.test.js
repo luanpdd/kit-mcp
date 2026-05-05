@@ -160,6 +160,41 @@ test('static UI: defensive label fallbacks — never empty rows (1.5)', async ()
   });
 });
 
+test('static UI: health-poll auto-reconnect when server returns (1.5.1)', async () => {
+  // Hardening: native EventSource retry às vezes estagna em CONNECTING. O poll
+  // /healthz em paralelo detecta quando o server volta e força reconnect limpo
+  // — usuário NÃO precisa recarregar a aba quando reinicia o sidecar.
+  await withServer(async (srv) => {
+    const r = await fetchHtml(srv.port);
+    assert.match(r.body, /function startHealthPoll/);
+    assert.match(r.body, /function stopHealthPoll/);
+    assert.match(r.body, /healthPollTimer = setInterval/);
+    // Poll deve verificar /healthz e fechar/recriar EventSource
+    assert.match(r.body, /fetch\("\/healthz"/);
+    // Após shutdown, banner deve sumir quando reconectar
+    assert.match(r.body, /banner\.remove\(\)/);
+    // Erro do SSE deve disparar startHealthPoll
+    assert.match(r.body, /applyConnState\("closed"\);\s+startHealthPoll\(\)/);
+    // Shutdown também deve disparar (pra detectar quando server volta após restart)
+    assert.match(r.body, /showShutdownBanner\(\);[\s\S]*?startHealthPoll\(\)/);
+  });
+});
+
+test('static UI: timeline rows have horizontal padding (no edge crop) (1.5.1)', async () => {
+  await withServer(async (srv) => {
+    const r = await fetchHtml(srv.port);
+    // Padding lateral no row pra "há 22m" não colar na borda esquerda e
+    // runId/tokens não serem cortados na direita.
+    assert.match(r.body, /\.tl-row \{[\s\S]*?padding:\s*var\(--pad-tight\) 12px/);
+    // Coluna do tempo precisa de padding-right pra separar do rail
+    assert.match(r.body, /\.tl-time \{[\s\S]*?padding-right:\s*8px/);
+    // Conteúdo precisa de padding-right pra runId não colar na borda direita
+    assert.match(r.body, /\.tl-content \{[\s\S]*?padding-right:\s*4px/);
+    // Tokens chip + runid não devem encolher
+    assert.match(r.body, /\.tl-content > \.tokens-chip,[\s\S]*?flex-shrink:\s*0/);
+  });
+});
+
 // ----- humanization (preserved API across versions) ----------------------
 
 test('static UI: humanize dictionaries map types and tools to PT-BR', async () => {

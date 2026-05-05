@@ -483,9 +483,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 .tl-row {
   display: grid;
-  grid-template-columns: 64px 18px 1fr;
+  grid-template-columns: 64px 18px minmax(0, 1fr);
   gap: 0;
-  padding: var(--pad-tight) 0;
+  padding: var(--pad-tight) 12px;
   position: relative;
   border-radius: 4px;
   transition: background .15s var(--ease);
@@ -514,8 +514,9 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   font-size: 11px;
   color: var(--text-3);
   font-variant-numeric: tabular-nums;
-  padding-left: 4px;
   padding-top: 1px;
+  padding-right: 8px;
+  text-align: left;
 }
 
 /* rail with node */
@@ -552,14 +553,17 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 .tl-row[data-type="progress"] .tl-node { width: 5px; height: 5px; margin-top: 6px; }
 
 /* group runId connector — visually subtle indent */
-.tl-row[data-grouped="true"] { padding-left: 0; }
 .tl-row[data-grouped="true"] .tl-node { background: var(--text-3); }
 
 .tl-content {
   display: flex; align-items: baseline; gap: 8px;
   padding-left: 8px;
+  padding-right: 4px;
   min-width: 0;
+  overflow: hidden;
 }
+.tl-content > .tokens-chip,
+.tl-content > .tl-runid { flex-shrink: 0; }
 
 .tl-badge {
   font-family: var(--mono);
@@ -1846,6 +1850,12 @@ function applyConnState(s) {
     els.conn.dataset.state = "on";
     els.connLabel.textContent = "conectado";
     if (els.srcLabel) els.srcLabel.textContent = "ao vivo";
+    // Healthy => banner stale. Independente de qual caminho colocou ele lá
+    // (shutdown event antigo, race, hydrate trazendo shutdown histórico),
+    // estar conectado significa que o aviso "Reabra com kit ui start" não
+    // serve mais — remova sempre.
+    const banner = document.getElementById("shutdown-banner");
+    if (banner) banner.remove();
   } else if (s === "connecting") {
     els.conn.dataset.state = "off";
     els.connLabel.textContent = "conectando";
@@ -1893,11 +1903,16 @@ function connectRealSource() {
   evtSource.addEventListener("open", () => {
     lastConnectedAt = Date.now();
     applyConnState("open");
+    stopHealthPoll();    // já tá conectado, não precisa pollar
   });
 
   evtSource.addEventListener("error", () => {
-    // EventSource auto-retries; reflect "closed" until next open fires.
+    // EventSource auto-retries; nós só atualizamos o estado visível e iniciamos
+    // o poll-de-saúde paralelo, que cobre o caso "server reiniciou" — o native
+    // retry às vezes gruda em CONNECTING sem nunca virar OPEN, e o poll detecta
+    // quando o /healthz volta a responder e força um connectRealSource() limpo.
     applyConnState("closed");
+    startHealthPoll();
   });
 
   // Listen for each typed event the server emits.
@@ -1907,6 +1922,9 @@ function connectRealSource() {
       if (data && data.type === "shutdown") {
         applyConnState("shutdown");
         showShutdownBanner();
+        // Mesmo após shutdown, um novo `kit ui start` faz o server voltar.
+        // Continue tentando reconectar — usuário não precisa recarregar a aba.
+        startHealthPoll();
       }
       ingest(data);
     } catch (_) { /* swallow malformed */ }
@@ -1917,12 +1935,41 @@ function connectRealSource() {
   evtSource.onmessage = handler; // fallback for unnamed
 }
 
-/* Background-tab recovery — Chrome throttles timers in inactive tabs and the
-   native EventSource retry can stall. When the tab becomes visible again and
-   we know we're closed, force a fresh hydrate + reconnect. */
+/* ───────────────────── health-poll auto-reconnect ─────────────────────
+   Quando o EventSource cai e fica preso (server reiniciado, sidecar `kit ui
+   stop` seguido de `kit ui start`, network blip), o native retry pode estagnar
+   em CONNECTING. Esse poll roda em segundo plano em paralelo: quando o /healthz
+   volta a responder 200, fechamos o EventSource antigo, hidratamos /state, e
+   abrimos um novo. Para de pollar assim que conectamos com sucesso. */
+let healthPollTimer = null;
+function startHealthPoll() {
+  if (healthPollTimer) return;
+  healthPollTimer = setInterval(async () => {
+    if (els.conn.dataset.state === "on") { stopHealthPoll(); return; }
+    try {
+      const res = await fetch("/healthz", { credentials: "omit", cache: "no-store" });
+      if (res.ok) {
+        stopHealthPoll();
+        // Banner de shutdown é stale agora que o server voltou — remova.
+        const banner = document.getElementById("shutdown-banner");
+        if (banner) banner.remove();
+        await hydrateFromState();
+        connectRealSource();
+      }
+    } catch (_) { /* server ainda não voltou — keep tentando */ }
+  }, 3000);
+}
+function stopHealthPoll() {
+  if (healthPollTimer) { clearInterval(healthPollTimer); healthPollTimer = null; }
+}
+
+/* Background-tab recovery — quando o tab volta a ficar visível e estamos fora
+   do estado conectado, força um reconnect imediato em vez de esperar o próximo
+   tick de health poll. */
 document.addEventListener("visibilitychange", () => {
   if (document.visibilityState !== "visible") return;
-  if (els.conn.dataset.state === "off") {
+  if (els.conn.dataset.state !== "on") {
+    stopHealthPoll();
     hydrateFromState().then(connectRealSource);
   }
 });

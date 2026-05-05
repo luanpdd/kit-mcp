@@ -6,6 +6,22 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.5.1] - 2026-05-05
+
+Patch da UI sidecar: auto-reconnect quando o server reinicia + bordas com respiro.
+
+### Corrigido
+
+- **UI fica presa em "desconectado" quando server volta.** O `EventSource` nativo às vezes estagna no estado `CONNECTING` mesmo depois do server voltar — usuário precisava recarregar a aba. Agora um poll do `/healthz` a cada 3s roda em paralelo: ao detectar 200, fecha o `EventSource` antigo, hidrata `/state`, e abre um novo. Funciona pra qualquer cenário (kill -9, `kit ui stop` + `kit ui start`, network blip, máquina suspended). Usuário **não precisa mais recarregar** — basta o server voltar.
+
+- **Banner "Sidecar encerrou" persistia mesmo após reconnect.** Race entre o handler de shutdown e o poll de saúde podia deixar o banner visível mesmo com a conexão de volta. Agora `applyConnState("open")` sempre remove o banner — estado saudável significa que o aviso está stale.
+
+- **Cropping nas bordas da timeline:** "há 22m" colado na borda esquerda e `runId`/tokens-chip cortados na direita. `.tl-row` ganhou `padding: var(--pad-tight) 12px`. `.tl-time` virou `padding-right: 8px`. `.tl-content` ganhou `padding-right: 4px` + `overflow: hidden`. Tokens-chip e tl-runid agora têm `flex-shrink: 0` explícito pra não encolher quando a mensagem ocupa muita largura.
+
+### Sem mudanças de API
+
+Patch puro de UI. `src/ui/static/index.html` e `test/integration/ui-static.test.js` apenas. Stable API v1.0+ preservada.
+
 ## [1.5.0] - 2026-05-05
 
 UI sidecar — bug fixes visuais + tokens + histórico de sessão.
