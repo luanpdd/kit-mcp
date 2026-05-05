@@ -6,6 +6,45 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.3.0] - 2026-05-05
+
+UI redesign completo entregue por handoff do Claude Design (claude.ai/design). Layout repensado, paleta OKLCH, painel de tweaks (acento/densidade/movimento) acessível, timeline com rail + nó por evento, hero card de active runs com borda cônica animada e barra com gradient + shimmer, empty state com heartbeat bars, e cenários de demo (`Sync` / `Multi` / `Erro` / `Idle`) mockáveis pelo painel de tweaks.
+
+### Adicionado — design
+
+- **Tokens OKLCH** com hue do acento configurável (padrão `130` — lima/verde). Trocas em runtime via tweaks panel: 6 swatches (lima, azul, roxo, laranja, magenta, ciano).
+- **Tema dark é puro `#000` no fundo**, com surfaces escalonados (`#0b0d10`, `#11141a`, `#171b22`). Light mode preservado via `prefers-color-scheme` (não é o default).
+- **Layout shell** centralizado em 980px. Header (logo + brand + conn pill), toolbar (search com atalho `/`, filter popover, pause, tweaks), main (active region + timeline + empty), footer (counts + last-seen).
+- **Hero card de active run**: ícone do tool family (sync/reverse/gates), título humanizado, tool id em mono cinza, elapsed badge à direita (vira `--warn` após 30s), barra com gradient OKLCH + shimmer linear infinito, caption do passo atual em pill com glyph spinning, run id chip em mono. Borda cônica animada (`@property --ang`) anuncia "rodando".
+- **Multi-run stacking**: quando há 2+ runs simultâneos, `active-region[data-count]` reduz padding/font-size dos cards pra caber sem rolagem.
+- **Timeline com rail**: coluna de tempo relativo (`agora`, `há 5s`, `há 2m`), rail vertical pontilhado conectando os nós, nó colorido por tipo (verde pra `run.start`, vermelho pra `error`, etc). Eventos do mesmo `runId` consecutivos viram `data-grouped="true"` (visualmente sub-eventos).
+- **Empty state com `empty-viz`**: 13 barras animadas em onda heartbeat enquanto aguarda o primeiro evento.
+- **Tweaks panel** flutuante (canto inferior direito, dialog acessível): paleta de acento, densidade (compacta / normal / confortável), movimento (sutil / médio / rico), e cenário mock (sync/multi/error/idle) pra demos.
+
+### Adicionado — produção
+
+- **Conexão real via `EventSource('/events')`** com retry nativo + `visibilitychange` que força `hydrate + reconnect` quando o tab volta a ser visível.
+- **Hydrate inicial via `GET /state`** ANTES do connect, replayando o ring buffer pelo mesmo `ingest()` (dedup por `ts|type|runId`).
+- **Shutdown banner** acima do main quando o servidor envia evento `shutdown`. Conn pill vai pra estado `off` com label `encerrado`.
+- **Estados de conexão** humanizados no pill: `conectado` (verde, pulsa), `conectando`, `desconectado`, `pausado`, `encerrado`.
+- **Mock scenarios preservados** via tweaks (mas não rodam mais em loop ao boot — `EventSource` é a fonte real). Útil pra demo offline e pra testar visualmente cada estado sem precisar disparar workflow real.
+
+### Corrigido
+
+- **Filter pop incluía só 5 tipos por default** — agora `tool_invocation` e `shutdown` aparecem na lista de eventos por default (sem chip de filtro, mas visíveis); evita esconder eventos importantes do servidor.
+
+### Removido
+
+- Helpers `pausedBuffer`/`flushPaused` da v1.2.x — o design optou por **descartar eventos durante pause** em vez de bufferizar (evita explosão de memória se user esquece pausado). Trade-off documentado.
+- Botão "rolagem auto" — timeline rola naturalmente conforme novos eventos entram; sem toggle.
+- Botão "limpar tela" — `clearAll()` continua disponível pelos tweaks (botão `limpar` no painel).
+
+### Stable API ainda preservada
+
+Todas as mudanças são apenas em `src/ui/static/index.html`. Nada em `src/core/`, `src/cli/`, `src/mcp-server/`, ou em qualquer schema MCP/CLI. Servidor (`src/ui/server.js`) intocado — endpoints `/`, `/events`, `/state`, `/healthz`, `/publish`, `/shutdown` mesmos.
+
+Bump pra **minor** (não patch) porque a UI é experiência radicalmente diferente — usuários verão a mudança visual imediatamente.
+
 ## [1.2.3] - 2026-05-04
 
 UI inteira agora fala português e usa termos que fazem sentido pra quem não conhece o código por dentro. Os tipos de evento técnicos viraram nomes legíveis, os caminhos absolutos viraram descrições do tipo "agente planner" / "comando novo-marco" / "skill limpeza", e o status badge da conexão agora lê "CONECTADO/CONECTANDO/DESCONECTADO".

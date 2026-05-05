@@ -44,9 +44,9 @@ async function withServer(fn) {
   }
 }
 
+// ----- baseline: served + DOCTYPE + lang ----------------------------------
+
 test('static UI: index.html is bundled and served (not the fallback)', async () => {
-  // Phase 14 ships the real index.html — test it's the real one, not the
-  // placeholder that server.js falls back to when the file is absent.
   await withServer(async (srv) => {
     const r = await fetchHtml(srv.port);
     assert.equal(r.status, 200);
@@ -55,54 +55,146 @@ test('static UI: index.html is bundled and served (not the fallback)', async () 
   });
 });
 
-test('static UI: HTML has DOCTYPE and lang attribute', async () => {
+test('static UI: HTML has DOCTYPE and pt-BR lang attribute', async () => {
   await withServer(async (srv) => {
     const r = await fetchHtml(srv.port);
     assert.match(r.body, /^<!doctype html>/i);
-    assert.match(r.body, /<html lang="en">/);
+    assert.match(r.body, /<html lang="pt-BR">/);
   });
 });
 
-test('static UI: contains required structural elements', async () => {
+// ----- 1.3.0 design (Claude Design handoff): structural elements ---------
+
+test('static UI: 1.3 layout — header, toolbar, active region, timeline, empty, footer', async () => {
   await withServer(async (srv) => {
     const r = await fetchHtml(srv.port);
-    // Headers, status indicator, toolbar, list, empty state, banner, footer
+    // Header + brand + connection pill
+    assert.match(r.body, /class="header"/);
+    assert.match(r.body, /class="brand"/);
     assert.match(r.body, /id="conn"/);
-    assert.match(r.body, /id="events"/);
-    assert.match(r.body, /id="empty"/);
-    assert.match(r.body, /id="shutdown-banner"/);
-    assert.match(r.body, /id="search"/);
-    assert.match(r.body, /id="type-filters"/);
+    assert.match(r.body, /id="conn-label"/);
+    // Toolbar
+    assert.match(r.body, /class="toolbar"/);
+    assert.match(r.body, /id="q"/);                         // search input
+    assert.match(r.body, /id="filter-btn"/);
+    assert.match(r.body, /id="filter-pop"/);
     assert.match(r.body, /id="pause-btn"/);
-    assert.match(r.body, /id="autoscroll-btn"/);
+    assert.match(r.body, /id="tweaks-btn"/);
+    // Main regions
+    assert.match(r.body, /id="active-region"/);
+    assert.match(r.body, /id="timeline"/);
+    assert.match(r.body, /id="empty"/);
+    // Footer
+    assert.match(r.body, /id="evt-count"/);
+    assert.match(r.body, /id="src-label"/);
+    // Tweaks dialog
+    assert.match(r.body, /id="tweaks"/);
   });
 });
 
-test('static UI: declares all 7 event types in client-side EVENT_TYPES', async () => {
+test('static UI: design tokens — pure-black bg, oklch accent, system fonts', async () => {
+  await withServer(async (srv) => {
+    const r = await fetchHtml(srv.port);
+    assert.match(r.body, /--bg:\s*#000000/);
+    assert.match(r.body, /--accent-h:\s*130/);          // default green hue
+    assert.match(r.body, /oklch\(82% 0\.18 var\(--accent-h\)\)/);
+    assert.match(r.body, /-apple-system, "Segoe UI"/);
+    assert.match(r.body, /ui-monospace/);
+  });
+});
+
+test('static UI: tweaks panel exposes accent / density / motion / scenario', async () => {
+  await withServer(async (srv) => {
+    const r = await fetchHtml(srv.port);
+    assert.match(r.body, /id="tw-accent"/);
+    assert.match(r.body, /id="tw-density"/);
+    assert.match(r.body, /id="tw-motion"/);
+    assert.match(r.body, /id="tw-scenario"/);
+    // Scenarios that mock real source for demo: sync, multi, error, idle
+    assert.match(r.body, /data-v="sync"/);
+    assert.match(r.body, /data-v="multi"/);
+    assert.match(r.body, /data-v="error"/);
+    assert.match(r.body, /data-v="idle"/);
+  });
+});
+
+// ----- humanization (preserved API across versions) ----------------------
+
+test('static UI: humanize dictionaries map types and tools to PT-BR', async () => {
+  await withServer(async (srv) => {
+    const r = await fetchHtml(srv.port);
+    // 7 event types translated
+    assert.match(r.body, /TYPE_LABELS/);
+    assert.match(r.body, /"run\.start":\s+"INICIADO"/);
+    assert.match(r.body, /"run\.end":\s+"FINALIZADO"/);
+    assert.match(r.body, /"progress":\s+"EM ANDAMENTO"/);
+    assert.match(r.body, /"milestone":\s+"MARCO"/);
+    assert.match(r.body, /"error":\s+"ERRO"/);
+    assert.match(r.body, /"shutdown":\s+"ENCERRADO"/);
+    // Tool labels
+    assert.match(r.body, /TOOL_LABELS/);
+    assert.match(r.body, /"sync\.install":\s+"Sincronizando kit"/);
+    assert.match(r.body, /"reverse\.scan":\s+"Escaneando agentes"/);
+    assert.match(r.body, /"gates\.run":\s+"Executando gates"/);
+    // Path humanizer present
+    assert.match(r.body, /function humanizePath/);
+  });
+});
+
+test('static UI: declares all 7 event types (TYPE_LABELS keys)', async () => {
   await withServer(async (srv) => {
     const r = await fetchHtml(srv.port);
     for (const t of ['run.start', 'run.end', 'tool_invocation', 'progress', 'milestone', 'error', 'shutdown']) {
-      assert.match(r.body, new RegExp(`'${t.replace('.', '\\.')}'`), `missing event type ${t}`);
+      const re = new RegExp(`"${t.replace('.', '\\.')}":`);
+      assert.match(r.body, re, `missing event type ${t}`);
     }
   });
 });
 
-test('static UI: dark mode is automatic via prefers-color-scheme', async () => {
+// ----- production wiring: real EventSource + /state hydration -----------
+
+test('static UI: connects to real /events SSE in production boot', async () => {
   await withServer(async (srv) => {
     const r = await fetchHtml(srv.port);
-    assert.match(r.body, /@media \(prefers-color-scheme: dark\)/);
+    assert.match(r.body, /new EventSource\("\/events"\)/);
+    assert.match(r.body, /function connectRealSource/);
+    // Must register a listener for each typed event (otherwise typed SSE messages won't fire)
+    for (const t of ['run.start', 'run.end', 'tool_invocation', 'progress', 'milestone', 'error', 'shutdown']) {
+      assert.ok(r.body.includes(`"${t}"`), `missing event listener for ${t}`);
+    }
   });
 });
 
-test('static UI: connects to /events and hydrates from /state', async () => {
+test('static UI: hydrates from /state on page load (1.2.1+)', async () => {
   await withServer(async (srv) => {
     const r = await fetchHtml(srv.port);
-    assert.match(r.body, /new EventSource\('\/events'\)/);
-    assert.match(r.body, /fetch\('\/state'/);
+    assert.match(r.body, /async function hydrateFromState/);
+    assert.match(r.body, /fetch\("\/state"/);
+    assert.match(r.body, /for \(const evt of j\.events\) ingest/);
   });
 });
 
-test('static UI: served with strict CSP header (frame-ancestors none)', async () => {
+test('static UI: visibilitychange listener reconnects from CLOSED (1.2.1+)', async () => {
+  await withServer(async (srv) => {
+    const r = await fetchHtml(srv.port);
+    assert.match(r.body, /visibilitychange/);
+    assert.match(r.body, /document\.visibilityState !== "visible"/);
+    // Must hydrate AND reconnect on visibility — events that arrived while
+    // we were dropped should also be rendered.
+    assert.match(r.body, /hydrateFromState\(\)\.then\(connectRealSource\)/);
+  });
+});
+
+test('static UI: shutdown banner appears when SSE delivers a shutdown event', async () => {
+  await withServer(async (srv) => {
+    const r = await fetchHtml(srv.port);
+    assert.match(r.body, /function showShutdownBanner/);
+    assert.match(r.body, /Sidecar encerrou/);
+    assert.match(r.body, /id\s*=\s*"shutdown-banner"/);
+  });
+});
+
+test('static UI: CSP from server is strict (frame-ancestors none)', async () => {
   await withServer(async (srv) => {
     const r = await fetchHtml(srv.port);
     const csp = r.headers['content-security-policy'];
@@ -112,108 +204,41 @@ test('static UI: served with strict CSP header (frame-ancestors none)', async ()
   });
 });
 
-test('static UI: pauses on demand, then flushes buffered events', async () => {
-  // Indirect smoke: the page-side pause button toggles aria-pressed and stashes events.
-  // We can't drive the DOM here (no JSDOM dep), but we can assert the JS is syntactically present.
+// ----- regression: states (idle / running / error) must all be in the design ----
+
+test('static UI: states for empty + running + error designed', async () => {
   await withServer(async (srv) => {
     const r = await fetchHtml(srv.port);
-    assert.match(r.body, /pausedBuffer/);
-    assert.match(r.body, /flushPaused/);
-    assert.match(r.body, /aria-pressed/);
+    // Idle / empty state
+    assert.match(r.body, /Aguardando o primeiro evento/);
+    assert.match(r.body, /class="empty"/);
+    assert.match(r.body, /class="empty-viz"/);            // heartbeat bars
+    // Running visual: run-card + bar + spinning conic border
+    assert.match(r.body, /class="run-card"/);
+    assert.match(r.body, /class="rc-bar/);
+    assert.match(r.body, /@keyframes spin/);
+    // Error state — timeline node + badge use --err token
+    assert.match(r.body, /\.tl-row\[data-type="error"\] \.tl-node/);
+    assert.match(r.body, /\.tl-row\[data-type="error"\] \.tl-badge/);
+    // Multi: stacked active runs
+    assert.match(r.body, /\.active-region\[data-count="2"\]/);
+    assert.match(r.body, /\.active-region\[data-count="3"\]/);
   });
 });
 
-test('static UI: includes shutdown banner copy in PT-BR', async () => {
+test('static UI: keyboard shortcut "/" focuses search', async () => {
   await withServer(async (srv) => {
     const r = await fetchHtml(srv.port);
-    assert.match(r.body, /Sidecar encerrou/);
-    assert.match(r.body, /Recarregue/);
+    assert.match(r.body, /e\.key === "\/"/);
+    assert.match(r.body, /els\.q\.focus\(\)/);
   });
 });
 
-test('static UI: humanizer maps technical event types to PT-BR labels (1.2.3)', async () => {
+test('static UI: paused state surfaces in conn pill + src label', async () => {
   await withServer(async (srv) => {
     const r = await fetchHtml(srv.port);
-    // Dictionaries present
-    assert.match(r.body, /EVENT_TYPE_LABEL/);
-    assert.match(r.body, /'run\.start':\s*'Iniciado'/);
-    assert.match(r.body, /'run\.end':\s*'Finalizado'/);
-    assert.match(r.body, /'progress':\s*'Em andamento'/);
-    assert.match(r.body, /'error':\s*'Erro'/);
-    // Tool name humanizer
-    assert.match(r.body, /TOOL_LABEL/);
-    assert.match(r.body, /'sync\.install':\s*'Sincronizando kit'/);
-    // Path humanizer
-    assert.match(r.body, /humanizePath/);
-    assert.match(r.body, /agente\s\$\{m\[1\]\}/);
-    // Wired into render functions
-    assert.match(r.body, /humanizeEventType\(evt\.type\)/);
-    assert.match(r.body, /humanizeTool\(run\.tool\)/);
-    assert.match(r.body, /humanizeStatus\(run\.status\)/);
-    // Connection labels translated
-    assert.match(r.body, /CONN_LABEL/);
-    assert.match(r.body, /OPEN:\s+'CONECTADO'/);
-    assert.match(r.body, /CLOSED:\s+'DESCONECTADO'/);
-  });
-});
-
-test('static UI: PT-BR copy in toolbar + footer (1.2.3)', async () => {
-  await withServer(async (srv) => {
-    const r = await fetchHtml(srv.port);
-    assert.match(r.body, /placeholder="filtrar/);
-    assert.match(r.body, /pausar/);
-    assert.match(r.body, /rolagem auto/);
-    assert.match(r.body, /limpar tela/);
-    assert.match(r.body, /Em execução agora/);
-    assert.match(r.body, /eventos:/);
-    assert.match(r.body, /fonte: ao vivo/);
-  });
-});
-
-test('static UI: eventLabel reads payload.name (1.2.1 fix)', async () => {
-  // Regression guard for the cosmetic bug where milestone events with
-  // `payload.name` rendered as bare "milestone" instead of the supplied label.
-  await withServer(async (srv) => {
-    const r = await fetchHtml(srv.port);
-    assert.match(r.body, /typeof p\.name === 'string'/);
-  });
-});
-
-test('static UI: active runs panel renders cards with progress bar (1.2.2)', async () => {
-  // The "Active runs" zone is what makes the sidecar feel like a process
-  // viewer rather than just a chronological log. It must:
-  //   - exist in the markup
-  //   - have a count chip
-  //   - render via upsertActiveRun keyed by runId
-  //   - show a progress bar that reflects `payload.percent`
-  await withServer(async (srv) => {
-    const r = await fetchHtml(srv.port);
-    // Markup
-    assert.match(r.body, /id="active-runs"/);
-    assert.match(r.body, /id="active-runs-list"/);
-    assert.match(r.body, /id="active-runs-count"/);
-    // Logic
-    assert.match(r.body, /upsertActiveRun/);
-    assert.match(r.body, /renderActiveRuns/);
-    assert.match(r.body, /activeRuns\s*=\s*new Map\(\)/);
-    // Progress bar driven by percent
-    assert.match(r.body, /run\.percent\s*=\s*clampPercent/);
-    assert.match(r.body, /\.run-bar/);
-    // Per-second elapsed tick keeps cards live
-    assert.match(r.body, /setInterval\(\(\) => \{[\s\S]*activeRuns\.size === 0/);
-  });
-});
-
-test('static UI: visibilitychange listener reconnects from CLOSED (1.2.1 fix)', async () => {
-  // Regression guard for SSE staying in CLOSED when Chrome throttles a
-  // background tab. We can't drive the DOM from this test without JSDOM,
-  // so we assert the listener and the reconnect logic are present.
-  await withServer(async (srv) => {
-    const r = await fetchHtml(srv.port);
-    assert.match(r.body, /visibilitychange/);
-    assert.match(r.body, /document\.visibilityState !== 'visible'/);
-    // The handler must call hydrate + connect, not just connect, so that
-    // events that arrived while we were dropped get rendered too.
-    assert.match(r.body, /hydrateFromState\(\)\.then\(connect\)/);
+    assert.match(r.body, /state\.paused = !state\.paused/);
+    assert.match(r.body, /els\.conn\.dataset\.state = state\.paused \? "off" : "on"/);
+    assert.match(r.body, /pausado/);
   });
 });

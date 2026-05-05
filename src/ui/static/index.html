@@ -1,1022 +1,1692 @@
 <!doctype html>
-<html lang="en">
+<html lang="pt-BR">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>kit-mcp sidecar</title>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>kit-mcp · sidecar</title>
 <style>
-  /* Design tokens */
+/* ───────────────────────── tokens ───────────────────────── */
+:root {
+  /* surfaces */
+  --bg: #000000;
+  --surface-1: #0b0d10;
+  --surface-2: #11141a;
+  --surface-3: #171b22;
+  --hover: #1c2129;
+
+  /* lines + text */
+  --line: rgba(255, 255, 255, 0.06);
+  --line-strong: rgba(255, 255, 255, 0.12);
+  --text: #e6e8eb;
+  --text-2: #a8adb6;
+  --text-3: #6c7280;
+  --text-4: #4a4f57;
+
+  /* states */
+  --accent-h: 130;
+  --accent: oklch(82% 0.18 var(--accent-h));
+  --accent-soft: oklch(82% 0.18 var(--accent-h) / 0.16);
+  --accent-glow: oklch(82% 0.18 var(--accent-h) / 0.42);
+  --ok: #d4d8df;
+  --err: oklch(70% 0.18 25);
+  --err-soft: oklch(70% 0.18 25 / 0.14);
+  --warn: oklch(82% 0.14 75);
+  --info: oklch(78% 0.10 250);
+
+  /* type */
+  --sans: -apple-system, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+  /* shape */
+  --radius: 10px;
+  --radius-sm: 6px;
+
+  /* motion */
+  --ease: cubic-bezier(.2,.7,.2,1);
+
+  /* layout */
+  --pad: 16px;
+  --pad-tight: 10px;
+}
+
+@media (prefers-color-scheme: light) {
   :root {
-    color-scheme: light dark;
-    --bg: #f8fafc;
-    --bg-elev: #ffffff;
-    --bg-row: #ffffff;
-    --bg-row-hover: #f1f5f9;
-    --fg: #0f172a;
-    --fg-muted: #475569;
-    --fg-subtle: #64748b;
-    --border: #e2e8f0;
-    --accent: #3b82f6;
-    --ok: #10b981;
-    --warn: #f59e0b;
-    --err: #ef4444;
-    --info: #6366f1;
-    --shadow: 0 1px 2px rgba(0,0,0,.04), 0 4px 10px rgba(0,0,0,.04);
-    --mono: ui-monospace, SFMono-Regular, Menlo, Consolas, "Liberation Mono", monospace;
-    --sans: system-ui, -apple-system, "Segoe UI", Roboto, Inter, "Helvetica Neue", sans-serif;
+    --bg: #fbfbfa;
+    --surface-1: #ffffff;
+    --surface-2: #f7f7f6;
+    --surface-3: #f1f1f0;
+    --hover: #ebebea;
+    --line: rgba(0,0,0,.07);
+    --line-strong: rgba(0,0,0,.14);
+    --text: #15171a;
+    --text-2: #54585f;
+    --text-3: #80858d;
+    --text-4: #a8adb4;
+    --accent: oklch(58% 0.18 var(--accent-h));
+    --accent-soft: oklch(58% 0.18 var(--accent-h) / 0.10);
+    --accent-glow: oklch(58% 0.18 var(--accent-h) / 0.30);
   }
-  @media (prefers-color-scheme: dark) {
-    :root {
-      --bg: #0b1120;
-      --bg-elev: #111827;
-      --bg-row: #0f172a;
-      --bg-row-hover: #1e293b;
-      --fg: #e2e8f0;
-      --fg-muted: #94a3b8;
-      --fg-subtle: #64748b;
-      --border: #1f2937;
-      --accent: #60a5fa;
-      --ok: #34d399;
-      --warn: #fbbf24;
-      --err: #f87171;
-      --info: #818cf8;
-      --shadow: 0 1px 2px rgba(0,0,0,.3), 0 4px 10px rgba(0,0,0,.3);
-    }
-  }
+}
 
-  * { box-sizing: border-box; }
-  html, body { margin: 0; padding: 0; height: 100%; }
-  body {
-    font-family: var(--sans);
-    font-size: 14px;
-    line-height: 1.5;
-    color: var(--fg);
-    background: var(--bg);
-    display: flex;
-    flex-direction: column;
-  }
+/* density tweak */
+:root[data-density="compact"]  { --pad: 10px; --pad-tight: 6px; }
+:root[data-density="comfy"]    { --pad: 20px; --pad-tight: 14px; }
 
-  header {
-    display: flex;
-    align-items: center;
-    gap: 12px;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg-elev);
-    box-shadow: var(--shadow);
-    position: sticky;
-    top: 0;
-    z-index: 10;
-  }
-  header h1 {
-    margin: 0;
-    font-size: 14px;
-    font-weight: 600;
-    letter-spacing: .2px;
-  }
-  header h1::before {
-    content: "◆";
-    color: var(--accent);
-    margin-right: 6px;
-  }
-  header .meta {
-    color: var(--fg-subtle);
-    font-family: var(--mono);
-    font-size: 12px;
-  }
-  header .grow { flex: 1; }
+/* ───────────────────────── base ───────────────────────── */
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body {
+  min-height: 100vh;
+  font-feature-settings: "ss01", "cv11";
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+::selection { background: var(--accent-soft); color: var(--text); }
 
-  .conn-status {
-    display: inline-flex;
-    align-items: center;
-    gap: 6px;
-    padding: 3px 10px;
-    border-radius: 999px;
-    font-family: var(--mono);
-    font-size: 11px;
-    font-weight: 600;
-    border: 1px solid var(--border);
-    background: var(--bg-row);
-  }
-  .conn-status .dot {
-    display: inline-block;
-    width: 8px;
-    height: 8px;
-    border-radius: 50%;
-    background: var(--fg-subtle);
-  }
-  .conn-status[data-state="CONNECTING"] .dot { background: var(--warn); animation: pulse 1.4s infinite; }
-  .conn-status[data-state="OPEN"]      .dot { background: var(--ok); }
-  .conn-status[data-state="CLOSED"]    .dot { background: var(--err); animation: pulse 1s infinite; }
-  @keyframes pulse { 50% { opacity: .35; } }
+/* scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 10px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-4); }
 
-  .toolbar {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg-elev);
-    flex-wrap: wrap;
-  }
-  .toolbar input[type="search"] {
-    flex: 1 1 240px;
-    min-width: 180px;
-    padding: 6px 10px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--bg-row);
-    color: var(--fg);
-    font-family: var(--sans);
-    font-size: 13px;
-  }
-  .toolbar input[type="search"]:focus {
-    outline: 2px solid var(--accent);
-    outline-offset: -1px;
-  }
-  .filters {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 4px;
-  }
-  .filters label {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    padding: 3px 8px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-    background: var(--bg-row);
-    cursor: pointer;
-    user-select: none;
-    font-size: 11px;
-    font-family: var(--mono);
-  }
-  .filters input { display: none; }
-  .filters label:has(input:checked) {
-    background: var(--accent);
-    color: white;
-    border-color: var(--accent);
-  }
+/* ───────────────────────── shell ───────────────────────── */
+.app {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  min-height: 100vh;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 18px 22px 0;
+}
 
-  button {
-    padding: 5px 12px;
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    background: var(--bg-row);
-    color: var(--fg);
-    font-family: var(--sans);
-    font-size: 12px;
-    cursor: pointer;
-  }
-  button:hover { background: var(--bg-row-hover); }
-  button:focus-visible { outline: 2px solid var(--accent); outline-offset: 1px; }
-  button[aria-pressed="true"] { background: var(--accent); color: white; border-color: var(--accent); }
+@media (max-width: 520px) {
+  .app { padding: 12px 14px 0; }
+}
 
-  main {
-    flex: 1;
-    overflow: auto;
-    padding: 0 16px 24px;
-  }
+/* ───────────────────────── header ───────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0 16px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 16px;
+}
+.logo {
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.logo svg { width: 14px; height: 14px; }
+.brand {
+  display: flex; flex-direction: column; gap: 1px;
+  min-width: 0;
+}
+.brand-row {
+  display: flex; align-items: baseline; gap: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: -0.01em;
+}
+.brand-name { color: var(--text); font-weight: 500; }
+.brand-meta { color: var(--text-3); font-size: 11px; }
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.spacer { flex: 1; }
+.conn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-1);
+}
+.conn .dot {
+  width: 6px; height: 6px; border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 var(--accent-glow);
+  animation: connpulse 2.4s ease-out infinite;
+}
+@keyframes connpulse {
+  0%   { box-shadow: 0 0 0 0 var(--accent-glow); }
+  70%  { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.conn[data-state="off"] .dot { background: var(--text-4); animation: none; }
+.conn[data-state="off"] { color: var(--text-3); }
 
-  .empty {
-    text-align: center;
-    color: var(--fg-subtle);
-    padding: 64px 16px;
-    font-size: 14px;
-  }
-  .empty strong { display: block; color: var(--fg-muted); margin-bottom: 6px; }
-  .empty code {
-    font-family: var(--mono);
-    background: var(--bg-row);
-    padding: 1px 6px;
-    border-radius: 4px;
-    font-size: 12px;
-    border: 1px solid var(--border);
-  }
+/* ───────────────────────── toolbar ───────────────────────── */
+.toolbar {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 16px;
+}
+.search {
+  flex: 1;
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  transition: border-color .15s var(--ease), background .15s var(--ease);
+}
+.search:focus-within { border-color: var(--line-strong); background: var(--surface-2); }
+.search svg { width: 13px; height: 13px; color: var(--text-3); flex-shrink: 0; }
+.search input {
+  flex: 1;
+  background: transparent; border: 0; outline: 0; color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+.search input::placeholder { color: var(--text-3); }
+.search kbd {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  color: var(--text-3);
+}
 
-  .ev-list {
-    list-style: none;
-    margin: 12px 0 0;
-    padding: 0;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    overflow: hidden;
-    background: var(--bg-elev);
-  }
-  .ev-row {
-    display: grid;
-    grid-template-columns: 92px 110px 1fr;
-    gap: 12px;
-    padding: 8px 12px;
-    border-bottom: 1px solid var(--border);
-    font-size: 13px;
-    align-items: start;
-  }
-  .ev-row:last-child { border-bottom: 0; }
-  .ev-row:hover { background: var(--bg-row-hover); }
+.iconbtn {
+  display: grid; place-items: center;
+  width: 30px; height: 30px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--surface-1);
+  color: var(--text-2);
+  transition: all .15s var(--ease);
+}
+.iconbtn:hover { color: var(--text); background: var(--surface-2); border-color: var(--line-strong); }
+.iconbtn[aria-pressed="true"] { color: var(--accent); border-color: var(--accent-soft); background: var(--accent-soft); }
+.iconbtn svg { width: 13px; height: 13px; }
 
-  .ev-time {
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--fg-subtle);
-    padding-top: 1px;
-  }
+/* filter popover */
+.filter-wrap { position: relative; }
+.filter-pop {
+  position: absolute;
+  top: calc(100% + 6px); right: 0;
+  min-width: 200px;
+  padding: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.02);
+  z-index: 30;
+  display: none;
+}
+.filter-pop.open { display: block; animation: pop-in .14s var(--ease); }
+@keyframes pop-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.fp-title { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-3); padding: 6px 8px 4px; }
+.fp-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+  user-select: none;
+}
+.fp-row:hover { background: var(--surface-3); color: var(--text); }
+.fp-row[data-on="true"] { color: var(--text); }
+.fp-row[data-on="true"] .fp-check { color: var(--accent); }
+.fp-check { width: 12px; opacity: 0; }
+.fp-row[data-on="true"] .fp-check { opacity: 1; }
+.fp-row .fp-glyph { font-family: var(--mono); width: 12px; text-align: center; color: var(--text-3); }
 
-  .ev-badge {
-    display: inline-block;
-    padding: 2px 8px;
-    border-radius: 999px;
-    background: var(--bg-row);
-    color: var(--fg-muted);
-    font-family: var(--mono);
-    font-size: 10px;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    border: 1px solid var(--border);
-    white-space: nowrap;
-    text-align: center;
-  }
-  .ev-badge[data-type="run.start"]      { color: var(--info);  border-color: var(--info); }
-  .ev-badge[data-type="run.end"]        { color: var(--info);  border-color: var(--info); }
-  .ev-badge[data-type="tool_invocation"]{ color: var(--accent); border-color: var(--accent); }
-  .ev-badge[data-type="progress"]       { color: var(--ok);    border-color: var(--ok); }
-  .ev-badge[data-type="milestone"]      { color: var(--warn);  border-color: var(--warn); }
-  .ev-badge[data-type="error"]          { color: var(--err);   border-color: var(--err); background: color-mix(in srgb, var(--err) 8%, transparent); }
-  .ev-badge[data-type="shutdown"]       { color: var(--err);   border-color: var(--err); }
+/* ───────────────────────── active runs hero ───────────────────────── */
+.active-region {
+  margin-bottom: 18px;
+  display: flex; flex-direction: column; gap: 10px;
+}
 
-  .ev-body { min-width: 0; word-wrap: break-word; }
-  .ev-body summary {
-    list-style: none;
-    cursor: pointer;
-  }
-  .ev-body summary::-webkit-details-marker { display: none; }
-  .ev-body summary .label {
-    color: var(--fg);
-    font-family: var(--sans);
-  }
-  .ev-body summary .meta {
-    color: var(--fg-subtle);
-    font-family: var(--mono);
-    font-size: 11px;
-    margin-left: 6px;
-  }
-  .ev-body pre {
-    margin: 6px 0 0;
-    padding: 8px 10px;
-    background: var(--bg-row);
-    border: 1px solid var(--border);
-    border-radius: 6px;
-    font-family: var(--mono);
-    font-size: 11px;
-    color: var(--fg-muted);
-    overflow-x: auto;
-    max-height: 280px;
-  }
+.run-card {
+  position: relative;
+  padding: var(--pad);
+  background:
+    radial-gradient(120% 80% at 0% 0%, var(--accent-soft) 0%, transparent 45%),
+    var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  isolation: isolate;
+}
+.run-card.enter { animation: run-in .35s var(--ease); }
+@keyframes run-in {
+  from { opacity: 0; transform: translateY(6px) scale(.995); }
+  to   { opacity: 1; transform: none; }
+}
 
-  /* Active runs panel — current executions with live progress bars */
-  .runs {
-    margin: 12px 0 16px;
-    display: grid;
-    gap: 10px;
-  }
-  .runs[hidden] { display: none; }
-  .runs-header {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    color: var(--fg-subtle);
-    font-family: var(--mono);
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: .8px;
-  }
-  .runs-header .count {
-    background: var(--accent);
-    color: white;
-    padding: 1px 8px;
-    border-radius: 999px;
-    font-weight: 700;
-  }
+/* ambient running glow on the card edge */
+.run-card::before {
+  content: "";
+  position: absolute; inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--ang, 0deg),
+    transparent 0deg, transparent 280deg,
+    var(--accent) 320deg, var(--accent) 340deg, transparent 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: .8;
+  pointer-events: none;
+  animation: spin 4s linear infinite;
+}
+@property --ang { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+@keyframes spin { to { --ang: 360deg; } }
 
-  .run-card {
-    background: var(--bg-elev);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 14px 16px;
-    box-shadow: var(--shadow);
-    display: grid;
-    grid-template-columns: minmax(0, 1fr) auto;
-    gap: 10px 16px;
-    align-items: baseline;
-    position: relative;
-    overflow: hidden;
-    transition: opacity .25s ease;
-    min-width: 0;
-  }
-  .run-card > * { min-width: 0; }
-  .run-card[data-status="running"] {
-    border-color: var(--accent);
-    border-left-width: 4px;
-  }
-  .run-card[data-status="done"] {
-    border-color: var(--ok);
-    border-left-width: 4px;
-  }
-  .run-card[data-status="error"] {
-    border-color: var(--err);
-    border-left-width: 4px;
-    background: color-mix(in srgb, var(--err) 5%, var(--bg-elev));
-  }
-  .run-card.fading { opacity: .4; }
+:root[data-motion="subtle"] .run-card::before { animation: none; opacity: .4; }
 
-  .run-card .run-title {
-    font-family: var(--sans);
-    font-weight: 600;
-    font-size: 14px;
-    color: var(--fg);
-    display: flex;
-    align-items: center;
-    gap: 8px;
-  }
-  .run-card .run-kind {
-    font-size: 11px;
-    font-family: var(--mono);
-    color: var(--fg-subtle);
-    text-transform: uppercase;
-    letter-spacing: .5px;
-    background: var(--bg-row);
-    padding: 1px 8px;
-    border-radius: 999px;
-    border: 1px solid var(--border);
-  }
-  .run-card .run-percent {
-    font-family: var(--mono);
-    font-size: 22px;
-    font-weight: 700;
-    font-variant-numeric: tabular-nums;
-    color: var(--accent);
-    line-height: 1;
-  }
-  .run-card[data-status="done"] .run-percent { color: var(--ok); }
-  .run-card[data-status="error"] .run-percent { color: var(--err); font-size: 13px; }
+.rc-head {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px;
+}
+.rc-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: grid; place-items: center;
+  background: var(--surface-3);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--line-strong);
+  position: relative;
+  flex-shrink: 0;
+}
+.rc-icon svg { width: 15px; height: 15px; }
+.rc-icon[data-tool="sync"]    { color: var(--accent); }
+.rc-icon[data-tool="reverse"] { color: oklch(78% 0.14 280); }
+.rc-icon[data-tool="gates"]   { color: oklch(82% 0.14 75); }
 
-  .run-card .run-bar-wrap {
-    grid-column: 1 / -1;
-    height: 8px;
-    background: var(--bg-row);
-    border-radius: 4px;
-    overflow: hidden;
-    border: 1px solid var(--border);
-    position: relative;
-  }
-  .run-card .run-bar {
-    height: 100%;
-    background: var(--accent);
-    border-radius: 3px;
-    transition: width .25s ease;
-    position: relative;
-  }
-  .run-card[data-status="done"] .run-bar { background: var(--ok); }
-  .run-card[data-status="error"] .run-bar { background: var(--err); }
-  .run-card[data-status="running"] .run-bar::after {
-    /* Subtle moving stripe so the bar feels alive even when % stays put briefly */
-    content: '';
-    position: absolute; inset: 0;
-    background-image: linear-gradient(
-      90deg,
-      transparent 0%, transparent 40%,
-      color-mix(in srgb, white 25%, transparent) 50%,
-      transparent 60%, transparent 100%
-    );
-    background-size: 200% 100%;
-    animation: shimmer 1.6s linear infinite;
-  }
-  @keyframes shimmer {
-    0%   { background-position: 200% 0; }
-    100% { background-position: -200% 0; }
-  }
+.rc-title-block { min-width: 0; flex: 1; }
+.rc-tool {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+  letter-spacing: -0.01em;
+}
+.rc-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rc-elapsed {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-2);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+}
+.rc-elapsed .em { color: var(--accent); }
+.rc-elapsed .em.warn { color: var(--warn); }
+.rc-elapsed small { color: var(--text-3); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
 
-  .run-card .run-step {
-    grid-column: 1 / -1;
-    color: var(--fg-muted);
-    font-family: var(--mono);
-    font-size: 12px;
-    word-break: break-word;
-  }
-  .run-card .run-meta {
-    grid-column: 1 / -1;
-    display: flex;
-    gap: 12px;
-    color: var(--fg-subtle);
-    font-family: var(--mono);
-    font-size: 10px;
-  }
-  .run-card .run-meta .runid { letter-spacing: .5px; }
-  .run-card[data-status="error"] .run-step { color: var(--err); }
+/* progress */
+.rc-progress {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 10px;
+}
+.rc-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  overflow: hidden;
+  position: relative;
+}
+.rc-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent) 0%, oklch(88% 0.16 calc(var(--accent-h) + 30)) 100%);
+  border-radius: inherit;
+  transition: width .6s var(--ease);
+  position: relative;
+}
+.rc-bar-fill::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.35) 50%, transparent 100%);
+  animation: shimmer 2s linear infinite;
+  mix-blend-mode: overlay;
+}
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+:root[data-motion="subtle"] .rc-bar-fill::after { display: none; }
 
-  .banner {
-    margin: 12px 0 0;
-    padding: 12px 16px;
-    border-radius: 8px;
-    background: color-mix(in srgb, var(--err) 8%, var(--bg-elev));
-    border: 1px solid var(--err);
-    color: var(--err);
-    font-size: 13px;
-  }
-  .banner[hidden] { display: none; }
-  .banner code {
-    font-family: var(--mono);
-    background: var(--bg-row);
-    padding: 1px 5px;
-    border-radius: 4px;
-    color: var(--fg-muted);
-  }
+.rc-pct {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  min-width: 38px;
+  text-align: right;
+}
 
-  .footer {
-    padding: 8px 16px;
-    border-top: 1px solid var(--border);
-    background: var(--bg-elev);
-    color: var(--fg-subtle);
-    font-family: var(--mono);
-    font-size: 11px;
-    display: flex;
-    gap: 16px;
-    flex-wrap: wrap;
+/* current step caption */
+.rc-step {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-2);
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  white-space: nowrap; overflow: hidden;
+}
+.rc-step .glyph {
+  color: var(--accent);
+  display: inline-grid; place-items: center;
+  width: 12px; height: 12px;
+  flex-shrink: 0;
+}
+.rc-step .glyph svg { width: 12px; height: 12px; animation: spin-slow 1.4s linear infinite; }
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+
+.rc-step-text {
+  flex: 1;
+  overflow: hidden; text-overflow: ellipsis;
+  transition: opacity .25s var(--ease);
+}
+.rc-step-text.fade { opacity: 0.3; }
+
+.rc-step-count {
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* run id chip */
+.rc-foot {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+}
+.rc-runid {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  color: var(--text-2);
+}
+.rc-foot .sep { color: var(--text-4); }
+
+/* multiple active runs => stack 'em */
+.active-region[data-count="2"] .run-card,
+.active-region[data-count="3"] .run-card { padding: 12px; }
+.active-region[data-count="2"] .run-card .rc-title,
+.active-region[data-count="3"] .run-card .rc-title { font-size: 14px; }
+
+/* ───────────────────────── log section ───────────────────────── */
+.section-head {
+  display: flex; align-items: baseline; gap: 8px;
+  margin: 8px 0 10px;
+  padding: 0 2px;
+}
+.section-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--text-3);
+}
+.section-count {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-4);
+}
+
+/* timeline */
+.timeline {
+  position: relative;
+  padding: 0 0 32px 0;
+}
+.tl-day {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  padding: 14px 0 10px;
+  position: sticky;
+  top: 0;
+  background: linear-gradient(var(--bg) 70%, transparent);
+  z-index: 1;
+}
+.tl-day::before, .tl-day::after {
+  content: ""; flex: 1;
+  border-top: 1px dashed var(--line);
+}
+
+.tl-row {
+  display: grid;
+  grid-template-columns: 64px 18px 1fr;
+  gap: 0;
+  padding: var(--pad-tight) 0;
+  position: relative;
+  border-radius: 4px;
+  transition: background .15s var(--ease);
+}
+.tl-row.enter { animation: row-in .35s var(--ease); }
+.tl-row:hover { background: var(--surface-1); }
+@keyframes row-in {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: none; }
+}
+.tl-row.is-new { background: var(--accent-soft); }
+.tl-row.is-new::after {
+  content: "novo";
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--accent);
+  animation: fade-out 2.4s 1s forwards;
+}
+@keyframes fade-out { to { opacity: 0; } }
+
+.tl-time {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  padding-left: 4px;
+  padding-top: 1px;
+}
+
+/* rail with node */
+.tl-rail {
+  position: relative;
+  display: flex; justify-content: center;
+}
+.tl-rail::before {
+  content: "";
+  position: absolute;
+  top: -10px; bottom: -10px;
+  left: 50%; width: 1px;
+  background: var(--line);
+  transform: translateX(-.5px);
+}
+.tl-row:first-of-type .tl-rail::before { top: 8px; }
+.tl-row:last-of-type .tl-rail::before { bottom: calc(100% - 8px); }
+
+.tl-node {
+  position: relative;
+  z-index: 1;
+  width: 7px; height: 7px;
+  border-radius: 999px;
+  margin-top: 5px;
+  background: var(--text-4);
+  border: 2px solid var(--bg);
+  box-sizing: content-box;
+}
+.tl-row[data-type="run.start"] .tl-node { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.tl-row[data-type="run.end"] .tl-node { background: var(--text-2); }
+.tl-row[data-type="run.end"][data-ok="false"] .tl-node { background: var(--err); }
+.tl-row[data-type="error"] .tl-node { background: var(--err); box-shadow: 0 0 0 3px var(--err-soft); }
+.tl-row[data-type="milestone"] .tl-node { background: var(--accent); }
+.tl-row[data-type="progress"] .tl-node { width: 5px; height: 5px; margin-top: 6px; }
+
+/* group runId connector — visually subtle indent */
+.tl-row[data-grouped="true"] { padding-left: 0; }
+.tl-row[data-grouped="true"] .tl-node { background: var(--text-3); }
+
+.tl-content {
+  display: flex; align-items: baseline; gap: 8px;
+  padding-left: 8px;
+  min-width: 0;
+}
+
+.tl-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .04em;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  background: var(--surface-1);
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.tl-badge .g { font-family: var(--mono); }
+
+.tl-row[data-type="run.start"] .tl-badge { color: var(--accent); border-color: var(--accent-soft); background: var(--accent-soft); }
+.tl-row[data-type="error"] .tl-badge { color: var(--err); border-color: var(--err-soft); background: var(--err-soft); }
+.tl-row[data-type="milestone"] .tl-badge { color: var(--accent); border-color: var(--accent-soft); background: var(--accent-soft); }
+.tl-row[data-type="run.end"][data-ok="true"] .tl-badge { color: var(--text); }
+.tl-row[data-type="run.end"][data-ok="false"] .tl-badge { color: var(--err); border-color: var(--err-soft); background: var(--err-soft); }
+
+.tl-msg {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 12px;
+  color: var(--text);
+}
+.tl-row[data-type="progress"] .tl-msg { color: var(--text-2); }
+
+.tl-msg .path,
+.tl-msg .ident {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
+  background: var(--surface-2);
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+}
+.tl-msg .arrow { color: var(--text-3); margin: 0 4px; }
+
+.tl-runid {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-4);
+  flex-shrink: 0;
+}
+
+/* ───────────────────────── empty state ───────────────────────── */
+.empty {
+  margin: 32px 0;
+  padding: 48px 24px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(60% 40% at 50% 50%, var(--accent-soft) 0%, transparent 70%),
+    var(--surface-1);
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  text-align: center;
+}
+.empty-viz {
+  width: 200px; height: 60px;
+  display: flex; align-items: center; justify-content: center;
+  gap: 4px;
+}
+.empty-viz .bar {
+  width: 4px;
+  background: var(--accent);
+  border-radius: 2px;
+  opacity: .5;
+  animation: heartbeat 1.6s var(--ease) infinite;
+}
+.empty-viz .bar:nth-child(1)  { animation-delay: 0.0s; height: 12px; }
+.empty-viz .bar:nth-child(2)  { animation-delay: 0.05s; height: 18px; }
+.empty-viz .bar:nth-child(3)  { animation-delay: 0.10s; height: 28px; }
+.empty-viz .bar:nth-child(4)  { animation-delay: 0.15s; height: 40px; }
+.empty-viz .bar:nth-child(5)  { animation-delay: 0.20s; height: 52px; }
+.empty-viz .bar:nth-child(6)  { animation-delay: 0.25s; height: 40px; }
+.empty-viz .bar:nth-child(7)  { animation-delay: 0.30s; height: 28px; }
+.empty-viz .bar:nth-child(8)  { animation-delay: 0.35s; height: 18px; }
+.empty-viz .bar:nth-child(9)  { animation-delay: 0.40s; height: 12px; }
+.empty-viz .bar:nth-child(10) { animation-delay: 0.45s; height: 22px; }
+.empty-viz .bar:nth-child(11) { animation-delay: 0.50s; height: 36px; }
+.empty-viz .bar:nth-child(12) { animation-delay: 0.55s; height: 24px; }
+.empty-viz .bar:nth-child(13) { animation-delay: 0.60s; height: 14px; }
+
+@keyframes heartbeat {
+  0%, 100% { transform: scaleY(0.5); opacity: 0.3; }
+  50%      { transform: scaleY(1.0); opacity: 0.9; }
+}
+
+.empty h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -.01em;
+}
+.empty p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-3);
+  max-width: 320px;
+}
+.empty .hint {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-4);
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 4px;
+}
+.empty .hint kbd {
+  font-family: var(--mono);
+  padding: 1px 5px;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  color: var(--text-2);
+}
+
+/* ───────────────────────── footer ───────────────────────── */
+.footer {
+  padding: 16px 0;
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  display: flex; align-items: center; gap: 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-4);
+}
+.footer .sep { color: var(--text-4); }
+.footer .live { color: var(--accent); }
+
+/* ───────────────────────── tweaks panel ───────────────────────── */
+.tweaks {
+  position: fixed;
+  right: 16px; bottom: 16px;
+  width: 280px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.02);
+  z-index: 50;
+  overflow: hidden;
+  display: none;
+  animation: tweaks-in .25s var(--ease);
+}
+.tweaks.open { display: block; }
+@keyframes tweaks-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.tweaks h3 {
+  margin: 0;
+  padding: 14px 14px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--text-3);
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.tweaks h3 .close {
+  margin-left: auto;
+  width: 18px; height: 18px;
+  display: grid; place-items: center;
+  border-radius: 4px;
+  color: var(--text-3);
+}
+.tweaks h3 .close:hover { background: var(--surface-3); color: var(--text); }
+.tweaks-body { padding: 8px 14px 14px; display: flex; flex-direction: column; gap: 14px; }
+.tw-group { display: flex; flex-direction: column; gap: 6px; }
+.tw-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-3);
+}
+.seg {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface-3);
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
+.seg button {
+  padding: 5px 8px;
+  font-size: 11px;
+  color: var(--text-2);
+  border-radius: 4px;
+  transition: all .12s var(--ease);
+  font-family: var(--sans);
+}
+.seg button[aria-pressed="true"] {
+  background: var(--surface-1);
+  color: var(--text);
+  box-shadow: 0 1px 0 rgba(255,255,255,.04), 0 1px 4px rgba(0,0,0,.4);
+}
+.seg button:not([aria-pressed="true"]):hover { color: var(--text); }
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.swatches button {
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  position: relative;
+}
+.swatches button[aria-pressed="true"] {
+  border-color: var(--text);
+  outline: 2px solid var(--text);
+  outline-offset: -3px;
+}
+
+.tw-actions {
+  display: flex; gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+}
+.tw-actions button {
+  flex: 1;
+  padding: 6px;
+  font-size: 11px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  background: var(--surface-1);
+  transition: all .12s var(--ease);
+  font-family: var(--mono);
+}
+.tw-actions button:hover { color: var(--text); background: var(--surface-3); }
+
+/* density-driven log padding handled via --pad-tight above */
+
+/* ───────────────────────── reduced motion ───────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
   }
+}
 </style>
 </head>
 <body>
-  <header>
-    <h1>kit-mcp sidecar</h1>
-    <span class="meta" id="meta-port">porta —</span>
-    <span class="grow"></span>
-    <span class="conn-status" id="conn" data-state="CONNECTING"><span class="dot"></span><span id="conn-text">CONECTANDO</span></span>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 7h16M4 12h10M4 17h16"/>
+      </svg>
+    </div>
+    <div class="brand">
+      <div class="brand-row">
+        <span class="brand-name">kit-mcp</span>
+        <span class="brand-meta" id="brand-meta">sidecar</span>
+      </div>
+      <div class="brand-sub">127.0.0.1:7100</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="conn" id="conn" data-state="on" title="Conexão SSE">
+      <span class="dot"></span>
+      <span id="conn-label">conectado</span>
+    </div>
   </header>
 
+  <!-- TOOLBAR -->
   <div class="toolbar">
-    <input type="search" id="search" placeholder="filtrar por nome ou conteúdo…" autocomplete="off">
-    <fieldset class="filters" id="type-filters" aria-label="Tipos de evento">
-      <!-- populated from EVENT_TYPES at runtime -->
-    </fieldset>
-    <button id="pause-btn" aria-pressed="false">⏸ pausar</button>
-    <button id="autoscroll-btn" aria-pressed="true">↧ rolagem auto</button>
-    <button id="clear-btn" title="Limpa o que está visível (histórico no servidor preservado)">limpar tela</button>
+    <label class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
+      </svg>
+      <input id="q" type="text" placeholder="buscar tool, runId, caminho…" autocomplete="off" spellcheck="false" />
+      <kbd>/</kbd>
+    </label>
+    <div class="filter-wrap">
+      <button class="iconbtn" id="filter-btn" aria-pressed="false" aria-label="Filtros" title="Filtros">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18M6 12h12M10 18h4"/>
+        </svg>
+      </button>
+      <div class="filter-pop" id="filter-pop" role="menu">
+        <div class="fp-title">Tipos</div>
+        <div class="fp-row" data-on="true" data-filter="run.start"><span class="fp-check">✓</span><span class="fp-glyph">▸</span>Iniciado</div>
+        <div class="fp-row" data-on="true" data-filter="progress"><span class="fp-check">✓</span><span class="fp-glyph">⟳</span>Em andamento</div>
+        <div class="fp-row" data-on="true" data-filter="milestone"><span class="fp-check">✓</span><span class="fp-glyph">★</span>Marco</div>
+        <div class="fp-row" data-on="true" data-filter="run.end"><span class="fp-check">✓</span><span class="fp-glyph">✓</span>Finalizado</div>
+        <div class="fp-row" data-on="true" data-filter="error"><span class="fp-check">✓</span><span class="fp-glyph">✕</span>Erro</div>
+      </div>
+    </div>
+    <button class="iconbtn" id="pause-btn" aria-pressed="false" aria-label="Pausar stream" title="Pausar stream">
+      <svg id="pause-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>
+      </svg>
+    </button>
+    <button class="iconbtn" id="tweaks-btn" aria-pressed="false" aria-label="Tweaks" title="Tweaks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>
+      </svg>
+    </button>
   </div>
 
+  <!-- ACTIVE + LOG -->
   <main>
-    <div class="banner" id="shutdown-banner" hidden>
-      <strong>Sidecar encerrou.</strong> Recarregue depois de <code>kit ui start</code>.
+    <section id="active-region" class="active-region" data-count="0" aria-live="polite"></section>
+
+    <div class="section-head" id="log-head" hidden>
+      <span class="section-title">Linha do tempo</span>
+      <span class="section-count" id="log-count">0 eventos</span>
     </div>
 
-    <section class="runs" id="active-runs" hidden aria-label="Em execução agora">
-      <div class="runs-header">
-        <span>Em execução agora</span>
-        <span class="count" id="active-runs-count">0</span>
+    <section id="timeline" class="timeline"></section>
+
+    <section id="empty" class="empty">
+      <div class="empty-viz" aria-hidden="true">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+        <span class="bar"></span>
       </div>
-      <div id="active-runs-list"></div>
+      <h2>Aguardando o primeiro evento</h2>
+      <p>O sidecar está escutando em <span style="font-family:var(--mono);color:var(--text-2)">/events</span>. Rode qualquer comando do kit-mcp e ele aparece aqui ao vivo.</p>
+      <div class="hint">
+        Tente <kbd>kit sync</kbd> · <kbd>kit gates</kbd>
+      </div>
     </section>
-
-    <ul class="ev-list" id="events" hidden></ul>
-    <div class="empty" id="empty">
-      <strong>Aguardando primeiro evento…</strong>
-      Rode <code>kit sync install</code>, <code>kit reverse-sync apply</code>, ou
-      chame uma ferramenta MCP com <code>autoSpawn: true</code> em outra janela.
-    </div>
   </main>
 
-  <div class="footer">
-    <span id="footer-events">eventos: 0</span>
-    <span id="footer-paused" hidden>pausado: 0 em fila</span>
-    <span id="footer-source">fonte: ao vivo</span>
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span id="evt-count">0 eventos</span>
+    <span class="sep">·</span>
+    <span>fonte: <span class="live" id="src-label">ao vivo</span></span>
+    <span class="sep">·</span>
+    <span id="last-seen">aguardando…</span>
+  </footer>
+
+</div>
+
+<!-- TWEAKS -->
+<aside class="tweaks" id="tweaks" role="dialog" aria-label="Tweaks">
+  <h3>
+    Tweaks
+    <button class="close" id="tweaks-close" aria-label="Fechar">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </h3>
+  <div class="tweaks-body">
+    <div class="tw-group">
+      <span class="tw-label">Acento</span>
+      <div class="swatches" id="tw-accent">
+        <button data-h="130" style="background:oklch(82% 0.18 130)" aria-label="Lima"></button>
+        <button data-h="220" style="background:oklch(78% 0.16 220)" aria-label="Azul"></button>
+        <button data-h="290" style="background:oklch(78% 0.18 290)" aria-label="Roxo"></button>
+        <button data-h="20"  style="background:oklch(78% 0.18 20)"  aria-label="Laranja"></button>
+        <button data-h="340" style="background:oklch(78% 0.18 340)" aria-label="Magenta"></button>
+        <button data-h="180" style="background:oklch(80% 0.14 180)" aria-label="Ciano"></button>
+      </div>
+    </div>
+
+    <div class="tw-group">
+      <span class="tw-label">Densidade</span>
+      <div class="seg" id="tw-density">
+        <button data-v="compact">Compacta</button>
+        <button data-v="normal" aria-pressed="true">Normal</button>
+        <button data-v="comfy">Confortável</button>
+      </div>
+    </div>
+
+    <div class="tw-group">
+      <span class="tw-label">Movimento</span>
+      <div class="seg" id="tw-motion">
+        <button data-v="subtle">Sutil</button>
+        <button data-v="medium" aria-pressed="true">Médio</button>
+        <button data-v="rich">Rico</button>
+      </div>
+    </div>
+
+    <div class="tw-group">
+      <span class="tw-label">Cenário (mock)</span>
+      <div class="seg" id="tw-scenario">
+        <button data-v="sync" aria-pressed="true">Sync</button>
+        <button data-v="multi">Multi</button>
+        <button data-v="error">Erro</button>
+        <button data-v="idle">Idle</button>
+      </div>
+    </div>
+
+    <div class="tw-actions">
+      <button id="tw-replay">▸ replay</button>
+      <button id="tw-clear">limpar</button>
+    </div>
   </div>
+</aside>
+
+<!-- SVG sprite (in-doc, no external) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-sync" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/>
+      <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/>
+    </symbol>
+    <symbol id="i-reverse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 7h10l-3-3"/><path d="M17 17H7l3 3"/>
+    </symbol>
+    <symbol id="i-gates" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/>
+    </symbol>
+    <symbol id="i-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <path d="M12 3a9 9 0 1 0 9 9" />
+    </symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/>
+    </symbol>
+  </defs>
+</svg>
 
 <script>
-  // src/ui/static/index.html — vanilla DOM client for the kit-mcp sidecar.
-  // Connects to /events (SSE) and hydrates from /state on load.
-  // No build step. No deps.
+/* ──────────────────────────────────────────────────────────
+   kit-mcp sidecar — prototype
+   This is a faithful mock of what the production HTML will do.
+   In production, replace the MockSource with a real EventSource('/events').
+   ────────────────────────────────────────────────────────── */
 
-  'use strict';
+/* ---------- humanize helpers (preserved API) ---------- */
+const TYPE_LABELS = {
+  "run.start":      "INICIADO",
+  "run.end":        "FINALIZADO",
+  "tool_invocation":"INVOCADO",
+  "progress":       "EM ANDAMENTO",
+  "milestone":      "MARCO",
+  "error":          "ERRO",
+  "shutdown":       "ENCERRADO",
+};
+const TOOL_LABELS = {
+  "sync.install":         "Sincronizando kit",
+  "sync.preview":         "Prévia de sincronização",
+  "reverse.scan":         "Escaneando agentes",
+  "reverse.merge":        "Mesclando alterações",
+  "gates.run":            "Executando gates",
+  "gates.lint":           "Lint dos agentes",
+  "kit.list":             "Listando kit",
+};
+const TOOL_FAMILIES = {
+  "sync.install":  "sync",
+  "sync.preview":  "sync",
+  "reverse.scan":  "reverse",
+  "reverse.merge": "reverse",
+  "gates.run":     "gates",
+  "gates.lint":    "gates",
+  "kit.list":      "sync",
+};
+function humanizeEventType(t) { return TYPE_LABELS[t] || t.toUpperCase(); }
+function humanizeTool(t)      { return TOOL_LABELS[t] || t; }
+function humanizePath(p) {
+  if (!p) return "";
+  // collapse leading paths, keep last 2 segments
+  const parts = p.split("/").filter(Boolean);
+  if (parts.length <= 2) return p;
+  return "…/" + parts.slice(-2).join("/");
+}
 
-  const EVENT_TYPES = ['run.start', 'run.end', 'tool_invocation', 'progress', 'milestone', 'error', 'shutdown'];
-  const RING_DISPLAY_MAX = 500;
+/* ---------- relative time ---------- */
+function relTime(ms) {
+  const s = Math.floor(ms / 1000);
+  if (s < 5)   return "agora";
+  if (s < 60)  return `há ${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60)  return `há ${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24)  return `há ${h}h`;
+  const d = Math.floor(h / 24);
+  return `há ${d}d`;
+}
+function clockTime(ts) {
+  const d = new Date(ts);
+  return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
+}
 
-  // ------- Humanization (PT-BR friendly labels) ------------------------
-  // Maps raw technical event types and tool ids to short human-readable
-  // labels. The technical values stay in the data attributes (so CSS colors
-  // and filters still key off the raw type) — only the display text changes.
+/* ---------- state ---------- */
+const state = {
+  events: [],          // newest first
+  runs: new Map(),     // runId → { startTs, tool, lastProgress, lastLabel, ended, ok, current, total }
+  filterText: "",
+  // tool_invocation + shutdown não têm chip de filtro, mas devem aparecer por default
+  filters: new Set(["run.start","progress","milestone","run.end","error","tool_invocation","shutdown"]),
+  paused: false,
+};
 
-  const EVENT_TYPE_LABEL = {
-    'run.start':        'Iniciado',
-    'run.end':          'Finalizado',
-    'tool_invocation':  'Comando',
-    'progress':         'Em andamento',
-    'milestone':        'Marco',
-    'error':            'Erro',
-    'shutdown':         'Desligado',
-  };
+/* ---------- DOM refs ---------- */
+const $ = (s) => document.querySelector(s);
+const els = {
+  active: $("#active-region"),
+  timeline: $("#timeline"),
+  empty: $("#empty"),
+  evtCount: $("#evt-count"),
+  logCount: $("#log-count"),
+  logHead: $("#log-head"),
+  lastSeen: $("#last-seen"),
+  conn: $("#conn"),
+  connLabel: $("#conn-label"),
+  q: $("#q"),
+  pauseBtn: $("#pause-btn"),
+  pauseIcon: $("#pause-icon"),
+  filterBtn: $("#filter-btn"),
+  filterPop: $("#filter-pop"),
+  tweaksBtn: $("#tweaks-btn"),
+  tweaks: $("#tweaks"),
+  tweaksClose: $("#tweaks-close"),
+  srcLabel: $("#src-label"),
+};
 
-  const TOOL_LABEL = {
-    'sync.install':       'Sincronizando kit',
-    'sync.watch':         'Vigiando kit (watch)',
-    'reverse-sync.apply': 'Importando edições do IDE',
-    'gates.run':          'Executando gate',
-    'sidecar':            'Servidor sidecar',
-  };
+/* ---------- ingest one event ---------- */
+function ingest(evt) {
+  if (state.paused) return;
+  state.events.unshift(evt);
+  if (state.events.length > 200) state.events.length = 200;
 
-  const STATUS_LABEL = {
-    running: 'em execução',
-    done:    'concluído',
-    error:   'erro',
-  };
-
-  const CONN_LABEL = {
-    CONNECTING: 'CONECTANDO',
-    OPEN:       'CONECTADO',
-    CLOSED:     'DESCONECTADO',
-  };
-
-  const PATH_VERB = {
-    reading:    'lendo',
-    writing:    'criando',
-    projecting: 'projetando',
-    merging:    'mesclando',
-    copying:    'copiando',
-    deleting:   'removendo',
-    creating:   'criando',
-    updating:   'atualizando',
-    syncing:    'sincronizando',
-    'sync':     'sincronizando',
-    applying:   'aplicando',
-    fetching:   'buscando',
-  };
-
-  function humanizeEventType(t) { return EVENT_TYPE_LABEL[t] || t; }
-  function humanizeTool(t) { return TOOL_LABEL[t] || t; }
-  function humanizeStatus(s) { return STATUS_LABEL[s] || s; }
-
-  // Turn a path / file reference inside a label into a friendlier description.
-  // Examples:
-  //   .claude/agents/planner.md  → agente planner
-  //   kit/commands/novo-marco.md → comando novo-marco
-  //   kit/skills/limpeza/SKILL.md → skill limpeza
-  //   .claude/framework/templates/codebase/x.md → template framework
-  //   CLAUDE.md                  → manifesto CLAUDE.md
-  function humanizePath(p) {
-    if (typeof p !== 'string' || !p.length) return '';
-    const norm = p.replace(/\\/g, '/');
-
-    let m;
-    if ((m = norm.match(/(?:\.claude|kit)\/agents\/([^/]+)\.md$/))) return `agente ${m[1]}`;
-    if ((m = norm.match(/(?:\.claude|kit)\/commands\/([^/]+)\.md$/))) return `comando ${m[1]}`;
-    if ((m = norm.match(/(?:\.claude|kit)\/skills\/([^/]+)/))) return `skill ${m[1]}`;
-    if ((m = norm.match(/(?:\.claude|kit)\/framework\//))) return 'framework';
-    if ((m = norm.match(/(?:\.claude|kit)\/hooks\//))) return 'hooks';
-    if (norm === 'CLAUDE.md' || norm.endsWith('/CLAUDE.md')) return 'manifesto CLAUDE.md';
-    if ((m = norm.match(/(?:\.claude|kit)\/([^/]+)\/([^/]+\.md)$/))) return `${m[1]} ${m[2].replace(/\.md$/, '')}`;
-    return norm; // fall back to the raw path if no rule matched
-  }
-
-  // Translate a raw progress label like "writing .claude/agents/planner.md"
-  // into "criando agente planner". The function is best-effort: if no rule
-  // matches, returns the original label so we never lose information.
-  function humanizeLabel(raw) {
-    if (typeof raw !== 'string' || !raw.length) return raw;
-
-    // verb + path (single token after verb)
-    const verbMatch = raw.match(/^(reading|writing|projecting|merging|copying|deleting|creating|updating|syncing|sync|applying|fetching)\s+(.+?)(?:\s+\(.+\))?$/i);
-    if (verbMatch) {
-      const verb = PATH_VERB[verbMatch[1].toLowerCase()] || verbMatch[1];
-      const target = humanizePath(verbMatch[2].trim());
-      return `${verb} ${target}`;
+  // run tracking
+  if (evt.runId) {
+    let run = state.runs.get(evt.runId);
+    if (!run) {
+      run = { runId: evt.runId, startTs: evt.ts, tool: null, lastProgress: 0, lastLabel: "", ended: false, ok: true, current: 0, total: 0, lastTs: evt.ts };
+      state.runs.set(evt.runId, run);
     }
-
-    // bare path
-    if (/^[^\s]+\.md$/.test(raw) || /^(?:\.claude|kit)\//.test(raw)) {
-      return humanizePath(raw);
+    run.lastTs = evt.ts;
+    if (evt.type === "run.start") {
+      run.tool = evt.payload?.tool;
+      run.startTs = evt.ts;
+    } else if (evt.type === "progress") {
+      if (typeof evt.payload?.percent === "number") run.lastProgress = evt.payload.percent;
+      if (evt.payload?.label) run.lastLabel = evt.payload.label;
+      if (evt.payload?.current) run.current = evt.payload.current;
+      if (evt.payload?.total)   run.total = evt.payload.total;
+    } else if (evt.type === "run.end") {
+      run.ended = true;
+      run.ok = !!evt.payload?.ok;
+      run.lastProgress = run.ok ? 100 : run.lastProgress;
+    } else if (evt.type === "error") {
+      // don't end the run on error event alone; matches server semantics
     }
-
-    // pure technical action, no path: leave as-is
-    return raw;
   }
 
-  const $ = (id) => document.getElementById(id);
-  const dom = {
-    conn: $('conn'),
-    connText: $('conn-text'),
-    metaPort: $('meta-port'),
-    list: $('events'),
-    empty: $('empty'),
-    banner: $('shutdown-banner'),
-    pauseBtn: $('pause-btn'),
-    autoscrollBtn: $('autoscroll-btn'),
-    clearBtn: $('clear-btn'),
-    search: $('search'),
-    typeFilters: $('type-filters'),
-    footerEvents: $('footer-events'),
-    footerPaused: $('footer-paused'),
-    footerSource: $('footer-source'),
-    activeRuns: $('active-runs'),
-    activeRunsList: $('active-runs-list'),
-    activeRunsCount: $('active-runs-count'),
-  };
+  render();
+  els.lastSeen.textContent = "último: " + clockTime(evt.ts);
+}
 
-  const state = {
-    events: [],         // currently rendered events (buffered while paused)
-    pausedBuffer: [],   // events captured while paused
-    paused: false,
-    autoscroll: true,
-    typeFilter: new Set(EVENT_TYPES), // all enabled
-    search: '',
-    closedAt: null,
-  };
+/* ---------- render ---------- */
+function passesFilter(evt) {
+  if (!state.filters.has(evt.type)) return false;
+  if (!state.filterText) return true;
+  const q = state.filterText.toLowerCase();
+  const blob = JSON.stringify(evt).toLowerCase();
+  return blob.includes(q);
+}
 
-  // ------- DOM helpers --------------------------------------------------
+function render() {
+  renderActive();
+  renderTimeline();
+  const total = state.events.length;
+  els.evtCount.textContent = `${total} evento${total === 1 ? "" : "s"}`;
+  els.logCount.textContent = `${total} evento${total === 1 ? "" : "s"}`;
+}
 
-  function el(tag, props = {}, kids = []) {
-    const e = document.createElement(tag);
-    for (const [k, v] of Object.entries(props)) {
-      if (k === 'class') e.className = v;
-      else if (k === 'data') for (const [dk, dv] of Object.entries(v)) e.dataset[dk] = dv;
-      else if (k.startsWith('on')) e.addEventListener(k.slice(2).toLowerCase(), v);
-      else if (k === 'text') e.textContent = v;
-      else if (v !== undefined && v !== null) e.setAttribute(k, v);
+function renderActive() {
+  const active = [...state.runs.values()].filter((r) => !r.ended).sort((a, b) => b.startTs - a.startTs);
+  els.active.dataset.count = active.length;
+
+  // remove cards that are no longer active
+  els.active.querySelectorAll(".run-card").forEach((card) => {
+    const id = card.dataset.runid;
+    if (!active.find((r) => r.runId === id)) card.remove();
+  });
+
+  // upsert each active run
+  active.forEach((run) => {
+    let card = els.active.querySelector(`[data-runid="${run.runId}"]`);
+    if (!card) {
+      const wrap = document.createElement("div");
+      wrap.innerHTML = activeCardHtml(run);
+      card = wrap.firstElementChild;
+      card.classList.add("enter");
+      card.addEventListener("animationend", () => card.classList.remove("enter"), { once: true });
+      setTimeout(() => card.classList.remove("enter"), 600);
+      els.active.appendChild(card);
     }
-    for (const k of kids) if (k) e.appendChild(typeof k === 'string' ? document.createTextNode(k) : k);
-    return e;
-  }
+    updateActiveCard(card, run);
+  });
+}
 
-  function fmtTime(ts) {
-    const d = new Date(ts);
-    const hh = String(d.getHours()).padStart(2, '0');
-    const mm = String(d.getMinutes()).padStart(2, '0');
-    const ss = String(d.getSeconds()).padStart(2, '0');
-    return `${hh}:${mm}:${ss}`;
-  }
+function updateActiveCard(card, run) {
+  const family = TOOL_FAMILIES[run.tool] || "sync";
+  const percent = Math.max(0, Math.min(100, Math.round(run.lastProgress)));
+  const elapsed = Date.now() - run.startTs;
+  const longRunning = elapsed > 30_000;
+  const stepLabel = humanizePath(run.lastLabel) || "iniciando…";
+  const stepCount = run.total ? `${run.current}/${run.total}` : "";
 
-  function eventLabel(evt) {
-    // Best-effort short label from payload; humanizes paths and tool ids;
-    // falls back to the humanized event type when payload has nothing useful.
-    const p = evt.payload;
-    if (!p || typeof p !== 'object') return humanizeEventType(evt.type);
-    if (typeof p.label === 'string') return humanizeLabel(p.label);
-    if (typeof p.name === 'string') return p.name;
-    if (typeof p.tool === 'string') return humanizeTool(p.tool);
-    if (typeof p.percent === 'number') return `${p.percent}%${p.kind ? ' · ' + p.kind : ''}`;
-    if (typeof p.message === 'string') return p.message;
-    if (typeof p.reason === 'string') return p.reason;
-    return humanizeEventType(evt.type);
-  }
+  const set = (sel, fn) => { const n = card.querySelector(sel); if (n) fn(n); };
+  set(".rc-icon", (n) => { n.dataset.tool = family; n.querySelector("use")?.setAttribute("href", `#i-${family}`); });
+  set(".rc-tool", (n) => { n.textContent = run.tool || "—"; });
+  set(".rc-title", (n) => { n.textContent = humanizeTool(run.tool || "—"); });
+  set(".rc-bar-fill", (n) => { n.style.width = percent + "%"; });
+  set(".rc-pct", (n) => { n.textContent = percent + "%"; });
+  set(".rc-step-text", (n) => { if (n.textContent !== stepLabel) n.textContent = stepLabel; });
+  set(".rc-step-count", (n) => { n.textContent = stepCount; });
+  set(".rc-elapsed-val", (n) => { n.textContent = formatElapsed(elapsed); });
+  set(".rc-elapsed .em", (n) => n.classList.toggle("warn", longRunning));
+  set(".rc-runid", (n) => { n.textContent = "id " + run.runId.slice(0, 8); });
+}
 
-  function eventMeta(evt) {
-    const p = evt.payload;
-    if (evt.type === 'progress' && p && typeof p.total === 'number' && typeof p.current === 'number') {
-      return `${p.current}/${p.total}`;
-    }
-    if (evt.runId) return evt.runId.slice(0, 6);
-    return '';
-  }
+function activeCardHtml(run) {
+  const family = TOOL_FAMILIES[run.tool] || "sync";
+  const iconHref = `#i-${family}`;
+  const title = humanizeTool(run.tool || "—");
+  const stepLabel = humanizePath(run.lastLabel) || "iniciando…";
+  const percent = Math.max(0, Math.min(100, Math.round(run.lastProgress)));
+  const elapsed = Date.now() - run.startTs;
+  const longRunning = elapsed > 30_000;
+  const stepCount = run.total ? `${run.current}/${run.total}` : "";
+  return `
+    <article class="run-card" data-runid="${run.runId}">
+      <div class="rc-head">
+        <div class="rc-icon" data-tool="${family}"><svg><use href="${iconHref}"/></svg></div>
+        <div class="rc-title-block">
+          <div class="rc-tool">${run.tool || "—"}</div>
+          <div class="rc-title">${title}</div>
+        </div>
+        <div class="rc-elapsed">
+          <span class="em ${longRunning ? "warn" : ""}"><span class="rc-elapsed-val">${formatElapsed(elapsed)}</span></span>
+          <small>decorrido</small>
+        </div>
+      </div>
 
-  function renderEventRow(evt) {
-    const time = el('div', { class: 'ev-time', text: fmtTime(evt.ts) });
-    // data-type stays raw so CSS color rules continue to apply; display text is humanized.
-    const badge = el('span', { class: 'ev-badge', data: { type: evt.type }, text: humanizeEventType(evt.type) });
-    const summary = el('summary', {}, [
-      el('span', { class: 'label', text: eventLabel(evt) }),
-      el('span', { class: 'meta', text: eventMeta(evt) }),
-    ]);
-    const pre = el('pre', { text: JSON.stringify(evt.payload ?? null, null, 2) });
-    const details = el('details', {}, [summary, pre]);
-    const body = el('div', { class: 'ev-body' }, [details]);
-    return el('li', { class: 'ev-row', data: { type: evt.type, label: eventLabel(evt).toLowerCase() } }, [time, badge, body]);
-  }
+      <div class="rc-progress">
+        <div class="rc-bar"><div class="rc-bar-fill" style="width:${percent}%"></div></div>
+        <div class="rc-pct">${percent}%</div>
+      </div>
 
-  function shouldShow(evt) {
-    if (!state.typeFilter.has(evt.type)) return false;
-    if (state.search) {
-      const haystack = (evt.type + ' ' + eventLabel(evt) + ' ' + JSON.stringify(evt.payload ?? '')).toLowerCase();
-      if (!haystack.includes(state.search.toLowerCase())) return false;
-    }
-    return true;
-  }
+      <div class="rc-step">
+        <span class="glyph"><svg><use href="#i-spin"/></svg></span>
+        <span class="rc-step-text">${escapeHtml(stepLabel)}</span>
+        ${stepCount ? `<span class="rc-step-count">${stepCount}</span>` : ""}
+      </div>
 
-  function applyFilter() {
-    const rows = dom.list.children;
-    let visible = 0;
-    for (let i = 0; i < rows.length; i += 1) {
-      const row = rows[i];
-      const evt = state.events[i];
-      const show = evt && shouldShow(evt);
-      row.style.display = show ? '' : 'none';
-      if (show) visible += 1;
-    }
-    dom.empty.hidden = visible > 0 || state.events.length > 0;
-    dom.list.hidden = visible === 0 && state.events.length > 0 ? false : visible === 0;
-    if (state.events.length === 0) {
-      dom.empty.hidden = false;
-      dom.list.hidden = true;
+      <div class="rc-foot">
+        <span class="rc-runid">id ${run.runId.slice(0, 8)}</span>
+        <span class="sep">·</span>
+        <span>${run.tool || ""}</span>
+      </div>
+    </article>
+  `;
+}
+
+function formatElapsed(ms) {
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}m ${String(r).padStart(2,"0")}s`;
+}
+
+function renderTimeline() {
+  const visible = state.events.filter(passesFilter);
+  if (state.events.length === 0) {
+    els.empty.style.display = "";
+    els.timeline.innerHTML = "";
+    els.logHead.hidden = true;
+    return;
+  }
+  els.empty.style.display = "none";
+  els.logHead.hidden = false;
+
+  // diff by event ts+type+runId — only animate truly new rows
+  const keyOf = (e) => `${e.ts}|${e.type}|${e.runId || ""}`;
+  const seen = state._seenKeys || (state._seenKeys = new Set());
+  const existing = new Map();
+  els.timeline.querySelectorAll(".tl-row").forEach((r) => existing.set(r.dataset.key, r));
+
+  // Build a desired ordered list. Insert new rows at their correct position
+  // WITHOUT detaching existing rows — that would retrigger CSS animations.
+  let prevNode = null;
+  visible.forEach((evt, idx) => {
+    const key = keyOf(evt);
+    let row = existing.get(key);
+    if (row) {
+      existing.delete(key);
+      // reorder only if not already in the right place
+      const expectedNext = prevNode ? prevNode.nextSibling : els.timeline.firstChild;
+      if (row !== expectedNext) {
+        els.timeline.insertBefore(row, expectedNext);
+      }
     } else {
-      dom.empty.hidden = true;
-      dom.list.hidden = false;
-    }
-    dom.footerEvents.textContent = `eventos: ${state.events.length}` + (visible !== state.events.length ? ` (mostrando ${visible})` : '');
-  }
-
-  function pushVisibleEvent(evt) {
-    state.events.push(evt);
-    while (state.events.length > RING_DISPLAY_MAX) state.events.shift();
-    while (dom.list.children.length > RING_DISPLAY_MAX - 1) dom.list.removeChild(dom.list.firstChild);
-    const row = renderEventRow(evt);
-    dom.list.appendChild(row);
-    if (!shouldShow(evt)) row.style.display = 'none';
-    applyFilter();
-    if (state.autoscroll) {
-      requestAnimationFrame(() => row.scrollIntoView({ block: 'end' }));
-    }
-  }
-
-  function ingestEvent(evt) {
-    // Always update the active-runs panel — that view is the live "what's
-    // happening NOW" and shouldn't be affected by the pause toggle below.
-    upsertActiveRun(evt);
-
-    if (state.paused) {
-      state.pausedBuffer.push(evt);
-      dom.footerPaused.hidden = false;
-      dom.footerPaused.textContent = `pausado: ${state.pausedBuffer.length} em fila`;
-      return;
-    }
-    pushVisibleEvent(evt);
-    if (evt.type === 'shutdown') {
-      dom.banner.hidden = false;
-    }
-  }
-
-  // ------- Active runs ---------------------------------------------------
-  // Maintain a Map<runId, ActiveRun> that tracks currently-executing tools.
-  // Updated from run.start / progress / run.end / error events that share a
-  // runId. Renders as cards above the event log so the user sees CURRENT
-  // state at a glance instead of having to scan the chronological feed.
-
-  const activeRuns = new Map(); // runId -> {tool, label, percent, current, total, startedAt, status, pendingRemove}
-  const fadeTimers = new Map(); // runId -> setTimeout handle
-
-  function upsertActiveRun(evt) {
-    if (!evt.runId) return;
-    const id = evt.runId;
-    const p = evt.payload || {};
-    let run = activeRuns.get(id);
-
-    if (evt.type === 'run.start') {
-      // Cancel any pending fade-out for a stale entry with the same id (rare).
-      if (fadeTimers.has(id)) { clearTimeout(fadeTimers.get(id)); fadeTimers.delete(id); }
-      activeRuns.set(id, {
-        runId: id,
-        tool: p.tool || p.server || 'run',
-        label: 'iniciando…',
-        percent: 0,
-        current: null,
-        total: null,
-        startedAt: evt.ts,
-        status: 'running',
-      });
-    } else if (evt.type === 'progress' && run && run.status === 'running') {
-      if (typeof p.percent === 'number') run.percent = clampPercent(p.percent);
-      if (typeof p.current === 'number') run.current = p.current;
-      if (typeof p.total === 'number')   run.total   = p.total;
-      if (typeof p.label === 'string' && p.label.length > 0) run.label = humanizeLabel(p.label);
-      // If the wrapper sent current/total but no percent, derive it.
-      if (typeof p.percent !== 'number' && typeof p.current === 'number' && typeof p.total === 'number' && p.total > 0) {
-        run.percent = clampPercent(Math.round((p.current / p.total) * 100));
+      const wrap = document.createElement("div");
+      wrap.innerHTML = rowHtml(evt, idx, visible[idx - 1]);
+      row = wrap.firstElementChild;
+      row.dataset.key = key;
+      if (!seen.has(key)) {
+        row.classList.add("enter", "is-new");
+        seen.add(key);
+        // strip the one-shot class once the animation completes,
+        // so reattachment / reorder won't restart it.
+        row.addEventListener("animationend", () => row.classList.remove("enter"), { once: true });
+        setTimeout(() => row.classList.remove("enter"), 600);
       }
-    } else if (evt.type === 'tool_invocation' && run && run.status === 'running') {
-      // tool_invocation events refine the title if it arrived after run.start.
-      if (typeof p.tool === 'string') run.tool = p.tool;
-    } else if (evt.type === 'run.end' && run) {
-      run.status = (p && p.ok === false) ? 'error' : 'done';
-      run.percent = run.status === 'done' ? 100 : run.percent;
-      run.label = run.status === 'done' ? 'concluído com sucesso' : (p?.message || 'falhou');
-      // Fade the card out a few seconds after completion so the user sees
-      // the 100% and "done" before it disappears.
-      const t = setTimeout(() => {
-        activeRuns.delete(id);
-        fadeTimers.delete(id);
-        renderActiveRuns();
-      }, 4000);
-      fadeTimers.set(id, t);
-    } else if (evt.type === 'error' && run && run.status === 'running') {
-      run.status = 'error';
-      run.label = p?.message || 'error';
-      // Errors stay visible longer (8s) so the user has time to read.
-      const t = setTimeout(() => {
-        activeRuns.delete(id);
-        fadeTimers.delete(id);
-        renderActiveRuns();
-      }, 8000);
-      fadeTimers.set(id, t);
+      els.timeline.insertBefore(row, prevNode ? prevNode.nextSibling : els.timeline.firstChild);
     }
-    renderActiveRuns();
-  }
+    const grouped = !!(visible[idx - 1] && visible[idx - 1].runId === evt.runId);
+    row.dataset.grouped = grouped;
+    prevNode = row;
+  });
+  // remove any leftover rows that no longer match
+  existing.forEach((r) => r.remove());
+}
 
-  function clampPercent(n) {
-    if (!Number.isFinite(n)) return 0;
-    return Math.max(0, Math.min(100, n));
-  }
-
-  function fmtElapsed(startTs) {
-    const sec = Math.max(0, Math.round((Date.now() - startTs) / 1000));
-    if (sec < 60) return `${sec}s`;
-    const m = Math.floor(sec / 60);
-    const s = sec % 60;
-    return `${m}m ${s.toString().padStart(2, '0')}s`;
-  }
-
-  function renderActiveRuns() {
-    const runs = [...activeRuns.values()].sort((a, b) => a.startedAt - b.startedAt);
-    if (runs.length === 0) {
-      dom.activeRuns.hidden = true;
-      dom.activeRunsList.replaceChildren();
-      return;
+function rowHtml(evt, idx, prev) {
+  const grouped = !!(prev && prev.runId === evt.runId);
+  const ok = evt.payload?.ok;
+  const time = clockTime(evt.ts);
+  const rel = relTime(Date.now() - evt.ts);
+  const badge = humanizeEventType(evt.type);
+  const isNew = (Date.now() - evt.ts) < 1500;
+  let msg = "";
+  switch (evt.type) {
+    case "run.start": {
+      msg = `<strong>${escapeHtml(humanizeTool(evt.payload?.tool))}</strong> <span class="ident">${escapeHtml(evt.payload?.tool || "")}</span>${evt.payload?.target ? ` <span class="arrow">→</span> <span class="ident">${escapeHtml(evt.payload.target)}</span>` : ""}`;
+      break;
     }
-    dom.activeRuns.hidden = false;
-    dom.activeRunsCount.textContent = String(runs.length);
-
-    // Use a stable key (runId) so we update existing cards in place rather than
-    // recreating them (preserves the CSS transition on the progress bar width).
-    const existing = new Map();
-    for (const child of dom.activeRunsList.children) {
-      existing.set(child.dataset.runid, child);
+    case "run.end": {
+      const dur = evt.payload?.duration_ms;
+      msg = `<strong>${escapeHtml(humanizeTool(evt.payload?.tool))}</strong> ${ok ? "concluído" : "falhou"}${dur ? ` <span class="ident">${(dur/1000).toFixed(2)}s</span>` : ""}`;
+      break;
     }
-
-    const frag = document.createDocumentFragment();
-    for (const run of runs) {
-      let card = existing.get(run.runId);
-      if (!card) {
-        card = el('div', { class: 'run-card', data: { runid: run.runId } });
-        card.innerHTML = `
-          <div class="run-title">
-            <span class="run-name"></span>
-            <span class="run-kind"></span>
-          </div>
-          <div class="run-percent"></div>
-          <div class="run-bar-wrap"><div class="run-bar"></div></div>
-          <div class="run-step"></div>
-          <div class="run-meta"><span class="elapsed"></span><span class="runid"></span></div>
-        `;
-      }
-      card.dataset.status = run.status;
-      card.querySelector('.run-name').textContent = humanizeTool(run.tool);
-      card.querySelector('.run-kind').textContent = humanizeStatus(run.status);
-      card.querySelector('.run-percent').textContent = run.status === 'error' ? 'ERRO' : `${run.percent}%`;
-      card.querySelector('.run-bar').style.width = `${run.percent}%`;
-      card.querySelector('.run-step').textContent = run.label;
-      const elapsed = card.querySelector('.elapsed');
-      elapsed.textContent = `há ${fmtElapsed(run.startedAt)}`;
-      const ridEl = card.querySelector('.runid');
-      const progressTotalText = (run.current !== null && run.total !== null) ? ` · ${run.current}/${run.total}` : '';
-      ridEl.textContent = `id ${run.runId.slice(0, 8)}${progressTotalText}`;
-      frag.appendChild(card);
+    case "progress": {
+      const pct = typeof evt.payload?.percent === "number" ? `${Math.round(evt.payload.percent)}%` : "";
+      const lbl = evt.payload?.label || "";
+      const ct = evt.payload?.current && evt.payload?.total ? ` <span class="ident">${evt.payload.current}/${evt.payload.total}</span>` : "";
+      msg = `${pct ? `<strong>${pct}</strong> ` : ""}<span class="path">${escapeHtml(humanizePath(lbl))}</span>${ct}`;
+      break;
     }
-    dom.activeRunsList.replaceChildren(frag);
+    case "milestone": {
+      msg = `<strong>${escapeHtml(evt.payload?.name || "")}</strong>`;
+      break;
+    }
+    case "error": {
+      msg = `<strong>${escapeHtml(evt.payload?.message || "erro")}</strong>${evt.payload?.code ? ` <span class="ident">${evt.payload.code}</span>` : ""}`;
+      break;
+    }
+    case "tool_invocation": {
+      msg = `<span class="ident">${escapeHtml(evt.payload?.tool || "")}</span>`;
+      break;
+    }
+    default:
+      msg = "";
   }
+  return `
+    <div class="tl-row" data-type="${evt.type}" data-ok="${ok}" data-grouped="${grouped}">
+      <div class="tl-time" title="${time}">${rel}</div>
+      <div class="tl-rail"><div class="tl-node"></div></div>
+      <div class="tl-content">
+        <span class="tl-badge">${badge}</span>
+        <span class="tl-msg">${msg}</span>
+        ${evt.runId ? `<span class="tl-runid">${evt.runId.slice(0,6)}</span>` : ""}
+      </div>
+    </div>
+  `;
+}
 
-  // Tick the elapsed-time labels every second so they stay live.
-  setInterval(() => {
-    if (activeRuns.size === 0) return;
-    for (const card of dom.activeRunsList.children) {
-      const id = card.dataset.runid;
-      const run = activeRuns.get(id);
-      if (run) card.querySelector('.elapsed').textContent = `há ${fmtElapsed(run.startedAt)}`;
-    }
-  }, 1000);
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
 
-  function flushPaused() {
-    for (const evt of state.pausedBuffer) pushVisibleEvent(evt);
-    state.pausedBuffer.length = 0;
-    dom.footerPaused.hidden = true;
+/* ---------- elapsed ticker ---------- */
+setInterval(() => {
+  for (const run of state.runs.values()) {
+    if (run.ended) continue;
+    const el = els.active.querySelector(`[data-runid="${run.runId}"] .rc-elapsed-val`);
+    if (!el) continue;
+    const elapsed = Date.now() - run.startTs;
+    el.textContent = formatElapsed(elapsed);
+    const wrap = el.closest(".em");
+    if (wrap) wrap.classList.toggle("warn", elapsed > 30_000);
   }
+  // refresh relative time on log rows (cheap: only update visible)
+  els.timeline.querySelectorAll(".tl-time").forEach((node, i) => {
+    const evt = state.events.filter(passesFilter)[i];
+    if (evt) node.textContent = relTime(Date.now() - evt.ts);
+  });
+}, 1000);
 
-  // ------- Filter UI ----------------------------------------------------
+/* ───────────────────── mock event generator ───────────────────── */
+let mockTimers = [];
+function clearMock() {
+  mockTimers.forEach(clearTimeout);
+  mockTimers = [];
+}
+function later(ms, fn) { mockTimers.push(setTimeout(fn, ms)); }
 
-  for (const t of EVENT_TYPES) {
-    const cb = el('input', { type: 'checkbox', checked: '' });
-    cb.checked = true;
-    cb.addEventListener('change', () => {
-      if (cb.checked) state.typeFilter.add(t);
-      else state.typeFilter.delete(t);
-      applyFilter();
+function genRunId() { return Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 8); }
+
+function scenarioSync(delay = 0) {
+  const runId = genRunId();
+  const tool = "sync.install";
+  const start = Date.now() + delay;
+  const target = "claude-code";
+  later(delay, () => ingest({ type: "run.start", ts: start, runId, payload: { tool, target } }));
+
+  const total = 19;
+  const labels = [
+    "lendo agente planner",
+    "analisando dependências",
+    "projetando framework",
+    "compilando templates",
+    "writing .claude/agents/planner.md",
+    "writing .claude/agents/builder.md",
+    "writing .claude/agents/reviewer.md",
+    "writing .claude/commands/sync.md",
+    "validando schema",
+    "merging com kit base",
+    "writing .claude/agents/coordinator.md",
+    "writing .claude/agents/specialist.md",
+    "configurando hooks",
+    "writing .claude/agents/architect.md",
+    "writing .claude/agents/qa.md",
+    "writing .claude/agents/docs.md",
+    "selando manifest",
+    "rodando linter final",
+    "gravando metadata",
+  ];
+  for (let i = 0; i < total; i++) {
+    const t = delay + 220 + i * 540;
+    later(t, () => ingest({
+      type: "progress", ts: Date.now(), runId,
+      payload: { percent: Math.round(((i + 1) / total) * 100), label: labels[i], current: i + 1, total, kind: "fs" }
+    }));
+  }
+  later(delay + 220 + total * 540 + 100, () => ingest({
+    type: "milestone", ts: Date.now(), runId, payload: { name: `✓ ${total} agentes projetados` }
+  }));
+  later(delay + 220 + total * 540 + 600, () => ingest({
+    type: "run.end", ts: Date.now(), runId, payload: { tool, ok: true, duration_ms: 220 + total * 540 + 400 }
+  }));
+}
+
+function scenarioMulti() {
+  scenarioSync(0);
+  // gates run starting in parallel
+  const runId = genRunId();
+  later(800, () => ingest({ type: "run.start", ts: Date.now(), runId, payload: { tool: "gates.run", target: "claude-code" } }));
+  const stages = ["lint", "typecheck", "schema", "smoke"];
+  stages.forEach((s, i) => {
+    later(800 + (i + 1) * 1100, () => ingest({
+      type: "progress", ts: Date.now(), runId,
+      payload: { percent: Math.round(((i + 1) / stages.length) * 100), label: `gate: ${s}`, current: i + 1, total: stages.length, kind: "task" }
+    }));
+  });
+  later(800 + stages.length * 1100 + 300, () => ingest({
+    type: "run.end", ts: Date.now(), runId, payload: { tool: "gates.run", ok: true, duration_ms: stages.length * 1100 }
+  }));
+}
+
+function scenarioError() {
+  const runId = genRunId();
+  later(0,    () => ingest({ type: "run.start", ts: Date.now(), runId, payload: { tool: "reverse.scan", target: "cursor" } }));
+  later(400,  () => ingest({ type: "progress",  ts: Date.now(), runId, payload: { percent: 18, label: "lendo .cursor/rules/", current: 2, total: 11, kind: "fs" } }));
+  later(900,  () => ingest({ type: "progress",  ts: Date.now(), runId, payload: { percent: 38, label: "scanning .cursor/rules/architecture.mdc", current: 4, total: 11, kind: "fs" } }));
+  later(1500, () => ingest({ type: "error",     ts: Date.now(), runId, payload: { message: "ENOENT: file not found", code: "ENOENT" } }));
+  later(1700, () => ingest({ type: "run.end",   ts: Date.now(), runId, payload: { tool: "reverse.scan", ok: false, duration_ms: 1700 } }));
+}
+
+function scenarioIdle() {
+  /* nothing */
+}
+
+let currentScenario = "sync";
+function runScenario(name) {
+  currentScenario = name;
+  if (name === "sync") scenarioSync();
+  else if (name === "multi") scenarioMulti();
+  else if (name === "error") scenarioError();
+  else if (name === "idle") scenarioIdle();
+}
+
+function clearAll() {
+  clearMock();
+  state.events = [];
+  state.runs.clear();
+  state._seenKeys = new Set();
+  els.active.innerHTML = "";
+  render();
+  els.lastSeen.textContent = "aguardando…";
+}
+
+/* ───────────────────── tweaks wiring ───────────────────── */
+els.tweaksBtn.addEventListener("click", () => {
+  const open = els.tweaks.classList.toggle("open");
+  els.tweaksBtn.setAttribute("aria-pressed", open);
+});
+els.tweaksClose.addEventListener("click", () => {
+  els.tweaks.classList.remove("open");
+  els.tweaksBtn.setAttribute("aria-pressed", "false");
+});
+
+document.querySelectorAll("#tw-accent button").forEach((b) => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll("#tw-accent button").forEach(x => x.setAttribute("aria-pressed","false"));
+    b.setAttribute("aria-pressed","true");
+    document.documentElement.style.setProperty("--accent-h", b.dataset.h);
+  });
+});
+document.querySelector('#tw-accent button[data-h="130"]').setAttribute("aria-pressed","true");
+
+function wireSeg(rootSel, attr, fn) {
+  document.querySelectorAll(`${rootSel} button`).forEach((b) => {
+    b.addEventListener("click", () => {
+      document.querySelectorAll(`${rootSel} button`).forEach(x => x.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+      fn(b.dataset.v);
     });
-    // Show humanized text but keep the data-type as the raw event name so
-    // power users (and tests) can still target the underlying value.
-    const lbl = el('label', { data: { type: t } }, [cb, document.createTextNode(humanizeEventType(t))]);
-    dom.typeFilters.appendChild(lbl);
+  });
+}
+wireSeg("#tw-density", "v", (v) => document.documentElement.dataset.density = v);
+wireSeg("#tw-motion",  "v", (v) => document.documentElement.dataset.motion = v);
+wireSeg("#tw-scenario","v", (v) => { clearAll(); runScenario(v); });
+
+document.documentElement.dataset.density = "normal";
+document.documentElement.dataset.motion = "medium";
+
+document.getElementById("tw-replay").addEventListener("click", () => { clearAll(); runScenario(currentScenario); });
+document.getElementById("tw-clear").addEventListener("click", clearAll);
+
+/* ───────────────────── toolbar wiring ───────────────────── */
+els.q.addEventListener("input", (e) => { state.filterText = e.target.value.trim(); render(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "/" && document.activeElement !== els.q) {
+    e.preventDefault();
+    els.q.focus();
   }
-
-  dom.search.addEventListener('input', () => {
-    state.search = dom.search.value;
-    applyFilter();
-  });
-
-  dom.pauseBtn.addEventListener('click', () => {
-    state.paused = !state.paused;
-    dom.pauseBtn.setAttribute('aria-pressed', String(state.paused));
-    dom.pauseBtn.textContent = state.paused ? '▶ retomar' : '⏸ pausar';
-    if (!state.paused) flushPaused();
-  });
-
-  dom.autoscrollBtn.addEventListener('click', () => {
-    state.autoscroll = !state.autoscroll;
-    dom.autoscrollBtn.setAttribute('aria-pressed', String(state.autoscroll));
-  });
-
-  dom.clearBtn.addEventListener('click', () => {
-    state.events.length = 0;
-    while (dom.list.firstChild) dom.list.removeChild(dom.list.firstChild);
-    applyFilter();
-  });
-
-  // ------- Connection lifecycle ----------------------------------------
-
-  let evtSource = null;
-  let closedTimer = null;
-  let lastConnectedAt = 0;
-
-  function setConnState(s) {
-    dom.conn.dataset.state = s;
-    dom.connText.textContent = CONN_LABEL[s] || s;
+  if (e.key === "Escape" && document.activeElement === els.q) {
+    els.q.value = ""; state.filterText = ""; els.q.blur(); render();
   }
+});
 
-  function scheduleClosedBanner() {
-    if (closedTimer) clearTimeout(closedTimer);
-    closedTimer = setTimeout(() => {
-      // Only show shutdown banner if still closed after 5s
-      if (dom.conn.dataset.state === 'CLOSED') {
-        dom.banner.hidden = false;
-      }
-    }, 5000);
+els.filterBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const open = els.filterPop.classList.toggle("open");
+  els.filterBtn.setAttribute("aria-pressed", open);
+});
+document.addEventListener("click", (e) => {
+  if (!els.filterPop.contains(e.target) && e.target !== els.filterBtn) {
+    els.filterPop.classList.remove("open");
+    els.filterBtn.setAttribute("aria-pressed", "false");
   }
+});
+els.filterPop.querySelectorAll(".fp-row").forEach((row) => {
+  row.addEventListener("click", () => {
+    const f = row.dataset.filter;
+    const on = row.dataset.on === "true";
+    row.dataset.on = on ? "false" : "true";
+    if (on) state.filters.delete(f); else state.filters.add(f);
+    render();
+  });
+});
 
-  async function hydrateFromState() {
+els.pauseBtn.addEventListener("click", () => {
+  state.paused = !state.paused;
+  els.pauseBtn.setAttribute("aria-pressed", state.paused);
+  els.pauseIcon.innerHTML = state.paused
+    ? '<polygon points="6,5 19,12 6,19" fill="currentColor"/>'
+    : '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>';
+  els.conn.dataset.state = state.paused ? "off" : "on";
+  els.connLabel.textContent = state.paused ? "pausado" : "conectado";
+  els.srcLabel.textContent = state.paused ? "pausado" : "ao vivo";
+});
+
+/* ───────────────────── real source: SSE + /state hydrate ───────────────────── */
+/* The prototype above keeps mock scenarios available via the tweaks panel. In
+   production we connect to /events for the live feed and to /state to backfill
+   the ring buffer on first paint and after reconnect. */
+
+let evtSource = null;
+let lastConnectedAt = 0;
+
+function applyConnState(s) {
+  // s ∈ { 'connecting', 'open', 'closed', 'paused', 'shutdown' }
+  if (s === "open") {
+    els.conn.dataset.state = "on";
+    els.connLabel.textContent = "conectado";
+    if (els.srcLabel) els.srcLabel.textContent = "ao vivo";
+  } else if (s === "connecting") {
+    els.conn.dataset.state = "off";
+    els.connLabel.textContent = "conectando";
+    if (els.srcLabel) els.srcLabel.textContent = "conectando";
+  } else if (s === "closed") {
+    els.conn.dataset.state = "off";
+    els.connLabel.textContent = "desconectado";
+    if (els.srcLabel) els.srcLabel.textContent = "offline";
+  } else if (s === "shutdown") {
+    els.conn.dataset.state = "off";
+    els.connLabel.textContent = "encerrado";
+    if (els.srcLabel) els.srcLabel.textContent = "encerrado";
+  } else if (s === "paused") {
+    els.conn.dataset.state = "off";
+    els.connLabel.textContent = "pausado";
+    if (els.srcLabel) els.srcLabel.textContent = "pausado";
+  }
+}
+
+async function hydrateFromState() {
+  try {
+    const res = await fetch("/state", { credentials: "omit" });
+    if (!res.ok) return;
+    const j = await res.json();
+    if (j.port && document.querySelector(".brand-sub")) {
+      document.querySelector(".brand-sub").textContent = "127.0.0.1:" + j.port;
+    }
+    if (j.version && document.getElementById("brand-meta")) {
+      document.getElementById("brand-meta").textContent = "sidecar · v" + j.version;
+    }
+    if (Array.isArray(j.events)) {
+      // Replay through ingest. The dedup key (ts|type|runId) prevents
+      // double-counting if SSE later delivers the same event.
+      for (const evt of j.events) ingest(evt);
+    }
+  } catch (_) { /* fine — SSE may still work */ }
+}
+
+function connectRealSource() {
+  applyConnState("connecting");
+  if (evtSource) try { evtSource.close(); } catch (_) {}
+
+  evtSource = new EventSource("/events");
+
+  evtSource.addEventListener("open", () => {
+    lastConnectedAt = Date.now();
+    applyConnState("open");
+  });
+
+  evtSource.addEventListener("error", () => {
+    // EventSource auto-retries; reflect "closed" until next open fires.
+    applyConnState("closed");
+  });
+
+  // Listen for each typed event the server emits.
+  const handler = (msg) => {
     try {
-      const res = await fetch('/state', { credentials: 'omit' });
-      if (!res.ok) return;
-      const j = await res.json();
-      if (j.port) dom.metaPort.textContent = `porta ${j.port}`;
-      if (Array.isArray(j.events)) {
-        for (const evt of j.events) ingestEvent(evt);
+      const data = JSON.parse(msg.data);
+      if (data && data.type === "shutdown") {
+        applyConnState("shutdown");
+        showShutdownBanner();
       }
-    } catch (_) {
-      // Ignore — SSE may still work
-    }
+      ingest(data);
+    } catch (_) { /* swallow malformed */ }
+  };
+  ["run.start", "run.end", "tool_invocation", "progress", "milestone", "error", "shutdown"].forEach((t) =>
+    evtSource.addEventListener(t, handler)
+  );
+  evtSource.onmessage = handler; // fallback for unnamed
+}
+
+/* Background-tab recovery — Chrome throttles timers in inactive tabs and the
+   native EventSource retry can stall. When the tab becomes visible again and
+   we know we're closed, force a fresh hydrate + reconnect. */
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+  if (els.conn.dataset.state === "off") {
+    hydrateFromState().then(connectRealSource);
   }
+});
 
-  function connect() {
-    setConnState('CONNECTING');
-    if (evtSource) try { evtSource.close(); } catch (_) { /* noop */ }
-    evtSource = new EventSource('/events');
-    evtSource.onopen = () => {
-      setConnState('OPEN');
-      lastConnectedAt = Date.now();
-      if (closedTimer) { clearTimeout(closedTimer); closedTimer = null; }
-      // Don't hide banner if we already received a 'shutdown' event
-    };
-    evtSource.onerror = () => {
-      setConnState('CLOSED');
-      scheduleClosedBanner();
-      // EventSource will retry automatically (we send retry: 3000 from server)
-    };
-    // Listen for each known event type so 'event:' lines get routed to the same handler
-    const handler = (msg) => {
-      try {
-        const data = JSON.parse(msg.data);
-        ingestEvent(data);
-      } catch (_) { /* swallow malformed */ }
-    };
-    for (const t of EVENT_TYPES) evtSource.addEventListener(t, handler);
-    evtSource.onmessage = handler; // fallback for events without type field
-  }
-
-  // ------- Background-tab recovery -------------------------------------
-  // Chrome aggressively throttles background tabs; the native EventSource
-  // retry timer can get suspended, leaving the connection stuck in CLOSED
-  // when the user comes back. The Page Visibility API lets us force a fresh
-  // connect() when the tab becomes visible again and we know we're CLOSED.
-  document.addEventListener('visibilitychange', () => {
-    if (document.visibilityState !== 'visible') return;
-    if (dom.conn.dataset.state === 'CLOSED') {
-      // Re-hydrate from /state in case events arrived while we were dropped,
-      // then reopen the SSE stream.
-      hydrateFromState().then(connect);
-    }
+/* ───────────────────── shutdown banner ───────────────────── */
+function showShutdownBanner() {
+  if (document.getElementById("shutdown-banner")) return;
+  const banner = document.createElement("div");
+  banner.id = "shutdown-banner";
+  banner.innerHTML = `
+    <strong>Sidecar encerrou.</strong>
+    Reabra com <span style="font-family:var(--mono);color:var(--text-2)">kit ui start</span> e atualize esta página.
+  `;
+  Object.assign(banner.style, {
+    margin: "0 0 16px",
+    padding: "12px 14px",
+    border: "1px solid var(--err-soft)",
+    borderRadius: "var(--radius)",
+    background: "color-mix(in srgb, var(--err) 10%, var(--surface-1))",
+    color: "var(--err)",
+    fontSize: "12px",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
   });
+  const main = document.querySelector("main");
+  if (main) main.insertBefore(banner, main.firstChild);
+}
 
-  // ------- Boot ---------------------------------------------------------
+/* ───────────────────── boot ───────────────────── */
+/* In production we DON'T auto-run the mock — the real /events stream is the
+   source of truth. The mock scenarios are still wired and accessible through
+   the tweaks panel for demo/dev. */
 
-  hydrateFromState().then(() => {
-    connect();
-    applyFilter();
-  });
+(async () => {
+  await hydrateFromState();
+  connectRealSource();
+})();
+
+// Detect "we're being served via http(s)" — when not, we're probably the
+// design preview opened via file://; in that case fall back to the mock.
+if (location.protocol === "file:") {
+  setTimeout(() => {
+    if (state.events.length === 0) runScenario("sync");
+  }, 200);
+}
 </script>
 </body>
 </html>
