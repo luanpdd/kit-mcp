@@ -613,6 +613,23 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
   flex-shrink: 0;
 }
 
+/* Source pill: identifies which terminal/IDE/PID emitted this event.
+   Used by the sidecar-tool-publisher hook (v1.6+) and any future multi-source clients. */
+.tl-source {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+}
+.tl-source[data-ide="claude-code"] { color: var(--accent); border-color: var(--accent-soft); }
+.tl-source[data-ide="cursor"]      { color: #8be9fd; }
+.tl-source[data-ide="vscode"]      { color: #58a6ff; }
+.tl-source[data-ide="jetbrains"]   { color: #ff9d76; }
+
 /* ───────────────────────── empty state ───────────────────────── */
 .empty {
   margin: 32px 0;
@@ -1679,7 +1696,8 @@ function rowHtml(evt, idx, prev) {
     case "tool_invocation": {
       const tool = safeStr(evt.payload?.tool || "");
       const title = humanizeTool(tool) || fallback(evt.payload?.title, evt.payload?.label, "ferramenta invocada");
-      msg = `<strong>${escapeHtml(title)}</strong>${tool ? ` <span class="ident">${escapeHtml(tool)}</span>` : ""}`;
+      const argsHint = renderArgsSummary(evt.payload?.argsSummary);
+      msg = `<strong>${escapeHtml(title)}</strong>${tool ? ` <span class="ident">${escapeHtml(tool)}</span>` : ""}${argsHint}`;
       break;
     }
     case "shutdown": {
@@ -1689,6 +1707,7 @@ function rowHtml(evt, idx, prev) {
     default:
       msg = `<span class="ident">${escapeHtml(badge.toLowerCase())}</span>`;
   }
+  const sourcePill = renderSourcePill(evt.payload?.source);
   return `
     <div class="tl-row" data-type="${evt.type}" data-ok="${ok}" data-grouped="${grouped}">
       <div class="tl-time" title="${time}">${rel}</div>
@@ -1697,10 +1716,31 @@ function rowHtml(evt, idx, prev) {
         <span class="tl-badge">${badge}</span>
         <span class="tl-msg">${msg}</span>
         ${tokenChip}
+        ${sourcePill}
         ${evt.runId ? `<span class="tl-runid">${evt.runId.slice(0,6)}</span>` : ""}
       </div>
     </div>
   `;
+}
+
+function renderArgsSummary(args) {
+  if (!args || typeof args !== "object") return "";
+  const bits = [];
+  if (args.file_path) bits.push(`<span class="path">${escapeHtml(safeStr(args.file_path))}</span>`);
+  if (args.command)   bits.push(`<span class="ident">${escapeHtml(safeStr(args.command))}</span>`);
+  if (args.pattern)   bits.push(`<span class="ident">/${escapeHtml(safeStr(args.pattern))}/</span>`);
+  if (args.url)       bits.push(`<span class="ident">${escapeHtml(safeStr(args.url))}</span>`);
+  if (args.description) bits.push(`<span class="ident">${escapeHtml(safeStr(args.description))}</span>`);
+  if (args.action_count) bits.push(`<span class="ident">×${args.action_count}</span>`);
+  return bits.length ? ` ${bits.join(" ")}` : "";
+}
+
+function renderSourcePill(source) {
+  if (!source || typeof source !== "object") return "";
+  const ide = safeStr(source.ide || "");
+  const id = safeStr(source.id || "") || (source.pid ? `${ide}:${source.pid}` : ide);
+  if (!id) return "";
+  return `<span class="tl-source" data-ide="${escapeHtml(ide)}" title="${escapeHtml(id)}">${escapeHtml(id)}</span>`;
 }
 
 function escapeHtml(s) {
