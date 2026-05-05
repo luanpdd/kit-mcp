@@ -26,7 +26,9 @@ export async function syncTo(targetId, opts = {}) {
   const dryRun      = !!opts.dryRun;
   const onProgress  = opts.onProgress ?? (() => {});
 
-  const kit  = await listKit(kitRoot);
+  // PERF-03: accept a pre-loaded kit to avoid re-walking the disk when callers
+  // already have one in hand (CLI sync that follows reverse-sync detect, etc).
+  const kit  = opts.kit ?? await listKit(kitRoot);
   const ops  = [];
 
   if (target.rules) {

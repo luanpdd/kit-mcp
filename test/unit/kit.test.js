@@ -2,7 +2,7 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
-import { listKit, searchKit, findItem, resolveKitRoot, BUNDLED_KIT_ROOT } from '../../src/core/kit.js';
+import { listKit, searchKit, findItem, resolveKitRoot, BUNDLED_KIT_ROOT, clearKitCache } from '../../src/core/kit.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const FIXTURE = path.resolve(__dirname, '../fixtures/sample-kit');
@@ -80,4 +80,21 @@ test('findItem — returns null for missing, item for present', async () => {
 test('findItem — throws on unknown kind', async () => {
   const kit = await listKit(FIXTURE);
   assert.throws(() => findItem(kit, 'invalid-kind', 'x'), /Unknown kind/);
+});
+
+test('listKit — caches result within TTL (PERF-01)', async () => {
+  clearKitCache();
+  const a = await listKit(FIXTURE);
+  const b = await listKit(FIXTURE);
+  // Same reference proves cache hit (we return the cached object as-is).
+  assert.equal(a, b, 'second call should return cached object reference');
+});
+
+test('listKit — clearKitCache forces re-read', async () => {
+  clearKitCache();
+  const a = await listKit(FIXTURE);
+  clearKitCache();
+  const b = await listKit(FIXTURE);
+  // Different reference proves cache miss after clear.
+  assert.notEqual(a, b, 'after clearKitCache, listKit should produce a fresh object');
 });

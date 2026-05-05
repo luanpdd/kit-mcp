@@ -29,7 +29,8 @@ Cada fase pode ser shipped independentemente como patch (1.6.0, 1.6.1, 1.6.2). E
 - **INF-02** — `.npmignore` explícito
 - **INF-03** — Node 24 na matriz CI
 - **INF-04** — mensagem deps-budget sincronizada
-- **TOK-03** — consolidar headers em planner.md (72 → ≤ 25)
+
+> **Nota de escopo:** TOK-03 (consolidar headers do planner.md) movido para Fase 21 — fica ao lado de TOK-01 que reescreve o mesmo arquivo. Evita o trabalho de consolidar headers ser refeito durante a compactação 53→35 KB.
 
 **Critérios de sucesso:**
 1. `mcp__kit__kit list-agents` chamado 5× consecutivos lê disco apenas 1× (verificável por `fs.readFile` count)
@@ -74,6 +75,7 @@ Cada fase pode ser shipped independentemente como patch (1.6.0, 1.6.1, 1.6.2). E
 **REQs cobertos:**
 - **TOK-01** — planner.md ≤ 35 KB (de 53 KB)
 - **TOK-02** — CLAUDE.md gerado: summaries em vez de descrições inteiras
+- **TOK-03** — consolidar headers em planner.md (72 → ≤ 25), feito junto da compactação
 
 **Critérios de sucesso:**
 1. `wc -c kit/agents/planner.md` ≤ 35840 (35 KB)

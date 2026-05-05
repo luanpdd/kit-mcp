@@ -37,20 +37,35 @@ jobs:
             echo "OK: src/ui/ does not exist yet — gate is armed for when it does"
           fi
 
-      - name: Audit — runtime deps budget (max v1.1.0 baseline + 1)
+      - name: Audit — runtime deps budget
         shell: bash
         run: |
-          # v1.2 budget: 5 baseline (@modelcontextprotocol/sdk, commander,
-          # chokidar, picocolors, @inquirer/prompts) + 1 new (open@11) = 6 max.
-          BASELINE=5
-          BUDGET=$((BASELINE + 1))
+          # Budget: 6 deps (5 v1.1 baseline @modelcontextprotocol/sdk, commander,
+          # chokidar, picocolors, @inquirer/prompts + 1 v1.2 addition open@11).
+          # New deps require a conscious budget bump and an ADR.
+          BUDGET=6
           CURRENT=$(node -e "console.log(Object.keys(require('./package.json').dependencies || {}).length)")
           echo "Runtime deps: $CURRENT / $BUDGET"
           if [ "$CURRENT" -gt "$BUDGET" ]; then
-            echo "::error::Runtime deps grew to $CURRENT — v1.2 budget is $BUDGET (baseline $BASELINE + 1)"
-            echo "If a new dep is genuinely necessary, update this gate and the v1.2 ADR consciously."
+            echo "::error::Runtime deps grew to $CURRENT — current budget is $BUDGET"
+            echo "If a new dep is genuinely necessary, bump BUDGET here AND record the rationale in .planning/decisions.md."
             exit 1
           fi
+
+      - name: Audit — npm audit (high/critical CVEs in runtime deps) (REQ v1.6 SEC-04)
+        shell: bash
+        run: |
+          # Fail PR/push if any high or critical CVE lands in runtime deps.
+          # Devs are excluded — they don't ship to users.
+          set +e
+          npm audit --omit=dev --audit-level=high
+          STATUS=$?
+          set -e
+          if [ "$STATUS" -ne 0 ]; then
+            echo "::error::npm audit found high/critical CVEs in runtime deps. Run \`npm audit\` locally and address before merging."
+            exit 1
+          fi
+          echo "OK: no high/critical CVEs in runtime deps"
 
       - name: Audit — npm pack includes UI assets (REQ OPS-06)
         shell: bash
@@ -89,7 +104,7 @@ jobs:
       fail-fast: false
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
-        node: ['20', '22']
+        node: ['20', '22', '24']
 
     steps:
       - uses: actions/checkout@v4

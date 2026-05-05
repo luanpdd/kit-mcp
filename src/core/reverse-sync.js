@@ -26,7 +26,8 @@ export async function detectReverse(targetId, opts = {}) {
   const target      = getTarget(targetId);
   const projectRoot = path.resolve(opts.projectRoot ?? process.cwd());
   const kitRoot     = resolveKitRoot(opts.kitRoot);
-  const kit         = await listKit(kitRoot);
+  // PERF-03: accept a pre-loaded kit; reduces sync+reverse-sync from 2 walks to 1.
+  const kit         = opts.kit ?? await listKit(kitRoot);
 
   const candidates = [];
 

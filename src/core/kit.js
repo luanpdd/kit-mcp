@@ -10,6 +10,12 @@ import { fileURLToPath } from 'node:url';
 const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 
+// PERF-02: Frontmatter regexes compiled once at module load (was being recompiled
+// on every readMdDir / readSkillsDir entry — 60+ times per listKit call).
+const FRONTMATTER_SPLIT_RE = /^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/;
+const FRONTMATTER_RAW_RE   = /^(---\r?\n[\s\S]*?\r?\n---\r?\n?)/;
+const YAML_KEY_RE          = /^([A-Za-z0-9_-]+):\s*(.*)$/;
+
 // Resolution order for the kit root (re-evaluated on each call so env-var
 // overrides set after module load — e.g. by the CLI preAction hook — work):
 //   1. explicit `kitRoot` opt passed by caller
@@ -22,15 +28,30 @@ export function resolveKitRoot(kitRoot) {
   return BUNDLED_KIT_ROOT;
 }
 
+// PERF-01: TTL cache for listKit output. Repeated calls within KIT_CACHE_TTL_MS
+// return the cached value — sync/reverse-sync/MCP list-* tools used to walk the
+// disk on every invocation. Trade-off: callers that edit kit/ inside the same
+// process may see stale data for up to 30s. Acceptable for MCP/CLI ergonomics.
+const KIT_CACHE_TTL_MS = 30_000;
+const kitCache = new Map(); // kitRoot -> { value, ts }
+
+export function clearKitCache() { kitCache.clear(); }
+
 export async function listKit(kitRoot) {
   kitRoot = resolveKitRoot(kitRoot);
+  const cached = kitCache.get(kitRoot);
+  if (cached && Date.now() - cached.ts < KIT_CACHE_TTL_MS) {
+    return cached.value;
+  }
   const [agents, commands, skills, skillsExtras] = await Promise.all([
     readMdDir(path.join(kitRoot, 'agents'),    'agent'),
     readMdDir(path.join(kitRoot, 'commands'),  'command'),
     readSkillsDir(path.join(kitRoot, 'skills')),
     readSkillsDir(path.join(kitRoot, 'skills-extras')).catch(() => []),
   ]);
-  return { agents, commands, skills, skillsExtras, kitRoot };
+  const value = { agents, commands, skills, skillsExtras, kitRoot };
+  kitCache.set(kitRoot, { value, ts: Date.now() });
+  return value;
 }
 
 async function readMdDir(dir, kind) {
@@ -95,13 +116,13 @@ async function readSkillsDir(dir) {
 // Good enough for our SKILL.md / agent.md headers.
 
 function splitFrontmatter(raw) {
-  const m = raw.match(/^---\r?\n([\s\S]*?)\r?\n---\r?\n?([\s\S]*)$/);
+  const m = raw.match(FRONTMATTER_SPLIT_RE);
   if (!m) return { frontmatter: null, body: raw };
   return { frontmatter: parseLooseYaml(m[1]), body: m[2] };
 }
 
 function matchFrontmatterRaw(raw) {
-  const m = raw.match(/^(---\r?\n[\s\S]*?\r?\n---\r?\n?)/);
+  const m = raw.match(FRONTMATTER_RAW_RE);
   return m ? m[1] : '';
 }
 
@@ -111,7 +132,7 @@ function parseLooseYaml(text) {
   let i = 0;
   while (i < lines.length) {
     const line = lines[i];
-    const m = line.match(/^([A-Za-z0-9_-]+):\s*(.*)$/);
+    const m = line.match(YAML_KEY_RE);
     if (!m) { i++; continue; }
     const key = m[1];
     let val = m[2];

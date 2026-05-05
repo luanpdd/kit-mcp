@@ -1,0 +1,24 @@
+# Defensive: package.json `files` field is the canonical allowlist for what
+# ships in the tarball. This .npmignore is a belt-and-braces guard against
+# future npm-default changes that might silently include any of these paths.
+#
+# Keep this list aligned with the project structure — if you add a new top-level
+# directory that should NOT ship, add it here too.
+
+.planning/
+.claude/
+.github/
+test/
+node_modules/
+.npmrc
+.editorconfig
+.eslintrc*
+.prettierrc*
+*.log
+*.swp
+.DS_Store
+.idea/
+.vscode/
+.ci-test/
+.ci-safety/
+docs/
