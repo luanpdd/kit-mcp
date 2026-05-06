@@ -6,6 +6,32 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.8.1] - 2026-05-06
+
+Patch de integração da Suíte Supabase v1.8.0 — fecha 7 lacunas onde o conteúdo novo não estava "wired" nos pontos de entrada existentes do framework.
+
+### Mudado — integração entre Suíte Supabase e fluxo padrão
+
+- **`/fazer`** (`kit/commands/fazer.md`) — adicionada linha "Tarefa Supabase → `/supabase`" na decision tree + parágrafo "Detecção de intenção Supabase" listando 7 categorias de termos (DB / Auth / Realtime / Edge / Storage / RAG / Background) que devem rotear para `/supabase` em vez de `/discutir-fase` ou `/expresso`.
+- **`planner` agent** (`kit/agents/planner.md`) — nova seção `<specialized_agents>` instrui o planner a delegar para `supabase-*` agents (architect, migration-writer, rls-writer, edge-fn-writer, realtime-implementer, auth-bootstrapper, storage-implementer) em fases Supabase em vez de gerar tasks genéricas para o `executor` resolver inline.
+- **`executor` agent** (`kit/agents/executor.md`) — nova tabela "Delegação para agents especializados" lista 8 patterns de task (migrations, schemas declarative, RLS, Edge Functions, Realtime, Auth bootstrap, Storage, schema-checker) com `Task(subagent_type=...)` correto. Princípio: agent especializado é mais barato + mais correto que o executor genérico em domínios cobertos.
+- **`/depurar`** (`kit/commands/depurar.md`) — `<available_agent_types>` agora inclui `schema-checker`. Nova seção `<supabase_pre_check>` faz triagem de bugs SQL/Supabase e pré-valida via `schema-checker` antes do `debugger` genérico (5 sintomas mapeados: migration falhou, RLS quebrou query, Edge Function quebrou, user_metadata em policy, service_role exposto).
+- **`discuss-phase` workflow** (`kit/framework/workflows/discuss-phase.md`) — nova seção `<supabase_detection>` antes da identificação de áreas cinzentas. Se a fase é Supabase, delega o questionamento para `supabase-architect` (que já tem template de perguntas Supabase-específicas) em vez de gerar gray areas genéricas.
+- **`plan-phase` workflow** (`kit/framework/workflows/plan-phase.md`) — `<available_agent_types>` agora inclui agents Supabase. Nova seção `<supabase_phase_detection>` no Step 1 — se fase é Supabase, usa `supabase-architect` em vez de `phase-researcher` genérico, e instrui o `planner` a marcar tasks com `subagent_type` apontando para o agent especializado correto (tabela com 7 patterns).
+- **CI** (`.github/workflows/ci.yml`) — novo step "Audit — v1.8 Supabase suite gates" que executa os 4 gates blocking (`budget-description`, `no-personal-uuid`, `agent-no-recursive-dispatch`, `skill-must-include`) extraindo o bash check de cada `gates/<name>.md` e rodando. Falha o CI se algum violar. Gate non-blocking `sync-idempotent` defer (exige CLI completo).
+
+### Adicionado — agentes existentes ganham awareness Supabase
+
+Sem novos arquivos. As 6 edições em arquivos de agent/workflow/command existentes integram o conteúdo da v1.8.0 nos pontos de entrada que LLMs usam, fechando o gap "conteúdo entregue mas não chamado".
+
+### Sem mudanças de API runtime
+
+Patch v1.8.1 continua content-only. Zero alterações em `src/core/`, `registry.js`, `sync.js`. Stable API v1.0+ preservada.
+
+### Tests
+
+Todos os 4 gates blocking continuam passing após o patch. CI agora os roda explicitamente — Phase 28 deixou os specs prontos mas sem step de execução.
+
 ## [1.8.0] - 2026-05-06
 
 Milestone v1.8 — Suíte Supabase: primeira coleção especializada de skills+agents+command focada em um stack concreto. 31 REQs em 4 fases (Phases 25-28).

@@ -6,12 +6,12 @@
 
 Fase: Concluída
 Plano: —
-Status: v1.8.0 entregue (31/31 REQs em 4 fases), pendente lifecycle (auditar → concluir → limpar) + cut
-Última atividade: 2026-05-06 — Phase 28 concluída (5 gates + UUID migration + CHANGELOG)
+Status: v1.8.0 arquivada + v1.8.1 patch de integração aplicado (7 edições). CI roda 4 gates blocking. Pronto para cut.
+Última atividade: 2026-05-06 — Patch v1.8.1: integração Supabase Suite no fluxo (/fazer, planner, executor, /depurar, discuss-phase, plan-phase, CI gates)
 
 ## Milestone ativo
 
-**Nenhum.** v1.8.0 completo. Aguardando `/auditar-marco` → `/concluir-marco` → cut (`npm version minor` + `npm publish`).
+**Nenhum.** v1.8.0 + v1.8.1 prontos. Cut: `npm version 1.8.1 -m "v%s — Suíte Supabase + integração"` + `git push --follow-tags`.
 
 ## Próximo passo
 

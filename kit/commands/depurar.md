@@ -20,7 +20,24 @@ Depurar problemas usando o método científico com isolamento de subagente.
 <available_agent_types>
 Tipos de subagente framework válidos (usar nomes exatos — não usar 'general-purpose'):
 - debugger — Diagnostica e corrige problemas
+- schema-checker — Pré-validação de SQL (FK, JOIN, INSERT) contra schema real via Supabase MCP. Use quando o bug envolve migration que falhou em apply ou suspeita de drift entre comentário do dev e schema real.
 </available_agent_types>
+
+<supabase_pre_check>
+## Triagem rápida — bug envolve SQL/Supabase?
+
+Se o $ARGUMENTS ou sintomas mencionam algum destes patterns, faça **pre-validação com `schema-checker`** ANTES de invocar o `debugger` genérico:
+
+| Sintoma | Razão |
+|---|---|
+| "migration falhou em apply" | `schema-checker` valida FKs/colunas/tabelas — sintoma comum é referência a coluna/tabela inexistente |
+| "RLS quebrou query" ou "query lenta após RLS" | Provavelmente `auth.uid()` sem `(select)` wrapper; veja skill `supabase-rls-policies` |
+| "Edge Function quebrou em deploy" | Provavelmente bare specifier ou import sem versão; veja skill `supabase-edge-functions` |
+| "user_metadata em policy" | Privilege escalation; veja skill `supabase-rls-policies` (REGRA absoluta) |
+| "service_role exposto" | Vazamento via `NEXT_PUBLIC_*`; veja skill `supabase-auth-ssr` |
+
+Se aplicável: invoque `Task(subagent_type=schema-checker, prompt=...)` primeiro. Se schema-checker retorna GO mas o bug persiste, então invoque o `debugger`.
+</supabase_pre_check>
 
 <context>
 Problema do usuário: $ARGUMENTS

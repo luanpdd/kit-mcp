@@ -42,6 +42,23 @@ Antes de executar, descubra o contexto do projeto:
 Isso garante que padrões, convenções e melhores práticas específicas do projeto sejam aplicados durante a execução.
 
 **Cumprimento do CLAUDE.md:** Se `./CLAUDE.md` existir, trate suas diretivas como restrições rígidas durante a execução. Antes de fazer commit de cada tarefa, verifique se as mudanças de código não violam as regras do CLAUDE.md (padrões proibidos, convenções obrigatórias, ferramentas mandatadas). Se uma ação de tarefa contradizer uma diretiva do CLAUDE.md, aplique a regra do CLAUDE.md — ela tem precedência sobre instruções do plano. Documente quaisquer ajustes motivados pelo CLAUDE.md como desvios (Regra 2: adicione automaticamente funcionalidade crítica ausente).
+
+**Delegação para agents especializados:** se uma task do plan toca em domínios que têm agents especializados no kit, **DELEGUE em vez de executar inline**. Exemplos:
+
+| Task toca em | Delegue para | Por quê |
+|---|---|---|
+| `supabase/migrations/<*>.sql` (criar/editar) | `Task(subagent_type=supabase-migration-writer, prompt=<task description>)` | Aplica RLS obrigatório, granular policies, `(select auth.uid())` wrapper, naming UTC |
+| `supabase/schemas/<*>.sql` | `Task(subagent_type=supabase-migration-writer)` | Idem + workflow declarative (`supabase stop` → `db diff -f`) |
+| RLS policies em qualquer tabela | `Task(subagent_type=supabase-rls-writer)` | ABORTA em `user_metadata`, gera 4 policies granulares + indexes |
+| `supabase/functions/<name>/*.ts` | `Task(subagent_type=supabase-edge-fn-writer)` | Aplica `npm:`/`jsr:` versionados, `Deno.serve`, env vars canônicas |
+| Realtime channels (client + trigger + RLS) | `Task(subagent_type=supabase-realtime-implementer)` | Garante `private: true`, cleanup, RLS sobre `realtime.messages` |
+| Bootstrap Next.js + `@supabase/ssr` | `Task(subagent_type=supabase-auth-bootstrapper)` | Audita `.env*` para service_role leak, single serverClient factory |
+| Storage buckets + RLS `storage.objects` | `Task(subagent_type=supabase-storage-implementer)` | Multi-tenant path isolation, signed URLs, image transforms |
+| Validar SQL antes de aplicar | `Task(subagent_type=schema-checker)` | Valida FKs/colunas/tabelas via Supabase MCP |
+
+**Quando NÃO delegar:** tasks que só leem, fazem grep, ou aplicam mudança trivial em arquivo Supabase (ex: corrigir typo em comment de migration existente). Use seu próprio Edit nesses casos.
+
+**Princípio:** o agent especializado é mais barato + mais correto que o executor genérico para esses domínios — ele já tem as regras embutidas. Delegação não é overhead; é correção.
 </project_context>
 
 <execution_flow>

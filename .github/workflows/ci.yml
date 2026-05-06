@@ -129,6 +129,33 @@ jobs:
           node bin/cli.js gates list
           node bin/cli.js install dry-run claude-code --scope project --project-root . --via npx
 
+      - name: Audit — v1.8 Supabase suite gates (markdown checks)
+        shell: bash
+        run: |
+          # PT-BR: roda os 5 gates novos da Suíte Supabase v1.8.
+          # Cada gate é markdown com bash check inline em gates/<name>.md.
+          # Falha o CI se algum gate blocking falhar.
+          set -e
+          GATES=(
+            budget-description
+            no-personal-uuid
+            agent-no-recursive-dispatch
+            skill-must-include
+          )
+          # sync-idempotent é non-blocking (warn) e exige CLI completo — defer.
+          for gate in "${GATES[@]}"; do
+            echo "::group::Gate: $gate"
+            # PT-BR: extrai o bash check do markdown e executa
+            awk '/^```bash/{flag=1;next}/^```/{flag=0}flag' "gates/${gate}.md" > "/tmp/gate-${gate}.sh"
+            if ! bash "/tmp/gate-${gate}.sh"; then
+              echo "::error::Gate $gate failed"
+              echo "::endgroup::"
+              exit 1
+            fi
+            echo "::endgroup::"
+          done
+          echo "All v1.8 Supabase suite gates passed"
+
       - name: Sync round-trip
         shell: bash
         run: |

@@ -13,7 +13,32 @@ Tipos de subagentes framework válidos (use nomes exatos — não use 'general-p
 - phase-researcher — Pesquisa abordagens técnicas para uma fase
 - planner — Cria planos detalhados a partir do escopo da fase
 - plan-checker — Revisa qualidade do plano antes da execução
+
+**Agents especializados por domínio** (use ao invés de phase-researcher quando aplicável):
+- supabase-architect — para fases Supabase (DB/Auth/Realtime/Edge/Storage), substitui phase-researcher genérico. Já tem questionamento Supabase-específico (tier, branches, RLS strategy, multi-tenant).
+- supabase-{migration-writer,rls-writer,edge-fn-writer,realtime-implementer,auth-bootstrapper,storage-implementer} — destinos de delegação que o `planner` pode incluir como `subagent_type` em tasks específicas do PLAN.md.
+- schema-checker — pré-validação de SQL para tasks que tocam migrations existentes.
 </available_agent_types>
+
+<supabase_phase_detection>
+**Detecção de fase Supabase no Step 1:** após carregar contexto via `init plan-phase`, verifique se a fase mexe em domínios Supabase (DB/Auth/Realtime/Edge/Storage/RLS/migrations). Sinais no objetivo do ROADMAP.md ou nos REQs mapeados: "Supabase", "Postgres", "RLS", "migration", "Edge Function", "broadcast", "pgvector", "bucket", `supabase/migrations/`, `supabase/schemas/`, `supabase/functions/`.
+
+**Se for fase Supabase:**
+1. **Pesquisa:** invoque `supabase-architect` em vez de `phase-researcher` genérico no Step 5 (Tratar Pesquisa). Architect produz plano de schema/RLS/topology que o planner usa como base.
+2. **Plano:** o `planner` deve incluir tasks com `subagent_type` apontando para o agent especializado correto (ver tabela abaixo). O `executor` lê e dispatcha automaticamente.
+
+| Task no plano envolve | `subagent_type:` para o `executor` dispatch |
+|---|---|
+| Migration ou schema declarative | `supabase-migration-writer` |
+| RLS policies | `supabase-rls-writer` |
+| Edge Function | `supabase-edge-fn-writer` |
+| Realtime (3 layers) | `supabase-realtime-implementer` |
+| Bootstrap auth Next.js | `supabase-auth-bootstrapper` |
+| Storage bucket + RLS | `supabase-storage-implementer` |
+| Validar SQL pre-apply | `schema-checker` |
+
+**Anti-pitfall:** agents `supabase-*` não devem se invocar uns aos outros — toda chain passa pelo `executor` lendo o plan. (Gate `agent-no-recursive-dispatch` valida.)
+</supabase_phase_detection>
 
 <process>
 

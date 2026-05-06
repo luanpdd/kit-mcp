@@ -43,6 +43,25 @@ Pergunte sobre visão e escolhas; capture decisões pra agentes downstream.
 **Quando usuário sugere expansão:** "[X] seria nova capacidade — fase própria. Anoto pro backlog. De volta a [tópico]." Capture em "Ideias Adiadas". Não perca, não aja.
 </scope_guardrail>
 
+<supabase_detection>
+**Detecção de fase Supabase:** antes de identificar áreas cinzentas genéricas, verifique se a fase mexe em Supabase (DB/Auth/Realtime/Edge Functions/Storage/RLS/migrations).
+
+Sinais de fase Supabase no objetivo do ROADMAP.md ou nos REQs mapeados:
+- Menções a "Supabase", "Postgres", "RLS", "policy", "migration", "supabase/migrations/", "supabase/schemas/", "supabase/functions/"
+- Menções a "Auth Next.js", "@supabase/ssr", "magic link", "OAuth", "MFA"
+- Menções a "broadcast", "realtime", "presence", "postgres_changes"
+- Menções a "Edge Function", "Deno", "pgvector", "RAG", "pg_cron", "pgmq"
+- Menções a "bucket", "signed URL", "storage.objects"
+
+**Se for fase Supabase:** considere delegar a discussão para o agent `supabase-architect` em vez de gerar áreas cinzentas genéricas. O architect já tem template de perguntas Supabase-específicas (tier Free/Pro, branches, RLS strategy multi-tenant, schema design, topology realtime, custos de egress/branches).
+
+```
+Task(subagent_type=supabase-architect, prompt="Projete schema + RLS + topologia para esta fase Supabase: {phase_goal}. Retorne plano em formato Markdown estruturado para servir de base ao CONTEXT.md.")
+```
+
+Use o output do architect como base do `<decisions>` do CONTEXT.md em vez de fazer questionamento manual. **Para fases mistas** (parte Supabase, parte genérica) — use architect só para a parte Supabase, depois faça discussão padrão para o resto.
+</supabase_detection>
+
 <gray_area_identification>
 Áreas cinzentas são **decisões de implementação que o usuário se importa** — coisas que podem ir de múltiplas formas e mudariam o resultado.
 
