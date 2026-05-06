@@ -134,3 +134,21 @@ Saída: Milestone arquivado (roadmap + requisitos), PROJECT.md evoluído, tag gi
 - **Eficiência de contexto:** Arquivo mantém ROADMAP.md e REQUIREMENTS.md com tamanho constante por milestone
 - **Novos requisitos:** Próximo milestone começa com `/novo-marco` que inclui definição de requisitos
   </critical_rules>
+
+<observability_integration>
+**OMM no-regression gate (v1.9 — INT-FW-05):**
+
+Quando `workflow.complete_milestone_omm_gate = true` (default), o workflow inclui passo OMM regression check antes de arquivar:
+
+1. Procurar `.planning/OMM-REPORT.md` atual. Se ausente: rodar `/auditar-observabilidade` primeiro.
+2. Comparar scores das 5 capacidades com `.planning/milestones/<previous>/OMM-REPORT.md`.
+3. Se alguma capacidade regrediu E `workflow.omm_no_regression = true`: BLOQUEAR conclusion.
+4. Se regression detectada mas `workflow.omm_no_regression = false`: WARN explícito; user decide entre aceitar ou pausar.
+5. OMM-REPORT.md final é arquivado em `.planning/milestones/v<version>/OMM-REPORT.md`.
+
+Gate executável: `gates/omm-no-regression.md`.
+
+Skill consultada: [`observability-maturity-model`](../skills/observability-maturity-model/SKILL.md).
+
+**REQ:** INT-FW-05.
+</observability_integration>

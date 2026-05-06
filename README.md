@@ -59,9 +59,47 @@ kit-mcp/
 
 ### About the bundled workflow
 
-The bundled `kit/` is an opinionated **brownfield planning workflow** in Portuguese — milestones, phases, requirements, planning, execution with atomic commits and checkpoints, retrospective auditing. Installing `@luanpdd/kit-mcp` and syncing into your IDE gives you all 60 slash-commands, 19 agents, plus the framework templates that they delegate into.
+The bundled `kit/` is an opinionated **brownfield planning workflow** in Portuguese — milestones, phases, requirements, planning, execution with atomic commits and checkpoints, retrospective auditing. Installing `@luanpdd/kit-mcp` and syncing into your IDE gives you all 60+ slash-commands, 24+ agents, plus the framework templates that they delegate into.
 
 If that's not what you want, point `--kit-root` at your own folder and ignore everything under `kit/` — the infrastructure (registry, sync, gates, forensics, MCP server) works the same regardless of what kit you load.
+
+### Observability suite (v1.9)
+
+A complete observability layer derived from *Observability Engineering* (Charity Majors, Liz Fong-Jones, George Miranda — O'Reilly, 2022) ships in the kit. It integrates deeply with the Supabase suite (v1.8) — every Supabase agent now consults observability skills, and the new `incident-investigator` agent uses `mcp__supabase__get_logs` / `execute_sql` / `get_advisors` to apply the **Core Analysis Loop** on real incidents.
+
+**11 skills** in `kit/skills/`:
+- `_shared-observability/glossary.md` — canonical bilingual vocabulary (PT-BR↔EN)
+- `structured-events`, `distributed-tracing`, `opentelemetry-standard`, `core-analysis-loop` — foundationals
+- `observability-driven-development` — the 4 pre-PR questions ("Does it do what I expected? Compare to previous version? Are users using? Anomalies emerge?")
+- `event-based-slos`, `burn-rate-alerting` — SLO definition + predictive burn alerts
+- `telemetry-sampling`, `telemetry-pipelines`, `observability-maturity-model` — scale + culture
+
+**5 agents** in `kit/agents/`:
+- `observability-instrumenter` — generates OTel + canonical attribute patches
+- `incident-investigator` — Core Analysis Loop with persistent state in `.planning/investigations/`
+- `slo-engineer` — generates `SLO.md` + SQL migrations to materialize SLI events
+- `burn-rate-forecaster` — calculates burn rate, ETA exhaustion, alert config
+- `omm-auditor` — scores 5 OMM capabilities (resilience, code quality, complexity, release cadence, user behavior)
+
+**6 commands**:
+- `/observabilidade <subcommand>` — single orchestrator (analog to `/supabase`) — dispatches to the 5 agents above with PT/EN synonyms
+- `/instrumentar-fase` — generates `INSTRUMENTATION.md` per plan after `/planejar-fase`
+- `/investigar-producao` — guided Core Analysis Loop with persistent state
+- `/definir-slo` — creates SLO definition + SQL materialized view
+- `/burn-rate-status` — table `[SLO | budget burned | ETA | action]`, also runnable in `/loop`
+- `/auditar-observabilidade` — generates OMM-REPORT.md scored
+
+**Quick start example:**
+```bash
+# Define an SLO for a critical journey
+/observabilidade slo "checkout"
+
+# Investigate a production incident with Core Analysis Loop
+/observabilidade investigar "checkout SLO burn rate = 8 às 14:32"
+
+# Score project against Observability Maturity Model
+/observabilidade omm
+```
 
 ---
 
