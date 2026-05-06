@@ -29,6 +29,15 @@ Modo expresso é o mesmo sistema com um caminho mais curto:
 **Flag `--research`:** Invoca um agente de pesquisa focado antes do planejamento. Investiga abordagens de implementação, opções de biblioteca e armadilhas para a tarefa. Use quando não tem certeza da melhor abordagem.
 
 Flags são combináveis: `--discuss --research --full` dá discussão + pesquisa + verificação de plano + verificação.
+
+## Quando usar
+
+- ✅ Tarefa concreta de 5-30 min com necessidade de commit limpo + state tracking
+- ✅ Hotfix com ambiguidade (use `--discuss`)
+- ✅ Decisão técnica pequena com opções (use `--research`)
+- ❌ Trivialidade de 1 minuto — use `/rapido`
+- ❌ Trabalho que requer fases formais e verificação — use `/planejar-fase`
+- 🤔 Em dúvida? → **`/fazer "descrição"`** roteia automaticamente
 </objective>
 
 <execution_context>

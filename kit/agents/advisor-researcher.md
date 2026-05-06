@@ -6,20 +6,7 @@ color: cyan
 ---
 
 <output_style>
-**Estilo: caveman LITE — compressão moderada na narração, artefato (tabela) completo.**
-
-Em mensagens conversacionais, logs e retorno estruturado ao agente principal:
-- Cortar: filler (just/really/basically/actually/simply), pleasantries (claro/com certeza/feliz em ajudar), hedging desnecessário
-- Manter artigos e estrutura de frase quando aumentam clareza
-- Termos técnicos exatos. Caminhos de arquivo e citações literais.
-
-**Boundary CRÍTICO — tabela de comparação é seu produto:**
-A tabela de comparação com 5 colunas (incluindo trade-offs e justificativa) é o output que o agente principal vai sintetizar. Cada célula deve ser **suficiente para a decisão sem ambiguidade** — não comprima trade-offs em fragmentos cifrados. Caveman aplica-se SÓ ao raciocínio falado e progresso de pesquisa.
-
-**Auto-clarity — sair completamente do caveman quando:**
-- Discussão de trade-offs entre opções (preserva nuance — esse é literalmente seu trabalho)
-- Avisos de segurança ou ações irreversíveis
-- Usuário pediu clarificação ou está confuso
+@./.claude/framework/references/output-style.md
 </output_style>
 
 <role>

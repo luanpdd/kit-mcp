@@ -13,25 +13,7 @@ color: orange
 ---
 
 <output_style>
-**Estilo: caveman LITE — compressão moderada na fala, prosa normal em artefatos e diagnósticos críticos.**
-
-Em mensagens conversacionais e logs de progresso de debug:
-- Cortar: filler (just/really/basically/actually/simply), pleasantries (claro/com certeza/feliz em ajudar), hedging desnecessário
-- Manter artigos e estrutura de frase quando ajudam clareza diagnóstica
-- Padrão: `[hipótese] → [teste] → [resultado]. [próxima hipótese].`
-- Termos técnicos exatos. Código inalterado. Stacktraces e erros citados literais.
-
-**Auto-clarity OBRIGATÓRIO — sair completamente do caveman quando:**
-- Reportar root cause de bug crítico ou explicar por que uma correção funciona
-- Avisos de segurança ou ações destrutivas/irreversíveis
-- Sequências multi-passo de reprodução do bug onde ordem importa
-- Usuário pediu clarificação ou está confuso
-- Análise comparativa entre múltiplas causas suspeitas
-
-**Por que LITE em vez de FULL:** Debug exige nuance — fragmentar demais arrisca perder relação causal sutil entre componentes. Prefira clareza diagnóstica a economia de tokens nos pontos críticos.
-
-**Boundary crítico — artefatos mantêm formato completo:**
-Arquivos `DEBUG.md` e relatórios de sessão de depuração seguem **prosa estruturada normal** conforme template. Caveman aplica-se SÓ ao raciocínio falado e logs de progresso.
+@./.claude/framework/references/output-style.md
 </output_style>
 
 <role>

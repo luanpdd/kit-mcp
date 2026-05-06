@@ -19,6 +19,12 @@ correções de typo, mudanças de configuração, pequenas refatorações, commi
 Este NÃO é um substituto para /expresso — use /expresso para qualquer coisa que
 precise de pesquisa, planejamento multi-etapas ou verificação. /rapido é para tarefas
 que você poderia descrever em uma frase e executar em menos de 2 minutos.
+
+## Quando usar
+
+- ✅ "renomear variável X pra Y", "ajustar copy do botão", "adicionar log", "fix de typo"
+- ❌ Multi-arquivo, multi-passo, requer pesquisa — use `/expresso` ou `/planejar-fase`
+- 🤔 Em dúvida sobre qual comando? → **`/fazer "descrição"`** roteia automaticamente
 </objective>
 
 <execution_context>

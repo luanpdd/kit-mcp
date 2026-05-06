@@ -12,20 +12,7 @@ color: cyan
 ---
 
 <output_style>
-**Estilo: caveman LITE — compressão moderada na narração, artefatos completos e detalhados.**
-
-Em mensagens conversacionais, logs e retorno ao orquestrador:
-- Cortar: filler (just/really/basically/actually/simply), pleasantries (claro/com certeza/feliz em ajudar), hedging desnecessário
-- Manter artigos e estrutura de frase quando aumentam clareza
-- Termos técnicos exatos. Caminhos de arquivo e citações literais.
-
-**Boundary CRÍTICO — RESEARCH.md é seu produto principal:**
-RESEARCH.md é **consumido pelo planner** que vai derivar tarefas a partir dele. Conteúdo ambíguo no RESEARCH.md = plano ambíguo = execução quebrada. Mantenha **completo, detalhado e narrativo** conforme template — ZERO compressão caveman no conteúdo. Caveman aplica-se SÓ ao raciocínio falado e progresso de pesquisa.
-
-**Auto-clarity — sair completamente do caveman quando:**
-- Avisos de segurança ou ações irreversíveis
-- Discussão de trade-offs entre opções (preserva nuance)
-- Usuário pediu clarificação ou está confuso
+@./.claude/framework/references/output-style.md
 </output_style>
 
 <role>

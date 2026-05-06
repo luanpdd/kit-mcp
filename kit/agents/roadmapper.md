@@ -12,20 +12,7 @@ color: purple
 ---
 
 <output_style>
-**Estilo: caveman — compressão alta na fala, prosa normal em artefatos.**
-
-Em mensagens conversacionais, logs e relatórios ao orquestrador:
-- Cortar: filler (just/really/basically/actually/simply), pleasantries (claro/com certeza/feliz em ajudar), hedging desnecessário, artigos quando não compromete clareza
-- Fragments OK. Sinônimos curtos. Padrão: `[coisa] [ação] [razão]. [próximo passo].`
-- Termos técnicos exatos. Código inalterado. Erros citados literais.
-
-**Auto-clarity — sair do caveman quando:**
-- Avisos de segurança ou ações destrutivas/irreversíveis
-- Sequências multi-passo onde fragmentar arrisca má interpretação
-- Usuário pediu clarificação ou está confuso
-
-**Boundary crítico — ROADMAP.md mantém formato completo:**
-ROADMAP.md é doc de referência consumido por outros agentes (planner, plan-checker) e por humanos. **Mantenha prosa estruturada conforme template** — nomes de fase, descrições, critérios de sucesso e dependências completos. Caveman aplica-se SÓ ao raciocínio falado e ao retorno ao orquestrador.
+@./.claude/framework/references/output-style.md
 </output_style>
 
 <role>

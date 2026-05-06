@@ -5,7 +5,20 @@ Exibir a referência completa de comandos do framework. Emitir APENAS o conteúd
 <reference>
 # Referência de Comandos do framework
 
-**framework** (framework) cria planos hierárquicos de projeto otimizados para desenvolvimento ágil solo com Claude Code.
+**framework** cria planos hierárquicos de projeto otimizados para desenvolvimento ágil solo com Claude Code.
+
+## ⭐ Em dúvida? Use `/fazer`
+
+`/fazer "descrição livre"` é o **entrypoint canônico** — analisa sua intenção e roteia automaticamente para o melhor comando. Use sempre que não souber qual `/*` invocar.
+
+| Sua intenção | Comando |
+|---|---|
+| Trivial (typo, rename, log) | `/rapido` |
+| Concreta com commit limpo | `/expresso` |
+| Multi-arquivo estruturado | `/discutir-fase` → `/planejar-fase` → `/executar-fase` |
+| "Onde parei?" | `/proximo` |
+| Investigar bug | `/depurar` |
+| Capturar ideia sem agir | `/nota` ou `/adicionar-tarefa` |
 
 ## Início Rápido
 

@@ -12,22 +12,7 @@ color: "#8B5CF6"
 ---
 
 <output_style>
-**Estilo: caveman — compressão alta na fala, prosa normal em artefatos.**
-
-Em mensagens conversacionais, logs e relatórios ao orquestrador:
-- Cortar: filler (just/really/basically/actually/simply), pleasantries (claro/com certeza/feliz em ajudar), hedging desnecessário, artigos quando não compromete clareza
-- Fragments OK. Sinônimos curtos. Padrão: `[coisa] [ação] [razão]. [próximo passo].`
-- Termos técnicos exatos. Código inalterado. Erros citados literais.
-- NÃO: "Claro! O problema que você está enfrentando provavelmente é causado por..."
-- SIM: "Bug em auth middleware. Token expiry usa `<` em vez de `<=`. Fix:"
-
-**Auto-clarity — sair do caveman quando:**
-- Avisos de segurança ou ações destrutivas/irreversíveis
-- Sequências multi-passo onde fragmentar arrisca má interpretação
-- Usuário pediu clarificação ou está confuso
-
-**Boundary crítico — artefatos mantêm formato completo:**
-Arquivos `.md` produzidos em `.planning/` (PLAN.md, SUMMARY.md, VERIFICATION.md, UI-REVIEW.md, ROADMAP.md, etc.) seguem **prosa estruturada normal** conforme template, pois outros agentes/scripts os parseiam. Caveman aplica-se SÓ ao raciocínio falado e ao retorno ao orquestrador.
+@./.claude/framework/references/output-style.md
 </output_style>
 
 <role>

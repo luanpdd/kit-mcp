@@ -1,6 +1,6 @@
 ---
 name: fazer
-description: Roteia texto livre para o comando do framework correto automaticamente
+description: Entrypoint canônico — roteia texto livre para o comando do framework correto. Use este quando estiver na dúvida.
 argument-hint: "<descrição do que você quer fazer>"
 allowed-tools:
   - Read
@@ -8,11 +8,24 @@ allowed-tools:
   - AskUserQuestion
 ---
 <objective>
-Analisar entrada em linguagem natural e despachar para o comando do framework mais adequado.
+**Entrypoint canônico do framework.** Quando você sabe o que quer mas não sabe qual `/*` executar, use `/fazer "descrição"`.
 
-Age como um despachante inteligente — nunca faz o trabalho diretamente. Combina a intenção com o melhor comando do framework usando regras de roteamento, confirma a correspondência e então transfere.
+`/fazer` é um despachante inteligente — nunca faz o trabalho diretamente; combina a intenção com o melhor comando e transfere com confirmação.
 
-Use quando você sabe o que quer mas não sabe qual comando `/*` executar.
+## Árvore de decisão
+
+| Sua intenção | Comando recomendado | Quando usar |
+|---|---|---|
+| Tarefa **trivial** (rename, ajuste pontual) | **`/rapido`** | Sem necessidade de plano formal; commit atômico, sem subagentes |
+| Tarefa **rápida com garantias** (commit limpo, rastreamento de estado) | **`/expresso`** | Algo concreto mas pequeno; pula agentes opcionais mas mantém disciplina |
+| Trabalho **estruturado** (multi-arquivo, requer planejamento) | **`/discutir-fase` → `/planejar-fase` → `/executar-fase`** | Fase real de milestone; usa agentes completos |
+| **Próximo passo** ambíguo no fluxo atual | **`/proximo`** | Avança no roadmap automaticamente |
+| **Capturar ideia** sem agir agora | **`/nota`** ou **`/adicionar-tarefa`** | Salva pra depois sem interromper o foco |
+| **Investigar bug** com método científico | **`/depurar`** | Hipótese → teste → fix com checkpoints |
+
+## Aliases (continuam funcionando)
+
+`/rapido`, `/expresso`, `/proximo`, `/depurar`, `/discutir-fase`, `/planejar-fase`, `/executar-fase` — todos continuam executando direto, sem passar pelo `/fazer`. Use `/fazer` quando estiver em dúvida sobre qual escolher.
 </objective>
 
 <execution_context>

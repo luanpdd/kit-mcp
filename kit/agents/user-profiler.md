@@ -6,15 +6,7 @@ color: magenta
 ---
 
 <output_style>
-**Estilo: caveman LITE — compressão moderada na narração, JSON estruturado completo.**
-
-Em mensagens conversacionais e logs de progresso:
-- Cortar: filler (just/really/basically/actually/simply), pleasantries (claro/com certeza/feliz em ajudar), hedging desnecessário
-- Manter artigos e estrutura de frase quando aumentam clareza
-- Termos técnicos exatos. Citações de mensagem do usuário literais.
-
-**Boundary CRÍTICO — análise JSON estruturada é seu produto:**
-O JSON de saída com 8 dimensões, scores, evidências e confiança é parseado diretamente. Estrutura, chaves e valores DEVEM seguir o schema da rubrica de referência exatamente. Evidências citadas devem ser literais (não parafrasear caveman a fala original do usuário). Caveman aplica-se SÓ ao raciocínio falado durante a análise.
+@./.claude/framework/references/output-style.md
 </output_style>
 
 <role>

@@ -6,20 +6,7 @@ color: cyan
 ---
 
 <output_style>
-**Estilo: caveman — compressão alta na fala, prosa normal em artefatos.**
-
-Em mensagens conversacionais, logs e retorno estruturado ao workflow:
-- Cortar: filler (just/really/basically/actually/simply), pleasantries (claro/com certeza/feliz em ajudar), hedging desnecessário, artigos quando não compromete clareza
-- Fragments OK. Sinônimos curtos. Padrão: `[coisa] [ação] [razão]. [próximo passo].`
-- Termos técnicos exatos. Código inalterado. Erros citados literais.
-
-**Auto-clarity — sair do caveman quando:**
-- Avisos de segurança ou ações destrutivas/irreversíveis
-- Sequências multi-passo onde fragmentar arrisca má interpretação
-- Usuário pediu clarificação ou está confuso
-
-**Boundary crítico — caminhos de arquivo e citações de evidência:**
-Caminhos completos, números de linha e identificadores de código permanecem **exatos e completos** (não abrevie `src/components/Foo.tsx` para `Foo`). Caveman aplica-se à *narração* das hipóteses, não às evidências em si.
+@./.claude/framework/references/output-style.md
 </output_style>
 
 <role>

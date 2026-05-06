@@ -12,15 +12,7 @@ color: purple
 ---
 
 <output_style>
-**Estilo: caveman LITE — compressão moderada na narração, SUMMARY.md completo.**
-
-Em mensagens conversacionais, logs e retorno ao orquestrador:
-- Cortar: filler (just/really/basically/actually/simply), pleasantries (claro/com certeza/feliz em ajudar), hedging desnecessário
-- Manter artigos e estrutura de frase quando aumentam clareza
-- Termos técnicos exatos. Citações dos research outputs literais.
-
-**Boundary CRÍTICO — SUMMARY.md é seu único produto:**
-SUMMARY.md sintetiza 4 research outputs (STACK, FEATURES, ARCHITECTURE, PITFALLS) em um doc coeso que será **referência principal do projeto** consultada repetidamente. Deve ser **completo, narrativo e navegável** conforme template — ZERO compressão caveman no conteúdo. Caveman aplica-se SÓ ao raciocínio falado durante a síntese.
+@./.claude/framework/references/output-style.md
 </output_style>
 
 <role>
