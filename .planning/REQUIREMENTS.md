@@ -101,4 +101,40 @@
 
 ## Rastreabilidade
 
-(preenchida pelo roadmap em ROADMAP.md)
+> Mapeamento REQ-ID → Phase. Total: **31 REQs** mapeados em 4 fases (Phase 25 → Phase 28). Zero unmapped. Detalhes em `.planning/ROADMAP.md`.
+
+| REQ-ID | Phase | Conteúdo (resumo) |
+|--------|-------|-------------------|
+| SB-S01 | Phase 25 | Skill `supabase-realtime` |
+| SB-S02 | Phase 25 | Skill `supabase-auth-ssr` |
+| SB-S03 | Phase 25 | Skill `supabase-edge-functions` |
+| SB-S04 | Phase 25 | Skill `supabase-declarative-schema` |
+| SB-S05 | Phase 25 | Skill `supabase-rls-policies` |
+| SB-S06 | Phase 25 | Skill `supabase-database-functions` |
+| SB-S07 | Phase 25 | Skill `supabase-migrations` |
+| SB-S08 | Phase 25 | Skill `supabase-postgres-style` |
+| SB-S09 | Phase 25 | Skill `supabase-storage` |
+| SB-S10 | Phase 25 | Skill `supabase-pgvector-rag` |
+| SB-S11 | Phase 25 | Skill `supabase-cron-queues` |
+| SB-D01 | Phase 25 | Glossário compartilhado `_shared-supabase/glossary.md` |
+| SB-A00 | Phase 26 | Convenção universal de agents Supabase (Compatibilidade + preflight + canonical tools) |
+| SB-A01 | Phase 26 | Agent `supabase-architect` |
+| SB-A02 | Phase 26 | Agent `supabase-migration-writer` |
+| SB-A03 | Phase 26 | Agent `supabase-rls-writer` |
+| SB-A04 | Phase 26 | Agent `supabase-edge-fn-writer` |
+| SB-A05 | Phase 26 | Agent `supabase-realtime-implementer` |
+| SB-A06 | Phase 26 | Agent `supabase-auth-bootstrapper` |
+| SB-A07 | Phase 26 | Agent `supabase-storage-implementer` |
+| SB-C01 | Phase 27 | Command `/supabase` com 9+ subcomandos (sinônimos PT/EN) |
+| SB-C02 | Phase 27 | Dispatch via `Task(subagent_type=...)`; subcomando `check` invoca `schema-checker` |
+| SB-G01 | Phase 28 | Gate `budget-description.mjs` (description ≤ 200 chars) |
+| SB-G02 | Phase 28 | Gate `no-personal-uuid.mjs` (zero UUIDs em tools/body) |
+| SB-G03 | Phase 28 | Gate `agent-no-recursive-dispatch.mjs` (zero `Task(...supabase-...)` em agents) |
+| SB-G04 | Phase 28 | Gate `skill-must-include.mjs` (strings obrigatórias por skill) |
+| SB-G05 | Phase 28 | Gate `sync-idempotent.mjs` (sync 2× = byte-idêntico) |
+| SB-V01 | Phase 28 | Sync para 8 IDE targets — smoke estrutural |
+| SB-V02 | Phase 28 | Smoke real em ≥4 IDEs invocando `supabase-rls-writer` |
+| SB-V03 | Phase 28 | Migrar `schema-checker.md` UUID → `mcp__supabase__*` (cleanup oportunístico) |
+| SB-V04 | Phase 28 | CHANGELOG/STATE/MILESTONES atualizados; PR ready para cut |
+
+**Verificação de cobertura:** 12 (Phase 25) + 8 (Phase 26) + 2 (Phase 27) + 9 (Phase 28) = **31 REQs**. ✓ Zero unmapped.
