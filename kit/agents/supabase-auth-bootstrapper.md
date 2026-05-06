@@ -292,7 +292,24 @@ Anti-patterns prevenidos:
 - Projeto já tem `@supabase/ssr` configurado e funcionando — overhead
 - Projeto não é Next.js (Expo, SvelteKit, Nuxt) — defer para skills `supabase-expo` etc. (v1.9+)
 
+## Observabilidade integrada
+
+Auth events são SLI primário — "successful login %" é métrica de saúde direta para o usuário final.
+
+1. **Auth events estruturados** (skill [`structured-events`](../skills/structured-events/SKILL.md)) — instrumentar handlers em `app/auth/*/route.ts`:
+   - `event_name`: `auth_signup` | `auth_login` | `auth_mfa_challenge` | `auth_logout` | `auth_password_reset` | `auth_oauth_callback`
+   - `result.success`: bool
+   - `error.type` enum: `'invalid_credentials'` | `'email_unconfirmed'` | `'mfa_required'` | `'rate_limit'` | `'oauth_provider_error'`
+   - `auth.method`: `'password'` | `'magic_link'` | `'oauth_google'` | `'oauth_github'` | `'sso'`
+   - `user.id` (após sucesso), `customer.tier`, `tenant_id` (se multi-tenant)
+2. **SLO de auth** (skill [`event-based-slos`](../skills/event-based-slos/SKILL.md) *Phase 32*): "99.5% dos login attempts retornam OK em < 800ms", janela deslizante 30d. SLI: `count(*) WHERE event_name='auth_login' AND result_success=true AND duration_ms<800`.
+3. **Audit trail**: signup/password_reset/mfa_setup viajam para `observability.audit_log` com IP, user_agent, geo (se disponível) — base para detectar fraud patterns via [`core-analysis-loop`](../skills/core-analysis-loop/SKILL.md).
+
+**Output adicionado:** seção "## Observability hooks" com snippet de span wrapper em handlers `/auth/*`.
+
 ## Ver também
 
 - [supabase-auth-ssr](../skills/supabase-auth-ssr/SKILL.md) — base de conhecimento canônica
 - [supabase-rls-policies](../skills/supabase-rls-policies/SKILL.md) — RLS aplicado quando user autenticado consulta tabelas
+- [structured-events](../skills/structured-events/SKILL.md) — campos canônicos para auth events
+- [event-based-slos](../skills/event-based-slos/SKILL.md) *(Phase 32)* — SLO de "successful login %"

@@ -212,7 +212,24 @@ NOTAS
 - Tabela já tem policies estabelecidas e user só quer 1 ajuste pequeno → use Edit direto
 - Tabela é puramente read-only para `anon` (ex: catalog público) → policy trivial, overhead
 
+## Observabilidade integrada
+
+RLS denials são sinal de segurança e debug — emite evento estruturado SEMPRE.
+
+1. **RLS deny logging**: no entry-point do app (Edge Function ou backend), capturar `42501 insufficient_privilege` errors e emitir span com:
+   - `policy.name` (qual policy negou)
+   - `attempted_op` (`select` | `insert` | `update` | `delete`)
+   - `user.id` (de `auth.uid()` na sessão)
+   - `tenant_id` (de `app_metadata` quando aplicável)
+   - `resource.table` (qual tabela/view tentada)
+   - `error.type = 'authz'` (skill [`structured-events`](../skills/structured-events/SKILL.md))
+2. **Investigação via Core Analysis Loop** (skill [`core-analysis-loop`](../skills/core-analysis-loop/SKILL.md)): pergunta canônica "qual policy + qual tenant + qual op + quando começou?" → query agrupando por essas 4 dimensões para identificar pattern.
+
+**Output adicionado:** seção "## Observability hooks" com snippet de error handler que classifica RLS denial e emite span.
+
 ## Ver também
 
 - [supabase-rls-policies](../skills/supabase-rls-policies/SKILL.md) — base de conhecimento canônica das regras
 - [supabase-migration-writer](./supabase-migration-writer.md) — invocar quando user quer policies dentro de migration nova
+- [structured-events](../skills/structured-events/SKILL.md) — campos canônicos para RLS denial logging
+- [core-analysis-loop](../skills/core-analysis-loop/SKILL.md) — investigar denial patterns

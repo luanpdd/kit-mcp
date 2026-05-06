@@ -178,8 +178,30 @@ Test local:
 - Função existente que precisa de pequeno ajuste → use Edit direto
 - Lógica que pode rodar em DB function (`security definer`) → considera `supabase-database-functions` (mais barato que Edge)
 
+## Observabilidade integrada
+
+Edge Function nasce instrumentada com OTel — não é addon. Beneficia mais que qualquer outro agent dado que é entry-point externo.
+
+1. **OTel SDK no topo do `index.ts`** (skill [`opentelemetry-standard`](../skills/opentelemetry-standard/SKILL.md)):
+   ```ts
+   import { trace } from 'npm:@opentelemetry/api@1.9.0'
+   import { NodeSDK } from 'npm:@opentelemetry/sdk-node@0.55.0'
+   import { OTLPTraceExporter } from 'npm:@opentelemetry/exporter-trace-otlp-http@0.55.0'
+   const sdk = new NodeSDK({ /* service.name, OTLP endpoint */ })
+   sdk.start()
+   ```
+2. **Span por handler** com kind `SERVER` envolvendo `Deno.serve`. Atributos canônicos: `request.id`, `user.id`, `tenant_id`, `endpoint`, `result.success`, `error.type`, `build_id` (`Deno.env.get('SUPABASE_GIT_SHA')`) — skill [`structured-events`](../skills/structured-events/SKILL.md).
+3. **Context propagation** via header `traceparent` para outbound calls a Postgres/PostgREST/external (skill [`distributed-tracing`](../skills/distributed-tracing/SKILL.md)).
+4. **Sampling head-based** baseado em `customer.tier` ou `feature_flag.<name>` (skill [`telemetry-sampling`](../skills/telemetry-sampling/SKILL.md) *Phase 34*) — 100% errors, 100% enterprise, 10% baseline.
+
+**Output adicionado:** template completo de Edge Function inclui SDK setup + span wrapper + propagação outbound + classificador de error.type. ODD-compliant (4 perguntas pré-PR endereçadas).
+
 ## Ver também
 
 - [supabase-edge-functions](../skills/supabase-edge-functions/SKILL.md) — base de conhecimento canônica
 - [supabase-cron-queues](../skills/supabase-cron-queues/SKILL.md) — pattern `cron → pgmq → Edge Function`
 - [supabase-auth-ssr](../skills/supabase-auth-ssr/SKILL.md) — clients Supabase
+- [opentelemetry-standard](../skills/opentelemetry-standard/SKILL.md) — SDK setup para Deno
+- [distributed-tracing](../skills/distributed-tracing/SKILL.md) — context propagation
+- [structured-events](../skills/structured-events/SKILL.md) — campos canônicos
+- [observability-driven-development](../skills/observability-driven-development/SKILL.md) — 4 perguntas pré-PR

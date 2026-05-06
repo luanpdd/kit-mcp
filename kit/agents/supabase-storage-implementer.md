@@ -233,8 +233,26 @@ ALERTAS
 - **Vector Buckets / Analytics Buckets** ainda alpha em 2026-05-06 — não detalhar
 - **Smart CDN** para egress optimization — fora deste agent (config no Dashboard)
 
+## Observabilidade integrada
+
+Upload events são quentes em custo (egress + storage) e em UX (lentidão de upload = abandono). Instrumentar SEMPRE.
+
+1. **Span por upload/download** (skill [`structured-events`](../skills/structured-events/SKILL.md)) com atributos:
+   - `bucket.name`, `bucket.public` (bool)
+   - `file.size_bytes`, `file.mime_type`, `file.path`
+   - `operation`: `upload` | `download` | `signed_url` | `delete`
+   - `result.success`, `error.type` (enum: `quota_exceeded`, `unauthorized`, `mime_blocked`, `size_exceeded`, `network`)
+   - `duration_ms`, `transfer.bytes_per_second` (calculado)
+   - `user.id`, `tenant_id` (do `auth.uid()`)
+2. **Sampling** (skill [`telemetry-sampling`](../skills/telemetry-sampling/SKILL.md) *Phase 34*): 100% errors, 100% uploads > 10 MB (cardinalidade baixa, valor alto), 5% baseline para downloads pequenos (alto volume).
+3. **Audit log** para uploads em buckets sensíveis (`audit_log` table com `actor`, `op`, `resource`, `geo`, `user_agent`).
+
+**Output adicionado:** seção "## Observability hooks" com snippet de upload/download wrapper.
+
 ## Ver também
 
 - [supabase-storage](../skills/supabase-storage/SKILL.md) — base de conhecimento canônica
 - [supabase-rls-writer](./supabase-rls-writer.md) — invocar para policies adicionais
 - [supabase-auth-ssr](../skills/supabase-auth-ssr/SKILL.md) — usuário autenticado obtém `auth.uid()`
+- [structured-events](../skills/structured-events/SKILL.md) — campos canônicos para upload/download events
+- [telemetry-sampling](../skills/telemetry-sampling/SKILL.md) *(Phase 34)* — head-based sampling por size_bytes

@@ -245,8 +245,31 @@ PRÓXIMOS PASSOS
 - Presence para listas de objetos → ALERTA explícito (use queries normais)
 - Naming inconsistente → SEMPRE `scope:entity:id`
 
+## Observabilidade integrada
+
+Realtime é tipicamente fora-de-trace porque WebSocket não usa header `traceparent` por default. Patches:
+
+1. **Trace context no payload do broadcast** (skill [`distributed-tracing`](../skills/distributed-tracing/SKILL.md)):
+   ```ts
+   // PT-BR: producer — anexa traceparent ao payload do broadcast
+   const carrier: Record<string, string> = {}
+   propagation.inject(context.active(), carrier)
+   await channel.send({
+     type: 'broadcast',
+     event: 'message_inserted',
+     payload: { ...originalPayload, _trace_context: carrier }
+   })
+   ```
+2. **Consumer extrai contexto** ao receber broadcast e abre span filho — stitching cross-WebSocket fica completo.
+3. **Atributos canônicos** em todo span de subscribe/unsubscribe (skill [`structured-events`](../skills/structured-events/SKILL.md)): `channel.name`, `channel.private`, `subscribe.status` (`SUBSCRIBED` | `CHANNEL_ERROR` | `TIMED_OUT`), `user.id`, `tenant_id`.
+4. **Trigger DB** (`realtime.broadcast_changes`) emite evento estruturado em `observability.events` com `event_name = 'realtime_broadcast'`, `result_success`, `tenant_id`.
+
+**Output adicionado:** template inclui propagation.inject no payload + span wrapper em subscribe + atributos canônicos no callback.
+
 ## Ver também
 
 - [supabase-realtime](../skills/supabase-realtime/SKILL.md) — base de conhecimento canônica
 - [supabase-rls-writer](./supabase-rls-writer.md) — invocar para policies adicionais em tabelas do app
 - [supabase-database-functions](../skills/supabase-database-functions/SKILL.md) — trigger function pattern
+- [distributed-tracing](../skills/distributed-tracing/SKILL.md) — context propagation cross-WebSocket
+- [structured-events](../skills/structured-events/SKILL.md) — atributos canônicos para channels

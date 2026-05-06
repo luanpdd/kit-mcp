@@ -151,3 +151,16 @@ Sem preâmbulo. Sem "vou analisar agora". O caller precisa do plano para delegar
 - Migrations já decididas e o user só quer escrever — delegar direto a `/supabase migration` (sem architect).
 - Mudança trivial em tabela existente (adicionar coluna) — overhead.
 - Apps com 1 tabela e 1 user — overkill.
+
+## Observabilidade integrada
+
+Schema nasce com observabilidade — não é addon. Este agent SEMPRE projeta:
+
+1. **Tabela `observability.events`** (ou usa schema de telemetria existente): coluna `result_success bool`, `error_type text`, `tenant_id`, `user_id`, `endpoint`, `duration_ms`, `build_id`, `trace_id`, `span_id` — campos canônicos da skill [`structured-events`](../skills/structured-events/SKILL.md).
+2. **Audit hooks** por entidade core (trigger AFTER INSERT/UPDATE/DELETE → emite linha em `observability.audit_log`) — base para [`core-analysis-loop`](../skills/core-analysis-loop/SKILL.md).
+3. **SLI tables**: para cada feature crítica, view materialized `obs.sli_<feature>` com colunas `bucket, good, bad, total` — feeder direto para [`event-based-slos`](../skills/event-based-slos/SKILL.md) *(skill da Phase 32)*.
+4. **OMM scoring**: anota qual capacidade do [`observability-maturity-model`](../skills/observability-maturity-model/SKILL.md) *(skill da Phase 34)* este schema endereça (resiliência, qualidade, complexidade, cadência, comportamento).
+
+**Output adicionado:** seção "## 9. Observabilidade" no plano com tabela de `obs.events` + audit triggers + SLI views.
+
+**Validação ODD** (skill [`observability-driven-development`](../skills/observability-driven-development/SKILL.md)): plano responde às 4 perguntas pré-PR — "Como sei que feature funciona em prod? Como comparo versões? Como sei quem está usando? Como detecto anomalias?"

@@ -154,3 +154,21 @@ Próximos passos:
 - `auth.uid()` sem `(select)` → SEMPRE wrapper
 - Schema-qualifier ausente em DB functions → SEMPRE `public.<name>`
 - Comandos destrutivos sem comentário → BLOQUEIA até user adicionar Risk/Validation/Rollback
+
+## Observabilidade integrada
+
+Toda migration emite evento estruturado e cria audit hooks por default — não é addon, é parte do contrato (skill [`observability-driven-development`](../skills/observability-driven-development/SKILL.md)).
+
+1. **Migration event** (auto-gerado no fim da migration):
+   ```sql
+   -- PT-BR: emite linha em observability.migration_events
+   insert into observability.migration_events (
+     migration_id, sql_hash, applied_at, build_id, result_success, duration_ms
+   ) values (
+     '20260506120000_create_orders', md5(...), now(), '{{BUILD_ID}}', true, {{ELAPSED_MS}}
+   );
+   ```
+2. **Audit triggers em tabelas sensíveis** (pagamentos, auth, dados pessoais): trigger `after insert/update/delete` que insere `audit_log` com `tenant_id`, `user_id`, `op`, `old_row`, `new_row`, `actor`, `timestamp`.
+3. **Atributos canônicos** em qualquer função criada: `set search_path = ''` + comments com `result.success`, `error.type` enum esperado (skill [`structured-events`](../skills/structured-events/SKILL.md)).
+
+**Output adicionado:** seção "## Audit hooks" + "## Migration event emit" no SQL gerado, comentadas em PT-BR.
