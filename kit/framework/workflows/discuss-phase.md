@@ -21,49 +21,26 @@ Você é um parceiro de pensamento, não um entrevistador. O usuário é o visio
 </downstream_awareness>
 
 <philosophy>
-**Usuário = fundador/visionário. Claude = construtor.**
+**Usuário = visionário. Claude = construtor.**
 
-O usuário sabe:
-- Como imagina funcionando
-- Como deve ser o visual/sensação
-- O que é essencial vs bom ter
-- Comportamentos ou referências específicas que têm em mente
+Usuário SABE: como imagina, visual/sensação, essencial vs nice-to-have, referências específicas.
+Usuário NÃO sabe (não pergunte): padrões da codebase (pesquisador lê), riscos técnicos (pesquisador), abordagem de implementação (planejador), métricas (inferidas).
 
-O usuário não sabe (e não deve ser perguntado):
-- Padrões da base de código (pesquisador lê o código)
-- Riscos técnicos (pesquisador identifica estes)
-- Abordagem de implementação (planejador descobre isso)
-- Métricas de sucesso (inferidas do trabalho)
-
-Perguntar sobre visão e escolhas de implementação. Capturar decisões para agentes downstream.
+Pergunte sobre visão e escolhas; capture decisões pra agentes downstream.
 </philosophy>
 
 <scope_guardrail>
-**CRÍTICO: Sem expansão de escopo.**
+**CRÍTICO: sem expansão de escopo.** Limite da fase vem do ROADMAP e é FIXO. Discussão clarifica COMO, nunca SE adicionar capacidades.
 
-O limite da fase vem do ROADMAP.md e é FIXO. A discussão clarifica COMO implementar o que está no escopo, nunca SE adicionar novas capacidades.
+| Permitido (clarifica) | Não permitido (expande) |
+|---|---|
+| "Como exibir posts?" (layout, densidade) | "Adicionar comentários?" (nova capacidade) |
+| "O que em estado vazio?" | "E busca/filtragem?" |
+| "Pull-to-refresh ou manual?" | "Incluir favoritos?" |
 
-**Permitido (clarificando ambiguidade):**
-- "Como os posts devem ser exibidos?" (layout, densidade, informações mostradas)
-- "O que acontece em estado vazio?" (dentro da funcionalidade)
-- "Pull to refresh ou manual?" (escolha de comportamento)
+**Heurística:** clarifica o que já está na fase, ou adiciona capacidade que merece fase própria?
 
-**Não permitido (expansão de escopo):**
-- "Deveríamos também adicionar comentários?" (nova capacidade)
-- "E a busca/filtragem?" (nova capacidade)
-- "Talvez incluir favoritos?" (nova capacidade)
-
-**A heurística:** Isso clarifica como implementamos o que já está na fase, ou adiciona uma nova capacidade que poderia ser sua própria fase?
-
-**Quando o usuário sugere expansão de escopo:**
-```
-"[Funcionalidade X] seria uma nova capacidade — é sua própria fase.
-Quer que eu anote para o backlog do roadmap?
-
-Por enquanto, vamos focar em [domínio da fase]."
-```
-
-Capturar a ideia em uma seção "Ideias Adiadas". Não a perder, não agir sobre ela.
+**Quando usuário sugere expansão:** "[X] seria nova capacidade — fase própria. Anoto pro backlog. De volta a [tópico]." Capture em "Ideias Adiadas". Não perca, não aja.
 </scope_guardrail>
 
 <gray_area_identification>
@@ -80,29 +57,11 @@ Capturar a ideia em uma seção "Ideias Adiadas". Não a perder, não agir sobre
    - Algo sendo ORGANIZADO → critérios, agrupamento, tratamento de exceções importam
 3. **Gerar áreas cinzentas específicas da fase** — Não categorias genéricas, mas decisões concretas para ESTA fase
 
-**Não usar rótulos de categoria genéricos** (UI, UX, Comportamento). Gerar áreas cinzentas específicas:
+**Não use rótulos genéricos** (UI/UX/Comportamento). Gere áreas específicas. Exemplos: Auth → sessão, erros, multi-device, recuperação. Backups CLI → output, flags, progress, recovery. Foto biblioteca → agrupamento, duplicatas, nomenclatura, pastas. API docs → estrutura, exemplos, versionamento, interativos.
 
-```
-Fase: "Autenticação de usuário"
-→ Gerenciamento de sessão, Respostas de erro, Política multi-dispositivo, Fluxo de recuperação
+**Pergunta-chave:** quais decisões mudariam o resultado que o usuário deveria opinar?
 
-Fase: "Organizar biblioteca de fotos"
-→ Critérios de agrupamento, Tratamento de duplicatas, Convenção de nomenclatura, Estrutura de pastas
-
-Fase: "CLI para backups de banco de dados"
-→ Formato de saída, Design de flags, Relatório de progresso, Recuperação de erros
-
-Fase: "Documentação de API"
-→ Estrutura/navegação, Profundidade de exemplos de código, Abordagem de versionamento, Elementos interativos
-```
-
-**A pergunta-chave:** Quais decisões mudariam o resultado que o usuário deveria opinar?
-
-**Claude lida com isso (não perguntar):**
-- Detalhes técnicos de implementação
-- Padrões de arquitetura
-- Otimização de performance
-- Escopo (roadmap define isso)
+**Claude trata sozinho (não perguntar):** detalhes técnicos, padrões de arquitetura, otimização, escopo (roadmap define).
 </gray_area_identification>
 
 <answer_validation>
@@ -202,57 +161,11 @@ Se "Cancelar": Sair do workflow.
 </step>
 
 <step name="load_prior_context">
-Ler contexto de projeto e de fases anteriores para evitar re-perguntar questões já decididas e manter consistência.
+Ler PROJECT.md (visão/princípios/inegociáveis), REQUIREMENTS.md (critérios/must-haves), STATE.md (progresso/flags). Encontrar CONTEXT.md anteriores (`find .planning/phases -name "*-CONTEXT.md" | sort`); pra cada um com número < fase atual, extrair `<decisions>` (preferências bloqueadas) e `<specifics>` (refs particulares).
 
-**Passo 1: Ler arquivos em nível de projeto**
-```bash
-# Arquivos centrais do projeto
-cat .planning/PROJECT.md 2>/dev/null || true
-cat .planning/REQUIREMENTS.md 2>/dev/null || true
-cat .planning/STATE.md 2>/dev/null || true
-```
+Construir contexto interno `<prior_decisions>` com seções "Nível de Projeto" + "Das Fases Anteriores".
 
-Extrair destes:
-- **PROJECT.md** — Visão, princípios, inegociáveis, preferências do usuário
-- **REQUIREMENTS.md** — Critérios de aceitação, restrições, must-haves vs bom-ter
-- **STATE.md** — Progresso atual, quaisquer flags ou notas de sessão
-
-**Passo 2: Ler todos os arquivos CONTEXT.md anteriores**
-```bash
-# Encontrar todos os arquivos CONTEXT.md de fases anteriores à atual
-(find .planning/phases -name "*-CONTEXT.md" 2>/dev/null || true) | sort
-```
-
-Para cada CONTEXT.md onde o número de fase < fase atual:
-- Ler a seção `<decisions>` — estas são preferências bloqueadas
-- Ler `<specifics>` — referências particulares ou momentos "quero como X"
-- Notar quaisquer padrões (ex: "usuário consistentemente prefere UI minimalista", "usuário rejeitou atalhos de tecla única")
-
-**Passo 3: Construir contexto interno `<prior_decisions>`**
-
-Estruturar as informações extraídas:
-```
-<prior_decisions>
-## Nível de Projeto
-- [Princípio ou restrição chave do PROJECT.md]
-- [Requisito que afeta esta fase do REQUIREMENTS.md]
-
-## Das Fases Anteriores
-### Fase N: [Nome]
-- [Decisão que pode ser relevante para a fase atual]
-- [Preferência que estabelece um padrão]
-
-### Fase M: [Nome]
-- [Outra decisão relevante]
-</prior_decisions>
-```
-
-**Uso nos passos subsequentes:**
-- `analyze_phase`: Pular áreas cinzentas já decididas em fases anteriores
-- `present_gray_areas`: Anotar opções com decisões anteriores ("Você escolheu X na Fase 5")
-- `discuss_areas`: Pré-preencher respostas ou sinalizar conflitos ("Isso contradiz a Fase 3 — mesmo aqui ou diferente?")
-
-**Se nenhum contexto anterior existir:** Continuar sem — isso é esperado para fases iniciais.
+**Uso downstream:** `analyze_phase` pula áreas já decididas; `present_gray_areas` anota com refs ("Você escolheu X na Fase 5"); `discuss_areas` pré-preenche ou sinaliza conflitos. Sem contexto anterior → continuar (esperado pra fases iniciais).
 </step>
 
 <step name="cross_reference_todos">
@@ -304,38 +217,11 @@ Varredura leve do código existente para informar identificação de áreas cinz
 ls .planning/codebase/*.md 2>/dev/null || true
 ```
 
-**Se mapas de codebase existirem:** Ler os mais relevantes (CONVENTIONS.md, STRUCTURE.md, STACK.md com base no tipo de fase). Extrair:
-- Componentes/hooks/utilitários reutilizáveis
-- Padrões estabelecidos (gerenciamento de estado, estilização, busca de dados)
-- Pontos de integração (onde novo código se conectaria)
+**Mapas de codebase existem (`.planning/codebase/*.md`):** ler CONVENTIONS/STRUCTURE/STACK conforme tipo da fase. Extrair: ativos reutilizáveis, padrões estabelecidos, pontos de integração.
 
-Pular para o Passo 3 abaixo.
+**Sem mapas:** grep direcionado por termos-chave do objetivo (`grep -rl "termo1\|termo2" src/ app/ --include='*.{ts,tsx,js,jsx}' | head -10`) + `ls src/{components,hooks,lib,utils}/`. Ler 3-5 arquivos mais relevantes.
 
-**Passo 2: Se não há mapas de codebase, fazer grep direcionado**
-
-Extrair termos-chave do objetivo da fase (ex: "feed" → "post", "card", "list"; "auth" → "login", "session", "token").
-
-```bash
-# Encontrar arquivos relacionados aos termos do objetivo da fase
-grep -rl "{termo1}\|{termo2}" src/ app/ --include="*.ts" --include="*.tsx" --include="*.js" --include="*.jsx" 2>/dev/null | head -10 || true
-
-# Encontrar componentes/hooks existentes
-ls src/components/ 2>/dev/null || true
-ls src/hooks/ 2>/dev/null || true
-ls src/lib/ src/utils/ 2>/dev/null || true
-```
-
-Ler os 3-5 arquivos mais relevantes para entender padrões existentes.
-
-**Passo 3: Construir codebase_context interno**
-
-Da varredura, identificar:
-- **Ativos reutilizáveis** — componentes, hooks, utilitários existentes que poderiam ser usados nesta fase
-- **Padrões estabelecidos** — como a base de código faz gerenciamento de estado, estilização, busca de dados
-- **Pontos de integração** — onde novo código se conectaria (rotas, nav, providers)
-- **Opções criativas** — abordagens que a arquitetura existente habilita ou restringe
-
-Armazenar como `<codebase_context>` interno para uso em analyze_phase e present_gray_areas. Isso NÃO é escrito em arquivo — é usado apenas nesta sessão.
+Construir `<codebase_context>` interno: ativos reutilizáveis, padrões, pontos de integração, opções criativas que a arquitetura habilita/restringe. Não escreve em arquivo — só sessão atual.
 </step>
 
 <step name="analyze_phase">
@@ -365,30 +251,11 @@ Analisar a fase para identificar áreas cinzentas que valem a discussão. **Usar
 
 **Detecção de Modo Advisor:**
 
-Verificar se o modo advisor deve ativar:
+`ADVISOR_MODE = exists("./.claude/framework/USER-PROFILE.md")`. Se false, pular todos os passos advisor — workflow conversacional inalterado.
 
-1. Verificar USER-PROFILE.md:
-   ```bash
-   PROFILE_PATH="./.claude/framework/USER-PROFILE.md"
-   ```
-   ADVISOR_MODE = arquivo existe em PROFILE_PATH → true, caso contrário → false
+Se true, resolver `calibration_tier` por prioridade: (1) `config.json > preferences.vendor_philosophy` (project), (2) USER-PROFILE.md Vendor Choices/Philosophy (global), (3) default `standard`. Mapeamento: `conservative`/`thorough-evaluator` → `full_maturity`; `opinionated` → `minimal_decisive`; `pragmatic-fast` ou outro/vazio → `standard`.
 
-2. Se ADVISOR_MODE for true, resolver tier de calibração vendor_philosophy:
-   - Prioridade 1: Ler config.json > preferences.vendor_philosophy (override em nível de projeto)
-   - Prioridade 2: Ler avaliação Vendor Choices/Philosophy do USER-PROFILE.md (global)
-   - Prioridade 3: Padrão para "standard" se nenhum tiver valor ou valor for UNSCORED
-
-   Mapear para tier de calibração:
-   - conservative OU thorough-evaluator → full_maturity
-   - opinionated → minimal_decisive
-   - pragmatic-fast OU qualquer outro valor OU vazio → standard
-
-3. Resolver modelo para agentes advisor:
-   ```bash
-   ADVISOR_MODEL=$(node "./.claude/framework/bin/tools.cjs" resolve-model advisor-researcher --raw)
-   ```
-
-Se ADVISOR_MODE for false, pular todos os passos específicos de advisor — workflow prossegue com fluxo conversacional existente inalterado.
+`ADVISOR_MODEL=$(node "./.claude/framework/bin/tools.cjs" resolve-model advisor-researcher --raw)`
 
 **Produzir sua análise internamente, então apresentar ao usuário.**
 
@@ -453,31 +320,10 @@ Vamos clarificar COMO implementar isso.
 
 **NÃO incluir opção "pular" ou "você decide".** O usuário executou este comando para discutir — dar escolhas reais.
 
-**Exemplos por domínio (com contexto de código):**
-
-Para "Feed de Posts" (funcionalidade visual):
-```
-☐ Estilo de layout — Cards vs lista vs timeline? (Componente Card existe com variantes)
-☐ Comportamento de carregamento — Scroll infinito ou paginação? (Hook useInfiniteQuery disponível)
-☐ Ordenação de conteúdo — Cronológico, algorítmico, ou escolha do usuário?
-☐ Metadados de post — Quais informações por post? Timestamps, reações, autor?
-```
-
-Para "CLI de backup de banco de dados" (ferramenta de linha de comando):
-```
-☐ Formato de saída — JSON, tabela, ou texto simples? Níveis de verbosidade?
-☐ Design de flags — Flags curtas, longas, ou ambas? Obrigatórias vs opcionais?
-☐ Relatório de progresso — Silencioso, barra de progresso, ou log verbose?
-☐ Recuperação de erros — Falhar rápido, tentar novamente, ou solicitar ação?
-```
-
-Para "Organizar biblioteca de fotos" (tarefa de organização):
-```
-☐ Critérios de agrupamento — Por data, localização, faces, ou eventos?
-☐ Tratamento de duplicatas — Manter melhor, manter todos, ou solicitar cada vez?
-☐ Convenção de nomenclatura — Nomes originais, datas, ou descritivos?
-☐ Estrutura de pastas — Plana, aninhada por ano, ou por categoria?
-```
+**Exemplos por domínio:**
+- Feed de Posts: layout (cards/lista/timeline), carregamento (infinito/paginação), ordenação, metadados
+- Backup CLI: output (JSON/tabela/texto), flags (curtas/longas), progress (silencioso/bar/verbose), recovery (fail-fast/retry)
+- Foto biblioteca: agrupamento (data/local/face/evento), duplicatas (melhor/todos/prompt), nomenclatura, pastas
 
 Continuar para discuss_areas com áreas selecionadas (ou advisor_research se ADVISOR_MODE for true).
 </step>
@@ -572,65 +418,14 @@ Rastrear ideias adiadas internamente.
 
 Para cada área selecionada, conduzir um loop de discussão focado.
 
-**Modo pesquisa-antes-das-perguntas:** Verificar se `workflow.research_before_questions` está habilitado na config (do contexto init ou `.planning/config.json`). Quando habilitado, antes de apresentar perguntas para cada área:
-1. Fazer uma breve busca na web por melhores práticas relacionadas ao tópico da área
-2. Resumir as principais descobertas em 2-3 bullet points
-3. Apresentar a pesquisa junto com a pergunta para que o usuário possa tomar uma decisão mais informada
+**Modos opcionais (lidos de config + args):**
 
-Exemplo com pesquisa habilitada:
-```
-Vamos falar sobre [Estratégia de Autenticação].
+- **`workflow.research_before_questions: true`** ou padrão off — antes de cada área, fazer 2-3 bullet de melhores práticas via web, apresentar com a pergunta. Ex: "OAuth 2.0 + PKCE é padrão atual pra SPAs; cookies httpOnly preferidos vs localStorage; passkey/WebAuthn em alta 2025-2026."
+- **`--text` ou `workflow.text_mode: true`** — substitui TODOS AskUserQuestion por listas numeradas em texto simples (necessário em sessões remotas Claude Code `/rc`).
+- **`--batch[=N]`** (default 4 quando ausente, range 2-5) — 1 turno agrupado com N perguntas numeradas em vez de N turnos de pergunta única. Após responder, refletir capturas e fazer follow-up mínimo.
+- **`--analyze`** — antes de cada pergunta (ou batch), fornecer mini-tabela de trade-offs (2-3 opções, prós/contras baseados na codebase + padrões), recomendação destacada, pitfalls.
 
-📊 Pesquisa de melhores práticas:
-• OAuth 2.0 + PKCE é o padrão atual para SPAs (substitui fluxo implícito)
-• Tokens de sessão com cookies httpOnly preferidos sobre localStorage para proteção XSS
-• Considerar suporte a passkey/WebAuthn — adoção está acelerando em 2025-2026
-
-Com esse contexto: Como os usuários devem autenticar?
-```
-
-Quando desabilitado (padrão), pular a pesquisa e apresentar perguntas diretamente como antes.
-
-**Suporte a modo texto:** Analisar `--text` opcional de `$ARGUMENTS`.
-- Aceitar flag `--text` OU ler `workflow.text_mode` da config (do contexto init)
-- Quando ativo, substituir TODAS as chamadas `AskUserQuestion` por listas numeradas de texto simples
-- Usuário digita um número para selecionar, ou digita texto livre para "Outro"
-- Isso é necessário para sessões remotas do Claude Code (modo `/rc`) onde menus TUI
-  não funcionam através do App Claude
-
-**Suporte a modo batch:** Analisar `--batch` opcional de `$ARGUMENTS`.
-- Aceitar `--batch`, `--batch=N`, ou `--batch N`
-
-**Suporte a modo analyze:** Analisar `--analyze` opcional de `$ARGUMENTS`.
-Quando `--analyze` estiver ativo, antes de apresentar cada pergunta (ou grupo de perguntas no modo batch), fornecer uma breve **análise de trade-offs** para a decisão:
-- 2-3 opções com prós/contras baseados no contexto da codebase e padrões comuns
-- Uma abordagem recomendada com raciocínio
-- Armadilhas conhecidas ou restrições de fases anteriores
-
-Exemplo com `--analyze`:
-```
-**Análise de trade-offs: Estratégia de autenticação**
-
-| Abordagem | Prós | Contras |
-|-----------|------|---------|
-| Cookies de sessão | Simples, httpOnly evita XSS | Requer proteção CSRF, sessões fixas |
-| JWT (stateless) | Escalável, sem estado no servidor | Tamanho do token, complexidade de revogação |
-| OAuth 2.0 + PKCE | Padrão da indústria para SPAs | Mais configuração, UX de fluxo de redirecionamento |
-
-💡 Recomendado: OAuth 2.0 + PKCE — seu app tem login social nos requisitos (REQ-04) e isso se alinha com a configuração NextAuth existente em `src/lib/auth.ts`.
-
-Como os usuários devem autenticar?
-```
-
-Isso dá ao usuário contexto para tomar decisões informadas sem prompts extras. Quando `--analyze` estiver ausente, apresentar perguntas diretamente como antes.
-- Aceitar `--batch`, `--batch=N`, ou `--batch N`
-- Padrão de 4 perguntas por batch quando nenhum número é fornecido
-- Limitar tamanhos explícitos a 2-5 para que um batch permaneça respondível
-- Se `--batch` estiver ausente, manter o fluxo existente de uma pergunta por vez
-
-**Filosofia:** permanecer adaptativo, mas deixar o usuário escolher o ritmo.
-- Modo padrão: 4 turnos de pergunta única, então verificar se continuar
-- Modo `--batch`: 1 turno agrupado com 2-5 perguntas numeradas, então verificar se continuar
+**Filosofia:** adaptativo, usuário escolhe o ritmo. Default: 4 turnos de pergunta única, depois verifica continuar. `--batch`: 1 turno agrupado, depois verifica.
 
 Cada resposta (ou conjunto de respostas, no modo batch) deve revelar a próxima pergunta ou próximo batch.
 
@@ -695,37 +490,13 @@ Após todas as áreas serem auto-resolvidas, pular o prompt "Explorar mais área
      - Loop: discutir novas áreas, então solicitar novamente
    - Se "Estou pronto para o contexto": Prosseguir para write_context
 
-**Acumulação de ref canônica durante a discussão:**
-Quando o usuário referencia um doc, spec, ou ADR durante qualquer resposta — ex: "leia adr-014", "verifique a spec MCP", "de acordo com browse-spec.md" — imediatamente:
-1. Ler o doc referenciado (ou confirmar que existe)
-2. Adicioná-lo ao acumulador de refs canônicas com caminho relativo completo
-3. Usar o que aprendeu do doc para informar perguntas subsequentes
+**Acumulação de refs canônicas:** quando usuário referencia doc/spec/ADR (ex: "leia adr-014"), imediatamente: leia o doc, adicione ao acumulador com caminho relativo completo, use pra informar perguntas seguintes. Esses são frequentemente MAIS importantes que refs do ROADMAP — usuário quer que agentes downstream sigam. Nunca perca.
 
-Esses docs referenciados pelo usuário são frequentemente MAIS importantes do que refs do ROADMAP.md porque representam docs que o usuário especificamente quer que agentes downstream sigam. Nunca os perder.
+**Design de perguntas:** opções concretas (não "Opção A"), cada resposta informa a próxima. Se usuário escolher "Outro" pra texto livre, faça acompanhamento em prompt simples (NÃO outro AskUserQuestion); reflita de volta e confirme.
 
-**Design de perguntas:**
-- Opções devem ser concretas, não abstratas ("Cards" não "Opção A")
-- Cada resposta deve informar a próxima pergunta ou próximo batch
-- Se o usuário escolher "Outro" para fornecer input livre (ex: "deixa eu descrever", "outra coisa", ou uma resposta aberta), fazer o acompanhamento como texto simples — NÃO outro AskUserQuestion. Aguardar eles digitarem no prompt normal, então refletir seu input de volta e confirmar antes de retomar AskUserQuestion ou o próximo batch numerado.
+**Expansão de escopo:** ver `<scope_guardrail>` acima — anote como Ideia Adiada, retorne ao tópico.
 
-**Tratamento de expansão de escopo:**
-Se o usuário mencionar algo fora do domínio da fase:
-```
-"[Funcionalidade] parece uma nova capacidade — pertence à sua própria fase.
-Vou anotá-la como uma ideia adiada.
-
-De volta a [área atual]: [retornar à pergunta atual]"
-```
-
-Rastrear ideias adiadas internamente.
-
-**Rastrear dados do log de discussão internamente:**
-Para cada pergunta feita, acumular:
-- Nome da área
-- Todas as opções apresentadas (rótulo + descrição)
-- Qual opção o usuário selecionou (ou sua resposta em texto livre)
-- Quaisquer notas ou esclarecimentos de acompanhamento que o usuário forneceu
-Esses dados são usados para gerar DISCUSSION-LOG.md no passo `write_context`.
+**Log interno por pergunta:** área, opções apresentadas, seleção do usuário, notas de acompanhamento. Usado pra gerar DISCUSSION-LOG.md no `write_context`.
 </step>
 
 <step name="write_context">
@@ -959,74 +730,19 @@ node "./.claude/framework/bin/tools.cjs" commit "docs(state): record phase ${PHA
 </step>
 
 <step name="auto_advance">
-Verificar gatilho de avanço automático:
+**Detecção:** flag `--auto` em $ARGUMENTS, OR `workflow._auto_chain_active=true`, OR `workflow.auto_advance=true`.
 
-1. Analisar flag `--auto` de $ARGUMENTS
-2. **Sincronizar flag de cadeia com intenção** — se o usuário invocou manualmente (sem `--auto`), limpar a flag de cadeia efêmera de qualquer cadeia `--auto` anterior interrompida. Isso NÃO toca em `workflow.auto_advance` (preferência persistente do usuário):
-   ```bash
-   if [[ ! "$ARGUMENTS" =~ --auto ]]; then
-     node "./.claude/framework/bin/tools.cjs" config-set workflow._auto_chain_active false 2>/dev/null
-   fi
-   ```
-3. Ler tanto a flag de cadeia quanto a preferência do usuário:
-   ```bash
-   AUTO_CHAIN=$(node "./.claude/framework/bin/tools.cjs" config-get workflow._auto_chain_active 2>/dev/null || echo "false")
-   AUTO_CFG=$(node "./.claude/framework/bin/tools.cjs" config-get workflow.auto_advance 2>/dev/null || echo "false")
-   ```
+**Sync de cadeia:** se usuário invocou manualmente (sem `--auto`), zere `workflow._auto_chain_active` (mas NÃO toque `workflow.auto_advance` — preferência do usuário). Se `--auto` presente e cadeia não estava ativa, set `_auto_chain_active=true` (handle uso direto de `--auto` sem new-project).
 
-**Se flag `--auto` presente E `AUTO_CHAIN` não for true:** Persistir flag de cadeia na config (lida com uso direto de `--auto` sem new-project):
-```bash
-node "./.claude/framework/bin/tools.cjs" config-set workflow._auto_chain_active true
-```
+**Quando ativo:** dispare `Skill(skill="framework:planejar-fase", args="${PHASE} --auto ${WS}")` (use Skill, não Task aninhado — evita freeze de runtime, issue #686).
 
-**Se flag `--auto` presente OU `AUTO_CHAIN` for true OU `AUTO_CFG` for true:**
+**Roteamento de retorno do plan-phase:**
+- `FASE CONCLUÍDA` → cadeia completa. Próximo: `/discutir-fase ${NEXT_PHASE} --auto ${WS}` (após `/clear`)
+- `PLANEJAMENTO CONCLUÍDO` → execução parou. Continuar: `/executar-fase ${PHASE} ${WS}`
+- `PLANEJAMENTO INCONCLUSIVO / CHECKPOINT` → parou. Continuar: `/planejar-fase ${PHASE} ${WS}`
+- `LACUNAS ENCONTRADAS` → parou. Continuar: `/planejar-fase ${PHASE} --gaps ${WS}`
 
-Exibir banner:
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- framework ► AVANÇANDO AUTOMATICAMENTE PARA PLANEJAMENTO
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-Contexto capturado. Iniciando plan-phase...
-```
-
-Iniciar plan-phase usando a ferramenta Skill para evitar sessões Task aninhadas (que causam freezes de runtime devido ao aninhamento profundo de agentes — ver #686):
-```
-Skill(skill="framework:planejar-fase", args="${PHASE} --auto ${WS}")
-```
-
-Isso mantém a cadeia de avanço automático plana — discutir, planejar e executar todos rodam no mesmo nível de aninhamento em vez de criar agentes Task cada vez mais profundos.
-
-**Lidar com retorno do plan-phase:**
-- **FASE CONCLUÍDA** → Cadeia completa bem-sucedida. Exibir:
-  ```
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   framework ► FASE ${PHASE} CONCLUÍDA
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  Pipeline de avanço automático finalizado: discutir → planejar → executar
-
-  Próximo: /discutir-fase ${NEXT_PHASE} --auto ${WS}
-  <sub>/clear primeiro → janela de contexto fresca</sub>
-  ```
-- **PLANEJAMENTO CONCLUÍDO** → Planejamento feito, execução não terminou:
-  ```
-  Avanço automático parcial: Planejamento concluído, execução não terminou.
-  Continuar: /executar-fase ${PHASE} ${WS}
-  ```
-- **PLANEJAMENTO INCONCLUSIVO / CHECKPOINT** → Parar cadeia:
-  ```
-  Avanço automático parado: Planejamento precisa de input.
-  Continuar: /planejar-fase ${PHASE} ${WS}
-  ```
-- **LACUNAS ENCONTRADAS** → Parar cadeia:
-  ```
-  Avanço automático parado: Lacunas encontradas durante execução.
-  Continuar: /planejar-fase ${PHASE} --gaps ${WS}
-  ```
-
-**Se nem `--auto` nem config habilitado:**
-Rotear para passo `confirm_creation` (comportamento existente — mostrar próximos passos manuais).
+**Quando inativo:** rotear pra `confirm_creation` (comportamento manual existente).
 </step>
 
 </process>

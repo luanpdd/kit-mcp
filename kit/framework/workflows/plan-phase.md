@@ -234,43 +234,15 @@ Se "Executar discuss-phase primeiro":
 
 ## 5. Tratar Pesquisa
 
-**Pular se:** flag `--gaps` ou flag `--skip-research` ou flag `--reviews`.
+**Pular se:** `--gaps`, `--skip-research`, ou `--reviews`.
 
-**Se `has_research` for true (do init) E sem flag `--research`:** Usar existente, pular para o passo 6.
+**Se `has_research` true e sem `--research`:** usar existente, ir pra passo 6.
 
-**Se RESEARCH.md ausente OU flag `--research`:**
+**Se ausente OR `--research`:** sem flag explícita e sem `--auto`, perguntar (AskUserQuestion ou lista numerada se TEXT_MODE):
+- "Pesquisar primeiro (Recomendado)" — investiga domínio/padrões/deps antes de planejar. Melhor pra features novas, integrações novas, mudanças arquiteturais.
+- "Pular pesquisa" — planeja direto do contexto. Melhor pra bug fix, refactor simples, tarefas bem compreendidas.
 
-**Se sem flag explícita (`--research` ou `--skip-research`) e não `--auto`:**
-Perguntar ao usuário se deseja pesquisar, com uma recomendação contextual baseada na fase:
-
-Se `TEXT_MODE` for true, apresentar como lista numerada de texto simples:
-```
-Pesquisar antes de planejar a Fase {X}: {phase_name}?
-
-1. Pesquisar primeiro (Recomendado) — Investigar domínio, padrões e dependências antes do planejamento. Melhor para novas funcionalidades, integrações desconhecidas ou mudanças arquiteturais.
-2. Pular pesquisa — Planejar diretamente a partir do contexto e requisitos. Melhor para correções de bugs, refatorações simples ou tarefas bem compreendidas.
-
-Digite o número:
-```
-
-Caso contrário usar AskUserQuestion:
-```
-AskUserQuestion([
-  {
-    question: "Pesquisar antes de planejar a Fase {X}: {phase_name}?",
-    header: "Pesquisa",
-    multiSelect: false,
-    options: [
-      { label: "Pesquisar primeiro (Recomendado)", description: "Investigar domínio, padrões e dependências antes do planejamento. Melhor para novas funcionalidades, integrações desconhecidas ou mudanças arquiteturais." },
-      { label: "Pular pesquisa", description: "Planejar diretamente a partir do contexto e requisitos. Melhor para correções de bugs, refatorações simples ou tarefas bem compreendidas." }
-    ]
-  }
-])
-```
-
-Se o usuário selecionar "Pular pesquisa": pular para o passo 6.
-
-**Se `--auto` e `research_enabled` for false:** Pular pesquisa silenciosamente (preserva comportamento automatizado).
+Se "Pular": passo 6. Se `--auto` e `research_enabled=false`: pular silenciosamente.
 
 Exibir banner:
 ```
@@ -365,51 +337,16 @@ test -f "${PHASE_DIR}/${PADDED_PHASE}-VALIDATION.md" && echo "VALIDATION_CREATED
 > Pular se `workflow.ui_phase` for explicitamente `false` E `workflow.ui_safety_gate` for explicitamente `false` em `.planning/config.json`. Se as chaves estiverem ausentes, tratar como habilitado.
 
 ```bash
-UI_PHASE_CFG=$(node "./.claude/framework/bin/tools.cjs" config-get workflow.ui_phase 2>/dev/null || echo "true")
-UI_GATE_CFG=$(node "./.claude/framework/bin/tools.cjs" config-get workflow.ui_safety_gate 2>/dev/null || echo "true")
-```
+`UI_PHASE_CFG` / `UI_GATE_CFG` (default true). Se ambos false, pular pra passo 6.
 
-**Se ambos forem `false`:** Pular para o passo 6.
+**Detecção:** grep `-iE "UI|interface|frontend|component|layout|page|screen|view|form|dashboard|widget"` na descrição da fase. Se sem match, pular silenciosamente.
 
-Verificar se a fase tem indicadores de frontend:
-
-```bash
-PHASE_SECTION=$(node "./.claude/framework/bin/tools.cjs" roadmap get-phase "${PHASE}" 2>/dev/null)
-echo "$PHASE_SECTION" | grep -iE "UI|interface|frontend|component|layout|page|screen|view|form|dashboard|widget" > /dev/null 2>&1
-HAS_UI=$?
-```
-
-**Se `HAS_UI` for 0 (indicadores de frontend encontrados):**
-
-Verificar UI-SPEC existente:
-```bash
-UI_SPEC_FILE=$(ls "${PHASE_DIR}"/*-UI-SPEC.md 2>/dev/null | head -1)
-```
-
-**Se UI-SPEC.md encontrado:** Definir `UI_SPEC_PATH=$UI_SPEC_FILE`. Exibir: `Usando contrato de design de UI: ${UI_SPEC_PATH}`
-
-**Se UI-SPEC.md ausente E `UI_GATE_CFG` for `true`:**
-
-Se `TEXT_MODE` for true, apresentar como lista numerada de texto simples:
-```
-A Fase {N} tem indicadores de frontend mas sem UI-SPEC.md. Gerar um contrato de design antes do planejamento?
-
-1. Gerar UI-SPEC primeiro — Execute /fase-ui {N} então re-execute /planejar-fase {N}
-2. Continuar sem UI-SPEC
-3. Não é uma fase de frontend
-
-Digite o número:
-```
-
-Caso contrário usar AskUserQuestion:
-- header: "Contrato de Design de UI"
-- question: "A Fase {N} tem indicadores de frontend mas sem UI-SPEC.md. Gerar um contrato de design antes do planejamento?"
-- options:
-  - "Gerar UI-SPEC primeiro" → Exibir: "Execute `/fase-ui {N} ${WS}` então re-execute `/planejar-fase {N} ${WS}`". Sair do workflow.
-  - "Continuar sem UI-SPEC" → Continuar para o passo 6.
-  - "Não é uma fase de frontend" → Continuar para o passo 6.
-
-**Se `HAS_UI` for 1 (sem indicadores de frontend):** Pular silenciosamente para o passo 6.
+**Se match encontrado:**
+- UI-SPEC.md existe → usar (`UI_SPEC_PATH`); exibir confirmação
+- UI-SPEC.md ausente E `UI_GATE_CFG=true` → AskUserQuestion (ou lista numerada se TEXT_MODE):
+  - "Gerar UI-SPEC primeiro" → exibir `/fase-ui {N} ${WS}` e sair do workflow
+  - "Continuar sem UI-SPEC" → passo 6
+  - "Não é frontend" → passo 6
 
 ## 6. Verificar Planos Existentes
 
@@ -511,28 +448,13 @@ Output consumed by /execute-phase. Plans need:
 
 Every task MUST include these fields — they are NOT optional:
 
-1. **`<read_first>`** — Files the executor MUST read before touching anything. Always include:
-   - The file being modified (so executor sees current state, not assumptions)
-   - Any "source of truth" file referenced in CONTEXT.md (reference implementations, existing patterns, config files, schemas)
-   - Any file whose patterns, signatures, types, or conventions must be replicated or respected
+1. **`<read_first>`** — files o executor DEVE ler antes de tocar em qualquer coisa: o arquivo sendo modificado, "source of truth" do CONTEXT.md, qualquer arquivo cujas convenções/tipos/assinaturas precisem ser replicados.
 
-2. **`<acceptance_criteria>`** — Verifiable conditions that prove the task was done correctly. Rules:
-   - Every criterion must be checkable with grep, file read, test command, or CLI output
-   - NEVER use subjective language ("looks correct", "properly configured", "consistent with")
-   - ALWAYS include exact strings, patterns, values, or command outputs that must be present
-   - Examples:
-     - Code: `auth.py contains def verify_token(` / `test_auth.py exits 0`
-     - Config: `.env.example contains DATABASE_URL=` / `Dockerfile contains HEALTHCHECK`
-     - Docs: `README.md contains '## Installation'` / `API.md lists all endpoints`
-     - Infra: `deploy.yml has rollback step` / `docker-compose.yml has healthcheck for db`
+2. **`<acceptance_criteria>`** — condições verificáveis com grep/file read/test command/CLI output. NUNCA linguagem subjetiva ("looks correct"); SEMPRE strings/patterns exatos. Ex: `auth.py contains "def verify_token("`, `test_auth.py exits 0`, `.env.example contains "DATABASE_URL="`.
 
-3. **`<action>`** — Must include CONCRETE values, not references. Rules:
-   - NEVER say "align X with Y", "match X to Y", "update to be consistent" without specifying the exact target state
-   - ALWAYS include the actual values: config keys, function signatures, SQL statements, class names, import paths, env vars, etc.
-   - If CONTEXT.md has a comparison table or expected values, copy them into the action verbatim
-   - The executor should be able to complete the task from the action text alone, without needing to read CONTEXT.md or reference files (read_first is for verification, not discovery)
+3. **`<action>`** — valores CONCRETOS, nunca referências. NUNCA "align X with Y"; SEMPRE valores reais (config keys, function signatures, SQL, imports, env vars). Se CONTEXT.md tem tabela de comparação, copie no `<action>` literal. Executor deve completar só com texto do action.
 
-**Why this matters:** Executor agents work from the plan text. Vague instructions like "update the config to match production" produce shallow one-line changes. Concrete instructions like "add DATABASE_URL=postgresql://... , set POOL_SIZE=20, add REDIS_URL=redis://..." produce complete work. The cost of verbose plans is far less than the cost of re-doing shallow execution.
+**Por quê:** instruções vagas ("update config to match production") geram one-line changes; instruções concretas ("add DATABASE_URL=..., POOL_SIZE=20, REDIS_URL=...") geram trabalho completo. Custo de plano verboso é ínfimo vs custo de redo de execução shallow.
 </deep_work_rules>
 
 <quality_gate>
@@ -725,58 +647,17 @@ Rotear para `<offer_next>` OU `auto_advance` dependendo de flags/config.
 
 Verificar gatilho de avanço automático:
 
-1. Analisar flag `--auto` de $ARGUMENTS
-2. **Sincronizar flag de cadeia com intenção** — se o usuário invocou manualmente (sem `--auto`), limpar a flag de cadeia efêmera de qualquer cadeia `--auto` anterior interrompida. Isso NÃO toca em `workflow.auto_advance` (preferência persistente do usuário):
-   ```bash
-   if [[ ! "$ARGUMENTS" =~ --auto ]]; then
-     node "./.claude/framework/bin/tools.cjs" config-set workflow._auto_chain_active false 2>/dev/null
-   fi
-   ```
-3. Ler tanto a flag de cadeia quanto a preferência do usuário:
-   ```bash
-   AUTO_CHAIN=$(node "./.claude/framework/bin/tools.cjs" config-get workflow._auto_chain_active 2>/dev/null || echo "false")
-   AUTO_CFG=$(node "./.claude/framework/bin/tools.cjs" config-get workflow.auto_advance 2>/dev/null || echo "false")
-   ```
+**Detecção:** flag `--auto` em $ARGUMENTS, OR `workflow._auto_chain_active=true`, OR `workflow.auto_advance=true`.
 
-**Se flag `--auto` presente OU `AUTO_CHAIN` for true OU `AUTO_CFG` for true:**
+**Sync de cadeia:** se invocação manual (sem `--auto`), zere `workflow._auto_chain_active` (não toque `workflow.auto_advance`).
 
-Exibir banner:
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- framework ► AVANÇANDO AUTOMATICAMENTE PARA EXECUÇÃO
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+**Quando ativo:** dispare `Skill(skill="framework:executar-fase", args="${PHASE} --auto --no-transition ${WS}")`. A flag `--no-transition` diz pra execute-phase retornar status após verificação (não encadear), mantendo cadeia plana.
 
-Planos prontos. Iniciando execute-phase...
-```
+**Roteamento de retorno:**
+- `FASE CONCLUÍDA` → próximo: `/discutir-fase ${NEXT_PHASE} --auto ${WS}` (após `/clear`)
+- `LACUNAS ENCONTRADAS` / `VERIFICAÇÃO FALHOU` → parar cadeia. Continuar: `/executar-fase ${PHASE} ${WS}`
 
-Iniciar execute-phase usando a ferramenta Skill para evitar sessões Task aninhadas (que causam freezes de runtime devido ao aninhamento profundo de agentes):
-```
-Skill(skill="framework:executar-fase", args="${PHASE} --auto --no-transition ${WS}")
-```
-
-A flag `--no-transition` diz ao execute-phase para retornar status após verificação em vez de encadear mais. Isso mantém a cadeia de avanço automático plana — cada fase roda no mesmo nível de aninhamento em vez de criar agentes Task mais profundos.
-
-**Lidar com retorno do execute-phase:**
-- **FASE CONCLUÍDA** → Exibir resumo final:
-  ```
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-   framework ► FASE ${PHASE} CONCLUÍDA ✓
-  ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-  Pipeline de avanço automático finalizado.
-
-  Próximo: /discutir-fase ${NEXT_PHASE} --auto ${WS}
-  ```
-- **LACUNAS ENCONTRADAS / VERIFICAÇÃO FALHOU** → Exibir resultado, parar cadeia:
-  ```
-  Avanço automático parado: Execução precisa de revisão.
-
-  Revisar a saída acima e continuar manualmente:
-  /executar-fase ${PHASE} ${WS}
-  ```
-
-**Se nem `--auto` nem config habilitado:**
-Rotear para `<offer_next>` (comportamento existente).
+**Quando inativo:** rotear para `<offer_next>`.
 
 </process>
 

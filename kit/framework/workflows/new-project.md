@@ -210,69 +210,21 @@ Proceed to Step 4 (skip Steps 3 and 5).
 
 ## 3. Deep Questioning
 
-**If auto mode:** Skip (already handled in Step 2a). Extract project context from provided document instead and proceed to Step 4.
+**Auto mode:** pular (handled em 2a) — extrair contexto do documento e ir pra passo 4.
 
-**Display stage banner:**
+**Banner:** `framework ► QUESTIONING`.
 
-```
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
- framework ► QUESTIONING
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-```
+**Abrir:** pergunta inline freeform (NÃO AskUserQuestion): "What do you want to build?". Aguardar resposta.
 
-**Open the conversation:**
+**Modo `workflow.research_before_questions`:** se enabled, antes de follow-ups numa área, fazer breve web search por melhores práticas e mencionar findings naturalmente ("Most projects like this use X — is that what you're thinking?"). Default off, perguntar direto.
 
-Ask inline (freeform, NOT AskUserQuestion):
+**Follow the thread:** AskUserQuestion com options que provocam interpretações/clarificações/exemplos. Cada resposta abre novos threads. Cobrir: o que empolgou, problema que sparkou, termos vagos, como seria na prática, o que já está decidido.
 
-"What do you want to build?"
+**Técnicas de `questioning.md`:** challenge vagueness, concretize abstract, surface assumptions, find edges, reveal motivation.
 
-Wait for their response. This gives you the context needed to ask intelligent follow-up questions.
+Mentalmente validar checklist do `questioning.md`; se gaps, tecer perguntas naturalmente (não modo checklist).
 
-**Research-before-questions mode:** Check if `workflow.research_before_questions` is enabled in `.planning/config.json` (or the config from init context). When enabled, before asking follow-up questions about a topic area:
-
-1. Do a brief web search for best practices related to what the user described
-2. Mention key findings naturally as you ask questions (e.g., "Most projects like this use X — is that what you're thinking, or something different?")
-3. This makes questions more informed without changing the conversational flow
-
-When disabled (default), ask questions directly as before.
-
-**Follow the thread:**
-
-Based on what they said, ask follow-up questions that dig into their response. Use AskUserQuestion with options that probe what they mentioned — interpretations, clarifications, concrete examples.
-
-Keep following threads. Each answer opens new threads to explore. Ask about:
-
-- What excited them
-- What problem sparked this
-- What they mean by vague terms
-- What it would actually look like
-- What's already decided
-
-Consult `questioning.md` for techniques:
-
-- Challenge vagueness
-- Make abstract concrete
-- Surface assumptions
-- Find edges
-- Reveal motivation
-
-**Check context (background, not out loud):**
-
-As you go, mentally check the context checklist from `questioning.md`. If gaps remain, weave questions naturally. Don't suddenly switch to checklist mode.
-
-**Decision gate:**
-
-When you could write a clear PROJECT.md, use AskUserQuestion:
-
-- header: "Ready?"
-- question: "I think I understand what you're after. Ready to create PROJECT.md?"
-- options:
-  - "Create PROJECT.md" — Let's move forward
-  - "Keep exploring" — I want to share more / ask me more
-
-If "Keep exploring" — ask what they want to add, or identify gaps and probe naturally.
-
-Loop until "Create PROJECT.md" selected.
+**Decision gate:** quando puder escrever PROJECT.md claro, AskUserQuestion `Ready?` — "Create PROJECT.md" ou "Keep exploring". Loop até "Create".
 
 ## 4. Write PROJECT.md
 
@@ -449,60 +401,17 @@ questions: [
 ]
 ```
 
-**Round 2 — Workflow agents:**
+**Round 2 — Workflow agents (opt-in, adicionam tokens/tempo, melhoram qualidade):**
 
-These spawn additional agents during planning/execution. They add tokens and time but improve quality.
+| Agent | Quando | O que faz |
+|---|---|---|
+| Researcher | Antes de cada plan-phase | Investiga domínio, padrões, pitfalls |
+| Plan Checker | Após plano criado | Verifica se plano atinge o goal |
+| Verifier | Após execução | Confirma must-haves entregues |
 
-| Agent | When it runs | What it does |
-|-------|--------------|--------------|
-| **Researcher** | Before planning each phase | Investigates domain, finds patterns, surfaces gotchas |
-| **Plan Checker** | After plan is created | Verifies plan actually achieves the phase goal |
-| **Verifier** | After phase execution | Confirms must-haves were delivered |
+Todos recomendados pra projetos sérios; pular pra experimentos rápidos.
 
-All recommended for important projects. Skip for quick experiments.
-
-```
-questions: [
-  {
-    header: "Research",
-    question: "Research before planning each phase? (adds tokens/time)",
-    multiSelect: false,
-    options: [
-      { label: "Yes (Recommended)", description: "Investigate domain, find patterns, surface gotchas" },
-      { label: "No", description: "Plan directly from requirements" }
-    ]
-  },
-  {
-    header: "Plan Check",
-    question: "Verify plans will achieve their goals? (adds tokens/time)",
-    multiSelect: false,
-    options: [
-      { label: "Yes (Recommended)", description: "Catch gaps before execution starts" },
-      { label: "No", description: "Execute plans without verification" }
-    ]
-  },
-  {
-    header: "Verifier",
-    question: "Verify work satisfies requirements after each phase? (adds tokens/time)",
-    multiSelect: false,
-    options: [
-      { label: "Yes (Recommended)", description: "Confirm deliverables match phase goals" },
-      { label: "No", description: "Trust execution, skip verification" }
-    ]
-  },
-  {
-    header: "AI Models",
-    question: "Which AI models for planning agents?",
-    multiSelect: false,
-    options: [
-      { label: "Balanced (Recommended)", description: "Sonnet for most agents — good quality/cost ratio" },
-      { label: "Quality", description: "Opus for research/roadmap — higher cost, deeper analysis" },
-      { label: "Budget", description: "Haiku where possible — fastest, lowest cost" },
-      { label: "Inherit", description: "Use the current session model for all agents (OpenCode /model)" }
-    ]
-  }
-]
-```
+AskUserQuestion: 4 perguntas — `Research` (yes/no), `Plan Check` (yes/no), `Verifier` (yes/no), `AI Models` (Balanced=Sonnet recomendado / Quality=Opus / Budget=Haiku / Inherit=session model).
 
 Create `.planning/config.json` with all settings (CLI fills in remaining defaults automatically):
 
