@@ -3,7 +3,24 @@
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
 > Última atualização: 2026-05-05 — abertura de v1.6.0.
 
-## Milestone Atual: v1.6 perf+lean (interno — saúde de codebase)
+## Milestone Atual: v1.7 perf+lean part 2 + UX naming canonical
+
+**Objetivo:** Continuar otimização interna de v1.6 com cuts mais profundos em workflows + dedup de boilerplate de agentes + sync stub-only mode. Adicionar `/fazer` como entrypoint canônico que rouba os outros como aliases.
+
+**Funcionalidades alvo:**
+- **P1 cont.** — compactar 3 workflows maiores (discuss-phase 49 KB, new-project 40 KB, plan-phase 36 KB) usando playbook de v1.6
+- **P3** — stub-only mode em sync (lê só frontmatter, não content body) → 3-5× mais rápido em sync default
+- **P4** — agent boilerplate dedup via `<shared>` references (kit/agents/_shared/) — reduz custo agregado do executor multiplicado
+- **U3** — `/fazer` vira canonical com árvore de decisão clara; `/expresso`, `/rapido`, `/proximo` ficam como aliases documentados
+
+**Decisões de stack:**
+- Continua zero deps novas. Stable API v1.0+ preservada (mode=copy ainda lê content full).
+- Workflows e agents são prompts; mudanças são "remoções de redundância", não de regras.
+- Roadmap começa em **Phase 22**.
+
+**Contrato preservado:** Quem usa v1.0+ não percebe nada além de menor latência e custo de tokens. CI permanece verde.
+
+## ~~Milestone Anterior: v1.6 perf+lean (interno — concluído 2026-05-05)~~
 
 **Objetivo:** Endereçar 16 itens identificados pela auditoria de codebase (executada após v1.5.3) que ficaram fora do bundle quick-win. Foco: tornar o servidor mais barato de rodar, mais seguro, com release pipeline mais robusto e prompts mais enxutos.
 

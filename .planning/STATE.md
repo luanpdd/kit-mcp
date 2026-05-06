@@ -4,25 +4,20 @@
 
 ## Posição Atual
 
-Fase: Concluída
+Fase: Não iniciada (definindo requisitos)
 Plano: —
-Status: v1.6.0 entregue, pendente cut (npm + tag)
-Última atividade: 2026-05-05 — Phase 21 commitada, 3 fases concluídas
+Status: v1.7 aberto, planejando
+Última atividade: 2026-05-06 — Milestone v1.7 iniciado
 
 ## Milestone ativo
 
-**Nenhum.** v1.6.0 concluído (3 fases + 1 inserida = Phase 19, 19.5, 20, 21).
+**v1.7.0 — perf+lean part 2 + UX naming canonical.** 10 REQs em 3 fases (22, 23, 24). Continuação direta de v1.6 — Onda 1 já entregue em v1.6.1.
 
 ## Próximo passo
 
-Cut da v1.6.0:
-```bash
-npm version patch -m "v%s"
-git push --follow-tags origin main
-# publish.yml workflow auto-publica
-```
+`/discutir-fase 22` — Workflow compaction (PERF-W1/W2/W3)
 
-Após cut, próximo ciclo: `/novo-marco "v1.7 — tema"`.
+Ou pular discussão: `/planejar-fase 22`.
 
 ## Bloqueadores
 
@@ -38,7 +33,9 @@ Após cut, próximo ciclo: `/novo-marco "v1.7 — tema"`.
 - v1.1.0 — concluído 2026-05-03 (`.planning/milestones/v1.1.0/`)
 - v1.2.0 — concluído 2026-05-04 (`.planning/milestones/v1.2.0/`)
 - v1.2.3 → v1.5.3 — patches ad-hoc fora do framework (CHANGELOG é canônico)
-- v1.6.0 — concluído 2026-05-05 (16 audit REQs + observability hook); cut pendente
+- v1.6.0 — concluído 2026-05-05 (16 audit REQs + observability hook); publicado em npm
+- v1.6.1 — concluído 2026-05-05 (kit doctor + upgrade-check + gates cache, Onda 1); publicado em npm
+- v1.7.0 — **em planejamento** (este milestone, Onda 2)
 
 ## Contexto Acumulado
 

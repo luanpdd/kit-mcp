@@ -1,90 +1,71 @@
-# ROADMAP — kit-mcp v1.6
+# ROADMAP — kit-mcp v1.7
 
-**Milestone:** v1.6 — perf+lean (interno)
-**Numeração de fases:** continua de v1.2 (que terminou em fase 18) → v1.6 começa em **Fase 19**
-**Total de REQs cobertos:** 16 (PERF 5 + SEC 4 + INF 4 + TOK 3)
-**Total de fases:** 3 (Fases 19–21)
-**Criado:** 2026-05-05
+**Milestone:** v1.7 — perf+lean part 2 + UX naming canonical
+**Numeração de fases:** continua de v1.6 (terminou em fase 21) → v1.7 começa em **Fase 22**
+**Total de REQs cobertos:** 10 (PERF-W1/W2/W3 + PERF-S1 + TOK-D1/D2/D3 + UX-F1/F2/F3)
+**Total de fases:** 3 (Fases 22-24)
+**Criado:** 2026-05-06
 
 ---
 
 ## Visão geral do milestone
 
-Endereçar 16 itens de auditoria (perf + segurança + infra + tokens) que ficaram fora do bundle quick-win 1.5.3. Sem features novas; sem mudanças de API runtime. Princípio de ordenamento: **risk-monotonic** — quick-wins primeiro (Fase 19), hardening de segurança e perf médio depois (Fase 20), refactor de tokens (que tem mais blast radius cognitivo) por último (Fase 21).
-
-Cada fase pode ser shipped independentemente como patch (1.6.0, 1.6.1, 1.6.2). Encerrar o milestone com um minor bump (v1.6.0) consolidado.
+Continuar v1.6 com cuts mais profundos em workflows + sync stub-mode + dedup de boilerplate de agentes. Adicionar `/fazer` como entrypoint canônico que cobre os outros como aliases. Sem features novas; sem mudanças de API runtime.
 
 ---
 
-## Phase 19: Quick wins (perf + infra + token-trim)
+## Phase 22: Workflow compaction (PERF-W1/W2/W3)
 
-**Tipo:** Mudanças mecânicas, baixo risco, alto ROI
-**Por que primeiro:** Todas P (≤30 min cada), zero blast radius, validáveis com testes existentes ou triviais novos. Liberam latência e tokens imediatamente.
+**Tipo:** Editorial — compactação de prompts grandes
+**Por que primeiro:** Maior ganho absoluto de tokens (49+40+36 = 125 KB de input atual). Aplica playbook já validado em v1.6 no `planner.md`. Risco semântico: perder regra crítica — validação obrigatória via grep dos termos-chave após cada cut.
 
-**REQs cobertos:**
-- **PERF-01** — listKit cache TTL 30s
-- **PERF-02** — regex frontmatter top-level
-- **PERF-03** — sync/reverse-sync aceitam kit pré-carregado
-- **SEC-04** — npm audit no CI
-- **INF-02** — `.npmignore` explícito
-- **INF-03** — Node 24 na matriz CI
-- **INF-04** — mensagem deps-budget sincronizada
-
-> **Nota de escopo:** TOK-03 (consolidar headers do planner.md) movido para Fase 21 — fica ao lado de TOK-01 que reescreve o mesmo arquivo. Evita o trabalho de consolidar headers ser refeito durante a compactação 53→35 KB.
+**REQs cobertos:** PERF-W1, PERF-W2, PERF-W3
 
 **Critérios de sucesso:**
-1. `mcp__kit__kit list-agents` chamado 5× consecutivos lê disco apenas 1× (verificável por `fs.readFile` count)
-2. CI roda em Node 20+22+24 e passa em todos
-3. CI falha em CVE Alto+ injetada via fixture (test the test)
-4. Tarball `npm pack` contém apenas o que está em `files`/`.npmignore`
-5. `wc -l kit/agents/planner.md` ≤ 800 linhas (era 1373)
+1. `wc -c kit/framework/workflows/discuss-phase.md` ≤ 35840
+2. `wc -c kit/framework/workflows/new-project.md` ≤ 28672
+3. `wc -c kit/framework/workflows/plan-phase.md` ≤ 26624
+4. Termos-chave preservados em cada workflow (regras de questionamento, fluxo de fases, retorno estruturado)
+5. Smoke test: invocar `/discutir-fase`, `/novo-projeto`, `/planejar-fase` em fixture sintético — checklist de output structurado bate com baseline
 
-**Estimativa:** ~3h de execução real com pause-points entre REQs.
+**Estimativa:** ~3h. Cada workflow é uma sessão dedicada de revisão+cut.
 
 ---
 
-## Phase 20: Hardening (segurança + perf médio + infra)
+## Phase 23: Stub-only sync mode (PERF-S1)
 
-**Tipo:** Mudanças que tocam caminhos críticos (lockfile, walkTree) e exigem testes novos cuidadosos
-**Por que segundo:** Esforço M, risco "Médio" pelo agente de auditoria. Não bloqueante para users em uso normal, mas fecha vetores defensivos.
+**Tipo:** Mudança no core/kit.js — adição de opção
+**Por que segundo:** Esforço M-G; ganho perceptível em `kit sync` que é rodado várias vezes em dev. Stable API: comportamento default muda de "lê content" pra "lê só frontmatter" em mode=reference, mas content continua disponível em mode=copy/action=get.
 
-**REQs cobertos:**
-- **PERF-04** — healthz probe timeout 500ms
-- **PERF-05** — `/state` paginação opcional
-- **SEC-01** — TOCTOU re-probe em acquireLockOrReclaim
-- **SEC-02** — walkTree path normalize + reject `..`
-- **SEC-03** — redactPath case-insensitive (Windows)
-- **INF-01** — `prepublishOnly` script
+**REQs cobertos:** PERF-S1
 
 **Critérios de sucesso:**
-1. Teste de regressão simulando race lockfile passa (acquireLockOrReclaim em 50 chamadas paralelas, 0 false-positives de "ELIVE")
-2. Teste de path traversal: `walkTree` com fixture contendo `../../etc/passwd` rejeita com erro claro
-3. Test fixture Windows-style path `C:\Users\foo` é redatado mesmo em sysetm Linux/macOS (case-insensitive match)
-4. `/state?offset=100&limit=50` retorna 50 events do índice 100; `/state` (sem query) retorna ring inteiro (compat)
-5. `npm publish --dry-run` aciona `prepublishOnly` e fica vermelho se algum teste falhar
+1. `listKit({ stubsOnly: true })` retorna kit sem `content`/`body`/`skillContent`, só metadata
+2. `syncTo(target, { mode: 'reference' })` usa stubsOnly internamente — confirmado por benchmark <50ms para kit típico (vs ~300ms hoje)
+3. `syncTo(target, { mode: 'copy' })` continua lendo content full — teste cobre
+4. `mcp__kit__kit action=get` retorna content full — teste existente passa
+5. `clearKitCache()` invalida ambos os modes (cached por hash de chaves)
 
-**Estimativa:** ~4h. Cada REQ tem teste novo dedicado.
+**Estimativa:** ~2h. Cache key precisa diferenciar stubs vs full.
 
 ---
 
-## Phase 21: Token economy refactor (planner + CLAUDE.md)
+## Phase 24: Agent boilerplate dedup (TOK-D1/D2/D3) + `/fazer` canonical (UX-F1/F2/F3)
 
-**Tipo:** Refactor de prompt engineering com validação semântica (não só wc -c)
-**Por que terceiro:** Esforço M-G, mas risco real é "perdi regra crítica do agent". Precisa de pareamento entre redução e amostragem comportamental do agent.
+**Tipo:** Refactor estrutural + edição de docs
+**Por que último:** Dedup de boilerplate é structural — cria `kit/agents/_shared/` e altera 12+ agents. Risco de quebrar projeção sync. `/fazer` canonical é decisão de naming sem código novo.
 
-**REQs cobertos:**
-- **TOK-01** — planner.md ≤ 35 KB (de 53 KB)
-- **TOK-02** — CLAUDE.md gerado: summaries em vez de descrições inteiras
-- **TOK-03** — consolidar headers em planner.md (72 → ≤ 25), feito junto da compactação
+**REQs cobertos:** TOK-D1, TOK-D2, TOK-D3, UX-F1, UX-F2, UX-F3
 
 **Critérios de sucesso:**
-1. `wc -c kit/agents/planner.md` ≤ 35840 (35 KB)
-2. Prompt do planner ainda contém: regras de scope_estimation, philosophy mínima (1 parágrafo), critérios de quality, ordenação interface-primeiro
-3. Smoke test conversacional: invocar planner em fixture sintética → roteia para output válido (compatível com `<task>` schema)
-4. `CLAUDE.md` gerado por `kit sync claude-code --dry-run` é ≥ 5 KB menor que baseline v1.5.3
-5. Sync para outras IDEs (cursor, codex) ainda compila listas válidas — diff só em densidade, não em estrutura
+1. `kit/agents/_shared/output-style.md` e `frontmatter-rules.md` existem e são auto-contidos (válidos como prompts independentes)
+2. 12+ agents reduzidos em ≥5 KB cada após substituir blocos repetidos por `@reference` ou link de leitura obrigatória
+3. `kit sync claude-code` não projeta `_shared/` como agent independente (excluído via `kit.js` ou via filename pattern `_*`)
+4. `/fazer` documenta árvore de decisão: trivial→`/rapido`, rápido-com-garantias→`/expresso`, estruturado→`/planejar-fase`
+5. `/rapido`, `/expresso`, `/proximo` cada um tem seção "Quando usar" linkando de volta a `/fazer`
+6. `kit ajuda` (CLI + slash) lista `/fazer` primeiro com tabela "se você quer X, use Y"
 
-**Estimativa:** ~3h. Loop de redução + validação semântica.
+**Estimativa:** ~3h.
 
 ---
 
@@ -92,43 +73,36 @@ Cada fase pode ser shipped independentemente como patch (1.6.0, 1.6.1, 1.6.2). E
 
 | Patch | Fase | REQs | Cumulativo |
 |---|---|---|---|
-| 1.6.0 | 19 (Quick wins) | 8 | 8/16 |
-| 1.6.1 | 20 (Hardening) | 6 | 14/16 |
-| 1.6.2 | 21 (Token refactor) | 2 | 16/16 |
-| 1.6.3 | (folga p/ followups) | — | — |
+| 1.7.0 | 22 (Workflow compaction) | 3 | 3/10 |
+| 1.7.1 | 23 (Stub-only sync) | 1 | 4/10 |
+| 1.7.2 | 24 (Boilerplate dedup + naming) | 6 | 10/10 |
 
-Cada patch é shippable e tem CHANGELOG dedicado. Se algo der errado em Phase 21, Phase 19+20 já estão na main como 1.6.0+1.6.1.
+Cada fase shippable independentemente. Falha em fase posterior não invalida anteriores.
 
 ---
 
 ## Rastreabilidade
 
-| Phase | REQ | Local de mudança | Tipo de validação |
+| Phase | REQ | Local | Validação |
 |---|---|---|---|
-| 19 | PERF-01 | `src/core/kit.js` | unit test (cache hit/miss) |
-| 19 | PERF-02 | `src/core/kit.js` | unit test (regex constant) |
-| 19 | PERF-03 | `src/core/sync.js`, `src/core/reverse-sync.js` | unit test (passing kit param) |
-| 19 | SEC-04 | `.github/workflows/ci.yml` | CI run |
-| 19 | INF-02 | `.npmignore` ou `package.json` | `npm pack` inspect |
-| 19 | INF-03 | `.github/workflows/ci.yml` | CI matrix |
-| 19 | INF-04 | `.github/workflows/ci.yml` | grep test |
-| 19 | TOK-03 | `kit/agents/planner.md` | `wc -l` + smoke conversational |
-| 20 | PERF-04 | `src/ui/lockfile.js` | unit test (timeout) |
-| 20 | PERF-05 | `src/ui/server.js` | integration test (offset+limit) |
-| 20 | SEC-01 | `src/ui/lockfile.js` | concurrency test |
-| 20 | SEC-02 | `src/core/sync.js` | unit test (path traversal fixture) |
-| 20 | SEC-03 | `src/ui/wrapper.js` | unit test (Windows-style paths) |
-| 20 | INF-01 | `package.json` | `npm publish --dry-run` |
-| 21 | TOK-01 | `kit/agents/planner.md` | `wc -c` + smoke |
-| 21 | TOK-02 | `src/core/sync.js` | snapshot diff |
+| 22 | PERF-W1 | `kit/framework/workflows/discuss-phase.md` | `wc -c` + grep termos-chave |
+| 22 | PERF-W2 | `kit/framework/workflows/new-project.md` | `wc -c` + grep |
+| 22 | PERF-W3 | `kit/framework/workflows/plan-phase.md` | `wc -c` + grep |
+| 23 | PERF-S1 | `src/core/kit.js`, `src/core/sync.js` | benchmark + testes existentes passam |
+| 24 | TOK-D1 | `kit/agents/_shared/output-style.md` + 12 agents | `wc -c` |
+| 24 | TOK-D2 | `kit/agents/_shared/frontmatter-rules.md` + agents | `wc -c` |
+| 24 | TOK-D3 | `src/core/kit.js` ou pattern filter | sync ignora `_shared/` |
+| 24 | UX-F1 | `kit/commands/fazer.md` | conteúdo da árvore de decisão |
+| 24 | UX-F2 | `kit/commands/{rapido,expresso,proximo}.md` | seção "Quando usar" |
+| 24 | UX-F3 | `kit/commands/ajuda.md` | tabela "se você quer X" |
 
-Cobertura: 16/16 (100%).
+Cobertura: 10/10 (100%).
 
 ---
 
 ## Pitfalls antecipados
 
-1. **PERF-01 (cache)** — invalidação. Decisão: TTL absoluto 30s, sem invalidação por mudança de file. Quem editar `kit/` durante uma session aceita 30s de stale. Tests cobrem TTL respect.
-2. **TOK-03 (headers)** — perda de hierarquia visual em agents enormes. Decisão: substituir por bullets ou tabelas, não eliminar conteúdo.
-3. **TOK-01 (planner)** — redução de 18 KB é grande. Validação semântica obrigatória: amostragem do planner em fixtures conhecidas antes de aprovar.
-4. **SEC-02 (walkTree)** — path traversal pode ter casos edge em Windows (UNC, drive letters). Test fixtures cobrem ambos.
+1. **PERF-W1/W2/W3** — perder fluxo de checkpoint do questionamento. Validação: replay de fixture conhecido produz mesmo output structurado.
+2. **PERF-S1** — cache key colidir entre full e stubs. Solução: chave separada (`${kitRoot}:full` vs `${kitRoot}:stubs`).
+3. **TOK-D3** — `_shared/` projetado como agent quebra sync downstream. Validação: `kit sync` mostra agents sem `_shared` na lista.
+4. **UX-F3** — quebra hábitos de quem aprendeu nomes específicos. Mitigação: aliases mantidos sem deprecation; mensagem "também disponível como X" no help.

@@ -86,9 +86,18 @@ Série de patches feitos fora do framework — UI redesign, framework velocity, 
 - Hook PostToolUse `sidecar-tool-publisher.js` publica `tool_invocation` events com source detection (multi-IDE pill na UI).
 - Stable API v1.0+ preservada. Tests: 102 unit + 67 integration verde.
 
+### v1.6.1 — DX patch (2026-05-05) 🩺 Diagnostic + upgrade-check
+- `kit doctor` — diagnostic command (version/sidecar/hook/settings/.planning/orphan locks)
+- Upgrade-check no boot do `kit ui start` com banner amarelo se atrás do npm latest
+- Cache TTL 30s em `listGates` (mirrors PERF-01 pattern)
+- 112 unit + 67 integration green; Stable API preservada.
+
 ## Em andamento
 
-(nada — v1.6.0 concluído)
+**v1.7.0 — perf+lean part 2 + UX naming canonical** (em planejamento). 10 REQs em 3 fases:
+- Phase 22: workflow compaction (discuss-phase, new-project, plan-phase) — Onda 2 do plano de melhorias
+- Phase 23: stub-only sync mode
+- Phase 24: agent boilerplate dedup + `/fazer` canonical entrypoint
 
 ## Backlog macro (não-priorizado)
 

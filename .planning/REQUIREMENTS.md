@@ -1,57 +1,47 @@
-# REQUIREMENTS — kit-mcp v1.6
+# REQUIREMENTS — kit-mcp v1.7
 
-**Milestone:** v1.6 — perf+lean (interno)
-**Aberto em:** 2026-05-05
+**Milestone:** v1.7 — perf+lean part 2 + UX naming canonical
+**Aberto em:** 2026-05-06
 **Status:** Definindo
 
-> Origem: auditoria de codebase 2026-05-05 (4 agentes Explore paralelos). Bundle v1.5.3 entregou 4 quick-wins; este milestone endereça os 16 restantes.
-> Sem features novas. Stable API v1.0+ preservada — campos só são removidos de outputs MCP onde "remoção de campo opcional" é compatível.
+> Continuação direta de v1.6. Onda 1 (kit doctor + upgrade-check + gates cache) já entregue em v1.6.1. Esta milestone aborda Onda 2 do plano de melhorias.
 
 ---
 
-## Requisitos do Milestone v1.6
+## Requisitos do Milestone v1.7
 
-### Performance
+### Performance — workflow + sync slim
 
-- [ ] **PERF-01**: `listKit()` retorna do cache em chamadas repetidas dentro de uma janela de 30s, sem re-ler 60+ arquivos `.md` do disco. (`src/core/kit.js`)
-- [ ] **PERF-02**: Regex de frontmatter (`/^---\r?\n([\s\S]*?)\r?\n---/`) é compilado uma única vez no top-level do módulo, não em cada loop de `readMdDir`. (`src/core/kit.js`)
-- [ ] **PERF-03**: `syncTo()` e `detectReverse()` aceitam um `kit` pré-carregado como parâmetro opcional, evitando dois walks completos quando chamados sequencialmente. (`src/core/sync.js`, `src/core/reverse-sync.js`)
-- [ ] **PERF-04**: `acquireLockOrReclaim()` aplica timeout local de 500 ms ao `healthzProbe` injetado, evitando que startup do sidecar trave esperando um sidecar morto. (`src/ui/lockfile.js`)
-- [ ] **PERF-05**: `GET /state` aceita `?offset=N&limit=M` e retorna ring buffer paginado quando solicitado, mantendo o comportamento default (ring inteiro) para compatibilidade. (`src/ui/server.js`)
+- [ ] **PERF-W1**: `discuss-phase.md` compactado de ~49 KB para ≤ 35 KB sem perder regras críticas — remover redundância prosa, consolidar headers. (`kit/framework/workflows/discuss-phase.md`)
+- [ ] **PERF-W2**: `new-project.md` compactado de ~40 KB para ≤ 28 KB. (`kit/framework/workflows/new-project.md`)
+- [ ] **PERF-W3**: `plan-phase.md` compactado de ~36 KB para ≤ 26 KB. (`kit/framework/workflows/plan-phase.md`)
+- [ ] **PERF-S1**: `listKit({ stubsOnly: true })` lê apenas frontmatter, pulando body parse. Usado por `syncTo` em mode=reference (default). Stable API: full read continua disponível pra mode=copy e action=get. (`src/core/kit.js`, `src/core/sync.js`)
 
-### Segurança
+### Tokens — agent boilerplate dedup
 
-- [ ] **SEC-01**: `acquireLockOrReclaim()` re-prova staleness após `releaseLock()` e antes de `acquireLock()` no caminho de retry, fechando a janela TOCTOU em alta contenção. (`src/ui/lockfile.js`)
-- [ ] **SEC-02**: `walkTree()` em `src/core/sync.js` rejeita entradas cujo `path.normalize()` contém `..` ou caminho absoluto, prevenindo escrita fora do `projectRoot` em mode=copy. (`src/core/sync.js`)
-- [ ] **SEC-03**: `redactPath()` normaliza casing e separadores antes de aplicar regex, garantindo que `C:\Users\foo` e `c:/users/foo` sejam ambos redatados em Windows. (`src/ui/wrapper.js`)
-- [ ] **SEC-04**: CI executa `npm audit --audit-level=high --omit=dev` em todo push, falhando o build em CVEs Alto+ na única dep runtime (`open@11`). (`.github/workflows/ci.yml`)
+- [ ] **TOK-D1**: Extrair `<output_style>` (caveman + boundary PLAN.md) pra `kit/agents/_shared/output-style.md`. Agents importam via `@reference`. Atualmente repetido em 12+ agents. (`kit/agents/*.md`, `kit/agents/_shared/output-style.md`)
+- [ ] **TOK-D2**: Extrair regras comuns de frontmatter validation pra `kit/agents/_shared/frontmatter-rules.md`. (`kit/agents/*.md`, `kit/agents/_shared/frontmatter-rules.md`)
+- [ ] **TOK-D3**: Sync respeita `_shared/` — não projeta esses arquivos como agents independentes; resolução de `@reference` acontece no consumidor (Claude Code). (`src/core/sync.js`, `src/core/kit.js`)
 
-### Infraestrutura
+### UX — naming canonical
 
-- [ ] **INF-01**: `package.json` declara `prepublishOnly` que roda `npm test && npm run test:integration && node bin/cli.js kit list-agents | head -1`, garantindo smoke local antes de qualquer `npm publish`. (`package.json`)
-- [ ] **INF-02**: Repo inclui `.npmignore` explícito (ou seção `files` no `package.json` é declaração canônica) listando o que vai pro tarball — não dependendo de defaults npm. (`.npmignore` ou `package.json`)
-- [ ] **INF-03**: Matriz CI inclui Node 24 (LTS atual) além de 20 e 22. (`.github/workflows/ci.yml`)
-- [ ] **INF-04**: Mensagem do gate de deps-budget reflete o count real de runtime deps (atualmente 1 — `open@11`), não a baseline obsoleta de "5". (`.github/workflows/ci.yml`)
-
-### Tokens
-
-- [ ] **TOK-01**: `kit/agents/planner.md` reduzido de ~53 KB para ≤ 35 KB sem perder regras críticas — remover redundância em `<philosophy>` / `<scope_estimation>` / `<task_breakdown>`. (`kit/agents/planner.md`)
-- [ ] **TOK-02**: `CLAUDE.md` projetado por `kit sync` retorna apenas summaries (name + 1-line desc) na lista de agents/commands/skills, com link pro path do kit. Reduz ~5 KB no carregamento inicial. (`src/core/sync.js`, gerador de CLAUDE.md)
-- [ ] **TOK-03**: Headers recursivos consolidados em agents grandes (`planner.md` de 72 → ≤ 25 headers `##`/`###`), substituindo aninhamento por blocos enxutos. (multiple agents)
+- [ ] **UX-F1**: `/fazer` é o entrypoint canônico com árvore de decisão documentada (rotaria pra `/rapido` em trivial, `/expresso` em rápido-com-garantias, `/planejar-fase` em estruturado). (`kit/commands/fazer.md`)
+- [ ] **UX-F2**: `/rapido`, `/expresso`, `/proximo` permanecem com seus próprios `.md` mas com seção "Quando usar" linkando de volta a `/fazer`. Não-quebra: usuários que conhecem os nomes específicos continuam funcionando. (`kit/commands/{rapido,expresso,proximo}.md`)
+- [ ] **UX-F3**: Help do `kit ajuda` (e equivalente CLI) destaca `/fazer` como entrada recomendada, com tabela "se você quer X, use Y". (`kit/commands/ajuda.md`, possivelmente `src/cli/index.js`)
 
 ---
 
 ## Requisitos Futuros (adiados)
 
-- Multi-source tabs no sidecar (eventos com campo `source` identificando terminal/IDE) — escopo de v1.7+
-- Always-on do sidecar via OS service (Task Scheduler / systemd-user) — escopo de v1.7+
-- Aggregation cross-projeto numa janela só — escopo de v1.7+
+- U2 active command panel no sidecar (precisa decisão de UI)
+- U5 permission-less autonomous trust mode (precisa coordenação com Claude Code permissions API)
+- Multi-source tabs no sidecar (cross-IDE, multi-project aggregation)
 
 ## Fora do Escopo
 
-- Reescrita de `src/core/` — milestone explicitamente preserva Stable API v1.0+
-- Migração para framework de teste externo — atual `node:test` zero-dep é princípio de produto
-- Sidecar autenticado / multi-user — fora do threat model atual (localhost-only, single-user)
+- Reescrita de `src/core/` — Stable API v1.0+ preservada
+- Migração de framework de teste (`node:test` zero-dep continua sendo princípio)
+- Sidecar autenticado / multi-user (fora do threat model atual)
 
 ## Rastreabilidade
 
