@@ -6,22 +6,16 @@
 
 Fase: Concluída
 Plano: —
-Status: v1.9.0 arquivada. Suíte Observabilidade entregue. CI roda 4 gates blocking + 1 não-blocking. Pronto para cut.
-Última atividade: 2026-05-06 — v1.9.0 Observabilidade concluído autonomamente (7 fases, 41 REQs)
+Status: v1.9.0 publicada (npm + GitHub Release). Suíte Observabilidade live. CI roda 4 gates blocking + 1 não-blocking.
+Última atividade: 2026-05-06 — v1.9.0 Observabilidade publicada (commit `5f0021a`, npm `@luanpdd/kit-mcp@1.9.0`, GitHub Release v1.9.0)
 
 ## Milestone ativo
 
-**Nenhum.** v1.9.0 pronto. Cut: `npm version minor -m "v%s — Observabilidade"` + `git push --follow-tags`.
+**Nenhum.** v1.9.0 cutado e publicado.
 
 ## Próximo passo
 
-1. Cut da v1.9.0:
-   ```bash
-   npm version minor -m "v%s — Observabilidade"
-   git push --follow-tags origin main
-   # publish.yml auto-publica via npm
-   ```
-2. Para próximo marco: `/novo-marco`
+`/novo-marco` para iniciar próximo ciclo.
 
 ## Bloqueadores
 

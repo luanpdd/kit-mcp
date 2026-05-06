@@ -5,7 +5,7 @@
 
 ## Estado Atual
 
-**v1.9 — Observabilidade** entregue e arquivada em `.planning/milestones/v1.9/`. 41 REQs em 7 fases (29-35). Stable API v1.0+ preservada. Aguardando cut: `npm version minor && git push --follow-tags`.
+**v1.9.0 — Observabilidade** publicada em 2026-05-06: npm `@luanpdd/kit-mcp@1.9.0` (latest), [GitHub Release v1.9.0](https://github.com/luanpdd/kit-mcp/releases/tag/v1.9.0), 41 REQs em 7 fases (29-35), arquivada em `.planning/milestones/v1.9/`. Stable API v1.0+ preservada.
 
 ## Próximo Milestone
 
