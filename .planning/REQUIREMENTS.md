@@ -101,57 +101,63 @@ Diferidos para milestone futuro.
 
 ## Rastreabilidade
 
-Vazia inicialmente. Preenchida pelo roadmapper.
+Preenchida pelo roadmapper em 2026-05-06. 41 REQs mapeados para 7 fases (29-35) em 3 ondas.
 
 | Requisito | Fase | Status |
 |-----------|------|--------|
-| GLOS-01 | TBD | Pending |
-| GLOS-02 | TBD | Pending |
-| GLOS-03 | TBD | Pending |
-| SKFD-01 | TBD | Pending |
-| SKFD-02 | TBD | Pending |
-| SKFD-03 | TBD | Pending |
-| SKFD-04 | TBD | Pending |
-| SKPR-01 | TBD | Pending |
-| SKPR-02 | TBD | Pending |
-| SKPR-03 | TBD | Pending |
-| SKPR-04 | TBD | Pending |
-| SKPR-05 | TBD | Pending |
-| SKPR-06 | TBD | Pending |
-| AGCORE-01 | TBD | Pending |
-| AGCORE-02 | TBD | Pending |
-| AGCORE-03 | TBD | Pending |
-| AGCORE-04 | TBD | Pending |
-| AGCORE-05 | TBD | Pending |
-| CMD-01 | TBD | Pending |
-| CMD-02 | TBD | Pending |
-| CMD-03 | TBD | Pending |
-| CMD-04 | TBD | Pending |
-| CMD-05 | TBD | Pending |
-| CMD-06 | TBD | Pending |
-| INT-SB-01 | TBD | Pending |
-| INT-SB-02 | TBD | Pending |
-| INT-SB-03 | TBD | Pending |
-| INT-SB-04 | TBD | Pending |
-| INT-SB-05 | TBD | Pending |
-| INT-SB-06 | TBD | Pending |
-| INT-SB-07 | TBD | Pending |
-| INT-FW-01 | TBD | Pending |
-| INT-FW-02 | TBD | Pending |
-| INT-FW-03 | TBD | Pending |
-| INT-FW-04 | TBD | Pending |
-| INT-FW-05 | TBD | Pending |
-| INT-FW-06 | TBD | Pending |
-| QA-01 | TBD | Pending |
-| QA-02 | TBD | Pending |
-| QA-03 | TBD | Pending |
-| QA-04 | TBD | Pending |
+| GLOS-01 | Phase 29 | Pending |
+| GLOS-02 | Phase 29 | Pending |
+| GLOS-03 | Phase 29 | Pending |
+| SKFD-01 | Phase 29 | Pending |
+| SKFD-02 | Phase 29 | Pending |
+| SKFD-03 | Phase 29 | Pending |
+| SKFD-04 | Phase 29 | Pending |
+| SKPR-01 | Phase 30 | Pending |
+| SKPR-02 | Phase 32 | Pending |
+| SKPR-03 | Phase 32 | Pending |
+| SKPR-04 | Phase 34 | Pending |
+| SKPR-05 | Phase 34 | Pending |
+| SKPR-06 | Phase 34 | Pending |
+| AGCORE-01 | Phase 30 | Pending |
+| AGCORE-02 | Phase 30 | Pending |
+| AGCORE-03 | Phase 32 | Pending |
+| AGCORE-04 | Phase 32 | Pending |
+| AGCORE-05 | Phase 34 | Pending |
+| CMD-01 | Phase 30 | Pending |
+| CMD-02 | Phase 32 | Pending |
+| CMD-03 | Phase 30 | Pending |
+| CMD-04 | Phase 32 | Pending |
+| CMD-05 | Phase 34 | Pending |
+| CMD-06 | Phase 34 | Pending |
+| INT-SB-01 | Phase 31 | Pending |
+| INT-SB-02 | Phase 31 | Pending |
+| INT-SB-03 | Phase 31 | Pending |
+| INT-SB-04 | Phase 31 | Pending |
+| INT-SB-05 | Phase 31 | Pending |
+| INT-SB-06 | Phase 31 | Pending |
+| INT-SB-07 | Phase 31 | Pending |
+| INT-FW-01 | Phase 33 | Pending |
+| INT-FW-02 | Phase 33 | Pending |
+| INT-FW-03 | Phase 33 | Pending |
+| INT-FW-04 | Phase 35 | Pending |
+| INT-FW-05 | Phase 35 | Pending |
+| INT-FW-06 | Phase 33 | Pending |
+| QA-01 | Phase 35 | Pending |
+| QA-02 | Phase 35 | Pending |
+| QA-03 | Phase 35 | Pending |
+| QA-04 | Phase 35 | Pending |
 
 **Cobertura:**
 - Requisitos v1: 41 total
-- Mapeados para fases: 0 (a ser preenchido pelo roadmapper)
-- Não mapeados: 41 (a corrigir)
+- Mapeados para fases: 41 (100%)
+- Não mapeados: 0
+- Distribuição por fase: Phase 29 (7), Phase 30 (5), Phase 31 (7), Phase 32 (6), Phase 33 (4), Phase 34 (6), Phase 35 (6) = 41
+
+**Distribuição por onda:**
+- Onda 1 — Núcleo (Phases 29-31): 19 REQs
+- Onda 2 — SLO/Reliability (Phases 32-33): 10 REQs
+- Onda 3 — Escala e cultura (Phases 34-35): 12 REQs
 
 ---
 *Requisitos definidos: 2026-05-06*
-*Última atualização: 2026-05-06 após definição inicial do milestone v1.9*
+*Última atualização: 2026-05-06 — rastreabilidade preenchida pelo roadmapper (41/41 mapeados para Phases 29-35)*
