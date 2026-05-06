@@ -54,3 +54,22 @@ Ler e executar o workflow forensics de @./.claude/framework/workflows/forensics.
 - **Fundamentar descobertas em evidências:** Toda anomalia deve citar commits, arquivos ou dados de estado específicos.
 - **Sem especulação sem evidência:** Se os dados forem insuficientes, diga isso — não fabrique causas raiz.
 </critical_rules>
+
+<observability_integration>
+**Integração com Core Analysis Loop (v1.9):**
+
+Forense usa skill [`core-analysis-loop`](../skills/core-analysis-loop/SKILL.md) — método científico iterativo (sintoma → hipótese de dados → validação → próxima iteração) em vez de inspeção ad hoc.
+
+Cada anomalia detectada vira hipótese com query de validação:
+
+| Tipo de anomalia | Hipótese formada | Query de validação |
+|---|---|---|
+| Loop travado | "phase X stuck há Yh" | `git log --since="Yh ago" --grep=phase` para confirmar zero commits |
+| Artefatos ausentes | "PLAN.md ausente em phase X" | `ls .planning/phases/X-*/X-PLAN-*.md` |
+| Trabalho abandonado | "branch sem merge nem commit recente" | `git log -1 <branch>` + `git status` |
+| Crash/interrupção | "executor falhou em meio a fase" | grep no STATE.md por "in_progress" sem update recente |
+
+**Skill consultada explicitamente:** abrir o arquivo `kit/skills/core-analysis-loop/SKILL.md` para padrão "documentação da trilha (formato canônico)" — o relatório forense em `.planning/forensics/report-<ts>.md` segue esse formato com cada hipótese tendo "Query / Resultado / Status (VALIDATED / REFUTED / INCONCLUSIVE)".
+
+**REQ:** INT-FW-06.
+</observability_integration>
