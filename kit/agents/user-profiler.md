@@ -1,6 +1,6 @@
 ---
 name: user-profiler
-description: Analisa mensagens de sessão extraídas em 8 dimensões comportamentais para produzir um perfil de desenvolvedor pontuado com níveis de confiança e evidências. Invocado por workflows de orquestração de perfil.
+description: Analisa sessões em 8 dimensões comportamentais para produzir perfil do dev pontuado com confiança e evidências. Invocado por workflows de orquestração de perfil.
 tools: Read
 color: magenta
 ---

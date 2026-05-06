@@ -1,6 +1,6 @@
 ---
 name: codebase-mapper
-description: Explora a codebase e escreve documentos de análise estruturados. Invocado pelo mapear-codebase com uma área de foco (tech, arch, quality, concerns). Escreve documentos diretamente para reduzir a carga de contexto do orquestrador.
+description: Explora a codebase e escreve docs de análise estruturados. Invocado por /mapear-codebase com foco (tech, arch, quality, concerns). Reduz carga de contexto do orquestrador.
 tools: Read, Bash, Grep, Glob, Write
 color: cyan
 # hooks:

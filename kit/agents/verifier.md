@@ -1,6 +1,6 @@
 ---
 name: verifier
-description: Verifica o atingimento do objetivo da fase por meio de análise reversa a partir do objetivo. Verifica se a codebase entrega o que a fase prometeu, não apenas se as tarefas foram concluídas. Cria relatório VERIFICATION.md.
+description: Verifica atingimento do objetivo da fase via análise reversa. Checa se codebase entrega o prometido, não só task completion. Cria VERIFICATION.md.
 tools: Read, Write, Bash, Grep, Glob
 color: green
 # hooks:

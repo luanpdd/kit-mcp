@@ -1,6 +1,6 @@
 ---
 name: schema-checker
-description: Valida foreign keys, colunas e tabelas referenciadas em uma migration SQL ANTES de aplicá-la em produção. Lê a SQL, extrai refs (FK, JOIN, INSERT INTO ... SELECT), consulta o schema real via Supabase MCP, e devolve um veredito GO/NO-GO com diff entre o que a migration assume e o que existe. Invocar antes de qualquer `apply_migration` que toque dados existentes.
+description: Valida FKs/colunas/tabelas referenciadas em migration SQL ANTES de aplicar em prod. Lê SQL, consulta schema via Supabase MCP, devolve veredito GO/NO-GO/NEEDS-REVIEW.
 tools: Read, Bash, Grep, Glob, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: red
 ---
