@@ -1,9 +1,46 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-05 — abertura de v1.6.0.
+> Última atualização: 2026-05-06 — abertura de v1.8.0 (Suíte Supabase).
 
-## Milestone Atual: v1.7 perf+lean part 2 + UX naming canonical
+## Milestone Atual: v1.8 Suíte Supabase
+
+**Objetivo:** Adicionar uma camada completa de expertise Supabase ao kit (skills + agents + commands), permitindo que consumidores do `@luanpdd/kit-mcp` tenham apoio canônico ao construir e manter backends Supabase — Postgres/DB, Auth, Realtime, Edge Functions, RLS, Migrations — diretamente do fluxo de trabalho do kit.
+
+**Funcionalidades alvo (todas aditivas, zero superfície de API quebrada):**
+
+- **Skills (8)** — expertise consultável que viaja com o kit:
+  - `supabase-realtime` — broadcast vs postgres_changes, RLS para realtime, naming de canais, triggers `realtime.broadcast_changes`
+  - `supabase-auth-ssr` — Next.js v16 + `@supabase/ssr` (getAll/setAll), browser/server clients, proxy
+  - `supabase-edge-functions` — Deno runtime, `npm:`/`jsr:` imports, env vars, `EdgeRuntime.waitUntil`
+  - `supabase-declarative-schema` — `supabase/schemas/`, `db diff`, ordering lexicográfica, caveats
+  - `supabase-rls-policies` — `auth.uid()`, policies por operação, indexing, MFA, performance
+  - `supabase-database-functions` — SECURITY INVOKER, `search_path`, immutable/stable, triggers
+  - `supabase-migrations` — naming `YYYYMMDDHHmmss_*.sql`, RLS obrigatório, granular policies
+  - `supabase-postgres-style` — Postgres SQL style guide (lowercase, snake_case, plurals)
+
+- **Agents (6)** — workers ativos especializados:
+  - `supabase-architect` — projeta schema + RLS + topologia realtime antes da implementação
+  - `supabase-migration-writer` — escreve migrations seguindo declarative schema + RLS + style guide
+  - `supabase-rls-writer` — gera RLS policies com indexing recomendado
+  - `supabase-edge-fn-writer` — escreve Deno Edge Functions
+  - `supabase-realtime-implementer` — configura canais (client + DB triggers + RLS)
+  - `supabase-auth-bootstrapper` — bootstrap Next.js v16 com Supabase Auth (SSR)
+  - (existente: `schema-checker` — pré-migration validator; será cross-referenced pelos novos agents)
+
+- **Commands (1)** — entry point único:
+  - `/supabase [subcomando]` — orquestrador que roteia para o agent certo (`arquiteto`, `migration`, `rls`, `edge`, `realtime`, `auth`)
+
+**Decisões de stack:**
+- Zero deps novas. Apenas conteúdo de kit (markdown). Stable API v1.0+ preservada — só adições.
+- Agents usam tools `mcp__supabase__*` quando disponíveis (precedente: `schema-checker.md`).
+- Conteúdo em PT-BR (alinhado com o resto do kit).
+- Material-fonte: 7 guias oficiais Supabase (Realtime, Auth SSR, Edge Functions, Declarative Schema, RLS, DB Functions, Migrations, Postgres Style).
+- Roadmap começa em **Phase 25** (continuação de v1.7 que terminou em 24).
+
+**Contrato preservado:** Quem usa kit-mcp em produção não percebe nada além de novos agents/commands/skills disponíveis ao sincronizar (`kit sync install <target>`). CI permanece verde.
+
+## ~~Milestone Anterior: v1.7 perf+lean part 2 + UX naming canonical (concluído 2026-05-06)~~
 
 **Objetivo:** Continuar otimização interna de v1.6 com cuts mais profundos em workflows + dedup de boilerplate de agentes + sync stub-only mode. Adicionar `/fazer` como entrypoint canônico que rouba os outros como aliases.
 
@@ -12,13 +49,6 @@
 - **P3** — stub-only mode em sync (lê só frontmatter, não content body) → 3-5× mais rápido em sync default
 - **P4** — agent boilerplate dedup via `<shared>` references (kit/agents/_shared/) — reduz custo agregado do executor multiplicado
 - **U3** — `/fazer` vira canonical com árvore de decisão clara; `/expresso`, `/rapido`, `/proximo` ficam como aliases documentados
-
-**Decisões de stack:**
-- Continua zero deps novas. Stable API v1.0+ preservada (mode=copy ainda lê content full).
-- Workflows e agents são prompts; mudanças são "remoções de redundância", não de regras.
-- Roadmap começa em **Phase 22**.
-
-**Contrato preservado:** Quem usa v1.0+ não percebe nada além de menor latência e custo de tokens. CI permanece verde.
 
 ## ~~Milestone Anterior: v1.6 perf+lean (interno — concluído 2026-05-05)~~
 

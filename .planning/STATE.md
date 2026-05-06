@@ -4,23 +4,18 @@
 
 ## Posição Atual
 
-Fase: Concluída
+Fase: Não iniciada (definindo requisitos)
 Plano: —
-Status: v1.7.0 entregue, pendente cut
-Última atividade: 2026-05-06 — Phases 22, 23, 24 commitadas
+Status: Definindo requisitos
+Última atividade: 2026-05-06 — Milestone v1.8 (Suíte Supabase) iniciado
 
 ## Milestone ativo
 
-**Nenhum.** v1.7.0 concluído (3 fases — 22 workflow compaction, 23 stubs-only sync, 24 boilerplate dedup + /fazer canonical).
+**v1.8 Suíte Supabase** — adicionar skills + agents + command `/supabase` para suporte canônico a Postgres/DB, Auth, Realtime, Edge Functions, RLS, Migrations.
 
 ## Próximo passo
 
-Cut da v1.7.0:
-```bash
-npm version minor -m "v%s — perf+lean part 2 + UX canonical"
-git push --follow-tags origin main
-# publish.yml auto-publica via npm
-```
+Definir requisitos (REQ-IDs) e roadmap por fases. Roadmap começa em **Phase 25**.
 
 ## Bloqueadores
 
@@ -42,4 +37,4 @@ git push --follow-tags origin main
 
 ## Contexto Acumulado
 
-Auditoria de codebase (2026-05-05, executada via 4 agentes Explore paralelos cobrindo perf/security/infra/tokens) produziu 20 melhorias tabuladas. Bundle v1.5.3 entregou as 4 mais ROI-positivas (I1, S1, T3, T5). Os 16 restantes são endereçados nesta milestone.
+Os 6 milestones anteriores (v1.0 → v1.7) construíram a infraestrutura genérica do kit-mcp (registry, sync, MCP tools, sidecar, observability, perf+lean). v1.8 muda o foco para **conteúdo especializado**: a primeira suíte de skills+agents+command focada em um stack específico (Supabase). Material-fonte dos 7 guias oficiais Supabase fornecidos pelo user na abertura. Sidecar em http://127.0.0.1:7100/ para observability.
