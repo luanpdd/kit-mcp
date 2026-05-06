@@ -1,9 +1,17 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-06 — abertura de v1.8.0 (Suíte Supabase).
+> Última atualização: 2026-05-06 — v1.8.0 (Suíte Supabase) concluída e arquivada.
 
-## Milestone Atual: v1.8 Suíte Supabase
+## Estado Atual
+
+**v1.8.0 — Suíte Supabase** entregue e arquivada em `.planning/milestones/v1.8.0/`. 31 REQs em 4 fases (25-28). Stable API v1.0+ preservada. Aguardando cut: `npm version minor && git push --follow-tags`.
+
+## Próximo Milestone
+
+Use `/novo-marco` para iniciar próximo ciclo (questionamento → pesquisa → requisitos → roadmap).
+
+## ~~Milestone Anterior: v1.8 Suíte Supabase (concluído 2026-05-06)~~
 
 **Objetivo:** Adicionar uma camada completa de expertise Supabase ao kit (skills + agents + commands), permitindo que consumidores do `@luanpdd/kit-mcp` tenham apoio canônico ao construir e manter backends Supabase — Postgres/DB, Auth, Realtime, Edge Functions, RLS, Migrations — diretamente do fluxo de trabalho do kit.
 
