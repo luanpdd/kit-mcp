@@ -4,25 +4,20 @@
 
 ## Posição Atual
 
-Fase: Concluída
+Fase: Não iniciada (definindo requisitos)
 Plano: —
-Status: v1.8.0 arquivada + v1.8.1 patch de integração aplicado (7 edições). CI roda 4 gates blocking. Pronto para cut.
-Última atividade: 2026-05-06 — Patch v1.8.1: integração Supabase Suite no fluxo (/fazer, planner, executor, /depurar, discuss-phase, plan-phase, CI gates)
+Status: Definindo requisitos
+Última atividade: 2026-05-06 — Milestone v1.9 Observabilidade iniciado
 
 ## Milestone ativo
 
-**Nenhum.** v1.8.0 + v1.8.1 prontos. Cut: `npm version 1.8.1 -m "v%s — Suíte Supabase + integração"` + `git push --follow-tags`.
+**v1.9 Observabilidade** — incorporar técnicas do livro *Observability Engineering* ao kit-mcp via skills/agentes/comandos novos com integração profunda à Suíte Supabase.
 
 ## Próximo passo
 
-1. `/auditar-marco` — audita 4 fases contra intenção original
-2. `/concluir-marco` — arquiva milestone em `.planning/milestones/v1.8.0/`
-3. Cut da v1.8.0:
-   ```bash
-   npm version minor -m "v%s — Suíte Supabase"
-   git push --follow-tags origin main
-   # publish.yml auto-publica via npm
-   ```
+1. Definir requisitos em `.planning/REQUIREMENTS.md`
+2. Criar roadmap em `.planning/ROADMAP.md`
+3. `/autonomo` para executar todas as fases
 
 ## Bloqueadores
 
@@ -41,8 +36,10 @@ Status: v1.8.0 arquivada + v1.8.1 patch de integração aplicado (7 edições). 
 - v1.6.0 — concluído 2026-05-05 (16 audit REQs + observability hook); publicado em npm
 - v1.6.1 — concluído 2026-05-05 (kit doctor + upgrade-check + gates cache, Onda 1); publicado em npm
 - v1.7.0 — concluído 2026-05-06 (workflow compaction + stubs-only sync + boilerplate dedup + /fazer canonical, Onda 2); cut pendente
-- v1.8.0 — concluído 2026-05-06 (Suíte Supabase: 11 skills + 7 agents + command + 5 gates + UUID cleanup, Phases 25-28); aguardando lifecycle + cut
+- v1.8.0 — concluído 2026-05-06 (Suíte Supabase: 11 skills + 7 agents + command + 5 gates + UUID cleanup, Phases 25-28); arquivado
+- v1.8.1 — concluído 2026-05-06 (integração Supabase Suite no fluxo: /fazer, planner, executor, /depurar, discuss-phase, plan-phase, CI gates)
+- v1.9 — em planejamento (Observabilidade)
 
 ## Contexto Acumulado
 
-Os 7 milestones anteriores (v1.0 → v1.7) construíram a infraestrutura genérica do kit-mcp. v1.8 é o primeiro milestone **content-only** com expertise especializada: Suíte Supabase (skills + agents + command + gates focados em Postgres/Supabase backend). 31 REQs entregues em 4 fases sem alterar `src/core/`. Todos os anti-pitfalls (A1-A12 packaging + B1-B14 Supabase) endereçados via gates ou patterns embutidos. Sidecar em http://127.0.0.1:7100/ ainda ativo da abertura.
+v1.8 entregou a Suíte Supabase (11 skills + 7 agents + command). v1.9 estende isso com camada de observabilidade derivada do livro *Observability Engineering* (Charity Majors et al., O'Reilly 2022). A Suíte Supabase é a maior beneficiária: cada agente Supabase consultará skills novas (`structured-events`, `opentelemetry-standard`, etc.), e o agente novo `incident-investigator` é o consumidor mais pesado dos MCP tools `mcp__supabase__get_logs`/`execute_sql`/`get_advisors`. A análise estruturada do livro (capítulos 5-8, 11-13, 17-18, 21) já mapeou cap → artefato em 11 skills, 5+2 agentes opcionais, 5+1 comandos.

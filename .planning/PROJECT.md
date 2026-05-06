@@ -1,15 +1,59 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-06 — v1.8.0 (Suíte Supabase) concluída e arquivada.
+> Última atualização: 2026-05-06 — v1.9 Observabilidade iniciado.
 
 ## Estado Atual
 
-**v1.8.0 — Suíte Supabase** entregue e arquivada em `.planning/milestones/v1.8.0/`. 31 REQs em 4 fases (25-28). Stable API v1.0+ preservada. Aguardando cut: `npm version minor && git push --follow-tags`.
+**v1.9 — Observabilidade** em planejamento. Incorporar técnicas do livro *Observability Engineering* (Charity Majors, Liz Fong-Jones, George Miranda — O'Reilly, 2022) como skills/agentes/comandos canônicos. v1.8.0+v1.8.1 (Suíte Supabase + integração) arquivados.
 
-## Próximo Milestone
+## Milestone Atual: v1.9 Observabilidade
 
-Use `/novo-marco` para iniciar próximo ciclo (questionamento → pesquisa → requisitos → roadmap).
+**Objetivo:** Adicionar uma camada de expertise em observabilidade ao kit (skills + agentes + comandos), inspirada em *Observability Engineering*, aproveitada pela Suíte Supabase existente para potencializar o uso dos MCP tools `mcp__supabase__get_logs/get_advisors/execute_sql` em diagnóstico, SLOs e instrumentação.
+
+**Funcionalidades alvo (todas aditivas, zero superfície de API quebrada):**
+
+- **Skills (11)** — expertise consultável que viaja com o kit:
+  - `_shared-observability/glossary.md` — vocabulário canônico (event, span, trace, SLI, SLO, error budget, burn rate, OMM)
+  - `structured-events` — wide events de alta cardinalidade (1/request)
+  - `distributed-tracing` — trace_id/span_id, W3C TraceContext, stitching
+  - `opentelemetry-standard` — SDK, Tracer, Meter, Exporter, Collector, OTLP
+  - `core-analysis-loop` — debug iterativo from first principles (4 fases)
+  - `observability-driven-development` — bundle telemetria com feature, 4 perguntas pré-PR
+  - `event-based-slos` — SLI event-based, sliding window, decouple what/why
+  - `burn-rate-alerting` — lookahead/baseline windows, fator 4×
+  - `telemetry-sampling` — head/tail, by-key, dynamic
+  - `telemetry-pipelines` — routing, buffering, filtering
+  - `observability-maturity-model` — 5 capacidades (resiliência, qualidade, complexidade, cadência, comportamento)
+
+- **Agentes (5+1 opcional)** — workers especializados:
+  - `observability-instrumenter` — instrumenta código com OTel + structured events
+  - `incident-investigator` — aplica Core Analysis Loop usando `mcp__supabase__get_logs/execute_sql/get_advisors`
+  - `slo-engineer` — define SLI/SLO/error budget materializando contagem em SQL
+  - `burn-rate-forecaster` — calcula burn rate predictive com janelas
+  - `omm-auditor` — pontua projeto contra Observability Maturity Model
+  - `telemetry-sampler` (opcional) — config de sampling por endpoint
+  - `telemetry-pipeline-architect` (opcional) — config de OTel Collector
+
+- **Comandos (5+1 orquestrador):**
+  - `/instrumentar-fase` — após `/planejar-fase`, gera `INSTRUMENTATION.md` por plano
+  - `/definir-slo` — gera `SLO.md` + SQL para materializar SLI events
+  - `/investigar-producao` — Core Analysis Loop guiado, estado persistente
+  - `/burn-rate-status` — tabela SLO/% gasto/ETA exhaustão
+  - `/auditar-observabilidade` — OMM scored 5 capacidades
+  - `/observabilidade [subcomando]` — orquestrador único (análogo a `/supabase`)
+
+- **Integração com Suíte Supabase** — patches nos 7 agentes existentes (architect, migration-writer, rls-writer, edge-fn-writer, realtime-implementer, auth-bootstrapper, storage-implementer) para consultarem as skills novas.
+
+- **Integração com fluxo framework** — `/discutir-fase` pergunta sobre instrumentação, `/planejar-fase` bloqueia se ODD ausente, `/concluir-marco` gate em OMM regression.
+
+**Decisões de stack:**
+- Zero deps novas. Apenas conteúdo de kit (markdown). Stable API v1.0+ preservada — só adições.
+- Material-fonte: livro *Observability Engineering* (978-1-492-07644-5).
+- Conteúdo em PT-BR (alinhado com o resto do kit).
+- Roadmap começa em **Phase 29** (continuação de v1.8 que terminou em 28).
+
+**Contrato preservado:** Quem usa kit-mcp em produção não percebe nada além de novos artefatos disponíveis ao sincronizar (`kit sync install <target>`). CI permanece verde.
 
 ## ~~Milestone Anterior: v1.8 Suíte Supabase (concluído 2026-05-06)~~
 
