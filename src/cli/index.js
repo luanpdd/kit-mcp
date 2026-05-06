@@ -33,7 +33,10 @@ import { createServer } from '../ui/server.js';
 import { readLock, lockPathFor } from '../ui/lockfile.js';
 import { wrapProgressForUi } from '../ui/wrapper.js';
 import { openBrowser } from '../ui/browser.js';
+import { checkUpgrade, getLocalVersion } from './upgrade-check.js';
 import http from 'node:http';
+import fs from 'node:fs';
+import os from 'node:os';
 
 // Read package.json version at boot so `--version` is always accurate. Falls
 // back to a string if the file lookup fails (e.g. unusual install layout).
@@ -391,6 +394,14 @@ ui.command('start')
       const url = `http://127.0.0.1:${actualPort}/`;
       process.stderr.write(`${c.cyan(icons.info)} kit-mcp ui listening on ${url}\n`);
       process.stderr.write(`${c.dim(`  project: ${projectRoot}`)}\n`);
+      // U4: non-blocking upgrade check. Warns if local install is behind npm latest.
+      // Cached for 24h via ~/.kit-mcp/version-check.json so we don't hit npm on every start.
+      checkUpgrade().then((info) => {
+        if (info?.behind) {
+          process.stderr.write(`${c.yellow(icons.warn)} kit-mcp v${info.local} → v${info.latest} disponível\n`);
+          process.stderr.write(`${c.dim('   atualize com: npm i -g @luanpdd/kit-mcp@latest')}\n`);
+        }
+      }).catch(() => { /* offline / silent */ });
       if (opts.open !== false) {
         await openBrowser(url);
       }
@@ -456,6 +467,174 @@ ui.command('open')
       process.exit(1);
     }
   });
+
+// --- doctor (DX diagnostic) ---
+program.command('doctor')
+  .description('Diagnose kit-mcp setup: version, sidecar, hook, settings.json, lockfile, .planning/.')
+  .option('--project-root <path>', 'Project to diagnose (default: cwd)')
+  .action(async (opts) => {
+    const projectRoot = opts.projectRoot || process.cwd();
+    const checks = await runDoctorChecks(projectRoot);
+    const failed = checks.filter(c => c.status === 'fail').length;
+    const warned = checks.filter(c => c.status === 'warn').length;
+
+    if (program.opts().json) {
+      out({ checks, failed, warned }, () => '');
+      process.exit(failed > 0 ? 1 : 0);
+    }
+
+    process.stdout.write(`\n${c.bold('kit-mcp doctor')} — ${projectRoot}\n\n`);
+    for (const check of checks) {
+      const sym = check.status === 'pass' ? c.green(icons.check)
+                : check.status === 'warn' ? c.yellow(icons.warn)
+                : c.red(icons.cross);
+      process.stdout.write(`${sym}  ${c.bold(check.label)}\n`);
+      if (check.detail)  process.stdout.write(`   ${c.dim(check.detail)}\n`);
+      if (check.fix)     process.stdout.write(`   ${c.cyan('fix:')} ${check.fix}\n`);
+    }
+    process.stdout.write('\n');
+    if (failed > 0) {
+      process.stdout.write(`${c.red(icons.cross)} ${failed} check(s) failed\n`);
+      process.exit(1);
+    } else if (warned > 0) {
+      process.stdout.write(`${c.yellow(icons.warn)} ${warned} warning(s) — kit-mcp is functional\n`);
+    } else {
+      process.stdout.write(`${c.green(icons.check)} all checks passed\n`);
+    }
+  });
+
+async function runDoctorChecks(projectRoot) {
+  const checks = [];
+
+  // 1. Version + upgrade availability
+  const upgrade = await checkUpgrade();
+  if (!upgrade) {
+    checks.push({ label: 'version', status: 'fail',
+      detail: 'could not read local package.json',
+      fix: 'reinstall via `npm i -g @luanpdd/kit-mcp@latest`' });
+  } else if (upgrade.latest === null) {
+    checks.push({ label: 'version', status: 'warn',
+      detail: `local v${upgrade.local} (offline — could not check npm)` });
+  } else if (upgrade.behind) {
+    checks.push({ label: 'version', status: 'warn',
+      detail: `local v${upgrade.local}, latest v${upgrade.latest}`,
+      fix: 'npm i -g @luanpdd/kit-mcp@latest' });
+  } else {
+    checks.push({ label: 'version', status: 'pass',
+      detail: `v${upgrade.local} (latest)` });
+  }
+
+  // 2. Sidecar lockfile + healthz
+  const lock = readLock(projectRoot);
+  if (!lock) {
+    checks.push({ label: 'sidecar', status: 'warn',
+      detail: 'not running for this project',
+      fix: 'kit ui start (or omit if you don\'t need the live viewer)' });
+  } else {
+    try {
+      await getHealthz(lock.port);
+      checks.push({ label: 'sidecar', status: 'pass',
+        detail: `running on port ${lock.port} (pid ${lock.pid})` });
+    } catch (err) {
+      checks.push({ label: 'sidecar', status: 'fail',
+        detail: `lockfile says port ${lock.port} but unreachable: ${err.message}`,
+        fix: 'kit ui stop && kit ui start' });
+    }
+  }
+
+  // 3. ~/.claude/settings.json — exists + valid JSON + hooks present?
+  const settingsPath = path.join(os.homedir(), '.claude', 'settings.json');
+  let settings = null;
+  try {
+    settings = JSON.parse(fs.readFileSync(settingsPath, 'utf8'));
+    checks.push({ label: 'settings.json', status: 'pass',
+      detail: settingsPath });
+  } catch (err) {
+    if (err.code === 'ENOENT') {
+      checks.push({ label: 'settings.json', status: 'warn',
+        detail: 'not found (expected for fresh Claude Code)',
+        fix: 'will be created automatically by Claude Code' });
+    } else {
+      checks.push({ label: 'settings.json', status: 'fail',
+        detail: `invalid JSON at ${settingsPath}: ${err.message}`,
+        fix: 'edit the file or restore from .claude/settings.json.bak' });
+    }
+  }
+
+  // 4. Hook installed?
+  if (settings) {
+    const hooks = settings.hooks?.PostToolUse;
+    const hasHook = Array.isArray(hooks) && hooks.some((h) =>
+      Array.isArray(h.hooks) && h.hooks.some((cmd) =>
+        typeof cmd.command === 'string' && cmd.command.includes('sidecar-tool-publisher')));
+    if (hasHook) {
+      checks.push({ label: 'observability hook', status: 'pass',
+        detail: 'sidecar-tool-publisher registered as PostToolUse' });
+    } else {
+      checks.push({ label: 'observability hook', status: 'warn',
+        detail: 'sidecar-tool-publisher not registered',
+        fix: 'see kit/hooks/sidecar-tool-publisher.js for installation snippet' });
+    }
+  }
+
+  // 5. Bundled kit dirs exist
+  const here = path.dirname(fileURLToPath(import.meta.url));
+  const kitRoot = path.resolve(here, '..', '..', 'kit');
+  const expected = ['agents', 'commands', 'skills'];
+  const missing = expected.filter((d) => {
+    try { return !fs.statSync(path.join(kitRoot, d)).isDirectory(); }
+    catch { return true; }
+  });
+  if (missing.length === 0) {
+    checks.push({ label: 'bundled kit', status: 'pass',
+      detail: `agents/, commands/, skills/ found in ${kitRoot}` });
+  } else {
+    checks.push({ label: 'bundled kit', status: 'fail',
+      detail: `missing: ${missing.join(', ')} in ${kitRoot}`,
+      fix: 'reinstall via `npm i -g @luanpdd/kit-mcp@latest`' });
+  }
+
+  // 6. .planning/ in projectRoot — only warn if absent (not all projects use the framework)
+  const planningDir = path.join(projectRoot, '.planning');
+  if (fs.existsSync(planningDir)) {
+    const stateOk = fs.existsSync(path.join(planningDir, 'STATE.md'));
+    const roadmapOk = fs.existsSync(path.join(planningDir, 'ROADMAP.md'));
+    if (stateOk && roadmapOk) {
+      checks.push({ label: '.planning/', status: 'pass',
+        detail: 'STATE.md + ROADMAP.md present' });
+    } else {
+      checks.push({ label: '.planning/', status: 'warn',
+        detail: `present but missing ${[!stateOk && 'STATE.md', !roadmapOk && 'ROADMAP.md'].filter(Boolean).join(', ')}`,
+        fix: 'run `kit saude` to repair, or `/novo-marco` if mid-cycle' });
+    }
+  } else {
+    checks.push({ label: '.planning/', status: 'warn',
+      detail: 'no framework state in this project',
+      fix: 'run `/novo-projeto` to bootstrap, or skip if not using the framework' });
+  }
+
+  // 7. Stale lockfile cleanup hint
+  try {
+    const tmpdir = os.tmpdir();
+    const orphans = fs.readdirSync(tmpdir).filter(n => /^kit-mcp-ui-[0-9a-f]{16}\.lock$/.test(n));
+    const stale = [];
+    for (const name of orphans) {
+      try {
+        const lock = JSON.parse(fs.readFileSync(path.join(tmpdir, name), 'utf8'));
+        try { process.kill(lock.pid, 0); } catch (err) {
+          if (err.code === 'ESRCH') stale.push(name);
+        }
+      } catch { /* skip unreadable */ }
+    }
+    if (stale.length > 0) {
+      checks.push({ label: 'orphan lockfiles', status: 'warn',
+        detail: `${stale.length} stale lockfile(s) in ${tmpdir}`,
+        fix: stale.map(n => `rm "${path.join(tmpdir, n)}"`).join(' && ') });
+    }
+  } catch { /* tmpdir scan is best-effort */ }
+
+  return checks;
+}
 
 // Helpers for kit ui (live in cli/ — stdout/console allowed here)
 async function postShutdown(port) {

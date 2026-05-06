@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import fs from 'node:fs/promises';
 import os from 'node:os';
-import { listGates, getGate, gatesForStage } from '../../src/core/gates.js';
+import { listGates, getGate, gatesForStage, clearGatesCache } from '../../src/core/gates.js';
 import { runGate } from '../../src/core/gate-runner.js';
 
 let TMP_GATES;
@@ -65,4 +65,20 @@ test('runGate shell-warn non-blocking — verdict warn', async () => {
 test('runGate manual-only --no-interactive — verdict manual', async () => {
   const r = await runGate('manual-only', { gatesRoot: TMP_GATES, interactive: false, onLog: () => {} });
   assert.equal(r.verdict, 'manual');
+});
+
+// P2: gates cache (mirrors PERF-01 in kit.js).
+test('listGates — caches result within TTL', async () => {
+  clearGatesCache();
+  const a = await listGates(TMP_GATES);
+  const b = await listGates(TMP_GATES);
+  assert.equal(a, b, 'second call should return cached object reference');
+});
+
+test('listGates — clearGatesCache forces re-read', async () => {
+  clearGatesCache();
+  const a = await listGates(TMP_GATES);
+  clearGatesCache();
+  const b = await listGates(TMP_GATES);
+  assert.notEqual(a, b, 'after clearGatesCache, listGates should produce a fresh object');
 });

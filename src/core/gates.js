@@ -22,7 +22,19 @@ const __filename = fileURLToPath(import.meta.url);
 const __dirname  = path.dirname(__filename);
 export const DEFAULT_GATES_ROOT = path.resolve(__dirname, '../../gates');
 
+// P2: TTL cache for listGates (mirrors PERF-01 in kit.js). Gates change rarely;
+// inside a single Claude Code session we may call listGates → getGate → gatesForStage
+// in sequence — without cache, that's 3 full directory walks of the gates dir.
+const GATES_CACHE_TTL_MS = 30_000;
+const gatesCache = new Map(); // gatesRoot -> { value, ts }
+
+export function clearGatesCache() { gatesCache.clear(); }
+
 export async function listGates(gatesRoot = DEFAULT_GATES_ROOT) {
+  const cached = gatesCache.get(gatesRoot);
+  if (cached && Date.now() - cached.ts < GATES_CACHE_TTL_MS) {
+    return cached.value;
+  }
   let entries;
   try { entries = await fs.readdir(gatesRoot, { withFileTypes: true }); }
   catch { return []; }
@@ -40,7 +52,9 @@ export async function listGates(gatesRoot = DEFAULT_GATES_ROOT) {
       absPath: abs,
     });
   }
-  return out.sort((a, b) => a.id.localeCompare(b.id));
+  const value = out.sort((a, b) => a.id.localeCompare(b.id));
+  gatesCache.set(gatesRoot, { value, ts: Date.now() });
+  return value;
 }
 
 export async function getGate(id, gatesRoot = DEFAULT_GATES_ROOT) {

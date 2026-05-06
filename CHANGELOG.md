@@ -6,6 +6,24 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.6.1] - 2026-05-05
+
+DX patch: comando `kit doctor` + upgrade-check no boot do sidecar + cache de gates.
+
+### Adicionado
+
+- **`kit doctor`** ([src/cli/index.js](src/cli/index.js), nova função `runDoctorChecks`) — comando único de diagnóstico que checa: versão local vs npm latest, sidecar reachability via lockfile + healthz, validade do `~/.claude/settings.json`, presença do hook PostToolUse `sidecar-tool-publisher`, dirs do kit bundled, integridade do `.planning/`, e lockfiles órfãos em tmpdir. Retorna checklist colorido com `fix:` específico em cada falha. Suporta `--json` (via flag global) pra consumo programático.
+- **Upgrade-check no `kit ui start`** ([src/cli/index.js](src/cli/index.js), [src/cli/upgrade-check.js](src/cli/upgrade-check.js)) — verifica npm registry em background; se versão local atrás da latest, imprime banner amarelo "v1.6 → v1.6.1 disponível, atualize com npm i -g". Cache TTL 24h em `~/.kit-mcp/version-check.json` evita hit no registry em todo boot. Falha gracefully em modo offline.
+- **Cache TTL em `listGates`** ([src/core/gates.js](src/core/gates.js)) — mesmo padrão de PERF-01 (`listKit`). Sequência `listGates → getGate → gatesForStage` num único processo agora faz 1 walk de disco em vez de 3.
+
+### Sem mudanças de API
+
+`mcp__kit__gates` action=list e action=get continuam funcionando com mesma assinatura. Doctor e upgrade-check são CLI-only.
+
+### Testes
+
++10 unit (112 total): 8 cobrindo `compareVersions`/`getLocalVersion`/constantes do upgrade-check, 2 cobrindo cache hit/miss em gates.
+
 ## [1.6.0] - 2026-05-05
 
 Milestone v1.6 — perf+lean: 16 itens de auditoria de codebase entregues em 3 fases (Phase 19 quick wins, Phase 20 hardening, Phase 21 token economy) + observability hook (Phase 19.5).
