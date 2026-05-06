@@ -111,9 +111,22 @@ Série de patches feitos fora do framework — UI redesign, framework velocity, 
 - Material-fonte: 7 guias oficiais Supabase + 4 dimensões de pesquisa (`.planning/research/`).
 - Detalhes: `.planning/milestones/v1.8.0/` (após `/concluir-marco`).
 
+### v1.9.0 — Observabilidade (2026-05-06) 🔭 Skills+Agentes+Comandos derivados de Observability Engineering
+
+- 41/41 REQs entregues em 7 fases (Phases 29-35).
+- **11 skills observability** em `kit/skills/`: `_shared-observability/glossary.md`, `structured-events`, `distributed-tracing`, `opentelemetry-standard`, `core-analysis-loop`, `observability-driven-development`, `event-based-slos`, `burn-rate-alerting`, `telemetry-sampling`, `telemetry-pipelines`, `observability-maturity-model`.
+- **5 agents** em `kit/agents/`: `observability-instrumenter`, `incident-investigator` (usa MCP Supabase get_logs/execute_sql/get_advisors), `slo-engineer` (apply_migration), `burn-rate-forecaster`, `omm-auditor`.
+- **6 commands**: `/instrumentar-fase`, `/investigar-producao`, `/definir-slo`, `/burn-rate-status`, `/auditar-observabilidade`, `/observabilidade` (orquestrador análogo a `/supabase`).
+- **3 audit gates** em `gates/`: `obs-skills-frontmatter`, `obs-agents-mcp-supabase`, `omm-no-regression`.
+- **Integração profunda com Suíte Supabase v1.8** — 7 agents Supabase patcheados com bloco "Observabilidade integrada" (skills observability cross-referenced; SLI tables nascem com schema; auth/storage/edge-fn/realtime instrumentados desde projeto).
+- **Integração com fluxo framework** — `/discutir-fase`, `/planejar-fase`, `/verificar-trabalho`, `/forense`, `/auditar-marco`, `/concluir-marco` ganharam blocos `<observability_integration>` com hooks ODD + OMM.
+- Material-fonte: livro *Observability Engineering* (Charity Majors, Liz Fong-Jones, George Miranda — O'Reilly, 2022, ISBN 978-1-492-07644-5).
+- Stable API v1.0+ preservada — content-only milestone (zero alterações em `src/core/`).
+- Detalhes: `.planning/milestones/v1.9/`.
+
 ## Em andamento
 
-(nada — v1.8.0 concluído)
+(nada — v1.9.0 concluído)
 
 ## Backlog macro (não-priorizado)
 

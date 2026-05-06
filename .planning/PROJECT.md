@@ -1,13 +1,17 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-06 — v1.9 Observabilidade iniciado.
+> Última atualização: 2026-05-06 — v1.9 Observabilidade concluída e arquivada.
 
 ## Estado Atual
 
-**v1.9 — Observabilidade** em planejamento. Incorporar técnicas do livro *Observability Engineering* (Charity Majors, Liz Fong-Jones, George Miranda — O'Reilly, 2022) como skills/agentes/comandos canônicos. v1.8.0+v1.8.1 (Suíte Supabase + integração) arquivados.
+**v1.9 — Observabilidade** entregue e arquivada em `.planning/milestones/v1.9/`. 41 REQs em 7 fases (29-35). Stable API v1.0+ preservada. Aguardando cut: `npm version minor && git push --follow-tags`.
 
-## Milestone Atual: v1.9 Observabilidade
+## Próximo Milestone
+
+Use `/novo-marco` para iniciar próximo ciclo (questionamento → pesquisa → requisitos → roadmap).
+
+## ~~Milestone Anterior: v1.9 Observabilidade (concluído 2026-05-06)~~
 
 **Objetivo:** Adicionar uma camada de expertise em observabilidade ao kit (skills + agentes + comandos), inspirada em *Observability Engineering*, aproveitada pela Suíte Supabase existente para potencializar o uso dos MCP tools `mcp__supabase__get_logs/get_advisors/execute_sql` em diagnóstico, SLOs e instrumentação.
 
