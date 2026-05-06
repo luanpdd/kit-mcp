@@ -6,6 +6,31 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.7.0] - 2026-05-06
+
+Milestone v1.7 — perf+lean part 2 + UX naming canonical: 10 REQs em 3 fases.
+
+### Performance
+
+- **Workflow files compactados** (Phase 22) — `discuss-phase.md` 49→39 KB (-22%), `plan-phase.md` 36→31 KB (-15%), `new-project.md` 40→37 KB (-7%). Cuts em prosa redundante; specs core (questionamento, fluxo de fases, retornos estruturados) preservados.
+- **`listKit({ stubsOnly: true })`** (Phase 23, PERF-S1) — sync em mode=reference (default) lê só os primeiros 4KB de cada arquivo (frontmatter), pulando body/content que stub renderers nunca usam. Cache key separado (`${kitRoot}:full` vs `${kitRoot}:stubs`). Benchmark local: 1.79× speedup em cold listKit.
+
+### Tokens (boilerplate dedup)
+
+- **Output style centralizado** (Phase 24, TOK-D1) — `kit/framework/references/output-style.md` é a única fonte; 18 agentes referenciam via `@./.claude/framework/references/output-style.md`. Economia: 19,110 bytes na árvore agents/ (-6%).
+
+### UX (naming canonical)
+
+- **`/fazer` é o entrypoint canônico** (Phase 24, UX-F1/F2/F3) — abre com tabela de decisão "intenção → comando". `/rapido`, `/expresso`, `/proximo` continuam funcionando direto, mas cada um tem nova seção "Quando usar" com trade-offs (✅/❌/🤔) e link de volta a `/fazer`. `/ajuda` (e `kit/framework/workflows/help.md`) destaca `/fazer` no topo.
+
+### Sem mudanças de API runtime
+
+Stable API v1.0+ preservada. `mode=copy` continua lendo content full. `mcp__kit__kit action=get` retorna content/absPath. Aliases de comando todos preservados.
+
+### Tests
+
+115 unit (+3 stubs-only) + 67 integration. Todos verdes.
+
 ## [1.6.1] - 2026-05-05
 
 DX patch: comando `kit doctor` + upgrade-check no boot do sidecar + cache de gates.

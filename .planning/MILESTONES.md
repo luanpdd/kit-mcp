@@ -92,12 +92,15 @@ Série de patches feitos fora do framework — UI redesign, framework velocity, 
 - Cache TTL 30s em `listGates` (mirrors PERF-01 pattern)
 - 112 unit + 67 integration green; Stable API preservada.
 
+### v1.7.0 — Perf+lean part 2 + UX canonical (2026-05-06) 🧹 Workflow compaction + naming
+- Phase 22: workflow files compactados (discuss-phase 49→39 KB, plan-phase 36→31 KB, new-project 40→37 KB)
+- Phase 23: stubs-only sync mode (1.79× speedup em cold listKit; cache key separado)
+- Phase 24: boilerplate dedup (output-style centralizado em references/, 19 KB economizados em 18 agents) + /fazer canonical com árvore de decisão; aliases /rapido /expresso /proximo linkam de volta
+- 115 unit + 67 integration green; Stable API preservada.
+
 ## Em andamento
 
-**v1.7.0 — perf+lean part 2 + UX naming canonical** (em planejamento). 10 REQs em 3 fases:
-- Phase 22: workflow compaction (discuss-phase, new-project, plan-phase) — Onda 2 do plano de melhorias
-- Phase 23: stub-only sync mode
-- Phase 24: agent boilerplate dedup + `/fazer` canonical entrypoint
+(nada — v1.7.0 concluído)
 
 ## Backlog macro (não-priorizado)
 

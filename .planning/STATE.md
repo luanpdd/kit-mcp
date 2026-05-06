@@ -4,20 +4,23 @@
 
 ## Posição Atual
 
-Fase: Não iniciada (definindo requisitos)
+Fase: Concluída
 Plano: —
-Status: v1.7 aberto, planejando
-Última atividade: 2026-05-06 — Milestone v1.7 iniciado
+Status: v1.7.0 entregue, pendente cut
+Última atividade: 2026-05-06 — Phases 22, 23, 24 commitadas
 
 ## Milestone ativo
 
-**v1.7.0 — perf+lean part 2 + UX naming canonical.** 10 REQs em 3 fases (22, 23, 24). Continuação direta de v1.6 — Onda 1 já entregue em v1.6.1.
+**Nenhum.** v1.7.0 concluído (3 fases — 22 workflow compaction, 23 stubs-only sync, 24 boilerplate dedup + /fazer canonical).
 
 ## Próximo passo
 
-`/discutir-fase 22` — Workflow compaction (PERF-W1/W2/W3)
-
-Ou pular discussão: `/planejar-fase 22`.
+Cut da v1.7.0:
+```bash
+npm version minor -m "v%s — perf+lean part 2 + UX canonical"
+git push --follow-tags origin main
+# publish.yml auto-publica via npm
+```
 
 ## Bloqueadores
 
@@ -35,7 +38,7 @@ Ou pular discussão: `/planejar-fase 22`.
 - v1.2.3 → v1.5.3 — patches ad-hoc fora do framework (CHANGELOG é canônico)
 - v1.6.0 — concluído 2026-05-05 (16 audit REQs + observability hook); publicado em npm
 - v1.6.1 — concluído 2026-05-05 (kit doctor + upgrade-check + gates cache, Onda 1); publicado em npm
-- v1.7.0 — **em planejamento** (este milestone, Onda 2)
+- v1.7.0 — concluído 2026-05-06 (workflow compaction + stubs-only sync + boilerplate dedup + /fazer canonical, Onda 2); cut pendente
 
 ## Contexto Acumulado
 
