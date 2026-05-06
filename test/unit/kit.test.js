@@ -98,3 +98,34 @@ test('listKit — clearKitCache forces re-read', async () => {
   // Different reference proves cache miss after clear.
   assert.notEqual(a, b, 'after clearKitCache, listKit should produce a fresh object');
 });
+
+// PERF-S1: stubs-only mode — frontmatter only, body/content omitted.
+test('listKit({ stubsOnly: true }) — omits body/content but keeps frontmatter', async () => {
+  clearKitCache();
+  const stubs = await listKit(FIXTURE, { stubsOnly: true });
+  assert.equal(stubs.stubsOnly, true);
+  for (const item of stubs.agents) {
+    assert.ok(item.name, 'name preserved');
+    assert.ok(item.description, 'description preserved');
+    assert.ok(item.frontmatterRaw, 'frontmatterRaw preserved');
+    assert.equal(item.body, undefined, 'body should be absent in stubs mode');
+    assert.equal(item.content, undefined, 'content should be absent in stubs mode');
+  }
+});
+
+test('listKit — stubsOnly cache key separate from full', async () => {
+  clearKitCache();
+  const full = await listKit(FIXTURE);
+  const stubs = await listKit(FIXTURE, { stubsOnly: true });
+  // Different references because cache keys differ.
+  assert.notEqual(full, stubs, 'full and stubs should have separate cache entries');
+  assert.equal(full.stubsOnly, false);
+  assert.equal(stubs.stubsOnly, true);
+});
+
+test('listKit — stubsOnly cache hit on repeat call', async () => {
+  clearKitCache();
+  const a = await listKit(FIXTURE, { stubsOnly: true });
+  const b = await listKit(FIXTURE, { stubsOnly: true });
+  assert.equal(a, b, 'second stubs-only call returns same cached reference');
+});

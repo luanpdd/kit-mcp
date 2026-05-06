@@ -33,28 +33,50 @@ export function resolveKitRoot(kitRoot) {
 // disk on every invocation. Trade-off: callers that edit kit/ inside the same
 // process may see stale data for up to 30s. Acceptable for MCP/CLI ergonomics.
 const KIT_CACHE_TTL_MS = 30_000;
-const kitCache = new Map(); // kitRoot -> { value, ts }
+const kitCache = new Map(); // `${kitRoot}:${mode}` -> { value, ts }
+
+// PERF-S1: when sync runs in mode=reference (default), the body/content of each
+// kit file is never used — only frontmatter (name + description). Reading just
+// the first STUB_READ_BYTES is enough for any frontmatter we'd ever produce and
+// avoids loading 50 KB+ files (planner.md etc) from disk.
+const STUB_READ_BYTES = 4096;
 
 export function clearKitCache() { kitCache.clear(); }
 
-export async function listKit(kitRoot) {
+export async function listKit(kitRoot, opts = {}) {
   kitRoot = resolveKitRoot(kitRoot);
-  const cached = kitCache.get(kitRoot);
+  const stubsOnly = opts.stubsOnly === true;
+  const cacheKey = `${kitRoot}:${stubsOnly ? 'stubs' : 'full'}`;
+  const cached = kitCache.get(cacheKey);
   if (cached && Date.now() - cached.ts < KIT_CACHE_TTL_MS) {
     return cached.value;
   }
   const [agents, commands, skills, skillsExtras] = await Promise.all([
-    readMdDir(path.join(kitRoot, 'agents'),    'agent'),
-    readMdDir(path.join(kitRoot, 'commands'),  'command'),
-    readSkillsDir(path.join(kitRoot, 'skills')),
-    readSkillsDir(path.join(kitRoot, 'skills-extras')).catch(() => []),
+    readMdDir(path.join(kitRoot, 'agents'),    'agent',   { stubsOnly }),
+    readMdDir(path.join(kitRoot, 'commands'),  'command', { stubsOnly }),
+    readSkillsDir(path.join(kitRoot, 'skills'), { stubsOnly }),
+    readSkillsDir(path.join(kitRoot, 'skills-extras'), { stubsOnly }).catch(() => []),
   ]);
-  const value = { agents, commands, skills, skillsExtras, kitRoot };
-  kitCache.set(kitRoot, { value, ts: Date.now() });
+  const value = { agents, commands, skills, skillsExtras, kitRoot, stubsOnly };
+  kitCache.set(cacheKey, { value, ts: Date.now() });
   return value;
 }
 
-async function readMdDir(dir, kind) {
+// Read just enough bytes from the head of the file to capture the frontmatter.
+// Returns the partial string. fs.open + fd.read avoids the OS pre-fetching the
+// rest of the file (which fs.readFile would force).
+async function readHead(absPath, n) {
+  const fd = await fs.open(absPath, 'r');
+  try {
+    const buf = Buffer.alloc(n);
+    const { bytesRead } = await fd.read(buf, 0, n, 0);
+    return buf.subarray(0, bytesRead).toString('utf8');
+  } finally {
+    await fd.close();
+  }
+}
+
+async function readMdDir(dir, kind, { stubsOnly = false } = {}) {
   let entries;
   try {
     entries = await fs.readdir(dir, { withFileTypes: true });
@@ -65,23 +87,28 @@ async function readMdDir(dir, kind) {
   for (const e of entries) {
     if (!e.isFile() || !e.name.endsWith('.md')) continue;
     const absPath = path.join(dir, e.name);
-    const raw = await fs.readFile(absPath, 'utf8');
+    const raw = stubsOnly
+      ? await readHead(absPath, STUB_READ_BYTES)
+      : await fs.readFile(absPath, 'utf8');
     const { frontmatter, body } = splitFrontmatter(raw);
-    out.push({
+    const item = {
       kind,
       name: e.name.replace(/\.md$/, ''),
       absPath,
       frontmatter,
       frontmatterRaw: matchFrontmatterRaw(raw),
-      body,
-      content: raw,
       description: frontmatter?.description ?? firstNonEmptyLine(body),
-    });
+    };
+    if (!stubsOnly) {
+      item.body = body;
+      item.content = raw;
+    }
+    out.push(item);
   }
   return out.sort((a, b) => a.name.localeCompare(b.name));
 }
 
-async function readSkillsDir(dir) {
+async function readSkillsDir(dir, { stubsOnly = false } = {}) {
   let entries;
   try {
     entries = await fs.readdir(dir, { withFileTypes: true });
@@ -93,20 +120,26 @@ async function readSkillsDir(dir) {
     if (!e.isDirectory()) continue;
     const skillPath = path.join(dir, e.name, 'SKILL.md');
     let raw;
-    try { raw = await fs.readFile(skillPath, 'utf8'); }
-    catch { continue; }
+    try {
+      raw = stubsOnly
+        ? await readHead(skillPath, STUB_READ_BYTES)
+        : await fs.readFile(skillPath, 'utf8');
+    } catch { continue; }
     const { frontmatter, body } = splitFrontmatter(raw);
-    out.push({
+    const item = {
       kind: 'skill',
       name: e.name,
       absPath: skillPath,
       dirPath: path.join(dir, e.name),
       frontmatter,
       frontmatterRaw: matchFrontmatterRaw(raw),
-      body,
-      skillContent: raw,
       description: frontmatter?.description ?? firstNonEmptyLine(body),
-    });
+    };
+    if (!stubsOnly) {
+      item.body = body;
+      item.skillContent = raw;
+    }
+    out.push(item);
   }
   return out.sort((a, b) => a.name.localeCompare(b.name));
 }

@@ -28,7 +28,9 @@ export async function syncTo(targetId, opts = {}) {
 
   // PERF-03: accept a pre-loaded kit to avoid re-walking the disk when callers
   // already have one in hand (CLI sync that follows reverse-sync detect, etc).
-  const kit  = opts.kit ?? await listKit(kitRoot);
+  // PERF-S1: in mode=reference (default), read just frontmatter — body/content
+  // is never used by stub renderers. Saves I/O on big kit files (planner.md etc).
+  const kit  = opts.kit ?? await listKit(kitRoot, { stubsOnly: mode === 'reference' });
   const ops  = [];
 
   if (target.rules) {
