@@ -14,41 +14,43 @@ description: Valida que skills supabase-* contêm strings obrigatórias verbatim
 ```bash
 #!/usr/bin/env bash
 # PT-BR: cada skill deve incluir strings obrigatórias verbatim para prevenir anti-patterns
+# Portable: bash 3.2+ (macOS default), sem associative arrays
 set -e
 
 VIOLATIONS=0
 
-# PT-BR: mapeamento skill → must-include strings (delimitadas por |)
-declare -A MUST_INCLUDE
-MUST_INCLUDE["supabase-rls-policies"]="(select auth.uid())|user_metadata|TO authenticated"
-MUST_INCLUDE["supabase-database-functions"]="set search_path = ''|SECURITY INVOKER"
-MUST_INCLUDE["supabase-auth-ssr"]="getAll|setAll|auth-helpers-nextjs|@supabase/ssr"
-MUST_INCLUDE["supabase-realtime"]="broadcast|private: true|realtime.broadcast_changes|removeChannel"
-MUST_INCLUDE["supabase-edge-functions"]="npm:|jsr:|Deno.serve|EdgeRuntime.waitUntil|/tmp"
-MUST_INCLUDE["supabase-declarative-schema"]="supabase/schemas/|supabase stop|supabase db diff -f"
-MUST_INCLUDE["supabase-migrations"]="YYYYMMDDHHmmss|RLS|granular"
-MUST_INCLUDE["supabase-postgres-style"]="snake_case|ISO 8601|lowercase"
-MUST_INCLUDE["supabase-storage"]="signed URL|storage.objects|multi-tenant"
-MUST_INCLUDE["supabase-pgvector-rag"]="HNSW|IVFFlat|<=>|RAG with permissions"
-MUST_INCLUDE["supabase-cron-queues"]="pg_cron|pgmq|pg_net"
+check_skill() {
+  local skill="$1"
+  local required="$2"   # strings separadas por |
+  local file="kit/skills/$skill/SKILL.md"
 
-for skill in "${!MUST_INCLUDE[@]}"; do
-  file="kit/skills/$skill/SKILL.md"
   if [ ! -f "$file" ]; then
     echo "FAIL: $file — skill ausente"
     VIOLATIONS=$((VIOLATIONS + 1))
-    continue
+    return
   fi
 
   # PT-BR: testa cada string (separada por |)
-  IFS='|' read -ra REQUIRED <<< "${MUST_INCLUDE[$skill]}"
-  for str in "${REQUIRED[@]}"; do
+  local IFS='|'
+  for str in $required; do
     if ! grep -qF "$str" "$file"; then
       echo "FAIL: $file — must-include ausente: '$str'"
       VIOLATIONS=$((VIOLATIONS + 1))
     fi
   done
-done
+}
+
+check_skill "supabase-rls-policies"        "(select auth.uid())|user_metadata|TO authenticated"
+check_skill "supabase-database-functions"  "set search_path = ''|SECURITY INVOKER"
+check_skill "supabase-auth-ssr"            "getAll|setAll|auth-helpers-nextjs|@supabase/ssr"
+check_skill "supabase-realtime"            "broadcast|private: true|realtime.broadcast_changes|removeChannel"
+check_skill "supabase-edge-functions"      "npm:|jsr:|Deno.serve|EdgeRuntime.waitUntil|/tmp"
+check_skill "supabase-declarative-schema"  "supabase/schemas/|supabase stop|supabase db diff -f"
+check_skill "supabase-migrations"          "YYYYMMDDHHmmss|RLS|granular"
+check_skill "supabase-postgres-style"      "snake_case|ISO 8601|lowercase"
+check_skill "supabase-storage"             "signed URL|storage.objects|multi-tenant"
+check_skill "supabase-pgvector-rag"        "HNSW|IVFFlat|<=>|RAG with permissions"
+check_skill "supabase-cron-queues"         "pg_cron|pgmq|pg_net"
 
 if [ "$VIOLATIONS" -gt 0 ]; then
   echo "Total violations: $VIOLATIONS"
