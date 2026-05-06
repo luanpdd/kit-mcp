@@ -4,20 +4,25 @@
 
 ## Posição Atual
 
-Fase: Não iniciada (roadmap criado)
+Fase: Concluída
 Plano: —
-Status: Roadmap criado (4 fases, Phase 25 → Phase 28)
-Última atividade: 2026-05-06 — Roadmap v1.8 criado (31 REQs mapeados em 4 fases)
+Status: v1.8.0 entregue (31/31 REQs em 4 fases), pendente lifecycle (auditar → concluir → limpar) + cut
+Última atividade: 2026-05-06 — Phase 28 concluída (5 gates + UUID migration + CHANGELOG)
 
 ## Milestone ativo
 
-**v1.8 Suíte Supabase** — adicionar skills + agents + command `/supabase` para suporte canônico a Postgres/DB, Auth, Realtime, Edge Functions, RLS, Migrations, Storage, pgvector/RAG, Cron+Queues.
+**Nenhum.** v1.8.0 completo. Aguardando `/auditar-marco` → `/concluir-marco` → cut (`npm version minor` + `npm publish`).
 
 ## Próximo passo
 
-`/planejar-fase 25` — Phase 25: 11 skills Supabase + glossário compartilhado (`_shared-supabase/glossary.md`).
-
-Dependências da Phase 25: nenhuma. Pode iniciar imediatamente.
+1. `/auditar-marco` — audita 4 fases contra intenção original
+2. `/concluir-marco` — arquiva milestone em `.planning/milestones/v1.8.0/`
+3. Cut da v1.8.0:
+   ```bash
+   npm version minor -m "v%s — Suíte Supabase"
+   git push --follow-tags origin main
+   # publish.yml auto-publica via npm
+   ```
 
 ## Bloqueadores
 
@@ -36,16 +41,8 @@ Dependências da Phase 25: nenhuma. Pode iniciar imediatamente.
 - v1.6.0 — concluído 2026-05-05 (16 audit REQs + observability hook); publicado em npm
 - v1.6.1 — concluído 2026-05-05 (kit doctor + upgrade-check + gates cache, Onda 1); publicado em npm
 - v1.7.0 — concluído 2026-05-06 (workflow compaction + stubs-only sync + boilerplate dedup + /fazer canonical, Onda 2); cut pendente
-- v1.8.0 — em planejamento (Suíte Supabase: 11 skills + 7 agents + command + 5 gates)
+- v1.8.0 — concluído 2026-05-06 (Suíte Supabase: 11 skills + 7 agents + command + 5 gates + UUID cleanup, Phases 25-28); aguardando lifecycle + cut
 
 ## Contexto Acumulado
 
-Os 7 milestones anteriores (v1.0 → v1.7) construíram a infraestrutura genérica do kit-mcp (registry, sync, MCP tools, sidecar, observability, perf+lean). v1.8 muda o foco para **conteúdo especializado**: a primeira suíte de skills+agents+command focada em um stack específico (Supabase). v1.8 é **content-only por design** — zero alterações em `src/core/`, registry, sync. Stable API v1.0+ preservada. Material-fonte: 7 guias oficiais Supabase + 4 dimensões de pesquisa em `.planning/research/`. Sidecar em http://127.0.0.1:7100/ para observability.
-
-Roadmap v1.8 (4 fases, Phase 25 → Phase 28):
-- Phase 25 — 11 skills + glossário (12 REQs)
-- Phase 26 — 7 agents + convenção universal SB-A00 (8 REQs)
-- Phase 27 — command `/supabase` orquestrador (2 REQs)
-- Phase 28 — 5 audit gates + 4 validação cross-IDE + cleanup (9 REQs)
-
-Total: 31 REQs mapeados (zero unmapped).
+Os 7 milestones anteriores (v1.0 → v1.7) construíram a infraestrutura genérica do kit-mcp. v1.8 é o primeiro milestone **content-only** com expertise especializada: Suíte Supabase (skills + agents + command + gates focados em Postgres/Supabase backend). 31 REQs entregues em 4 fases sem alterar `src/core/`. Todos os anti-pitfalls (A1-A12 packaging + B1-B14 Supabase) endereçados via gates ou patterns embutidos. Sidecar em http://127.0.0.1:7100/ ainda ativo da abertura.

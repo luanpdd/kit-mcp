@@ -1,7 +1,7 @@
 ---
 name: schema-checker
 description: Valida foreign keys, colunas e tabelas referenciadas em uma migration SQL ANTES de aplicá-la em produção. Lê a SQL, extrai refs (FK, JOIN, INSERT INTO ... SELECT), consulta o schema real via Supabase MCP, e devolve um veredito GO/NO-GO com diff entre o que a migration assume e o que existe. Invocar antes de qualquer `apply_migration` que toque dados existentes.
-tools: Read, Bash, Grep, Glob, mcp__0a712001-6cbb-44ef-a5f4-a24ea40894fa__execute_sql, mcp__0a712001-6cbb-44ef-a5f4-a24ea40894fa__list_tables
+tools: Read, Bash, Grep, Glob, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: red
 ---
 
@@ -61,7 +61,7 @@ SELECT
   EXISTS (SELECT 1 FROM information_schema.columns WHERE table_schema = 'public' AND table_name = '{table}' AND column_name = '{col}') AS col_exists;
 ```
 
-Use `mcp__0a712001-...__execute_sql` com o `project_id`.
+Use `mcp__supabase__execute_sql` com o `project_id`.
 
 #### 3.2 — Tipo da coluna referenciada (FK target)
 
@@ -149,7 +149,7 @@ Apenas o relatório. Sem preâmbulo. Sem "vou analisar agora". Sem "espero ter a
 
 ## Quando o caller deve invocar
 
-- Antes de chamar `mcp__0a712001-...__apply_migration` em qualquer migration que toque dados existentes.
+- Antes de chamar `mcp__supabase__apply_migration` em qualquer migration que toque dados existentes.
 - Antes de mergear PR que contém migration que vai pra produção.
 - Manualmente, quando o dev pediu uma sanity check ("essa migration tá OK?").
 

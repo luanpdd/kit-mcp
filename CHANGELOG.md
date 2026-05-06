@@ -6,6 +6,81 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.8.0] - 2026-05-06
+
+Milestone v1.8 — Suíte Supabase: primeira coleção especializada de skills+agents+command focada em um stack concreto. 31 REQs em 4 fases (Phases 25-28).
+
+### Adicionado — 11 skills Supabase canônicas (Phase 25)
+
+Cada skill é auto-contida (sem `references/` folder), com frontmatter `description ≤ 200 chars`, template fixo de 5 seções (Quando usar / Regras absolutas / Patterns canônicos / Anti-patterns / Ver também), code blocks EN com comentários PT-BR pedagógicos, e cross-refs via Markdown link relativo.
+
+- `supabase-realtime` — broadcast vs postgres_changes, `private: true` obrigatório, naming `scope:entity:id`, `realtime.broadcast_changes` triggers, `removeChannel` cleanup
+- `supabase-auth-ssr` — Next.js v16 + `@supabase/ssr` (NUNCA `auth-helpers-nextjs`), padrão `getAll`/`setAll` exclusivo, middleware com `getUser()` + redirects, single serverClient factory
+- `supabase-edge-functions` — Deno runtime, imports `npm:`/`jsr:` versionados, env vars pre-populadas, `Deno.serve`, `EdgeRuntime.waitUntil`, file writes apenas em `/tmp`, basePath `/<function-name>`
+- `supabase-declarative-schema` — workflow `supabase/schemas/` → `supabase stop` → `db diff -f` → revisar → apply, com caveats sobre views, RLS, partitions
+- `supabase-rls-policies` — REGRA #1 absoluta `(select auth.uid())` wrapper, WARNING `user_metadata` em autorização (privilege escalation), policies granulares por operação, `to authenticated`/`to anon` explícito, indexes obrigatórios, MFA via `aal2`
+- `supabase-database-functions` — `SECURITY INVOKER` por default, `set search_path = ''` SEMPRE (lint advisor 0011), schema-qualified names, `IMMUTABLE`/`STABLE` quando aplicável
+- `supabase-migrations` — naming `YYYYMMDDHHmmss_<name>.sql` UTC, header de metadados, RLS obrigatório em toda nova tabela, granular policies, comentários extensivos em comandos destrutivos
+- `supabase-postgres-style` — lowercase reserved, `snake_case`, plurais para tabelas/singular para colunas, `ISO 8601`, CTEs lineares para queries complexas
+- `supabase-storage` — buckets públicos vs privados, `signed URL` com expiration, RLS sobre `storage.objects` com multi-tenant path isolation, image transforms (Pro+), TUS para uploads > 6 MB, awareness de egress billing
+- `supabase-pgvector-rag` — `create extension vector`, dim consistente por modelo, `HNSW` (default 2026) vs `IVFFlat`, operadores `<=>`/`<#>`/`<->`, RAG with permissions via RLS, chunking 200-500 tokens
+- `supabase-cron-queues` — `pg_cron` + `pgmq` (Postgres 15.6.1.143+) + `pg_net` v0.10.0+, pattern canônico `cron → pgmq → Edge Function`, idempotência obrigatória em consumers
+
+Plus glossário compartilhado em `kit/skills/_shared-supabase/glossary.md` — termos PT-BR↔EN, comandos CLI canônicos, patterns canônicos consolidados (não-skill, arquivo de referência).
+
+### Adicionado — 7 agents Supabase + convenção universal (Phase 26)
+
+Cada agent inclui tabela `## Compatibilidade` por IDE (Full / Partial / Offline-only), preflight detection MCP no Step 0 (declara MODO OFFLINE explícito se MCP indisponível — NUNCA finge sucesso), output em layout canônico do CLI Supabase (`supabase/migrations/`, `supabase/schemas/`, `supabase/functions/<name>/`), e frontmatter `tools:` com nomes canônicos `mcp__supabase__*` (zero UUIDs).
+
+- `supabase-architect` (blue) — projeta schema + RLS + topologia realtime ANTES da implementação. Pergunta tier (Free/Pro/Team/Enterprise) upfront via `AskUserQuestion`. Alerta sobre Free pause + branch billing. NÃO escreve código.
+- `supabase-migration-writer` (yellow) — escreve migrations seguindo declarative schema + RLS obrigatório + style guide. Detecta layout `schemas/` vs `migrations/` no boot. Aplica via `mcp__supabase__apply_migration` se MCP disponível; modo offline gera SQL.
+- `supabase-rls-writer` (red) — gera 4 policies granulares por operação com `(select auth.uid())` wrapper + indexes recomendados. **ABORTA explicitamente** se input menciona `user_metadata` em policy de autorização.
+- `supabase-edge-fn-writer` (cyan) — escreve Edge Functions Deno com `npm:`/`jsr:` versionados, `Deno.serve`, env vars pre-populadas, file writes em `/tmp`, basePath em multi-rota. Alerta cold start em bundles grandes.
+- `supabase-realtime-implementer` (magenta) — configura 3 layers (RLS sobre `realtime.messages` + trigger DB via `realtime.broadcast_changes` + client subscribe com cleanup obrigatório). Migra `postgres_changes` para `broadcast`.
+- `supabase-auth-bootstrapper` (green) — bootstrap Next.js v16 com `@supabase/ssr` (browser client + server client + middleware completo). **Audita `.env*` files** e ABORTA se detectar `NEXT_PUBLIC_*SERVICE*` (service_role leak).
+- `supabase-storage-implementer` (orange) — configura bucket + RLS sobre `storage.objects` com multi-tenant path (`<auth.uid()>/<file>`) + client code (upload + signedURL). Suporta TUS para uploads grandes.
+
+### Adicionado — Command `/supabase` orquestrador único (Phase 27)
+
+`kit/commands/supabase.md` aceita 10 subcomandos com sinônimos PT-BR/EN: `arquiteto|architect`, `migration|migrar`, `rls`, `edge|edge-function|funcao`, `realtime|tempo-real`, `auth|autenticacao`, `storage|armazenamento`, `rag|pgvector|embeddings`, `cron|queues|pgmq|background`, `check|validar` (invoca `schema-checker` existente), `help|ajuda|?`.
+
+Detecta `supabase/config.toml` para extrair `project_id`. Dispatch via `Task(subagent_type=supabase-...)`. **É o único ponto de chain de agents Supabase** — agents permanecem função pura (anti-pitfall A10).
+
+### Adicionado — 5 audit gates novos (Phase 28)
+
+Markdown specs em `gates/` com `## Check` em bash:
+
+- `gates/budget-description.md` — valida `description ≤ 200 chars` em todo agent/command/skill (anti-pitfall A2 — CLAUDE.md inflation)
+- `gates/no-personal-uuid.md` — detecta UUIDs `[0-9a-f]{8}-...` em frontmatter ou body de `kit/{agents,commands,skills}/` (anti-pitfall A12)
+- `gates/agent-no-recursive-dispatch.md` — valida zero `Task(...subagent_type=...supabase-...)` em `kit/agents/supabase-*.md` (anti-pitfall A10)
+- `gates/skill-must-include.md` — valida strings obrigatórias por skill verbatim — `(select auth.uid())`, `set search_path = ''`, `getAll`/`setAll`, `private: true`, `Deno.serve`, etc. (anti-pitfall A7)
+- `gates/sync-idempotent.md` — valida que `kit sync claude-code` rodado 2× produz `.claude/` byte-idêntico (anti-pitfall A1, non-blocking warn)
+
+### Mudado — schema-checker.md UUID migration
+
+`kit/agents/schema-checker.md` migrado de `mcp__0a712001-6cbb-44ef-a5f4-a24ea40894fa__execute_sql` (UUID do projeto pessoal do mantenedor) para `mcp__supabase__execute_sql`/`__list_tables`/`__apply_migration` (canônico). **Breaking interno:** instaladores de versões anteriores tinham um UUID que não funcionava para eles; com v1.8 funciona com qualquer Supabase MCP server configurado. Mesma funcionalidade — apenas referência canônica.
+
+### Sem mudanças de API runtime
+
+v1.8 é **content-only por design** — zero alterações em `src/core/`, `registry.js`, `sync.js`. Stable API v1.0+ totalmente preservada. CI passa sem mudança em `.github/workflows/`. Deps budget mantido em 6/6 (zero deps novas — todo o conteúdo é markdown).
+
+### Tests
+
+Tests existentes (115 unit + 67 integration de v1.7) continuam verde. Novos gates não têm tests dedicados (são bash em markdown, executados via `runGate` no framework de gates já testado em `test/unit/gates.test.js`).
+
+### Decisões arquiteturais
+
+Validadas em `.planning/research/`:
+- **Naming flat** `kit/skills/supabase-*/SKILL.md` (não subárvore — quebraria `readSkillsDir`)
+- **MCP-first com fallback offline gracioso** — 5 dos 8 IDE targets não têm Supabase MCP; agents funcionam offline gerando SQL/código
+- **Cross-references via Markdown link relativo** (não `@-include` — quebraria lazy-load das skills)
+- **Outputs em layouts canônicos do CLI Supabase** — `supabase/migrations/`, `supabase/schemas/`, `supabase/functions/<name>/`
+- **Glossário compartilhado** em `_shared-supabase/` — não é skill (sem trigger), apenas referência cross-skill
+
+### Detalhes
+
+`.planning/milestones/v1.8.0/` (após `/concluir-marco`).
+
 ## [1.7.0] - 2026-05-06
 
 Milestone v1.7 — perf+lean part 2 + UX naming canonical: 10 REQs em 3 fases.

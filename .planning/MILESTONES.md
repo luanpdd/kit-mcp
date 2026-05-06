@@ -98,9 +98,22 @@ Série de patches feitos fora do framework — UI redesign, framework velocity, 
 - Phase 24: boilerplate dedup (output-style centralizado em references/, 19 KB economizados em 18 agents) + /fazer canonical com árvore de decisão; aliases /rapido /expresso /proximo linkam de volta
 - 115 unit + 67 integration green; Stable API preservada.
 
+### v1.8.0 — Suíte Supabase (2026-05-06) 🗄️ Skills+Agents+Command especializados
+
+- 31/31 REQs entregues em 4 fases (Phases 25-28).
+- **11 skills canônicas** em `kit/skills/supabase-*/SKILL.md`: realtime, auth-ssr, edge-functions, declarative-schema, rls-policies, database-functions, migrations, postgres-style, storage, pgvector-rag, cron-queues. Auto-contidas, template fixo de 5 seções, code blocks EN com comentários PT-BR.
+- **Glossário** em `kit/skills/_shared-supabase/glossary.md` — termos PT-BR↔EN + comandos CLI canônicos + patterns canônicos consolidados.
+- **7 agents** em `kit/agents/supabase-*.md`: architect, migration-writer, rls-writer, edge-fn-writer, realtime-implementer, auth-bootstrapper, storage-implementer. Cada um com tabela Compatibilidade IDE + preflight MCP + modo offline gracioso + canonical layouts.
+- **1 command** `/supabase` em `kit/commands/supabase.md` com 10 subcomandos (sinônimos PT/EN). Dispatch via `Task(subagent_type=supabase-...)`. Único orquestrador.
+- **5 audit gates** em `gates/`: budget-description, no-personal-uuid, agent-no-recursive-dispatch, skill-must-include, sync-idempotent.
+- **Cleanup oportunístico:** `kit/agents/schema-checker.md` migrado de UUID `mcp__0a712001-...` (UUID pessoal) para `mcp__supabase__*` canônico. Breaking interno fixado.
+- Stable API v1.0+ preservada — content-only milestone (zero alterações em `src/core/`).
+- Material-fonte: 7 guias oficiais Supabase + 4 dimensões de pesquisa (`.planning/research/`).
+- Detalhes: `.planning/milestones/v1.8.0/` (após `/concluir-marco`).
+
 ## Em andamento
 
-(nada — v1.7.0 concluído)
+(nada — v1.8.0 concluído)
 
 ## Backlog macro (não-priorizado)
 
