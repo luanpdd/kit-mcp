@@ -270,7 +270,140 @@ mcp__supabase__get_logs             — verificação de instrumentação (PRR a
 
 ## (c) Patterns canônicos
 
-_Em construção — preenchido em T4._
+### Pattern: risk continuum em decisão de SLO target
+
+> Cap 3. SLO target NÃO é meta arbitrária — é escolha explícita no continuum risk × innovation × cost. Custo cresce não-linearmente; usuário satura em torno de 99.95-99.99% para serviços user-facing (smartphone/ISP/Wi-Fi diluem qualquer melhoria além).
+
+| Target | Tolerância 30d | Quando usar | Custo relativo |
+|---|---|---|---|
+| 99% | 7.2 h | Tier free, beta features, internal tools | 1× |
+| 99.5% | 3.6 h | Tier free de produção | 2× |
+| 99.9% | 43.2 min | Tier paid, paths críticos default | 5× |
+| 99.95% | 21.6 min | Tier enterprise / mission-critical | 10× |
+| 99.99% | 4.3 min | Apenas se justificado por user perception (raro) | 50×+ |
+| 99.999% | 26 s | NUNCA para serviço user-facing (smartphone dilui) | 100×+ |
+
+**Princípio Google SRE:** "as reliable as needs to be, no more". Sobrar reliability é tão danoso quanto faltar — custa innovation velocity, e o usuário não percebe melhoria além de ~99.95%-99.99%.
+
+**Como aplicar:**
+1. Identifique o link mais fraco entre serviço e usuário final (ex: Wi-Fi 99% disponível dilui qualquer SLO 99.999%)
+2. Escolha SLO target ≤ 99.95% por default — só suba para 99.99%+ com justificativa documentada
+3. Documente o tradeoff explícito: "este SLO em troca de N% velocity gasto em reliability work"
+4. Revise a cada milestone — risk appetite evolui com produto
+
+### Pattern: 4 golden signals em código (OTel SDK)
+
+> Cap 6. Os 4 sinais mínimos universais aplicados em uma Edge Function/handler via OTel SDK. Latência separada por `result` (success vs error); errors counter por `error.type` (categoria, não message); saturation gauge é resource-specific (geralmente conn pool).
+
+```ts
+// PT-BR: instrumentação canônica de Edge Function — 4 golden signals
+import { trace, metrics } from '@opentelemetry/api'
+
+const tracer = trace.getTracer('orders-service')
+const meter = metrics.getMeter('orders-service')
+
+// PT-BR: 1. LATENCY — histogram com bucketing exponencial
+const latencyHistogram = meter.createHistogram('http_request_duration_ms', {
+  description: 'Request latency in ms',
+  unit: 'ms',
+  // PT-BR: buckets exponenciais cobrem long tail (1ms → 30s)
+  advice: { explicitBucketBoundaries: [1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 30000] }
+})
+
+// PT-BR: 2. TRAFFIC — counter de requests recebidos
+const trafficCounter = meter.createCounter('http_requests_total', {
+  description: 'Total HTTP requests received'
+})
+
+// PT-BR: 3. ERRORS — counter por error.type (alta cardinalidade controlada)
+const errorsCounter = meter.createCounter('http_errors_total', {
+  description: 'Total HTTP errors by error.type'
+})
+
+// PT-BR: 4. SATURATION — gauge do recurso mais escasso (connection pool em DB)
+const saturationGauge = meter.createObservableGauge('db_connection_pool_used_pct', {
+  description: 'DB connection pool utilization %',
+  unit: '%'
+})
+
+export async function placeOrder(req: Request) {
+  const startMs = performance.now()
+  trafficCounter.add(1, { endpoint: '/api/v1/orders', method: 'POST' })
+
+  return tracer.startActiveSpan('place_order', async (span) => {
+    try {
+      const order = await db.insertOrder(req.body)
+      // PT-BR: latência APENAS de success — separar de error
+      const durationMs = performance.now() - startMs
+      latencyHistogram.record(durationMs, { result: 'success', endpoint: '/api/v1/orders' })
+      return order
+    } catch (e) {
+      const durationMs = performance.now() - startMs
+      // PT-BR: latência de erro — separada
+      latencyHistogram.record(durationMs, { result: 'error', endpoint: '/api/v1/orders' })
+      // PT-BR: counter por error.type — categoria, não message
+      errorsCounter.add(1, { error_type: classify(e), endpoint: '/api/v1/orders' })
+      throw e
+    } finally {
+      span.end()
+    }
+  })
+}
+```
+
+**Atributos canônicos das métricas:**
+- `endpoint`: path normalizado (`/api/v1/orders`, NÃO `/api/v1/orders/abc-123`)
+- `method`: HTTP method (`GET`, `POST`)
+- `result`: `success` ou `error` — para latência APENAS
+- `error_type`: categoria fechada (`timeout`, `validation`, `auth`, `rate_limit`, `db`, `internal`)
+
+### Pattern: classificação de toil (decisão tree)
+
+> Cap 5. Antes de classificar trabalho como "toil", aplicar os 6 critérios canônicos Google. Trabalho repetitivo NÃO é automaticamente toil — overhead administrativo e grungy work são repetitivos mas têm naturezas diferentes.
+
+```text
+Tarefa repetitiva detectada → aplicar 6 critérios canônicos:
+
+1. Manual?           (humano executa cada vez) ────┐
+2. Repetitiva?       (já fiz isso 3+ vezes)        │
+3. Automatizável?    (script/cron resolve)          ├── Se TODOS sim → TOIL
+4. Tática?           (reage a evento, não planeja)  │   → automatizar / eliminar
+5. Sem valor durável? (não cria asset permanente)   │   → contar em ≤ 50% rule
+6. Escala linear?    (mais users = mais trabalho)  ─┘
+
+Se NÃO for toil mas repetitivo, classificar:
+- OVERHEAD (reuniões, RH) → não-eliminável, não conta em ≤ 50%
+- GRUNGY WORK (refactor, sec cleanup) → necessário, valor durável → projeto
+```
+
+**Regra ≤ 50%:** SRE não pode gastar mais que 50% do tempo em toil. Se passa de 50%, é gatilho para:
+1. Pedir mais headcount (toil cresce com produto, não scale linearmente com time)
+2. Engajar projeto de automation com prioridade P0
+3. Renegociar com produto sobre features que adicionam toil
+
+### Pattern: postmortem timeline em UTC
+
+> Cap 15. Timeline padronizado em UTC com horários `HH:MM` em ordem cronológica. Inclui ações que NÃO funcionaram (informa próximos incidents) e gap entre trigger e detection (métrica chave de monitoring quality).
+
+```text
+## Timeline (UTC)
+
+- 14:23 — Deploy v2.3.0 do orders-service mergeado em main
+- 14:27 — CI completa, deploy automatizado para prod (canary 10%)
+- 14:31 — Alerta SLO burn rate dispara (page on-call)
+- 14:33 — On-call ack page; abre incident Slack channel #inc-2026-05-06-01
+- 14:38 — Hipótese inicial: deploy v2.3.0 (correlação temporal)
+- 14:42 — Rollback canary para 0%; SLO burn cessa
+- 14:50 — Confirma: deploy v2.3.0 introduziu N+1 query em /api/v1/orders
+- 15:02 — Fix em PR #1234; CI verde em 14 min
+- 15:18 — Deploy do fix; canary 10% → 100% sem regressão
+- 15:25 — Incident resolvido; SLO compliance retorna a 99.92%
+```
+
+**Insights derivados desse timeline:**
+- **Detection lag:** trigger 14:23 → detect 14:31 = 8 min. Alvo: ≤ 5 min. Action item: alerta de canary regression em 1 min.
+- **Resolution time:** 14:31 → 15:25 = 54 min (MTTR). Action item: rollback automatizado em < 5 min via SLO burn detection.
+- **Root cause:** "deploy introduziu N+1" é trigger; root cause é "ausência de query plan diff em CI".
 
 ---
 
