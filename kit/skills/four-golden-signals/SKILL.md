@@ -270,3 +270,28 @@ CERTO: black-box detecta UX impact (cliente real não consegue) + white-box
        white-box mostra qual signal degradou (latency? errors? saturation?)
        e em qual endpoint.
 ```
+
+## Verificação
+
+Antes de marcar instrumentação como production-ready, validar:
+
+1. **Os 4 signals presentes** — Latency (histogram), Traffic (counter), Errors (counter por error.type), Saturation (gauge resource-specific)
+2. **Latency separada** — `result: 'success'` e `result: 'error'` em séries distintas
+3. **Histogram com bucketing exponencial** — não fixed buckets lineares
+4. **error.type é enum (5-15 valores)** — não `error.message` como dimension
+5. **Saturation tem o recurso certo identificado** — connection pool? queue depth? concurrency? CPU load?
+6. **Black-box probe complementar** — synthetic check do happy path principal a cada 30s
+7. **Dashboard de 4 signals** existe e é o **primeiro** lugar de debug em incident
+
+## Ver também
+
+- [`_shared-sre/glossary.md`](../_shared-sre/glossary.md) — termos canônicos golden signals, black-box, white-box, percentile
+- [`opentelemetry-standard`](../opentelemetry-standard/SKILL.md) (v1.9) — OTel SDK base, exporter, OTLP
+- [`structured-events`](../structured-events/SKILL.md) (v1.9) — wide events que alimentam SLI de Errors
+- [`event-based-slos`](../event-based-slos/SKILL.md) (v1.9) — SLO sobre Errors+Latency forma SLI canônico
+- [`burn-rate-alerting`](../burn-rate-alerting/SKILL.md) (v1.9) — alertar em SLO burn-rate, não em CPU
+- [`production-readiness-review`](../production-readiness-review/SKILL.md) — PRR axis "Instrumentation" exige 4 signals
+
+---
+
+*Material-fonte: Site Reliability Engineering — Beyer, Jones, Petoff, Murphy (Google/O'Reilly, 2016) — Cap 6: "Monitoring Distributed Systems" (Four Golden Signals).*
