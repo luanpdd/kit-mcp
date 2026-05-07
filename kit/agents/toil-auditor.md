@@ -261,3 +261,17 @@ P2: <count> itens — score < 0.3
 ## Output
 `<OUTPUT_PATH>`
 ```
+
+## Quando NÃO invocar
+
+- Repo novo (< 1 mês de git history) — sample size insuficiente, audit produz falso-zero
+- Time muito pequeno (1-2 pessoas) onde toil é "óbvio" — overhead de audit > valor; usar checklist mental
+- Quando user já fez audit recentemente (< 90 dias) — re-audit a cada quarter é suficiente
+- Re-audit após poucas mudanças — esperar próximo milestone
+
+## Ver também
+
+- [`eliminating-toil`](../skills/eliminating-toil/SKILL.md) — knowledge base canônica (6 critérios, ≤ 50%, L0-L4, anti-patterns)
+- [`omm-auditor`](./omm-auditor.md) (v1.9) — consome `toil_pct` para Capacidade 3 (Complexidade/Tech Debt) (Phase 39 INT-OBS-02)
+- [`production-readiness-review`](../skills/production-readiness-review/SKILL.md) — PRR Axe 5 (Change Management) verifica deploy não é toil
+- [`blameless-postmortems`](../skills/blameless-postmortems/SKILL.md) — postmortems de toil-induced incidents alimentam audit
