@@ -539,9 +539,35 @@ CERTO: alertar APENAS em SLO burn rate (event-based, customer-impacting).
 
 ## (e) Cross-references
 
-_Em construção — preenchido em T6._
+Skills que consultam este glossário:
+
+- `kit/skills/sre-risk-management/SKILL.md`
+- `kit/skills/four-golden-signals/SKILL.md`
+- `kit/skills/eliminating-toil/SKILL.md`
+- `kit/skills/blameless-postmortems/SKILL.md`
+- `kit/skills/production-readiness-review/SKILL.md`
+
+Agentes que consultam este glossário (Phase 37):
+
+- `kit/agents/golden-signals-instrumenter.md`
+- `kit/agents/toil-auditor.md`
+- `kit/agents/postmortem-writer.md`
+- `kit/agents/prr-conductor.md`
+
+Comandos que consultam este glossário (Phase 38):
+
+- `kit/commands/golden-signals.md`
+- `kit/commands/auditar-toil.md`
+- `kit/commands/postmortem.md`
+- `kit/commands/prr.md`
+- `kit/commands/risk-budget.md`
+- `kit/commands/sre.md` (orquestrador)
+
+Skills v1.9 que cross-referenciam este glossário (Phase 39 patches):
+
+- `kit/skills/event-based-slos/SKILL.md` (ganha bloco "Risk continuum")
 
 ---
 
 *Glossário criado em 2026-05-07 (Phase 36 do milestone v1.10 SRE Engagement).*
-*Material-fonte: Site Reliability Engineering — Beyer, Jones, Petoff, Murphy (Google/O'Reilly, 2016, ISBN 978-1-491-92912-4). Caps prioritários: 3, 4, 5, 6, 15, 32.*
+*Material-fonte: Site Reliability Engineering — Beyer, Jones, Petoff, Murphy (Google/O'Reilly, 2016, ISBN 978-1-491-92912-4). Caps prioritários: 3 (Embracing Risk), 4 (SLOs), 5 (Eliminating Toil), 6 (Monitoring Distributed Systems / Four Golden Signals), 15 (Postmortem Culture), 32 (Evolving SRE Engagement Model / PRR).*
