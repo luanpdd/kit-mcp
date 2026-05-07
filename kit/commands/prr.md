@@ -191,3 +191,15 @@ ${OUTPUT_PATH}
 ```
 
 </process>
+
+<success_criteria>
+- [ ] `--service <name>` E `--feature "<desc>"` parseados (mutuamente exclusivos)
+- [ ] Modo A: output canônico `.planning/prr/<service>.md` (override via `--output`)
+- [ ] Modo B: output canônico `.planning/prr/feature-<slug>.md` (slug auto-gerado)
+- [ ] Re-PRR não-bloqueante (informa mas permite — re-PRR é válido após mudança grande)
+- [ ] `supabase/config.toml` detectado para passar `project_id` (Full mode)
+- [ ] AskUserQuestion para engagement model (se ausente) E reviewer (se ausente — anti auto-PRR)
+- [ ] `prr-conductor` invocado via `Task(subagent_type=...)` com prompt completo (6 axes literalmente + modo offline)
+- [ ] Output forwarded transparentemente do agent
+- [ ] Próximos passos sugerem cross-ref para `/observabilidade omm`, `/concluir-marco`, P0/P1/P2 priorização
+</success_criteria>
