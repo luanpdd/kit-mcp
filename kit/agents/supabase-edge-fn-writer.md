@@ -196,6 +196,106 @@ Edge Function nasce instrumentada com OTel — não é addon. Beneficia mais que
 
 **Output adicionado:** template completo de Edge Function inclui SDK setup + span wrapper + propagação outbound + classificador de error.type. ODD-compliant (4 perguntas pré-PR endereçadas).
 
+## Four Golden Signals
+
+> Cross-ref canônico: [four-golden-signals](../skills/four-golden-signals/SKILL.md) (cap 6 do livro Google SRE — Monitoring Distributed Systems). Para retro-instrumentar Edge Function existente, delegar para [golden-signals-instrumenter](./golden-signals-instrumenter.md).
+
+Edge Function user-facing nasce com os 4 sinais dourados — não é addon. O bloco `## Observabilidade integrada` acima cobre OTel SDK + spans + propagation; este bloco especifica os **4 instrumentos canônicos** que o template gerado SEMPRE inclui:
+
+| Signal | Instrumento | Dimensão | Valor padrão |
+|---|---|---|---|
+| **Latency** | `meter.createHistogram('http_request_duration_ms')` com `explicitBucketBoundaries: [1,2,5,10,25,50,100,250,500,1000,2500,5000,10000,30000]` | `result=success\|error` (separar success de erro) | Bucketing exponencial captura long tail sem cardinality explosion |
+| **Traffic** | `meter.createCounter('http_requests_total')` | `endpoint`, `http_method` | Incrementado antes de processar request |
+| **Errors** | `meter.createCounter('http_errors_total')` | `error.type` enum (5-15 valores: `timeout\|validation\|auth\|rate_limit\|db\|provider_down\|...`) — **nunca** `error.message` (cardinalidade explode) | Incrementado em catch + path 4xx/5xx |
+| **Saturation** | `meter.createObservableGauge('saturation_pct')` com callback que lê estado real | resource-specific: `connection_pool` (pg) / `concurrency_limit` (Edge runtime) / `egress_bandwidth` / `cache_memory` | % do recurso mais escasso identificado ANTES de instrumentar |
+
+### Snippet canônico — adicionado ao topo do `index.ts` gerado
+
+```ts
+// PT-BR: 4 golden signals — instrumentação mínima universal
+import { metrics } from 'npm:@opentelemetry/api@1.9.0'
+const meter = metrics.getMeter('<function_name>')
+
+// 1. LATENCY — histogram bucketed exponencial
+const latencyHistogram = meter.createHistogram('http_request_duration_ms', {
+  description: 'Edge function latency split by result (success vs error)',
+  unit: 'ms',
+  advice: { explicitBucketBoundaries: [1, 2, 5, 10, 25, 50, 100, 250, 500, 1000, 2500, 5000, 10000, 30000] }
+})
+
+// 2. TRAFFIC — counter de requests recebidos
+const trafficCounter = meter.createCounter('http_requests_total', {
+  description: 'Total HTTP requests received by edge function'
+})
+
+// 3. ERRORS — counter por error.type (NUNCA error.message — cardinalidade)
+const errorsCounter = meter.createCounter('http_errors_total', {
+  description: 'Edge function errors by error.type enum'
+})
+
+// 4. SATURATION — gauge do recurso mais escasso (callback lê estado real)
+// PT-BR: para Edge Function default, saturation = concurrency_limit_used %
+// Substituir callback conforme recurso identificado (db pool, queue, cache)
+meter.createObservableGauge('saturation_pct', {
+  description: 'Saturation of scarcest resource — function-specific'
+}).addCallback((result) => {
+  // PT-BR: callback canônico — ler estado real (ex: SELECT count(*) FROM pg_stat_activity)
+  // Aqui placeholder: 0 < value < 1
+  result.observe(getSaturationPct())  // implementar conforme resource
+})
+```
+
+### Wrapping no handler
+
+```ts
+Deno.serve(async (req: Request) => {
+  const start = performance.now()
+  const endpoint = new URL(req.url).pathname
+  trafficCounter.add(1, { endpoint, http_method: req.method })
+
+  try {
+    const response = await handle(req)
+    latencyHistogram.record(performance.now() - start, {
+      endpoint,
+      result: response.ok ? 'success' : 'error',
+    })
+    if (!response.ok) {
+      errorsCounter.add(1, { endpoint, 'error.type': classifyError(response) })
+    }
+    return response
+  } catch (err) {
+    latencyHistogram.record(performance.now() - start, { endpoint, result: 'error' })
+    errorsCounter.add(1, { endpoint, 'error.type': classifyError(err) })
+    throw err
+  }
+})
+
+// PT-BR: classifyError DEVE retornar enum fechado, não err.message
+function classifyError(e: unknown): string {
+  if (e instanceof TimeoutError) return 'timeout'
+  if (e instanceof ValidationError) return 'validation'
+  if (e instanceof AuthError) return 'auth'
+  // ... 5-15 valores no total
+  return 'unknown'
+}
+```
+
+### Saturation por tipo de Edge Function
+
+| Tipo de função | Recurso mais escasso | Implementação típica |
+|---|---|---|
+| API simples (GET/POST com leitura DB) | `pg_pool` connections used | `select count(*) from pg_stat_activity where state = 'active'` |
+| RAG / embeddings | `concurrency_limit` (provider externo) | counter de requests in-flight |
+| Email / queue consumer (cron → pgmq) | `pgmq.queue_length` | `select msg_count from pgmq.metrics_<queue>` |
+| Storage I/O heavy (uploads grandes) | `egress_bandwidth` | bytes-out tracker em window |
+
+### Anti-patterns prevenidos
+
+- `error.type = err.message` → SEMPRE enum fechado (5-15 valores)
+- Latency mistura success + error → SEMPRE `result` dimension separa
+- Mean latency em vez de histogram → SEMPRE histogram com percentis derivados em backend
+- Saturation genérico (CPU%) sem identificar recurso real → SEMPRE escolher recurso scarcest da função
+
 ## Ver também
 
 - [supabase-edge-functions](../skills/supabase-edge-functions/SKILL.md) — base de conhecimento canônica
