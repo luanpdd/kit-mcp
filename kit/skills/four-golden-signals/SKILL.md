@@ -177,3 +177,96 @@ async function blackBoxProbe(): Promise<{ ok: boolean; durationMs: number }> {
 | DB | Tablespace ou WAL | `disk_used_pct`, `wal_lag_bytes` |
 | CPU-bound (encoder, ML) | Load average | `cpu_load_avg_5min` |
 | Network egress | Bandwidth | `egress_bytes_per_sec_pct` |
+
+## Anti-patterns
+
+### ANTI: mean latency
+
+```text
+ANTI: alerta/dashboard com avg(duration_ms) — long tail invisível.
+
+PROBLEMA: mean=50ms mas p99=5000ms = UX ruim invisível; cliente enterprise
+          (no p99) sofre sem nunca disparar alerta. Mean é puxado para baixo
+          por mass de requests rápidos; sinaliza "tudo ok" enquanto 1% dos
+          users espera 5s.
+
+CERTO: histogram com percentile_cont(0.99); alertar em p99 > target.
+       Reportar p50/p95/p99/p99.9 para ver formato da distribuição.
+```
+
+### ANTI: latência success+error misturadas
+
+```text
+ANTI: histogram(duration_ms) sem dimension result.
+
+PROBLEMA: falhas rápidas (HTTP 500 em 5ms quando timeout dispara cedo)
+          puxam mean/percentis para baixo; mascaram lentidão real de
+          requests bem-sucedidos. Dashboard mostra "p99=80ms" mas
+          successes reais são 800ms.
+
+CERTO: dimension {result: 'success'} vs {result: 'error'} SEMPRE separadas
+       em séries distintas. SLI/SLO computado APENAS sobre success path.
+```
+
+### ANTI: Errors com error.message como dimension
+
+```text
+ANTI: errorsCounter.add(1, { error_message: e.message })
+
+PROBLEMA: cada mensagem única é uma série temporal; cardinality explosion
+          (1M+ séries em horas se message contém timestamps/IDs/random);
+          time-series DB OOMs ou throttles; queries lentas/impossíveis;
+          custo de armazenamento explode.
+
+CERTO: enum error.type com 5-15 valores fixos (timeout, validation, auth,
+       rate_limit, db, provider_down, unknown); error.message em
+       log/span attribute (não métrica) para debug pontual.
+```
+
+### ANTI: monitoring causes não symptoms
+
+```text
+ANTI: alertar em "CPU > 80% / memory < 10% / threads > N"
+
+PROBLEMA: mistura "what" (sintoma user-facing) com "why" (causa interna);
+          falsos positivos (cron job legítimo dispara CPU);
+          falsos negativos (sistema lento sem CPU alta — saturação em
+          connection pool ou rede); on-call paginado por nada e
+          incidents reais passam silenciosos.
+
+CERTO: alertar em SLO burn rate sobre os 4 signals (event-based,
+       customer-impacting); usar CPU/memory como debug context em
+       white-box monitoring, não como alert source.
+```
+
+### ANTI: saturation genérica
+
+```text
+ANTI: copiar pattern de saturation de outro serviço sem identificar o
+      gargalo real.
+
+PROBLEMA: mede CPU em serviço onde gargalo é connection pool; mede memory
+          em serviço CPU-bound; saturation alerta nunca dispara antes do
+          incident; quando incident acontece, dashboard mostra "saturação
+          OK" e ninguém sabe explicar por quê.
+
+CERTO: identificar EXPLICITAMENTE o recurso mais escasso (DB pool? queue
+       depth? Deno concurrency? tablespace?) ANTES de instrumentar (ver
+       Pattern: saturation por tipo de serviço). Cada serviço tem 1 ou 2
+       gargalos reais — instrumentar esses, não copiar template.
+```
+
+### ANTI: black-box only (sem white-box)
+
+```text
+ANTI: só prober externo (synthetic check), sem instrumentação interna.
+
+PROBLEMA: sabe que "site offline" mas não sabe porquê; debug requer SSH
+          em prod / log dive sem instrumentation; MTTR cresce horas;
+          incidents repetem porque root cause nunca foi capturada.
+
+CERTO: black-box detecta UX impact (cliente real não consegue) + white-box
+       (4 signals) explica root cause. Os dois juntos: black-box dispara,
+       white-box mostra qual signal degradou (latency? errors? saturation?)
+       e em qual endpoint.
+```
