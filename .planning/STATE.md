@@ -2,13 +2,13 @@
 state_version: 1.0
 milestone: v1.10
 milestone_name: — SRE Engagement
-status: Phase 38 COMPLETA em paralelização — orquestrador único família v1.10 fecha a Phase; dispatch via Task(subagent_type=...) para 4 agents SRE + delega risk-budget para comando direto
-last_updated: "2026-05-07T06:49:21.248Z"
+status: Phase 39 Plan 05 concluído — supabase-migration-writer com alerta toil via pg_cron (REINDEX/VACUUM/REFRESH MV/DELETE retention) cross-ref eliminating-toil skill + toil-auditor agent
+last_updated: "2026-05-07T07:30:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 3
-  total_plans: 16
-  completed_plans: 16
+  total_plans: 22
+  completed_plans: 17
 ---
 
 # STATE.md — sessão atual
@@ -17,10 +17,10 @@ progress:
 
 ## Posição Atual
 
-Fase: 38 — Comandos + orquestrador SRE — COMPLETA
-Plano: 06 (sre — orquestrador) — concluído (parallel executor); TODOS 6 plans entregues
-Status: Phase 38 COMPLETA em paralelização — orquestrador único família v1.10 fecha a Phase; dispatch via Task(subagent_type=...) para 4 agents SRE + delega risk-budget para comando direto
-Última atividade: 2026-05-07 — Plan 38-06 concluído (`kit/commands/sre.md` 10.3 KB / 227 linhas — frontmatter válido description 159/200 chars + allowed-tools com Task + AskUserQuestion + Read/Write/Bash/Grep/Glob; 5 âncoras canônicas objective/execution_context/context/process/success_criteria cada count=1; objective cita "terceiro orquestrador da família" + cross-refs Markdown literais para `/supabase` (v1.8) e `/observabilidade` (v1.9, 3×) + anti-pitfall A10 explicit ("único ponto de chain", "função pura") 2×; subcomandos cobrem caps 3/5/6/15/32 do livro Google SRE — golden-signals (cap 6), auditar-toil/audit-toil (cap 5), postmortem (cap 15), prr (cap 32), risk-budget/budget (cap 3); execution_context lista 5 skills SRE Phase 36 + 4 agents SRE Phase 37 com cross-refs Markdown ativos + documenta caso especial risk-budget; tabela canônica context com 6 linhas (5 subcomandos + help) e 4 colunas (Subcomando, Sinônimos, Agent dispatched, Cap livro) + bloco roteamento de flags com mutuamente exclusivas marcadas + 6 exemplos de uso; process com 6 steps numerados — Step 1 parse subcomando + help inline, Step 2 resolver sinônimos para 5 targets (4 agents + 1 comando direto) + erro inline com lista, Step 3 detectar supabase/config.toml para project_id (apenas relevante para prr-conductor), Step 4 dispatch com 5 sub-paths 4a-4e — 4a golden-signals→golden-signals-instrumenter, 4b auditar-toil→toil-auditor, 4c postmortem→postmortem-writer (valida --from-investigation E --incident mutuamente exclusivos antes de dispatch), 4d prr→prr-conductor (valida --service E --feature mutuamente exclusivos + AskUserQuestion para reviewer ausente anti auto-PRR), 4e risk-budget caso especial — re-encaminha para comando direto /risk-budget ou aplica skill sre-risk-management inline, Step 5 output transparente, Step 6 sugestões de chains comuns com 5 linhas + cross-refs cross-família /observabilidade omm (Cap 3 toil + Cap 5 incidents) e /burn-rate-status (v1.9); success_criteria com 10 bullets cobrindo critérios críticos; smoke T4 ALL_PASS — description 159/200 chars, 5 âncoras count=1 cada, 4 dispatches Task ≥1× cada (golden-signals-instrumenter/toil-auditor/postmortem-writer/prr-conductor), subcomandos canônicos golden-signals=13 / postmortem=18 / audit-toil=8 / risk-budget=14, family cross-refs /supabase=1 + /observabilidade=3, anti-pitfall A10 2×, capítulos livro 6× combinado, kit sync install claude-code → .claude/commands/sre.md OK + idempotência byte-idêntica timestamp-stripped per design Phase 36 ROADMAP crit-4). **Phase 38 fechada em 6/6 plans** — Onda 1 do milestone v1.10 (Phases 36-38: skills + agents + comandos + orquestrador) COMPLETA.
+Fase: 39 — Patches em observabilidade e supabase — EM ANDAMENTO
+Plano: 05 (supabase-migration-writer toil) — CONCLUÍDO
+Status: Phase 39 Plan 05 concluído — supabase-migration-writer com alerta toil via pg_cron (REINDEX/VACUUM/REFRESH MV/DELETE retention) cross-ref eliminating-toil skill + toil-auditor agent
+Última atividade: 2026-05-07 — Plan 39-05 concluído (commit `77c67d9` em `kit/agents/supabase-migration-writer.md` +80/-0 linhas — patch puramente aditivo; nova seção `## Alerta toil — automação via pg_cron` posicionada como ÚLTIMA seção do arquivo após `## Observabilidade integrada` v1.8; frontmatter v1.8 preservado byte-a-byte (anti-pitfall A2 — `name: supabase-migration-writer`, `tools: Read, Write, Edit, Bash, Grep, Glob, mcp__supabase__execute_sql, mcp__supabase__list_tables, mcp__supabase__apply_migration`, `color: yellow`); seção contém: bloco cross-ref Markdown literal para `[eliminating-toil](../skills/eliminating-toil/SKILL.md)` (cap 5 livro Google SRE) + `[toil-auditor](./toil-auditor.md)` (audit sistemático), tabela "6 critérios canônicos toil-prone" (manual/repetitivo/automatizável/tático/sem valor durável/escala linear), tabela "Padrões SQL canônicos que SEMPRE disparam alerta toil" com 6 rows (REINDEX recorrente, VACUUM ANALYZE manual, REFRESH MATERIALIZED VIEW, ANALYZE pós-bulk, DELETE retention, dump+restore), snippet canônico ANTES/DEPOIS converter `psql -c 'reindex'` em `cron.schedule('reindex_heavy_table_biweekly', '0 3 1,15 * *', $$...$$)`, bloco "Quando NÃO automatizar" diferenciando toil de DDL one-shot/backfill único/rebuild com julgamento, bloco "Output do agent — adicionado ao SQL gerado" com template comentário SQL `⚠ TOIL ALERT —` e regex detecção (`reindex|vacuum|refresh materialized|delete from .* interval`), bloco "Anti-patterns prevenidos" com 4 items ("roda quando der", pg_cron sem alerta falha, automação parcial, "só uma vez por mês"); smoke validation ALL_PASS — frontmatter byte-idêntico, `## Alerta toil` heading count=1, cross-refs Markdown ambos count=1, `pg_cron`/`cron.schedule` count=20 (≥3), REINDEX/VACUUM/REFRESH MATERIALIZED/TOIL ALERT combinados count=10 (≥4), `## Observabilidade integrada` preservado count=1, diff numstat 80/0 (puro additive); cobre INT-SB-V2-03 integralmente. **Phase 39 — Plan 05 de 6 concluído** (Onda 2 v1.10 em andamento).
 
 ## Milestone ativo
 
