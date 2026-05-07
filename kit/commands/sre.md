@@ -212,3 +212,16 @@ Após dispatch, orquestrador pode sugerir chains comuns:
 | `risk-budget` | `/burn-rate-status` (live forecast) OR `/sre postmortem --incident "..."` se BUDGET-EXHAUSTED |
 
 </process>
+
+<success_criteria>
+- [ ] Subcomando resolvido para agent canônico (5 subcomandos × seus sinônimos)
+- [ ] `project_id` extraído de `supabase/config.toml` se presente (apenas relevante para `prr`)
+- [ ] Dispatch via `Task(subagent_type=...)` — único ponto de chain (anti-pitfall A10)
+- [ ] Subcomando `risk-budget` delega para comando direto `/risk-budget` (não usa Task)
+- [ ] Subcomando `postmortem` valida `--from-investigation` E `--incident` mutuamente exclusivos antes de dispatch
+- [ ] Subcomando `prr` valida `--service` E `--feature` mutuamente exclusivos + AskUserQuestion para reviewer (anti auto-PRR)
+- [ ] Subcomando inválido → mensagem clara com lista de 5 subcomandos válidos
+- [ ] Subcomando `help`/`ajuda`/`?` → exibe tabela inline com 6 linhas (5 + help)
+- [ ] Args após subcomando passam transparentemente para o agent
+- [ ] Sugestões de chains comuns na tabela final (5 chains documentadas)
+</success_criteria>
