@@ -2,13 +2,13 @@
 state_version: 1.0
 milestone: v1.10
 milestone_name: — SRE Engagement
-status: Phase 39 Plan 05 concluído — supabase-migration-writer com alerta toil via pg_cron (REINDEX/VACUUM/REFRESH MV/DELETE retention) cross-ref eliminating-toil skill + toil-auditor agent
-last_updated: "2026-05-07T07:30:00.000Z"
+status: Phase 39 Plan 01 concluído — event-based-slos com bloco "Risk continuum — SLO target é decisão explícita" cross-ref Markdown ativo para sre-risk-management; frontmatter byte-idêntico (anti-pitfall A2); patch puro de adição (22+/0-); cobre INT-OBS-01
+last_updated: "2026-05-07T07:35:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 3
   total_plans: 22
-  completed_plans: 17
+  completed_plans: 18
 ---
 
 # STATE.md — sessão atual
@@ -18,9 +18,9 @@ progress:
 ## Posição Atual
 
 Fase: 39 — Patches em observabilidade e supabase — EM ANDAMENTO
-Plano: 05 (supabase-migration-writer toil) — CONCLUÍDO
-Status: Phase 39 Plan 05 concluído — supabase-migration-writer com alerta toil via pg_cron (REINDEX/VACUUM/REFRESH MV/DELETE retention) cross-ref eliminating-toil skill + toil-auditor agent
-Última atividade: 2026-05-07 — Plan 39-05 concluído (commit `77c67d9` em `kit/agents/supabase-migration-writer.md` +80/-0 linhas — patch puramente aditivo; nova seção `## Alerta toil — automação via pg_cron` posicionada como ÚLTIMA seção do arquivo após `## Observabilidade integrada` v1.8; frontmatter v1.8 preservado byte-a-byte (anti-pitfall A2 — `name: supabase-migration-writer`, `tools: Read, Write, Edit, Bash, Grep, Glob, mcp__supabase__execute_sql, mcp__supabase__list_tables, mcp__supabase__apply_migration`, `color: yellow`); seção contém: bloco cross-ref Markdown literal para `[eliminating-toil](../skills/eliminating-toil/SKILL.md)` (cap 5 livro Google SRE) + `[toil-auditor](./toil-auditor.md)` (audit sistemático), tabela "6 critérios canônicos toil-prone" (manual/repetitivo/automatizável/tático/sem valor durável/escala linear), tabela "Padrões SQL canônicos que SEMPRE disparam alerta toil" com 6 rows (REINDEX recorrente, VACUUM ANALYZE manual, REFRESH MATERIALIZED VIEW, ANALYZE pós-bulk, DELETE retention, dump+restore), snippet canônico ANTES/DEPOIS converter `psql -c 'reindex'` em `cron.schedule('reindex_heavy_table_biweekly', '0 3 1,15 * *', $$...$$)`, bloco "Quando NÃO automatizar" diferenciando toil de DDL one-shot/backfill único/rebuild com julgamento, bloco "Output do agent — adicionado ao SQL gerado" com template comentário SQL `⚠ TOIL ALERT —` e regex detecção (`reindex|vacuum|refresh materialized|delete from .* interval`), bloco "Anti-patterns prevenidos" com 4 items ("roda quando der", pg_cron sem alerta falha, automação parcial, "só uma vez por mês"); smoke validation ALL_PASS — frontmatter byte-idêntico, `## Alerta toil` heading count=1, cross-refs Markdown ambos count=1, `pg_cron`/`cron.schedule` count=20 (≥3), REINDEX/VACUUM/REFRESH MATERIALIZED/TOIL ALERT combinados count=10 (≥4), `## Observabilidade integrada` preservado count=1, diff numstat 80/0 (puro additive); cobre INT-SB-V2-03 integralmente. **Phase 39 — Plan 05 de 6 concluído** (Onda 2 v1.10 em andamento).
+Plano: 01 (event-based-slos risk continuum) — CONCLUÍDO
+Status: Phase 39 Plan 01 concluído — event-based-slos com bloco "Risk continuum — SLO target é decisão explícita" cross-ref Markdown ativo para sre-risk-management
+Última atividade: 2026-05-07 — Plan 39-01 concluído (commit `ba47d99` em `kit/skills/event-based-slos/SKILL.md` +22/-0 linhas — patch puramente aditivo; nova seção `## Risk continuum — SLO target é decisão explícita` posicionada **entre** `## Regras absolutas` e `## Patterns canônicos` v1.9; frontmatter v1.9 preservado byte-a-byte (anti-pitfall A2 — `name: event-based-slos`, `description: Use ao definir SLO — SLI event-based (não time-based), sliding window 30d, decouple what/why. SLO-based alerts substituem thresholds brutos como CPU/memória.` byte-idêntico); seção contém: bloco cross-ref Markdown literal para `[sre-risk-management](../sre-risk-management/SKILL.md)` (cap 3 livro Google SRE — Embracing Risk) + introdução conceitual ("SLO target NÃO é meta arbitrária"), tabela continuum 5 rows (99% / 99.5% / 99.9% / 99.95% / 99.99%) com 4 colunas (Target, Tolerância 30d, User-perceptible, Quando faz sentido), parágrafo "Sabedoria 99.99%" (smartphone ~99% + ISP ~99% diluem benefício marginal), parágrafo error budget como "balanço explícito risk × innovation" com exemplo numérico (10M eventos × 0.001 = 10k bad events), parágrafo tiers diferenciados (`customer.tier='enterprise'` 99.95% vs `tier='free'` 99.5%), nota de fechamento explicando regra existente `Target ≤ 99.95%` como **consequência** do continuum (não restrição arbitrária); smoke validation ALL_PASS — frontmatter byte-idêntico (head -4 confirmou), `## Risk continuum` heading count=1, `## Patterns canônicos` preservado count=1, `## Regras absolutas` preservado count=1, cross-ref `[sre-risk-management](../sre-risk-management/SKILL.md)` literal count=1, "sabedoria 99.99%" count=1, diff numstat 22/0 (puro additive), `node bin/cli.js sync install claude-code` OK (279 itens) com stub frontmatter byte-idêntico + canonical source pointer (v1.7+ stub-mode by design); cobre INT-OBS-01 integralmente. **Phase 39 — Plan 01 de 6 concluído** (Onda 2 v1.10 em andamento; planos 39-02..39-05 também concluídos por parallel executors em commits separados; 39-06 pendente).
 
 ## Milestone ativo
 
