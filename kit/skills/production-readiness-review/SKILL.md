@@ -198,3 +198,81 @@ Resultado por axe (1-2 linhas cada):
 [Assinatura + data]
 ```
 ````
+
+## Anti-patterns
+
+### ANTI: PRR depois do launch
+
+```text
+ANTI: fazer PRR após serviço já em produção.
+
+PROBLEMA: gaps P0 já causaram incidents (sem instrumentação significa SEV1 cego);
+          valor de gate perdido; PRR vira post-mortem disfarçado.
+
+CERTO: PRR ANTES de aceitar tráfego real (≥ 1%); blocker se P0 pendente.
+       PRR conclusão é pré-requisito de aceitar tráfego, não follow-up.
+```
+
+### ANTI: auto-PRR pelo time dev
+
+```text
+ANTI: time dev preenche checklist + auto-aprova.
+
+PROBLEMA: confirmation bias (dev acredita que serviço é maduro); itens vagos
+          passam ("Sim, temos monitoring"); gaps invisíveis até incident.
+
+CERTO: reviewer EXTERNO ao time (SRE ou outro time dev sênior); evidence-based
+       em cada item; dev preenche, externo verifica.
+```
+
+### ANTI: pular axes "menos relevantes"
+
+```text
+ANTI: "Esse serviço é simples, não precisa de capacity planning."
+
+PROBLEMA: axe pulado vira lacuna; "simples" é subjetivo; decisão baseada em
+          assumption sem evidence.
+
+CERTO: TODOS os 6 axes preenchidos. Item N/A é resposta válida (com justificativa)
+       — pular silenciosamente NÃO é. Para serviços pequenos, model "Simple PRR"
+       cobre os 6 em 4-8h.
+```
+
+### ANTI: PRR como rubber stamp
+
+```text
+ANTI: reviewer aprova sem ler evidence; meeting 15 min; checklist marcado "looks good".
+
+PROBLEMA: first-incident (em 3-6 meses) revela 5+ gaps; reviewer responsabilidade
+          compartilhada por incident.
+
+CERTO: reviewer aplica time-budget (4-8h Simple, dias Early); evidence verificada
+       em cada item; não-OK = blocker, não "todos têm gaps".
+```
+
+### ANTI: engagement model errado para custo
+
+```text
+ANTI: Simple PRR para tier-1 (outage > $100k/min) OU Early Engagement para internal
+       tool com 5 usuários.
+
+PROBLEMA: Simple para tier-1 — SRE não engajou no design; problemas estruturais
+          inviáveis de fix pós-launch; tier-1 com instabilidade. Early para
+          internal tool — over-investment SRE; deslocamento de trabalho importante.
+
+CERTO: escolher model conforme custo de outage (regra do glossário: < $1k/min =
+       Simple, > $100k/min = Platform).
+```
+
+### ANTI: PRR one-shot
+
+```text
+ANTI: passou PRR em 2024, foi para prod, nunca re-PRR'd.
+
+PROBLEMA: 2 anos depois — dependency new, RPS 10×, código rewrote, time rotated;
+          PRR original irrelevante.
+
+CERTO: re-PRR triggered em (a) rewrite > 50%, (b) RPS escala > 10×, (c) novo
+       dependency tier-1, (d) time-of-record rotation > 50%, (e) anualmente como
+       hygiene.
+```
