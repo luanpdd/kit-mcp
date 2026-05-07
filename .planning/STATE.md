@@ -2,13 +2,13 @@
 state_version: 1.0
 milestone: v1.10
 milestone_name: — SRE Engagement
-status: Phase 36 completa em paralelização (5 SKFD-SRE skills + glossário + smoke agregados validados)
-last_updated: "2026-05-07T05:56:05.402Z"
+status: Phase 37 Plan 01 (golden-signals-instrumenter) entregue em paralelização
+last_updated: "2026-05-07T06:31:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 1
-  total_plans: 6
-  completed_plans: 6
+  total_plans: 10
+  completed_plans: 7
 ---
 
 # STATE.md — sessão atual
@@ -17,10 +17,10 @@ progress:
 
 ## Posição Atual
 
-Fase: 36 — Skills foundationais SRE
-Plano: 01 (glossary) — concluído (parallel executor) — TODOS 6 plans da Phase 36 entregues
-Status: Phase 36 completa em paralelização (5 SKFD-SRE skills + glossário + smoke agregados validados)
-Última atividade: 2026-05-07 — Plan 36-01 concluído (`kit/skills/_shared-sre/glossary.md` 32.6 KB — 5 seções; cobre GLOS-01/02/03 dos 6 caps prioritários do livro Google SRE; precedente _shared-supabase/_shared-observability preservado; smoke T7 IDEMPOTENT_OK + NOT_LISTED_OK + NOT_MATERIALIZED_OK; CLAUDE.md NÃO cresce por design — glossary não é skill triggerável). Phase 36 totalmente entregue: glossário + 5 skills SKFD-SRE.
+Fase: 37 — Agentes core SRE
+Plano: 01 (golden-signals-instrumenter) — concluído (parallel executor)
+Status: Phase 37 Plan 01 entregue em paralelização (golden-signals-instrumenter — AGCORE-SRE-01)
+Última atividade: 2026-05-07 — Plan 37-01 concluído (`kit/agents/golden-signals-instrumenter.md` 11.88 KB — frontmatter + 6 seções canônicas; tools sem MCP; cross-refs Markdown ativos para four-golden-signals + observability-instrumenter + slo-engineer + production-readiness-review; especialização do observability-instrumenter v1.9 focada em métricas dos 4 signals — Latency histogram bucketed exponencial, Traffic counter, Errors counter por error.type enum, Saturation ObservableGauge resource-specific; tabela 6 saturation variants + heurística por tipo de serviço; smoke T5 ALL_PASS — descrição 157 chars ≤ 200, 6 anchors count=1, histogram=7/counter=9/gauge=5/saturation=14/error_type=10, sync 2× IDEMPOTENT_OK_TIMESTAMP_STRIPPED preservando precedente Phase 36).
 
 ## Milestone ativo
 

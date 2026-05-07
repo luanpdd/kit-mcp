@@ -78,6 +78,9 @@ Adicionar camada SRE (Site Reliability Engineering) ao kit derivada do livro do 
 
 **Dependência:** Phase 36 concluída (skills SKFD-SRE existem para cross-reference).
 
+**Status execução (2026-05-07):**
+- Plan 01 (`golden-signals-instrumenter`) — concluído (11.88 KB, AGCORE-SRE-01; especialização do observability-instrumenter v1.9 focada em métricas; 4 signals com snippets OTel SDK — Latency histogram bucketed exponencial + Traffic counter + Errors counter por error.type enum + Saturation ObservableGauge resource-specific; tabela 6 saturation variants; cross-refs four-golden-signals + observability-instrumenter + slo-engineer + production-readiness-review; smoke T5 ALL_PASS — desc=157 ≤ 200, 6 anchors, sync IDEMPOTENT_OK_TIMESTAMP_STRIPPED)
+
 **REQs cobertos (4):** AGCORE-SRE-01, AGCORE-SRE-02, AGCORE-SRE-03, AGCORE-SRE-04
 
 **Critérios de sucesso:**
