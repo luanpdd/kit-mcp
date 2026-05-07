@@ -55,3 +55,83 @@ Skill consultada: [`observability-maturity-model`](../skills/observability-matur
 
 **REQ:** INT-FW-04.
 </observability_integration>
+
+<sre_integration>
+**Toil scoring auto-invocação (v1.10 — INT-FW-V2-03):**
+
+Quando `workflow.audit_milestone_toil = true` (default), o workflow inclui passo Toil audit auto-invocação **antes** do passo de OMM scoring (que já existe via `<observability_integration>` v1.9 — INT-FW-04):
+
+```text
+Skill(skill="framework:auditar-toil")
+```
+
+O comando `/auditar-toil` invoca o agente [toil-auditor](../agents/toil-auditor.md) que analisa `git log` recente (≤ 90 dias) + scripts shell em `scripts/` + comandos manuais documentados em README/runbooks/`.planning/runbooks/` + tarefas repetitivas em `.planning/phases/*/SUMMARY.md`. O agent classifica candidatos a automação (P0/P1/P2 por esforço × frequência) e produz `.planning/TOIL-AUDIT.md` na raiz do `.planning/`. Cap 5 do livro Google SRE (*Eliminating Toil*) define toil canonicamente: **manual + repetitivo + automatizável + tático + sem valor durável + escala linear com tráfego/team**.
+
+**Loop fechado canônico:**
+
+```text
+/auditar-marco
+  ↓
+Step A: invoca /auditar-toil   ← gera .planning/TOIL-AUDIT.md (este patch — INT-FW-V2-03)
+  ↓
+Step B: invoca /auditar-observabilidade   ← OMM scoring v1.9 (INT-FW-04)
+  ↓
+omm-auditor consulta .planning/TOIL-AUDIT.md   ← Capacidade 3 — Complexidade / Tech Debt (Phase 39 INT-OBS-02)
+  ↓
+OMM-REPORT.md inclui Capacidade 3 score derivado de % toil pelo time
+  ↓
+MILESTONE-AUDIT.md inclui OMM-REPORT.md + TOIL-AUDIT.md como anexos
+```
+
+**Por que rodar `/auditar-toil` ANTES de `/auditar-observabilidade`:**
+
+O agent `omm-auditor` (Capacidade 3 patcheada em Phase 39 / INT-OBS-02) tem regra absoluta:
+
+> "score Capacidade 3 > 3 exige TOIL-AUDIT.md fresco ≤ 30 dias com `% toil < 30%`"
+
+Se TOIL-AUDIT.md ausente ou stale (> 30d), `omm-auditor` delega geração via `Task(subagent_type=toil-auditor)` ad-hoc — duplicação. Auto-invocar `/auditar-toil` em `/auditar-marco` evita essa duplicação ao garantir que `omm-auditor` encontre TOIL-AUDIT.md fresco.
+
+**Tabela de score Capacidade 3 (consumida por omm-auditor):**
+
+| % toil pelo time | OMM Capacidade 3 score | Implicação |
+|---|---|---|
+| < 15% | 5 | Excelente — automação madura |
+| 15-30% | 4 | Bom — abaixo regra ≤ 50% cap 5 com folga |
+| 30-50% | 3 | Aceitável — no limite (regra ≤ 50%) |
+| 50-60% | 2 | Risco — acima limite cap 5; team queimando ciclos em toil |
+| > 60% | 1 | Crítico — toil-driven team; scaling linear vai quebrar |
+
+Cross-ref ativo: tabela acima é replicada em [omm-auditor](../agents/omm-auditor.md) (Step 1 — patcheado em Phase 39 / INT-OBS-02).
+
+**Output esperado:**
+
+`.planning/TOIL-AUDIT.md` contém:
+
+1. % toil pelo time (estimado a partir de git log + scripts shell + runbooks manuais documentados)
+2. Lista de candidatos a automação P0/P1/P2 com:
+   - Comando/processo manual identificado
+   - Frequência (× por sprint/mês)
+   - Esforço estimado de automação (S/M/L)
+   - ROI = Frequência × Tempo Manual / Esforço Automação
+3. Sugestões de automação concretas (pg_cron job, hook PostToolUse, kit-mcp command, GitHub Action)
+4. Anti-toil-by-design: action items para `/discutir-fase` capturar toil prevenção upfront em fases futuras
+
+**Quando desligar gate:**
+
+- Solo developer side project (toil = você mesmo, audit é overhead)
+- Projeto ≤ 30 dias (sem volume git suficiente para detectar padrões repetitivos)
+- Repo somente bibliotecário sem ops (kit-mcp content-only sem deploy)
+
+Para esses casos: `workflow.audit_milestone_toil = false`. Para projetos team-based com ops/deploy, **manter `true`**.
+
+**Skill consultada:** [eliminating-toil](../skills/eliminating-toil/SKILL.md) (cap 5 livro Google SRE — *Eliminating Toil* — define toil canonicamente, regra ≤ 50%, padrões de automação, distinção toil vs overhead vs grungy work).
+
+**Anti-patterns prevenidos:**
+
+- "Skipar audit toil porque está OK há tempo" → trabalho cresce, toil cresce com ele; audit obrigatório por milestone
+- "TOIL-AUDIT.md gerado mas ignorado" → omm-auditor Capacidade 3 consome o arquivo; ignorar o relatório = score Cap 3 deteriora visivelmente
+- "Toil = features pequenas" → toil é manual + repetitivo + automatizável (ortogonal a tamanho); 5min × 50× por sprint = 4h por sprint
+- "Toil ≠ overhead" → overhead inclui meetings, planning, code review (necessário, não automatizável); toil é só o automatizable
+
+**REQ:** INT-FW-V2-03.
+</sre_integration>
