@@ -8,7 +8,7 @@ autonomous: true
 files_modified:
   - kit/agents/omm-auditor.md
 requirements: [INT-OBS-02]
-status: ready
+status: done
 ---
 
 # Plan 02 — Patch `kit/agents/omm-auditor.md`
