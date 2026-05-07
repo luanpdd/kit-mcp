@@ -225,3 +225,17 @@ import { metrics } from 'npm:@opentelemetry/api@1.9.0'
 2. Smoke local: enviar request e verificar histogram/counter/gauge no backend OTel
 3. Cross-ref com `observability-instrumenter` se spans/wide events ainda ausentes
 ```
+
+## Quando NÃO invocar
+
+- Serviço **interno** sem trafic real (job rodando 1×/dia) — overkill; instrumentação custa mais que valor
+- Função pura sem I/O (calculadora, validator) — métricas de latência/traffic não-acionáveis
+- Quando spans/wide events já cobrem 4 signals indiretamente — usar `observability-instrumenter` direto
+- Quando user já roda `event-based-slos` (v1.9) e quer SLI custom — `slo-engineer` (v1.9) é melhor caminho
+
+## Ver também
+
+- [`four-golden-signals`](../skills/four-golden-signals/SKILL.md) — knowledge base canônica dos 4 signals
+- [`observability-instrumenter`](./observability-instrumenter.md) (v1.9) — spans + wide events (complementa este agent)
+- [`slo-engineer`](./slo-engineer.md) (v1.9) — SLO event-based consome counters Errors+Traffic
+- [`production-readiness-review`](../skills/production-readiness-review/SKILL.md) — PRR Axe 2 (Instrumentation) exige 4 signals
