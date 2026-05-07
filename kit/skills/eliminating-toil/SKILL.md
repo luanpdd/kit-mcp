@@ -137,3 +137,82 @@ Antes de mergear PR de nova feature, perguntar:
 
 Se QUALQUER resposta = "humano fará isso" → toil tax. Bloqueie ou descontar do release budget.
 ```
+
+## Anti-patterns
+
+### ANTI: confundir overhead com toil
+
+```text
+ANTI: contar reuniões, RH, planning, performance review como toil — toda
+      atividade não-codificadora vira "toil" no audit.
+
+PROBLEMA: métrica inflada (e.g., 60% "toil" falso); ações erradas — cortar
+          reunião não diminui toil real; equipe perde tempo em automação
+          de overhead (que é não-eliminável por design).
+
+CERTO: overhead é categoria separada; ≤ 50% rule conta APENAS toil estrito
+       (6 critérios canônicos). Audit lista overhead em seção própria,
+       fora do total.
+```
+
+### ANTI: hero culture (toil mascara via heroísmo)
+
+```text
+ANTI: engineer fica 2h por dia executando deploys manuais e é "celebrado
+      por dedicação" / "salvador" — toil nunca aparece em métrica.
+
+PROBLEMA: toil invisível para liderança; investimento em automação adiado
+          indefinidamente; engineer pede demissão; sucessor herda toil sem
+          context — incidente garantido. Ciclo se repete.
+
+CERTO: TOIL-AUDIT trimestral mandatório; quantificar em hours/week por
+       pessoa; tornar visível em dashboards de produtividade. Heroísmo
+       sustentado = sinal de underinvestment, não de mérito.
+```
+
+### ANTI: documentar runbook em vez de automatizar
+
+```text
+ANTI: "Vamos só escrever um doc detalhado de como fazer isso passo-a-passo"
+      — runbook de 30 passos no wiki, sem script.
+
+PROBLEMA: L1 (Documented) ainda é toil — humano lê doc, segue passos,
+          falha em algum, doc desatualiza em 3 meses; primeira pessoa que
+          segue após drift quebra prod; ninguém atualiza doc retroativamente.
+
+CERTO: doc como passo intermediário (L1); meta é L3/L4 (autonomous);
+       marcar runbook com TODO de automação + owner + due date; sprint
+       seguinte transforma em script (L2) ou melhor.
+```
+
+### ANTI: automatizar parcialmente
+
+```text
+ANTI: script faz 3 dos 5 passos; humano completa os outros 2 — "execute
+      primeiro ./step1.sh, depois manualmente faça X em prod, depois
+      ./step3.sh".
+
+PROBLEMA: ainda é toil (humano envolvido); contexto-switch entre script e
+          humano dobra tempo total; script raramente atualizado por estar
+          "incompleto"; degrada para chain frágil que ninguém quer mexer.
+
+CERTO: automação completa OU não automatizar — meias-medidas perpetuam.
+       Se faltam 2 passos manuais, gastar mais 1 dia para fechar o loop;
+       resultado é L3/L4 autônomo, não L1.5 frankenstein.
+```
+
+### ANTI: ignorar toil de baixa frequência
+
+```text
+ANTI: "Só faço isso 1× por trimestre, não vale automatizar" — descartar
+      tarefas raras do audit.
+
+PROBLEMA: cumulative impact alto (10 tarefas trimestrais × 4 trimestres ×
+          30 min = 20h/ano); cada vez que retorna, pessoa esquece passos;
+          documentação envelhece entre execuções; DR exercises e migrations
+          raras são exatamente onde erro humano custa mais.
+
+CERTO: priorizar por (frequency × pain) / effort; baixa frequência +
+       alto pain (e.g., DR exercise, schema migration crítica) = ainda
+       P1. Frequência baixa ≠ toil baixo — soma de raras é alta.
+```
