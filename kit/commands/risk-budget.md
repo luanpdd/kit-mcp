@@ -206,3 +206,15 @@ Se algum SLO em status `BUDGET-EXHAUSTED` ou `OVER-SPEC`:
 ```
 
 </process>
+
+<success_criteria>
+- [ ] `<slo_name>` opcional + flags `--format` e `--explain` parseadas
+- [ ] SLOs listados via glob `.planning/slos/*.md`
+- [ ] Cada SLO mapeado para posição no risk continuum (1× a 100×+)
+- [ ] 4 status enum: OPTIMAL / OVER-SPEC / UNDER-SPEC / BUDGET-EXHAUSTED
+- [ ] Tabela agregada com 8 colunas (SLO, Target, Posição, Tier, Custo relativo, Budget gasto, Status, Decisão)
+- [ ] Modo `--explain` anexa sabedoria 99.99% + anti-patterns detectados inline
+- [ ] Cross-refs para `/burn-rate-status`, `/postmortem`, `/observabilidade omm` (Capacidade 1 Embracing Risk)
+- [ ] Idempotente — rodável em `/loop` sem state acumulado
+- [ ] Read-only — comando NÃO modifica arquivos
+</success_criteria>
