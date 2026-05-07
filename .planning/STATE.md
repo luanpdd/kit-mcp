@@ -3,12 +3,12 @@ state_version: 1.0
 milestone: v1.10
 milestone_name: — SRE Engagement
 status: executing
-last_updated: "2026-05-07T06:40:00.000Z"
+last_updated: "2026-05-07T06:05:00.000Z"
 progress:
   total_phases: 13
   completed_phases: 0
   total_plans: 6
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # STATE.md — sessão atual
@@ -18,9 +18,9 @@ progress:
 ## Posição Atual
 
 Fase: 36 — Skills foundationais SRE
-Plano: 03 (four-golden-signals) — concluído (parallel executor)
-Status: Executing Phase 36
-Última atividade: 2026-05-07 — Plan 36-03 concluído (skill `four-golden-signals/SKILL.md` 13.69 KB criada — cap 6 Monitoring Distributed Systems; SKFD-SRE-02 coberto integralmente; 4 signals canônicos + 8 regras + 5 patterns OTel/SQL/black-box + 6 anti-patterns + checklist 7-itens)
+Plano: 06 (production-readiness-review) — concluído (parallel executor) + smoke agregado Phase 36 ALL_PASS
+Status: Executing Phase 36 (5/5 skills foundationais SRE + glossário entregues; smoke agregado validado)
+Última atividade: 2026-05-07 — Plan 36-06 concluído (skill `production-readiness-review/SKILL.md` ~15.3 KB criada — cap 32 Evolving SRE Engagement Model; SKFD-SRE-05 coberto integralmente; checklist 6 axes detalhado + 3 engagement models + template PRR-REPORT.md + handoff dev→SRE 9 passos + 8 regras + 6 anti-patterns). Smoke agregado da Phase 36: todas 5 SKFD-SRE skills idempotentes em sync 2× (timestamp-stripped); _shared-sre NÃO listed em `kit list-skills`; description ≤ 200 chars em todas (172/161/169/186/168 chars).
 
 ## Milestone ativo
 

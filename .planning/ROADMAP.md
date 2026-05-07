@@ -51,7 +51,11 @@ Adicionar camada SRE (Site Reliability Engineering) ao kit derivada do livro do 
 
 **Status execução (2026-05-07):**
 - Plan 02 (`sre-risk-management/SKILL.md`) — ✅ concluído (11.2 KB, SKFD-SRE-01)
+- Plan 03 (`four-golden-signals/SKILL.md`) — ✅ concluído (13.69 KB, SKFD-SRE-02)
 - Plan 04 (`eliminating-toil/SKILL.md`) — ✅ concluído (12.2 KB, SKFD-SRE-03; cap 5 Eliminating Toil — 6 critérios + ≤ 50% + L0-L4 + 5 anti-patterns)
+- Plan 05 (`blameless-postmortems/SKILL.md`) — ✅ concluído (SKFD-SRE-04, cap 15)
+- Plan 06 (`production-readiness-review/SKILL.md`) — ✅ concluído (15.3 KB, SKFD-SRE-05; cap 32 Evolving SRE Engagement Model — 6 axes detalhados + 3 engagement models + template PRR-REPORT.md + handoff dev→SRE 9 passos)
+- Smoke agregado Phase 36 (Plan 06 T6) — ALL_PASS (5 skills frontmatter ≤ 200 chars; sync 2× idempotente timestamp-stripped; _shared-sre NÃO listed em `kit list-skills`)
 
 **REQs cobertos (8):** GLOS-01, GLOS-02, GLOS-03, SKFD-SRE-01, SKFD-SRE-02, SKFD-SRE-03, SKFD-SRE-04, SKFD-SRE-05
 
