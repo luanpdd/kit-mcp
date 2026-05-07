@@ -61,3 +61,133 @@ Para feature em design/dev — agent lê design docs, SLOs propostos, código WI
 
 **Pré-requisito (Full mode):** projeto Supabase configurado, `mcp__supabase__*` disponível. Modo offline funciona com fallback graceful (filesystem only — itens MCP-dependentes ficam `EVIDENCE_PENDING_MCP`).
 </context>
+
+<process>
+
+## 1. Parsear argumentos (2 modos)
+
+```bash
+SERVICE=$(echo "$ARGUMENTS" | grep -oE -- '--service [^ ]+' | awk '{print $2}')
+FEATURE=$(echo "$ARGUMENTS" | grep -oE -- '--feature "[^"]+"' | sed 's/--feature //; s/^"//; s/"$//')
+ENGAGEMENT=$(echo "$ARGUMENTS" | grep -oE -- '--engagement [^ ]+' | awk '{print $2}')
+REVIEWER=$(echo "$ARGUMENTS" | grep -oE -- '--reviewer [^ ]+' | awk '{print $2}')
+OUTAGE_COST=$(echo "$ARGUMENTS" | grep -oE -- '--outage-cost [^ ]+' | awk '{print $2}')
+OUTPUT_PATH=$(echo "$ARGUMENTS" | grep -oE -- '--output [^ ]+' | awk '{print $2}')
+
+# PT-BR: validar mutuamente exclusivos
+if [ -n "$SERVICE" ] && [ -n "$FEATURE" ]; then
+  echo "✗ Erro: --service e --feature são mutuamente exclusivos. Escolha um."
+  exit 1
+fi
+
+# PT-BR: nenhum dos 2 → erro com sugestão
+if [ -z "$SERVICE" ] && [ -z "$FEATURE" ]; then
+  echo "✗ Forneça --service <name> OU --feature \"<descrição>\""
+  echo "  Exemplos:"
+  echo "    /prr --service orders-api"
+  echo "    /prr --feature \"RAG sobre documentos privados\""
+  exit 1
+fi
+```
+
+## 2. Resolver output_path + idempotência
+
+```bash
+if [ -n "$SERVICE" ]; then
+  [ -z "$OUTPUT_PATH" ] && OUTPUT_PATH=".planning/prr/${SERVICE}.md"
+else
+  SLUG=$(echo "$FEATURE" | tr ' ' '-' | tr -cd 'a-zA-Z0-9-' | head -c 30 | sed 's/-$//')
+  [ -z "$OUTPUT_PATH" ] && OUTPUT_PATH=".planning/prr/feature-${SLUG}.md"
+fi
+mkdir -p "$(dirname "$OUTPUT_PATH")"
+
+# PT-BR: PRR pode ser re-PRR (após mudança grande) — informar mas permitir
+if [ -f "$OUTPUT_PATH" ]; then
+  LAST_DATE=$(grep -m1 '**Date:**' "$OUTPUT_PATH" 2>/dev/null | sed 's/.*Date:\*\* //' || echo "?")
+  echo "ℹ PRR-REPORT.md anterior detectado ($LAST_DATE) em $OUTPUT_PATH."
+  echo "  Re-PRR válido (após mudança grande, incident, ou anual). Continuando — vai sobrescrever."
+fi
+```
+
+## 3. Detectar `supabase/config.toml` (Full mode)
+
+```bash
+PROJECT_ID=""
+if [ -f supabase/config.toml ]; then
+  PROJECT_ID=$(grep -E '^project_id\s*=' supabase/config.toml | sed 's/.*= *"\(.*\)".*/\1/' | head -1)
+  echo "✓ project_id detectado: $PROJECT_ID (Full mode com MCP Supabase)"
+else
+  echo "ℹ Sem supabase/config.toml — agent pode rodar em modo offline (fallback graceful)"
+fi
+```
+
+## 4. AskUserQuestion — engagement model + reviewer
+
+Se `--engagement` não fornecido E `--outage-cost` ausente:
+
+> **AskUserQuestion**
+> header: "PRR Engagement Model"
+> question: "Qual custo estimado de outage para este target?"
+> options:
+> - "< $1k/min OR internal tool → Simple PRR (4-8h, 1 sessão)"
+> - "$1k-100k/min OR customer-facing → Early Engagement (semanas, SRE no design)"
+> - "> $100k/min OR built on platform → Frameworks/Platform (PRR é confirmação)"
+
+Se `--reviewer` não fornecido (anti-pattern auto-PRR):
+
+> **AskUserQuestion**
+> header: "PRR Reviewer (anti auto-PRR)"
+> question: "Quem é o reviewer? Reviewer DEVE ser SRE OU par externo ao time dev (anti-pattern: time dev faz auto-PRR — confirmation bias)."
+> options: (texto livre — handle/email)
+
+## 5. Dispatch para `prr-conductor`
+
+```text
+Task(
+  subagent_type="prr-conductor",
+  prompt="
+${SERVICE:+service_name: ${SERVICE}}
+${FEATURE:+feature_description: ${FEATURE}}
+output_path: ${OUTPUT_PATH}
+${ENGAGEMENT:+engagement_model: ${ENGAGEMENT}}
+${REVIEWER:+reviewer: ${REVIEWER}}
+${OUTAGE_COST:+outage_cost_per_min: ${OUTAGE_COST}}
+${PROJECT_ID:+project_id: ${PROJECT_ID}}
+
+Aplicar skill production-readiness-review. Audit em 6 axes (todos obrigatórios — pular = inválido):
+1. System Architecture — design, dependencies, blast radius, isolation, single points of failure
+2. Instrumentation/Metrics/Monitoring — 4 golden signals, SLOs definidos, alerting com burn rates
+3. Emergency Response — runbooks atualizados, on-call rotation, rollback < 60s, communication plan
+4. Capacity Planning — load testing recente, scaling docs, headroom % atual vs peak
+5. Change Management — canary deployment, feature flags, rollback drills
+6. Performance — latency p50/p95/p99 vs budget, throughput vs target, optimization headroom
+
+Padrão obrigatório: cada item evidence-based (NÃO 'acreditamos que está pronto' — exigir query/log/runbook/test).
+Modo offline: se MCP ausente, declarar [MODO OFFLINE] e marcar items MCP-dependentes EVIDENCE_PENDING_MCP.
+Output: PRR-REPORT.md com scoring 0-5 por axe + status Pass/Pass with gaps/Fail + decisão Approved/Approved with conditions/Blocked + reviewer signature + Re-PRR triggers.
+"
+)
+```
+
+## 6. Pós-output
+
+```
+═══════════════════════════════════════════════════════════
+ framework ► PRR ▸ ${SERVICE:-feature-${SLUG}}
+═══════════════════════════════════════════════════════════
+
+[output do prr-conductor — ver Step 3 do agent]
+
+## Estado salvo
+${OUTPUT_PATH}
+
+## Próximos passos
+1. Reviewer (`${REVIEWER}`) precisa assinar — anti-pattern: rubber stamp sem ler evidence
+2. P0 items são bloqueadores; P1 items são conditions; P2 items são monitoramento
+3. Re-PRR triggers (anual, mudança arquitetural grande, incident SEV1+) — agendar
+4. Se status `Approved` → liberar para production; se `Blocked` → fechar P0s antes de re-submit
+5. Cross-ref OMM: PRR alimenta Capacidade 4 (Production Readiness) — `/observabilidade omm`
+6. Phase 40 INT-FW-V2-02: `/concluir-marco` pode exigir PRR `Approved` se `workflow.complete_milestone_prr_gate=true`
+```
+
+</process>
