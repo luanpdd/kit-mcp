@@ -104,6 +104,20 @@ Para cada uma das 5 capacidades, atribuir score baseado em sintomas observados:
 5 = Optimizing: melhoria contínua
 ```
 
+**Regra específica Cap 3 (Complexidade / Tech Debt) — incorpora % toil:**
+
+| Score | % toil pelo time | Sintoma operacional |
+|---|---|---|
+| 1 (Initial) | > 60% ou desconhecido | Time apaga incêndios; sem audit de toil; "tudo é urgente" |
+| 2 (Repeatable) | 50-60% | Toil reconhecido mas não auditado; "sabemos que tem mas não medimos" |
+| 3 (Defined) | 30-50% | TOIL-AUDIT.md existe; itens P0 endereçados; mas regra ≤ 50% no fio |
+| 4 (Managed) | 15-30% | Toil consistentemente sob 50%; automação rolling; cultura de "não fazer 3× sem script" |
+| 5 (Optimizing) | < 15% | Toil é exceção; novos features projetados com automação no design (anti-toil by-design) |
+
+**Regra absoluta**: Cap 3 score nunca é > 3 se TOIL-AUDIT.md ausente — sem evidência objetiva, defaultar a 2 (mesmo que sintomas qualitativos sugiram acima). Score 4-5 exige TOIL-AUDIT.md fresco (≤ 30d) com `% toil pelo time < 30%`.
+
+Para outros sintomas qualitativos da Cap 3 (skills observability instaladas, cobertura de runbooks, hero culture indicators), continue consultando a skill [`observability-maturity-model`](../skills/observability-maturity-model/SKILL.md).
+
 Para cada score, citar 2-3 sintomas-chave concretos da skill `observability-maturity-model`.
 
 ### Step 2 — Trend vs marco anterior
