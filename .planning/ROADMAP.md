@@ -50,6 +50,7 @@ Adicionar camada SRE (Site Reliability Engineering) ao kit derivada do livro do 
 **Por que primeiro:** Glossário SRE e 5 skills foundationais são consultáveis standalone e referenciadas por todos agentes/comandos das fases seguintes. Sem vocabulário canônico em `_shared-sre/glossary.md` e definições de risk/golden-signals/toil/postmortem/PRR, links morrem em `kit/agents/sre-*.md` e `kit/commands/sre-*.md`. Sem dependências exceto contexto v1.9.
 
 **Status execução (2026-05-07):**
+- Plan 01 (`_shared-sre/glossary.md`) — ✅ concluído (32.6 KB, GLOS-01/02/03; 5 seções cobrindo 6 caps prioritários do livro Google SRE; precedente _shared-supabase/_shared-observability preservado; smoke T7 IDEMPOTENT_OK + NOT_LISTED_OK + NOT_MATERIALIZED_OK; CLAUDE.md NÃO cresce — glossary não é skill triggerável)
 - Plan 02 (`sre-risk-management/SKILL.md`) — ✅ concluído (11.2 KB, SKFD-SRE-01)
 - Plan 03 (`four-golden-signals/SKILL.md`) — ✅ concluído (13.69 KB, SKFD-SRE-02)
 - Plan 04 (`eliminating-toil/SKILL.md`) — ✅ concluído (12.2 KB, SKFD-SRE-03; cap 5 Eliminating Toil — 6 critérios + ≤ 50% + L0-L4 + 5 anti-patterns)
