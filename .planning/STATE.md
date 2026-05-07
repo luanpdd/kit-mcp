@@ -4,18 +4,26 @@
 
 ## Posição Atual
 
-Fase: Concluída
+Fase: Não iniciada (definindo requisitos)
 Plano: —
-Status: v1.9.0 publicada (npm + GitHub Release). Suíte Observabilidade live. CI roda 4 gates blocking + 1 não-blocking.
-Última atividade: 2026-05-06 — v1.9.0 Observabilidade publicada (commit `5f0021a`, npm `@luanpdd/kit-mcp@1.9.0`, GitHub Release v1.9.0)
+Status: Marco v1.10 SRE Engagement criado. REQUIREMENTS + ROADMAP gerados. Aguardando user limpar contexto antes de executar fases.
+Última atividade: 2026-05-06 — Planejamento de v1.10 SRE Engagement concluído (6 fases planejadas, 30 REQs)
 
 ## Milestone ativo
 
-**Nenhum.** v1.9.0 cutado e publicado.
+**v1.10 SRE Engagement** — incorporar técnicas do livro *Site Reliability Engineering* (Beyer, Jones, Petoff, Murphy — Google/O'Reilly, 2016) ao kit-mcp via skills/agentes/comandos novos com integração à Suíte Observabilidade v1.9 e Suíte Supabase v1.8.
+
+**Estrutura em 3 ondas (Phases 36-41):**
+- Onda 1 — Núcleo SRE (Phases 36-38): glossário + 5 skills foundationais + 4 agentes + 5 comandos + orquestrador `/sre`
+- Onda 2 — Integração (Phases 39-40): patches Supabase (4 agentes) + patches fluxo framework (3 comandos) + patches observabilidade (2 artefatos)
+- Onda 3 — Gates e docs (Phase 41): 3 audit gates + README + CHANGELOG
 
 ## Próximo passo
 
-`/novo-marco` para iniciar próximo ciclo.
+**User vai limpar contexto** antes de prosseguir. Após retomada:
+
+1. `/discutir-fase 36` — primeira fase (skills foundationais)
+2. Ou `/autonomo` — executar todas as 6 fases sequencialmente
 
 ## Bloqueadores
 
@@ -23,25 +31,30 @@ Status: v1.9.0 publicada (npm + GitHub Release). Suíte Observabilidade live. CI
 
 ## Todos pendentes
 
-(vazio)
+(vazio — planejamento concluído, execução virá em sessão seguinte)
 
 ## Histórico
 
-- v1.0.0 — concluído 2026-05-03
-- v1.1.0 — concluído 2026-05-03
-- v1.2.0 — concluído 2026-05-04
-- v1.2.3 → v1.5.3 — patches ad-hoc fora do framework (CHANGELOG é canônico)
-- v1.6.0 — concluído 2026-05-05 (16 audit REQs + observability hook)
-- v1.6.1 — concluído 2026-05-05 (kit doctor + upgrade-check + gates cache)
-- v1.7.0 — concluído 2026-05-06 (workflow compaction + stubs-only sync + boilerplate dedup + /fazer canonical)
+- v1.0.0 → v1.5.3 — patches diversos
+- v1.6.0 — concluído 2026-05-05 (16 audit REQs)
+- v1.6.1 — concluído 2026-05-05 (kit doctor + upgrade-check)
+- v1.7.0 — concluído 2026-05-06 (workflow compaction)
 - v1.8.0 — concluído 2026-05-06 (Suíte Supabase: 11 skills + 7 agents + command + 5 gates)
-- v1.8.1 — concluído 2026-05-06 (integração Supabase Suite no fluxo)
-- **v1.9.0 — concluído 2026-05-06 (Suíte Observabilidade: 11 skills + 5 agents + 6 commands + 3 gates + 11 patches)**
+- v1.8.1 — concluído 2026-05-06 (integração Supabase no fluxo)
+- v1.9.0 — **publicada 2026-05-06** (Suíte Observabilidade: 11 skills + 5 agents + 6 commands + 3 gates + 11 patches; npm latest)
+- **v1.10 — em planejamento** (SRE Engagement; ROADMAP criado 2026-05-06; aguardando execução)
 
 ## Contexto Acumulado
 
-v1.9 entregou a Suíte Observabilidade derivada do livro *Observability Engineering* (Charity Majors et al., O'Reilly 2022). 11 skills (glossário + 4 foundationais + 6 práticas), 5 agents (observability-instrumenter, incident-investigator, slo-engineer, burn-rate-forecaster, omm-auditor), 6 comandos (/instrumentar-fase, /investigar-producao, /definir-slo, /burn-rate-status, /auditar-observabilidade, /observabilidade orquestrador), 3 audit gates (obs-skills-frontmatter, obs-agents-mcp-supabase, omm-no-regression), e 11 patches em commands/agents existentes (7 supabase-* + 4 commands framework).
+v1.10 estende a stack acumulada: v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE) formam suíte coesa de production engineering.
 
-Suíte Supabase é o maior beneficiário: cada um dos 7 agentes Supabase ganhou bloco "Observabilidade integrada" cross-referenciando skills novas. `incident-investigator` usa intensivamente `mcp__supabase__get_logs/execute_sql/get_advisors` para Core Analysis Loop em incidents reais.
+**Material-fonte v1.10:** *Site Reliability Engineering: How Google Runs Production Systems* (Beyer, Jones, Petoff, Murphy — Google/O'Reilly, 2016, ISBN 978-1-491-92912-4). Caps prioritários: 3 (Embracing Risk), 4 (SLOs), 5 (Eliminating Toil), 6 (Monitoring Distributed Systems / Four Golden Signals), 15 (Postmortem Culture), 32 (Evolving SRE Engagement Model / PRR).
 
-Stable API v1.0+ preservada — content-only milestone com zero alterações em `src/core/`. Mantém budget 6/6 deps (zero deps novas).
+**Como v1.10 conecta com v1.8 + v1.9:**
+- `golden-signals-instrumenter` (v1.10) é especialização de `observability-instrumenter` (v1.9) — define os 4 sinais mínimos universais
+- `postmortem-writer` (v1.10) é continuação natural de `incident-investigator` (v1.9) — após Core Analysis Loop fechar, postmortem documenta blameless
+- `prr-conductor` (v1.10) consome SLI/SLO definidos em v1.9 (`slo-engineer`) + RLS/schema definido em v1.8 (`supabase-architect`)
+- `toil-auditor` (v1.10) alimenta scoring de OMM Capacidade 3 (Complexidade/Tech Debt) do `omm-auditor` v1.9
+- `/sre` (v1.10) é o terceiro orquestrador da família após `/supabase` (v1.8) e `/observabilidade` (v1.9)
+
+**v1.10 é content-only por design** — zero alterações em `src/core/`. Stable API v1.0+ preservada. Mantém budget 6/6 deps.

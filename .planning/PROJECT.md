@@ -1,15 +1,55 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-06 — v1.9 Observabilidade concluída e arquivada.
+> Última atualização: 2026-05-06 — v1.10 SRE Engagement iniciado.
 
 ## Estado Atual
 
-**v1.9.0 — Observabilidade** publicada em 2026-05-06: npm `@luanpdd/kit-mcp@1.9.0` (latest), [GitHub Release v1.9.0](https://github.com/luanpdd/kit-mcp/releases/tag/v1.9.0), 41 REQs em 7 fases (29-35), arquivada em `.planning/milestones/v1.9/`. Stable API v1.0+ preservada.
+**v1.10 — SRE Engagement** em planejamento. Incorporar técnicas do livro *Site Reliability Engineering: How Google Runs Production Systems* (Beyer, Jones, Petoff, Murphy — Google/O'Reilly, 2016) como skills/agentes/comandos canônicos. v1.9.0 (Suíte Observabilidade) publicada em npm + GitHub Release.
 
-## Próximo Milestone
+## Milestone Atual: v1.10 SRE Engagement
 
-Use `/novo-marco` para iniciar próximo ciclo (questionamento → pesquisa → requisitos → roadmap).
+**Objetivo:** Adicionar uma camada de expertise em SRE (Site Reliability Engineering) ao kit derivada do livro do Google, complementando v1.9 (Observabilidade) com práticas de engagement de SRE — Production Readiness Review (PRR), Four Golden Signals, Postmortem Culture blameless, Toil elimination, Risk management. Camada se beneficia profundamente da Suíte Observabilidade v1.9 (SLOs, burn-rate, OMM) e da Suíte Supabase v1.8 (instrumentação de Edge Functions com golden signals).
+
+**Funcionalidades alvo (todas aditivas, zero superfície de API quebrada):**
+
+- **Skills (6)** — expertise consultável que viaja com o kit:
+  - `_shared-sre/glossary.md` — vocabulário canônico bilíngue (PT-BR↔EN) sobre SRE
+  - `sre-risk-management` — risk continuum, 99.99% wisdom, error budget como balanço explícito risk × innovation (cap 3)
+  - `four-golden-signals` — Latency + Traffic + Errors + Saturation como sinais mínimos de monitoramento (cap 6)
+  - `eliminating-toil` — definição de toil, regra ≤ 50%, padrões de automação (cap 5)
+  - `blameless-postmortems` — template canônico, "no postmortem left unreviewed", Wheel of Misfortune (cap 15)
+  - `production-readiness-review` — checklist PRR canônica + Engagement Model (Simple PRR / Early Engagement / Frameworks) (cap 32)
+
+- **Agentes (4)** — workers especializados:
+  - `golden-signals-instrumenter` — aplica os 4 golden signals em código (latency/traffic/errors/saturation com histograms/counters); especialização do `observability-instrumenter` v1.9
+  - `toil-auditor` — analisa repo + commits + scripts para identificar toil (manual repetitivo automatizável sem valor durável); recomenda automação
+  - `postmortem-writer` — após `incident-investigator` v1.9 fechar Core Analysis Loop, gera postmortem blameless seguindo template canônico
+  - `prr-conductor` — conduz Production Readiness Review para serviço/feature; produz PRR-REPORT.md scored com gaps e action items
+
+- **Comandos (5+1 orquestrador):**
+  - `/golden-signals` — aplica 4 golden signals em fase ou serviço (invoca `golden-signals-instrumenter`)
+  - `/auditar-toil` — identifica toil no projeto, sugere automação (invoca `toil-auditor`)
+  - `/postmortem` — gera postmortem blameless após incident-investigator (invoca `postmortem-writer`)
+  - `/prr` — conduz PRR para serviço/feature (invoca `prr-conductor`)
+  - `/risk-budget` — exibe state do error budget vs risk continuum (consume SLOs v1.9)
+  - `/sre [subcomando]` — orquestrador único (análogo a `/supabase`, `/observabilidade`)
+
+- **Integração com Suíte Observabilidade v1.9** — patches em 2 artefatos: `event-based-slos` ganha menção a risk continuum; `omm-auditor` consume `toil-auditor` para Capacidade 3 (Complexidade).
+
+- **Integração com Suíte Supabase v1.8** — patches em 4 agentes: `supabase-edge-fn-writer` aplica os 4 golden signals; `supabase-architect` referencia PRR antes de prod; `supabase-migration-writer` identifica toil em scripts SQL repetitivos; `supabase-storage-implementer` aplica saturation signal para uploads.
+
+- **Integração com fluxo framework** — patches em 3 comandos: `/forense` → chain para `/postmortem`; `/concluir-marco` → gate `/prr` para features production-bound; `/auditar-marco` → invoca `/auditar-toil` para scoring OMM Capacidade 3.
+
+- **Audit gates (3 novos):** `golden-signals-coverage`, `postmortem-template-required`, `prr-checklist-coverage`.
+
+**Decisões de stack:**
+- Zero deps novas. Apenas conteúdo de kit (markdown). Stable API v1.0+ preservada — só adições.
+- Material-fonte: livro *Site Reliability Engineering* (978-1-491-92912-4), gratuito em sre.google/books.
+- Conteúdo em PT-BR (alinhado com o resto do kit). Code blocks EN com comentários PT-BR (precedente v1.8/v1.9).
+- Roadmap começa em **Phase 36** (continuação de v1.9 que terminou em 35).
+
+**Contrato preservado:** Quem usa kit-mcp em produção não percebe nada além de novos artefatos disponíveis ao sincronizar. CI permanece verde.
 
 ## ~~Milestone Anterior: v1.9 Observabilidade (concluído 2026-05-06)~~
 
