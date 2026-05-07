@@ -312,3 +312,29 @@ CERTO: postmortem nasce de investigation real (Core Analysis Loop, /forense,
        (queries que rodaram, logs específicos, métricas observadas), não
        impressões; cada Root Cause precisa de prova citável.
 ```
+
+## Verificação
+
+Antes de marcar postmortem como `Final`:
+
+1. **9 seções canônicas presentes** — Summary, Impact, Root Causes, Trigger, Resolution, Detection, Action Items, Lessons Learned, Timeline UTC
+2. **Root cause sistêmico** — não nomeia pessoa; passou pelo 5 whys
+3. **Action items SMART** — Specific, Measurable, Assignable (owner @user), Realistic, Time-bound (due date)
+4. **Timeline em UTC** — sem timezone ambíguo
+5. **Impact quantificado** — # usuários, duração HH:MM, SLO budget consumido, revenue
+6. **Lições generalizáveis** — aplicáveis a outros serviços/incidents
+7. **Reviewed por par sênior** — checklist 8 perguntas aplicado
+8. **Supporting evidence linkada** — investigation, dashboards, queries
+9. **Action items P0 escalonados** — viraram phases ou tasks no roadmap próximo
+
+## Ver também
+
+- [`_shared-sre/glossary.md`](../_shared-sre/glossary.md) — termos canônicos postmortem, blameless, root cause, Wheel of Misfortune
+- [`core-analysis-loop`](../core-analysis-loop/SKILL.md) (v1.9) — Core Analysis Loop alimenta investigation que vira postmortem
+- [`sre-risk-management`](../sre-risk-management/SKILL.md) — postmortem documenta budget consumido
+- [`production-readiness-review`](../production-readiness-review/SKILL.md) — PRR axis "Emergency Response" exige postmortem culture
+- [`eliminating-toil`](../eliminating-toil/SKILL.md) — toil-induced incidents geram postmortems
+
+---
+
+*Material-fonte: Site Reliability Engineering — Beyer, Jones, Petoff, Murphy (Google/O'Reilly, 2016) — Cap 15: "Postmortem Culture: Learning from Failure".*
