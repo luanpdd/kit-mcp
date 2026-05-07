@@ -118,3 +118,12 @@ Output: ${OUTPUT_PATH} com tabela priorizada + sumário executivo + recomendaç�
 ```
 
 </process>
+
+<success_criteria>
+- [ ] $ARGUMENTS parseados (4 flags opcionais com defaults sensatos)
+- [ ] Pré-requisitos validados de forma não-bloqueante (git ausente OK; falta runbooks OK)
+- [ ] `toil-auditor` invocado via `Task(subagent_type=...)` com prompt completo (6 etapas)
+- [ ] `.planning/TOIL-AUDIT.md` (ou `--output` custom) criado pelo agent
+- [ ] Output forwarded transparentemente do agent (sem post-processing)
+- [ ] Próximos passos sugerem cross-ref para `/auditar-marco`, `/observabilidade omm`
+</success_criteria>
