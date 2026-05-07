@@ -211,3 +211,104 @@ Fluxo natural após incident:
 6. Final marked + archived em milestone correspondente
 7. Action items P0 viram phases inseridas no roadmap próximo (`/inserir-fase`)
 ```
+
+## Anti-patterns
+
+### ANTI: blame culture
+
+```text
+ANTI: postmortem nomeia "fulano fez deploy errado", "@maria não testou direito",
+      "o time de X causou o problema"
+
+PROBLEMA: engineers escondem incidents próximos ao limite por medo de retaliação;
+          psychological safety colapsa; replicação garantida (próximo near-miss
+          vira full incident porque ninguém reportou); team rotation aumenta;
+          quem fica deixa de propor mudanças arriscadas (mesmo as boas).
+
+CERTO: foco em sistema/processo (ausência de canary, ausência de rollback
+       automatizado, gate de CI faltante); pessoas são parte do sistema, NÃO
+       o root cause; revisão por par sênior antes de arquivar — reviewer
+       redireciona toda menção a pessoa para "que processo permitiu?".
+```
+
+### ANTI: action items vagos
+
+```text
+ANTI: "Melhorar monitoring", "Revisitar processo de deploy", "Investigar mais",
+      "Documentar melhor"
+
+PROBLEMA: sem owner, sem due date, sem critério de "feito"; ficam pendentes
+          para sempre; mesma falha repete em 6 meses porque nada concreto
+          aconteceu; aprendizado do incident é perdido na próxima sprint.
+
+CERTO: SMART (Specific, Measurable, Assignable, Realistic, Time-bound) —
+       "Bob adiciona SLO burn alert em /api/v1/orders até 2026-05-15";
+       "Alice documenta RPS limit em runbook orders-service até 2026-05-22".
+```
+
+### ANTI: postmortem left unreviewed
+
+```text
+ANTI: autor escreve postmortem, ninguém revisa, vai direto para o arquivo
+
+PROBLEMA: autor está perto demais (mente involuntariamente sobre próprio
+          papel — sem má-fé, é a natureza humana); root cause errado
+          documentado; lições não-generalizáveis; mesma falha repete porque
+          ação errada foi tomada com base em diagnóstico errado.
+
+CERTO: revisor sênior aplica checklist (8 perguntas — ver Pattern: revisão
+       por par sênior); só depois `Final` status; "no postmortem left
+       unreviewed" é regra absoluta — incident sem postmortem revisado
+       conta como aberto, mesmo que serviço esteja restaurado.
+```
+
+### ANTI: postmortem só para SEV1
+
+```text
+ANTI: "só investigar incident que pagou on-call"; SEV2/SEV3 ignorados;
+      near-misses (detecção rápida evitou impacto) descartados
+
+PROBLEMA: near-misses são oportunidade de aprender SEM CUSTO — perdê-los
+          é desperdício; SEV3s acumulam até virar SEV1 (mesma classe de
+          falha, escala diferente); tendências invisíveis (3 SEV3s em 1 mês
+          no mesmo serviço = sinal); team perde músculo de investigação.
+
+CERTO: SEV1/SEV2 mandatório; SEV3 opcional mas encorajado; near-miss notável
+       (detection rápida evitou impacto) é candidato a postmortem leve
+       (Summary + Impact + Lessons Learned, sem timeline detalhada se durou
+       < 1 min). Investigation barata, lição grátis.
+```
+
+### ANTI: timeline ambígua
+
+```text
+ANTI: "Por volta das 14h", "After lunch", "Em horário de pico",
+      "Ontem à tarde"
+
+PROBLEMA: reviewers de outros timezones perdem contexto (15h Brasília
+          = 18h UTC = 11h US-East); reconstrução em > 30 dias impossível
+          (lembra "horário de pico"?); análise estatística (MTTR
+          distribution, time-to-detect) impossível sem timestamps; cross-
+          incident correlation falha.
+
+CERTO: sempre `HH:MM UTC` no formato 24h; cada evento na timeline com
+       timestamp; UTC é o único timezone universal — converter quando
+       compartilhar com stakeholders locais, NUNCA armazenar local.
+```
+
+### ANTI: copy-paste de postmortem template sem investigation
+
+```text
+ANTI: abrir template, preencher campos genéricos, "Resolution: investigamos
+      e resolvemos", "Root Cause: bug no código"; sem dados, sem 5 whys
+
+PROBLEMA: root cause errado documentado; action items irrelevantes;
+          lessons learned superficiais; falha equivalente em 3 meses
+          porque diagnóstico verdadeiro nunca foi feito; postmortem vira
+          ritual burocrático em vez de instrumento de aprendizado.
+
+CERTO: postmortem nasce de investigation real (Core Analysis Loop, /forense,
+       ou logs/state via mcp__supabase__get_logs); preencher com EVIDÊNCIAS
+       (queries que rodaram, logs específicos, métricas observadas), não
+       impressões; cada Root Cause precisa de prova citável.
+```
