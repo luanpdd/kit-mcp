@@ -101,6 +101,61 @@ A complete observability layer derived from *Observability Engineering* (Charity
 /observabilidade omm
 ```
 
+### SRE Engagement suite (v1.10)
+
+A production engineering layer derived from *Site Reliability Engineering: How Google Runs Production Systems* (Beyer, Jones, Petoff, Murphy — Google/O'Reilly, 2016) ships in the kit. It composes with the Supabase suite (v1.8) and the Observability suite (v1.9) into a coherent production engineering stack — Supabase agents now suggest PRR before launch, every Edge Function template includes the **4 golden signals**, and `incident-investigator` outputs feed directly into blameless postmortems via `/postmortem --from-investigation <id>`.
+
+**6 skills** in `kit/skills/`:
+- `_shared-sre/glossary.md` — canonical bilingual vocabulary (PT-BR↔EN) — SLI/SLO/SLA, error budget, burn rate, toil, postmortem, blameless, PRR, golden signals, risk continuum, MTTR/MTBF
+- `sre-risk-management` — risk continuum (cap 3), 99.99% wisdom ("as reliable as needs to be, no more"), error budget as explicit risk × innovation balance
+- `four-golden-signals` — Latency + Traffic + Errors + Saturation (cap 6), histograms with exponential bucketing, success vs error latency separated, percentiles vs mean (long tail)
+- `eliminating-toil` — canonical toil definition (manual + repetitive + automatable + tactical + no enduring value + scales linearly), ≤ 50% rule (cap 5), automation patterns
+- `blameless-postmortems` — canonical 9-section template (cap 15), "no postmortem left unreviewed", blame culture as anti-pattern, Wheel of Misfortune
+- `production-readiness-review` — PRR checklist (cap 32) — 6 axes (System architecture, Instrumentation, Emergency response, Capacity planning, Change management, Performance), 3 engagement models
+
+**4 agents** in `kit/agents/`:
+- `golden-signals-instrumenter` — specialization of `observability-instrumenter` (v1.9); generates OTel patches with the 4 golden signals (Latency=histogram, Traffic=counter, Errors=counter by `error.type`, Saturation=gauge)
+- `toil-auditor` — analyzes git log + shell scripts + manual commands in README/runbooks; produces `TOIL-AUDIT.md` with P0/P1/P2 priority + estimated effort
+- `postmortem-writer` — natural continuation of `incident-investigator` (v1.9); reads `.planning/investigations/<id>.md` and produces blameless postmortem (Summary, Impact, Root Causes, Trigger, Resolution, Detection, Action Items, Lessons Learned, Timeline UTC)
+- `prr-conductor` — conducts Production Readiness Review for service/feature; reads schema (Supabase MCP), Edge Functions, `.planning/slos/`, audit logs; produces `PRR-REPORT.md` scored across the 6 axes
+
+**6 commands**:
+- `/sre <subcommand>` — single orchestrator (analog to `/supabase` v1.8 and `/observabilidade` v1.9) — dispatches to the 4 agents with PT/EN synonyms
+- `/golden-signals` — invokes `golden-signals-instrumenter` for service/Edge Function/phase; generates `GOLDEN-SIGNALS.md` with OTel-ready instrumentation
+- `/auditar-toil` — invokes `toil-auditor`; generates `.planning/TOIL-AUDIT.md`
+- `/postmortem` — invokes `postmortem-writer`; supports `--from-investigation <id>` (continue from v1.9 investigation) or `--incident "<description>"` (standalone)
+- `/prr` — invokes `prr-conductor`; supports `--service <name>` or `--feature <description>`; generates `PRR-REPORT.md`
+- `/risk-budget` — displays current error budget vs risk continuum, citing SLOs from v1.9 (`.planning/slos/`); applies `sre-risk-management` skill
+
+**3 audit gates** in `gates/`:
+- `golden-signals-coverage` (blocking, pre-verify) — verifies code in `supabase/functions/**`, `src/**`, `lib/**` covers the 4 golden signals (skips gracefully on content-only phases)
+- `postmortem-template-required` (blocking, pre-conclude) — blocks `/concluir-marco` if any `.planning/investigations/<id>.md` lacks a corresponding `.planning/postmortems/<id>.md` (`Status: INCONCLUSIVE` is the only exception)
+- `prr-checklist-coverage` (blocking, pre-verify) — verifies every `PRR-REPORT.md` in `.planning/prr/**/*.md` covers the 6 canonical axes; "skipping an axe = invalid approval"
+
+**Lifecycle integration:**
+- `/forense` — after Core Analysis Loop closes with VALIDATED root cause, suggests chain `/postmortem --from-investigation <id>` (Phase 40 / INT-FW-V2-01)
+- `/concluir-marco` — opt-in gate `workflow.complete_milestone_prr_gate=true` requires `PRR-REPORT.md` with status `passed` for production-bound features before archive (Phase 40 / INT-FW-V2-02)
+- `/auditar-marco` — auto-invokes `/auditar-toil` when `workflow.audit_milestone_toil=true` (default); result feeds OMM Capacidade 3 scoring via `omm-auditor` (Phase 40 / INT-FW-V2-03)
+
+**Quick start example — end-to-end SRE workflow:**
+```bash
+# Before launching a new feature in production — PRR
+/sre prr --feature "checkout v2"
+
+# While instrumenting service — apply 4 golden signals
+/sre golden-signals supabase/functions/orders/index.ts
+
+# Audit team toil quarterly
+/sre toil
+
+# When SLO burn alert fires — investigate (v1.9), then postmortem (v1.10)
+/forense "checkout SLO burn rate = 8 às 14:32"
+/sre postmortem --from-investigation checkout-2026-05-07
+
+# Risk dashboard against SLO budgets
+/sre risk-budget
+```
+
 ---
 
 ## Prerequisites
