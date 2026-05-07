@@ -6,6 +6,92 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.10.0] - 2026-05-07
+
+Milestone v1.10 — Suíte SRE Engagement: incorpora técnicas do livro *Site Reliability Engineering: How Google Runs Production Systems* (Beyer, Jones, Petoff, Murphy — Google/O'Reilly, 2016) ao kit-mcp. 32 REQs em 6 fases (Phases 36-41), distribuídos em 3 ondas: Núcleo SRE (Phases 36-38), Integração com suítes existentes (Phases 39-40), Gates QA + docs (Phase 41). Complementa a Suíte Observabilidade v1.9.0 (publicada 2026-05-06) e a Suíte Supabase v1.8.0 — juntas formam o stack production engineering do kit.
+
+### Adicionado — 6 skills SRE foundationais (Phase 36)
+
+Cada skill é auto-contida (sem `references/`), com frontmatter `description ≤ 200 chars`, template canônico de 5 seções (Quando usar / Regras absolutas / Patterns canônicos / Anti-patterns / Ver também), e cross-refs via Markdown link relativo.
+
+- `_shared-sre/glossary.md` — vocabulário canônico bilíngue (PT-BR↔EN): SLI, SLO, SLA, error budget, burn rate, toil, postmortem, blameless, PRR, golden signals (latency/traffic/errors/saturation), risk continuum, MTTR, MTBF. Lista anti-patterns explícitos (alert fatigue, hero culture, SLO 99.99%+, fixed-window error budget, blame culture, mean-only latency, monitoring causes não symptoms).
+- `sre-risk-management` — risk continuum (cap 3 livro Google SRE), 99.99% wisdom (user em 99% smartphone não distingue 99.99% vs 99.999%), error budget como balanço explícito risk × innovation, "as reliable as needs to be, no more".
+- `four-golden-signals` — Latency + Traffic + Errors + Saturation (cap 6), black-box vs white-box monitoring, distinção de latência success vs error, percentis vs mean (long tail), histograms com bucketing exponencial.
+- `eliminating-toil` — definição canônica de toil (manual, repetitivo, automatizável, tático, sem valor durável, escala linear), regra ≤ 50% (cap 5), padrões de automação, distinção toil vs overhead vs grungy work.
+- `blameless-postmortems` — template canônico 9 seções (Summary, Impact, Root Causes, Trigger, Resolution, Detection, Action Items, Lessons Learned, Timeline UTC), cultura blameless (cap 15), "no postmortem left unreviewed", Wheel of Misfortune para training.
+- `production-readiness-review` — checklist PRR (cap 32) — 6 axes: System architecture, Instrumentation/Metrics/Monitoring, Emergency response, Capacity planning, Change management, Performance — com 3 modelos de engagement: Simple PRR, Early Engagement, Frameworks/SRE Platform.
+
+### Adicionado — 4 agents SRE core (Phase 37)
+
+Cada agent inclui tabela `## Compatibilidade` por IDE (Full / Partial / Offline-only), preflight detection MCP no Step 0 quando aplicável, e frontmatter `tools:` com nomes canônicos.
+
+- `golden-signals-instrumenter` — especialização de `observability-instrumenter` (v1.9). Recebe código de serviço/Edge Function e retorna patches OTel com Latency=histogram bucketed exponencial, Traffic=counter por endpoint × method, Errors=counter por `error.type` enum 5-15 valores fechado (NUNCA `error.message`), Saturation=gauge resource-specific identificado explicitamente.
+- `toil-auditor` — analisa repo + git log ≤ 90d + scripts shell + comandos manuais documentados em README/runbooks. Retorna `.planning/TOIL-AUDIT.md` listando candidatos a automação com priorização P0/P1/P2 e ROI = freq × tempo / esforço.
+- `postmortem-writer` — recebe `--from-investigation <id>` (continuação de `incident-investigator` v1.9 — lê `.planning/investigations/<id>.md`) ou `--incident "<descrição>"` (standalone). Gera postmortem blameless seguindo template canônico de 9 seções em `.planning/postmortems/<id>.md`.
+- `prr-conductor` — conduz Production Readiness Review para serviço/feature. Lê schema (Supabase MCP), Edge Functions code, SLOs definidos (`.planning/slos/`), audit logs. Produz `PRR-REPORT.md` scored em 6 axes com gaps e action items priorizados (P0 blocker / P1 scheduled).
+
+### Adicionado — 6 commands SRE (Phase 38)
+
+- `/sre <subcommand>` — orquestrador único (análogo a `/supabase` v1.8 e `/observabilidade` v1.9); dispatch via `Task(subagent_type=...)` com sinônimos PT/EN para os 5 comandos abaixo.
+- `/golden-signals` — invoca `golden-signals-instrumenter` para serviço/Edge Function/fase; gera `GOLDEN-SIGNALS.md` por target com instrumentação OTel pronta.
+- `/auditar-toil` — invoca `toil-auditor`; gera `.planning/TOIL-AUDIT.md`.
+- `/postmortem` — invoca `postmortem-writer`; suporta flag `--from-investigation <id>` (continuar de investigation v1.9) ou `--incident "<descrição>"` (postmortem standalone).
+- `/prr` — invoca `prr-conductor` para serviço/feature; usa flag `--service <name>` ou `--feature <description>`; gera `PRR-REPORT.md`.
+- `/risk-budget` — exibe state atual de error budget vs risk continuum, citando SLOs definidos em v1.9 (lê `.planning/slos/`); aplica skill `sre-risk-management`.
+
+### Adicionado — 3 audit gates novos (Phase 41)
+
+Markdown specs em `gates/` com `## Check` em bash 3.2-portable (macOS default):
+
+- `gates/golden-signals-coverage.md` (blocking, pre-verify) — verifica código de serviço/Edge Function tocado em fase tem os 4 golden signals presentes (regex sobre `histogram | counter | gauge | saturation`). Skip gracefully em projetos content-only (sem `supabase/functions/` / `src/` / `lib/`).
+- `gates/postmortem-template-required.md` (blocking, pre-conclude) — em `/concluir-marco`, bloqueia se houve incident em `.planning/investigations/` sem `.planning/postmortems/` correspondente. `Status: INCONCLUSIVE` reconhecido como exceção (sem root cause = sem aprendizado a documentar). Princípio canônico: "no postmortem left unreviewed" (cap 15).
+- `gates/prr-checklist-coverage.md` (blocking, pre-verify) — verifica que `PRR-REPORT.md` em `.planning/prr/**/*.md` cobre os 6 axes do PRR (System architecture, Instrumentation, Emergency response, Capacity planning, Change management, Performance) — pular um axe = aprovação inválida (regra absoluta da skill `production-readiness-review`).
+
+### Adicionado — integração com Suíte Observabilidade v1.9 (Phase 39)
+
+- **Skill `event-based-slos` (v1.9)** ganha bloco "Risk continuum" cross-referenciando `sre-risk-management`; explica que target SLO é escolha explícita no continuum risk × innovation, não meta arbitrária.
+- **Agent `omm-auditor` (v1.9)** consulta `toil-auditor` para Capacidade 3 (Complexidade/Tech Debt). Score OMM-3 considera % de tempo em toil pelo time. Tabela 5-row Cap 3 (`< 15%` → 5 / `15-30%` → 4 / `30-50%` → 3 / `50-60%` → 2 / `> 60%` → 1) replicada como single source of truth distribuída.
+
+### Adicionado — integração com Suíte Supabase v1.8 (Phase 39)
+
+- **`supabase-edge-fn-writer`** ganha seção "Four Golden Signals" — template canônico de Edge Function inclui histogram de latência, counter de tráfego, counter de erros por error.type enum, gauge de saturação (recurso identificado explicitamente: pg_pool / concurrency_limit / pgmq.queue_length / egress_bandwidth conforme tipo de função).
+- **`supabase-architect`** ganha menção a PRR — plano arquitetural sugere PRR antes de production; cross-ref para `production-readiness-review`. Tabela 6 axes adaptada ao contexto Supabase (single project = SPOF mitigado por branches Pro; Spend Cap; RLS git-versioned; declarative schema; load test com p99 baseline).
+- **`supabase-migration-writer`** ganha alerta sobre toil — scripts SQL repetitivos (rebuild de índices manuais, vacuums recorrentes) são candidatos a automação via pg_cron; cross-ref para `eliminating-toil`.
+- **`supabase-storage-implementer`** ganha saturation signal — uploads emitem gauge de bucket size + counter de quota near-exhaustion (thresholds 80% yellow / 95% red por plan: Free 1 GB / Pro 100 GB / Team 1 TB / Enterprise custom); cross-ref para `four-golden-signals`.
+
+### Mudado — lifecycle hooks no fluxo framework (Phase 40)
+
+Patches editoriais puramente aditivos em 3 commands de fluxo framework — frontmatter (`description`, `allowed-tools`) preservado byte-a-byte (anti-pitfall A2), workflows em `.claude/framework/workflows/*.md` continuam funcionais como antes.
+
+- **`/forense`** ganha bloco `<sre_integration>` que sugere chain `/postmortem` automaticamente após Core Analysis Loop fechar com root cause `VALIDATED`. Distinção fundamental: forense diagnostica (read-only, evidence-based, científico — output em `.planning/forensics/`); postmortem documenta blameless para aprendizado organizacional (cap 15 — output em `.planning/postmortems/`). 3 condições de trigger sugerido + 3 exceções explícitas de não-trigger (INT-FW-V2-01).
+- **`/concluir-marco`** ganha gate PRR opcional — quando `workflow.complete_milestone_prr_gate=true` (default `false`, opt-in até maturidade SRE), exige `PRR-REPORT.md` com status `passed` para features production-bound antes de arquivar. Status table 3-row (`passed` 6/6 axes ≥ 3/5 = arquivável / `passed-with-warnings` P1 pendente = arquivável com warnings / `failed` P0 reprovado = BLOQUEIA). Coexiste ortogonalmente com gate OMM regression v1.9 — OMM mede observability maturity, PRR mede production readiness (INT-FW-V2-02).
+- **`/auditar-marco`** invoca `/auditar-toil` automaticamente quando `workflow.audit_milestone_toil=true` (default `true`); resultado `.planning/TOIL-AUDIT.md` alimenta scoring OMM Capacidade 3 via `omm-auditor`. Loop fechado canônico: `/auditar-marco` → `/auditar-toil` → `/auditar-observabilidade` → `omm-auditor` consulta `TOIL-AUDIT.md` → `OMM-REPORT.md` inclui Cap 3 → `MILESTONE-AUDIT.md` (INT-FW-V2-03).
+
+### Mudado — README ganha seção "SRE Engagement suite (v1.10)"
+
+`README.md` adiciona nova seção entre "Observability suite (v1.9)" e o separador `---` listando 6 skills + 4 agents + 6 commands + 3 audit gates + lifecycle integration + quick start example end-to-end (PRR antes de produção → instrumentação golden signals → após incident, postmortem chain). Citação canônica ao livro Google SRE 2016 em paridade com a citação a *Observability Engineering* na seção v1.9 (QA-SRE-04).
+
+### Sem mudanças de API runtime
+
+v1.10 é **content-only por design** — zero alterações em `src/core/`, `registry.js`, `sync.js`, ou no MCP server. Stable API v1.0+ totalmente preservada. CI passa sem mudança em `.github/workflows/`. Deps budget mantido em 6/6 (zero deps novas — todo o conteúdo é Markdown).
+
+### Tests
+
+Tests existentes (115 unit + 67 integration acumulados de v1.7) continuam verde. Novos gates não têm tests dedicados (são bash em markdown, executados via `runGate` no framework de gates já testado em `test/unit/gates.test.js`). Smoke validation por gate: PASS na codebase atual (kit-mcp content-only) + FAIL em fixture sintético com gaps + PASS em fixture sintético com cobertura completa — todos os 3 gates novos validados.
+
+### Decisões arquiteturais
+
+- **Conteúdo-only milestone** — zero alterações em `src/core/`. Toda integração com fluxo framework via patches editoriais nos commands `kit/commands/{forense,concluir-marco,auditar-marco}.md` (paridade com pattern v1.9 que adicionou bloco `<observability_integration>` aos mesmos commands).
+- **Specialização sobre overlap** — `golden-signals-instrumenter` é especialização de `observability-instrumenter` (v1.9), não substituto: aquele cuida de spans/atributos canônicos, este cuida de métricas dos 4 signals; ambos podem coexistir num mesmo PR (chain canônica: `observability-instrumenter` primeiro → `golden-signals-instrumenter` segundo).
+- **Chain v1.9 → v1.10** — `incident-investigator` (v1.9) fecha Core Analysis Loop com root cause `VALIDATED` em `.planning/investigations/<id>.md`; `postmortem-writer` (v1.10) consome via `--from-investigation <id>` para gerar `.planning/postmortems/<id>.md`. Handoff é state-based via filesystem (não API).
+- **Gates blocking pre-verify** — `golden-signals-coverage` e `prr-checklist-coverage` são blocking (cobertura mínima é regra absoluta). `postmortem-template-required` é blocking pre-conclude (regra cap 15 "no postmortem left unreviewed" não admite warn-only após adoption).
+- **PRR gate em `/concluir-marco` é opt-in** — diferente do gate OMM regression v1.9 (default `true`, estabelecido), o gate PRR v1.10 é default `false` até time amadurecer cultura SRE. Toggle via `workflow.complete_milestone_prr_gate=true`. Critério de "ligar gate": ≥ 2 dos 4 indicadores (paid feature, SLO definido, on-call rotation, postmortem culture).
+- **Vendor-neutral** — gate `golden-signals-coverage` aceita qualquer pattern com `histogram` / `counter` / `gauge` (OTel, Prometheus, StatsD, Borgmon-like). Livro Google SRE descreve Borgmon mas é proprietário; gate é genérico.
+
+### Detalhes
+
+`.planning/milestones/v1.10.0/` (após `/concluir-marco`).
+
 ## [1.8.1] - 2026-05-06
 
 Patch de integração da Suíte Supabase v1.8.0 — fecha 7 lacunas onde o conteúdo novo não estava "wired" nos pontos de entrada existentes do framework.
