@@ -1,13 +1,24 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-06 — v1.10 SRE Engagement iniciado.
+> Última atualização: 2026-05-07 — v1.10 SRE Engagement entregue.
 
 ## Estado Atual
 
-**v1.10 — SRE Engagement** em planejamento. Incorporar técnicas do livro *Site Reliability Engineering: How Google Runs Production Systems* (Beyer, Jones, Petoff, Murphy — Google/O'Reilly, 2016) como skills/agentes/comandos canônicos. v1.9.0 (Suíte Observabilidade) publicada em npm + GitHub Release.
+**v1.10.0 — SRE Engagement** entregue 2026-05-07. 6 fases (36-41), 30 plans, 32 REQs entregues: 6 skills + 4 agents + 6 commands + 3 audit gates + 9 patches em artefatos v1.8/v1.9 + framework flow. Material-fonte: *Site Reliability Engineering* (Beyer/Jones/Petoff/Murphy — Google/O'Reilly, 2016).
 
-## Milestone Atual: v1.10 SRE Engagement
+Stack acumulado v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE) forma suíte coesa de production engineering. Stable API v1.0+ preservada (zero alterações em src/core/). Próximo milestone a definir.
+
+## Objetivos do Próximo Milestone
+
+A definir. Use `/novo-marco` para iniciar próximo ciclo.
+
+## Histórico (arquivado abaixo)
+
+<details>
+<summary>v1.10 SRE Engagement — milestone original</summary>
+
+## Milestone v1.10 SRE Engagement (entregue 2026-05-07)
 
 **Objetivo:** Adicionar uma camada de expertise em SRE (Site Reliability Engineering) ao kit derivada do livro do Google, complementando v1.9 (Observabilidade) com práticas de engagement de SRE — Production Readiness Review (PRR), Four Golden Signals, Postmortem Culture blameless, Toil elimination, Risk management. Camada se beneficia profundamente da Suíte Observabilidade v1.9 (SLOs, burn-rate, OMM) e da Suíte Supabase v1.8 (instrumentação de Edge Functions com golden signals).
 
@@ -50,6 +61,8 @@
 - Roadmap começa em **Phase 36** (continuação de v1.9 que terminou em 35).
 
 **Contrato preservado:** Quem usa kit-mcp em produção não percebe nada além de novos artefatos disponíveis ao sincronizar. CI permanece verde.
+
+</details>
 
 ## ~~Milestone Anterior: v1.9 Observabilidade (concluído 2026-05-06)~~
 

@@ -1,39 +1,83 @@
 # MILESTONES.md — Histórico de releases
 
+## v1.10 SRE Engagement (Shipped: 2026-05-07)
+
+**Phases completed:** 6 phases, 30 plans, 0 tasks
+
+**Key accomplishments:**
+
+- Skill canônica SRE Risk Management documentando cap 3 do livro Google SRE (Embracing Risk): risk continuum 6 targets, sabedoria 99.99%, error budget como balanço explícito risk × innovation, "as reliable as needs to be, no more".
+- Skill canônica SRE cap 6 documentando os 4 sinais dourados universais (Latency/Traffic/Errors/Saturation), black-box vs white-box monitoring, latência success vs error separadas, percentis vs mean, e histograms com bucketing exponencial — auto-contida com OTel SDK em TypeScript/Deno e queries SQL prontas.
+- Skill canônica `eliminating-toil` documentando cap 5 do livro Google SRE — definição operacionalizável de toil (6 critérios), regra ≤ 50%, distinção toil vs overhead vs grungy work, template TOIL-AUDIT.md, estágios de automação L0-L4 e 5 anti-patterns.
+- Skill canônica em kit/skills/blameless-postmortems/SKILL.md cobrindo capítulo 15 do livro Google SRE — template canônico de 9 seções (Summary/Impact/Root Causes/Trigger/Resolution/Detection/Action Items/Lessons Learned/Timeline UTC), cultura blameless explícita, no postmortem left unreviewed, Wheel of Misfortune como training trimestral.
+- Skill canônica PRR (cap 32 Google SRE) com checklist 6 axes detalhado in-line, 3 engagement models, template PRR-REPORT.md, e sequência handoff dev→SRE em 9 passos — base para prr-conductor Phase 37.
+- Especialização do observability-instrumenter (v1.9) com 4 golden signals OTel canônicos — Latency (histogram bucketed exponencial), Traffic (counter), Errors (counter por error.type enum), Saturation (gauge resource-specific)
+- Agente content-only `kit/agents/toil-auditor.md` (11.9 KB / 277 linhas) que audita repo + git log + scripts shell + runbooks aplicando 6 critérios canônicos de toil (manual/repetitivo/automatizável/tático/sem valor durável/escala linear), prioriza P0/P1/P2 via score `(frequency × pain) / effort_days`, computa `% do tempo do time` vs ≤ 50% rule, e gera TOIL-AUDIT.md com priorização e estágio L0-L4 de automação alvo
+- Agent canônico em kit/agents/postmortem-writer.md que gera postmortem blameless seguindo template de 9 seções (Summary, Impact, Root Causes, Trigger, Resolution, Detection, Action Items, Lessons Learned, Timeline UTC); suporta 2 modos mutuamente exclusivos — `--from-investigation <id>` extrai automaticamente de `.planning/investigations/<id>.md` (artefato do incident-investigator v1.9) e `--incident "<descrição>"` standalone com AskUserQuestion guiado em 9 perguntas; aplica 5 Whys quando blame culture detectada via regex; produz output em `.planning/postmortems/<id>.md` com status Draft + checklist 8 perguntas para reviewer sênior ("no postmortem left unreviewed").
+- Agente SRE que conduz Production Readiness Review (cap 32 do livro Google SRE) para serviço/feature antes de produção, lendo schema/Edge Functions/SLOs/advisors via 4 Supabase MCP tools (list_tables, execute_sql, get_advisors, list_edge_functions), produzindo PRR-REPORT.md scored em 6 axes com modo offline fallback gracioso quando MCP indisponível.
+- Wrapper command kit/commands/golden-signals.md (142 linhas / 6.1 KB) que dispatch para `golden-signals-instrumenter` via `Task(subagent_type=...)` e suporta 3 modos de target resolution (arquivo único, diretório, número de fase) — entrada canônica do user para aplicar 4 golden signals OTel (Latency histogram + Traffic counter + Errors counter + Saturation gauge) em código de serviço.
+- Wrapper command kit/commands/auditar-toil.md (146-char description, 5.8 KB / 129 linhas) que dispatch para toil-auditor via Task(subagent_type=...) com 4 flags opcionais e graceful degradation sem git history, gera .planning/TOIL-AUDIT.md priorizado P0/P1/P2.
+- Wrapper /postmortem invoca postmortem-writer com 2 modos mutuamente exclusivos (--from-investigation v1.9 trail OU --incident standalone) gerando postmortem blameless 9 seções em .planning/postmortems/<id>.md
+- Wrapper command `kit/commands/prr.md` que dispatcha para `prr-conductor` agent com 2 modos `--service|--feature`, 6 axes obrigatórios, 3 engagement models e AskUserQuestion duplo (engagement + reviewer anti auto-PRR).
+- Comando direto read-only que exibe error budget vs risk continuum (cap 3 SRE) — lê .planning/slos/, posiciona cada SLO no continuum 99% → 99.999%, classifica em 4 status enum (OPTIMAL/OVER-SPEC/UNDER-SPEC/BUDGET-EXHAUSTED), e aplica sabedoria 99.99% inline em modo --explain.
+- Terceiro orquestrador da família v1.8/v1.9/v1.10 — dispatch para 4 agents SRE com sinônimos PT/EN + caso especial risk-budget como comando direto + validação flags mutuamente exclusivas pre-dispatch
+- Patch editorial em kit/skills/event-based-slos/SKILL.md inserindo bloco "Risk continuum — SLO target é decisão explícita" com tabela canônica de 5 linhas (99%–99.99%) + sabedoria 99.99% + cross-ref Markdown ativo para sre-risk-management; frontmatter byte-idêntico preservado.
+- Patch puramente editorial de `kit/agents/omm-auditor.md` (+52 linhas / -0 linhas) que faz a Capacidade 3 (Complexidade / Tech Debt) consultar `toil-auditor` via cross-ref Markdown ativo e incorporar `% toil pelo time` no scoring 1-5 — frontmatter byte-idêntico, modelo 5-capacidade canônico preservado, regra absoluta "score > 3 exige TOIL-AUDIT.md fresco" estabelecida.
+- Patch substancial em `kit/agents/supabase-edge-fn-writer.md` (v1.8 + v1.9) adiciona seção "Four Golden Signals" (cap 6 livro Google SRE) — toda Edge Function gerada nasce com Latency histogram + Traffic counter + Errors counter por error.type + Saturation gauge resource-specific. Frontmatter byte-idêntico preservado.
+- Patch v1.10 do agent supabase-architect: nova seção 'Production Readiness Review' (cap 32 livro Google SRE) + extensão do template de output com '## 10. PRR pré-production' — frontmatter byte-preservado
+- Chain canônico /forense → /postmortem documentado via bloco <sre_integration> em kit/commands/forense.md (cap 15 Google SRE)
+- Gate PRR opcional adicionado ao /concluir-marco via flag workflow.complete_milestone_prr_gate (default false), com status table 3-row, critério ≥ 2 dos 4 sinais de production maturity e cross-refs ATIVOS para skill + agent v1.10
+- Bloco `<sre_integration>` adicionado ao `/auditar-marco` — auto-invoca `/auditar-toil` antes de `/auditar-observabilidade`, fechando loop cap 5 SRE → omm-auditor Capacidade 3 (Phase 39 INT-OBS-02)
+- Gate bash 3.2-portable blocking pre-verify que detecta os 4 golden signals (Latency=histogram, Traffic=counter, Errors=counter, Saturation=gauge) via regex inclusiva em código tocado, com skip gracefully para projetos content-only.
+- Bash 3.2-portable blocking pre-conclude gate enforcing "no postmortem left unreviewed" (cap 15 Google SRE) by cross-checking .planning/investigations/ vs .planning/postmortems/ via basename match, with Status: INCONCLUSIVE recognized as exception
+- Gate bash 3.2-portable blocking pre-verify validando que cada PRR-REPORT.md em .planning/prr/
+- README.md updated with new SRE Engagement suite (v1.10) section listing 6 skills + 4 agents + 6 commands + 3 audit gates with end-to-end workflow example, citing Site Reliability Engineering book (Google/O'Reilly 2016) — pure additive patch (55 insertions / 0 deletions)
+- QA-SRE-05
+
+---
+
 > Reconstruído a partir do CHANGELOG e dos commits. Fonte canônica das versões está em `CHANGELOG.md`.
 
 ## Concluídos
 
 ### v0.1.x — Foundation (2026-05-03)
+
 - v0.1.0: Initial release. 5 MCP tools, 8 IDE targets, registry table, markdown-reference projection.
 - v0.1.1–0.1.6: Polishes (`--via npx`/`local`/`global`, CI, npm provenance, README, badges, reverse-sync, watch, gate runner, forensics reflect).
 
 ### v0.2.0 — Cleanup falho (2026-05-03)
+
 - Removeu por engano o kit pessoal achando ser third-party. **Deprecated retroativamente** — não usar.
 
 ### v0.2.1 — Patch da v0.2.0 (2026-05-03)
+
 - Mantém o erro da v0.2.0. Não usar.
 
 ### v0.3.0 — Workflow restaurado (2026-05-03)
+
 - 19 agents, 60 commands, framework, hooks restaurados de `069349c^`.
 - Skills da Anthropic Cowork excluídas conscientemente.
 - Trynux/IEP-Advocacia/Notion ID hardcoded → env vars (`KIT_NOTION_PARENT_PAGE_ID`, `OBSIDIAN_VAULT_REPO`).
 
 ### v0.4.0 — Docs alinhados (2026-05-03)
+
 - README reescrito: kit bundled é caminho default; `--kit-root` é escape hatch.
 - BUG: import morto `DEFAULT_KIT_ROOT` em `src/mcp-server/index.js` quebrava boot via `npx`. **Deprecated**.
 
 ### v0.4.1 — Fix MCP boot (2026-05-03)
+
 - Removido import morto.
 - Adicionado boot test ao CI.
 
 ### v0.5.0 — Mirror-tree sync (2026-05-03)
+
 - Nova capability `framework` e `hooks` no registry: cópia recursiva de `kit/framework/` e `kit/hooks/` para `.claude/framework/` e `.claude/hooks/`.
 - Marker `.kit-mcp-managed` na raiz pra `sync remove` seguro.
 - CI cobre projection + safety (preserva user files sem marker).
 - **Resolve a regressão estrutural** que fazia commands tipo `/novo-marco` aparecerem na IDE mas falharem em runtime ao tentar ler templates.
 
 ### v1.0.0 — Estabilização para 1.0 (2026-05-03) 🎉 First stable
+
 - 12/12 REQs entregues em 5 fases (tooling, parser, reverse-sync, tests, cut).
 - Tests: 42 automatizados (37 unit + 5 integration) via `node:test`, zero deps.
 - CI: 6/6 combinações verdes (Ubuntu/macOS/Windows × Node 20/22) em todo push.
@@ -44,6 +88,7 @@
 - Detalhes: `.planning/milestones/v1.0.0/`.
 
 ### v1.2.0 — GUI sidecar de acompanhamento (2026-05-04) 🪟 Live process viewer
+
 - 56/56 REQs entregues em 8 fases (lock arquitetural, fundações, servidor HTTP+SSE, UI estática, publisher+wrapper, CLI integration, MCP auto-spawn, hardening+release).
 - Sidecar web localhost (porta 7100-7199) com SSE; abre via `kit ui start` ou `autoSpawn:true` em tools MCP de sync/reverse-sync/gates.
 - Stable API v1.0+ preservada — apenas adições. `src/core/` literalmente intocado (`git diff` vazio).
@@ -56,6 +101,7 @@
 - Detalhes: `.planning/milestones/v1.2.0/`.
 
 ### v1.1.0 — Feedback visual no terminal (2026-05-03) 🎨 Visual UX
+
 - 10/10 REQs entregues em 5 fases (UI primitives, --json flag, progress, selectors, cut).
 - `src/core/ui.js` (~167 LOC) — color/icons/spinner/progress/select/confirm/summary, respeita NO_COLOR + isTTY.
 - Default output muda de JSON para human-readable; `--json` global flag preserva v1.0.
@@ -68,7 +114,9 @@
 - Detalhes: `.planning/milestones/v1.1.0/`.
 
 ### v1.3.0 → v1.5.3 — Patches ad-hoc (2026-05-04 → 2026-05-05)
+
 Série de patches feitos fora do framework — UI redesign, framework velocity, UI tokens display, auto-reconnect, idle-default fix, audit bundle. Todos em `CHANGELOG.md` (canônico). Resumo:
+
 - v1.2.3 — humanize labels (PT-BR, caminhos amigáveis)
 - v1.3.0 — UI redesign Claude Design (active hero, timeline rail, tweaks panel)
 - v1.4.0 — framework velocity (publicar-rapido, main-sync, auto-detects, schema-checker, post-migration hook)
@@ -78,6 +126,7 @@ Série de patches feitos fora do framework — UI redesign, framework velocity, 
 - v1.5.3 — bundle audit quick-wins (POST /shutdown Origin check, awk regex em publish.yml, drop absPath de list-*, trim Vago/Correto)
 
 ### v1.6.0 — Perf+lean (2026-05-05) 🧹 16 audit items + observability hook
+
 - 16/16 REQs entregues em 3 fases (Phase 19 quick wins / Phase 20 hardening / Phase 21 token economy) + Phase 19.5 inserida (observability hook).
 - planner.md compactado 53→35 KB (-34%); CLAUDE.md gerado 10→8.5 KB (-19%).
 - listKit cache TTL 30s, regex top-level, sync/reverse-sync aceitam kit pré-carregado.
@@ -87,12 +136,14 @@ Série de patches feitos fora do framework — UI redesign, framework velocity, 
 - Stable API v1.0+ preservada. Tests: 102 unit + 67 integration verde.
 
 ### v1.6.1 — DX patch (2026-05-05) 🩺 Diagnostic + upgrade-check
+
 - `kit doctor` — diagnostic command (version/sidecar/hook/settings/.planning/orphan locks)
 - Upgrade-check no boot do `kit ui start` com banner amarelo se atrás do npm latest
 - Cache TTL 30s em `listGates` (mirrors PERF-01 pattern)
 - 112 unit + 67 integration green; Stable API preservada.
 
 ### v1.7.0 — Perf+lean part 2 + UX canonical (2026-05-06) 🧹 Workflow compaction + naming
+
 - Phase 22: workflow files compactados (discuss-phase 49→39 KB, plan-phase 36→31 KB, new-project 40→37 KB)
 - Phase 23: stubs-only sync mode (1.79× speedup em cold listKit; cache key separado)
 - Phase 24: boilerplate dedup (output-style centralizado em references/, 19 KB economizados em 18 agents) + /fazer canonical com árvore de decisão; aliases /rapido /expresso /proximo linkam de volta
