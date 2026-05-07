@@ -99,9 +99,12 @@ O comando `/forense` **sugere ao usuário** ao final do relatório:
 
 ```text
 Próximo passo recomendado:
-  /postmortem --from-investigation <forensic-id>
+  /postmortem --incident "<one-liner derivado do relatório forense>"
 Continua o blameless write-up com Summary + Impact + Root Causes + Action Items.
 Cross-ref canônico: [blameless-postmortems](../skills/blameless-postmortems/SKILL.md) skill + [postmortem-writer](../agents/postmortem-writer.md) agent.
+
+Nota: para incidents de produção SRE com investigação completa via /investigar-producao
+(que produz .planning/investigations/<id>.md), use `/postmortem --from-investigation <id>`.
 ```
 
 **Chain de fluxo canônico:**
@@ -109,14 +112,19 @@ Cross-ref canônico: [blameless-postmortems](../skills/blameless-postmortems/SKI
 ```text
 Falha detectada
   ↓
-/forense "<descrição>"   ← diagnóstico evidence-based (este comando)
+/forense "<descrição>"   ← diagnóstico evidence-based (este comando, output: .planning/forensics/report-<ts>.md)
   ↓ (Core Analysis Loop fecha com VALIDATED)
-/postmortem --from-investigation <id>   ← blameless write-up (chain sugerido)
+/postmortem --incident "<one-liner>"   ← blameless write-up (chain sugerido — modo standalone)
   ↓
 Action Items P0/P1 viram tarefas em milestone atual ou próximo
   ↓
 Wheel of Misfortune: postmortem vira treino de novos engineers (cap 15)
 ```
+
+**Distinção `/forense` vs `/investigar-producao`:**
+
+- `/forense` — diagnóstico de workflows framework com falha (post-mortem de processo). Output: `.planning/forensics/report-<ts>.md`. Chain: `--incident "<one-liner>"`.
+- `/investigar-producao` (v1.9) — Core Analysis Loop em incident produção SRE com MCP Supabase. Output: `.planning/investigations/<id>.md`. Chain: `--from-investigation <id>`.
 
 **Quando NÃO sugerir chain `/postmortem`:**
 

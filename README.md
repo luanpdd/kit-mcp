@@ -148,9 +148,12 @@ A production engineering layer derived from *Site Reliability Engineering: How G
 # Audit team toil quarterly
 /sre toil
 
-# When SLO burn alert fires — investigate (v1.9), then postmortem (v1.10)
-/forense "checkout SLO burn rate = 8 às 14:32"
+# When SLO burn alert fires — investigate (v1.9 deep loop), then postmortem (v1.10)
+/investigar-producao "checkout SLO burn rate = 8 às 14:32"
 /sre postmortem --from-investigation checkout-2026-05-07
+# Or for framework-level failures:
+/forense "framework workflow X falhou em produção"
+/sre postmortem --incident "framework workflow X failed (see .planning/forensics/report-*)"
 
 # Risk dashboard against SLO budgets
 /sre risk-budget
