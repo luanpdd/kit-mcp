@@ -276,3 +276,30 @@ CERTO: re-PRR triggered em (a) rewrite > 50%, (b) RPS escala > 10×, (c) novo
        dependency tier-1, (d) time-of-record rotation > 50%, (e) anualmente como
        hygiene.
 ```
+
+## Verificação
+
+Antes de marcar PRR como `Approved`:
+
+1. **6 axes preenchidos** — System Architecture, Instrumentation/Metrics/Monitoring, Emergency Response, Capacity Planning, Change Management, Performance
+2. **Cada item tem evidence** — não checkbox vago; evidence concreta (URL/query/doc) em cada
+3. **Engagement model escolhido apropriadamente** — Simple PRR/Early Engagement/Frameworks-Platform conforme custo de outage
+4. **Reviewer ≠ time dev** — reviewer externo ou SRE
+5. **P0s todos resolvidos** — gaps P0 são blockers; nenhum aberto pré-launch
+6. **P1s tracked com owner + due** — escalonados em roadmap próximo
+7. **PRR-REPORT.md em `.planning/prr/<service>.md`** — formato canônico
+8. **Re-PRR trigger documentado** — quando re-PRR é triggered (rewrite, RPS 10×, etc.)
+
+## Ver também
+
+- [`_shared-sre/glossary.md`](../_shared-sre/glossary.md) — termos canônicos PRR, 6 axes, 3 engagement models
+- [`four-golden-signals`](../four-golden-signals/SKILL.md) — Axe 2 (Instrumentation) exige os 4 signals
+- [`event-based-slos`](../event-based-slos/SKILL.md) (v1.9) — Axe 6 (Performance) exige SLO definido
+- [`burn-rate-alerting`](../burn-rate-alerting/SKILL.md) (v1.9) — Axe 2 (Instrumentation) exige SLO burn-rate alerts
+- [`sre-risk-management`](../sre-risk-management/SKILL.md) — Axe 6 (Performance) requer risk continuum justificativa
+- [`blameless-postmortems`](../blameless-postmortems/SKILL.md) — Axe 3 (Emergency Response) exige postmortem culture
+- [`eliminating-toil`](../eliminating-toil/SKILL.md) — Axe 5 (Change Management) verifica deploy não é toil
+
+---
+
+*Material-fonte: Site Reliability Engineering — Beyer, Jones, Petoff, Murphy (Google/O'Reilly, 2016) — Cap 32: "The Evolving SRE Engagement Model".*
