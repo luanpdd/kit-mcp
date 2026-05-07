@@ -26,6 +26,28 @@ LLM carrega esta skill ao definir/avaliar SLOs ou substituir alertas threshold p
 - **Owner explícito** — cada SLO tem dono nomeado. Sem owner = sem ação = sem valor.
 - **Substituir alertas threshold gradualmente** — após SLO comprovar valor (1+ incident detectado por SLO antes de threshold), DELETAR threshold antigo.
 
+## Risk continuum — SLO target é decisão explícita
+
+> Cross-ref canônico: [sre-risk-management](../sre-risk-management/SKILL.md) (cap 3 do livro Google SRE — Embracing Risk).
+
+SLO target NÃO é meta arbitrária ("queremos 99.99% porque soa bom"). É uma escolha consciente no **continuum risk × innovation**: cada nove adicional **multiplica custo** mas **divide benefício marginal** percebido pelo cliente.
+
+| Target | Tolerância 30d | User-perceptible? | Quando faz sentido |
+|---|---|---|---|
+| 99% | 7.2 h | Sim, notável | Tier free, beta features, internal tools |
+| 99.5% | 3.6 h | Notável em paths críticos | Tier free de produção |
+| 99.9% | 43.2 min | Aceitável para maior parte de UX | Tier paid default |
+| 99.95% | 21.6 min | Quase imperceptível | Tier enterprise / mission-critical |
+| 99.99% | 4.3 min | Imperceptível em smartphone (~99% no canal do user) | Apenas se justificado por user perception (raro) |
+
+**Sabedoria 99.99%** — cliente final acessa via smartphone (~99% disponibilidade) com ISP residencial (~99%). Serviço 99.99% **não é distinguível** de 99.999% nesse contexto: ambos parecem "sempre funcionando". Esforço além de 99.95% para serviço user-facing é tipicamente desperdício.
+
+**Error budget é o instrumento contábil dessa decisão.** Para SLO 99.9% em 30d com 10M eventos: budget = `0.001 × 10M = 10k bad events`. Esse 10k é orçamento explícito para gastar em deploys arriscados, experimentos, refactors. Quando esgota, releases freezam até regenerar — não como punição, mas como **balanço explícito risk × innovation**.
+
+**Diferentes tiers, diferentes targets** — `customer.tier='enterprise'` pode justificar 99.95%; `tier='free'` pode operar em 99.5%. Tratar todos como tier-1 desperdiça budget; tratar todos como tier-3 frustra clientes pagantes. A skill `sre-risk-management` documenta o framework completo de decisão.
+
+> Em resumo: a regra `Target ≤ 99.95%` desta skill (acima) é **consequência** do risk continuum, não restrição arbitrária. Para 99.99%+ trate como métrica informativa (dashboard), NÃO como SLO acionável (alerts).
+
 ## Patterns canônicos
 
 ### Pattern: SLI event-based vs time-based
