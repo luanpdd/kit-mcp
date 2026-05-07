@@ -38,3 +38,37 @@ Agents disponíveis (Phase 37):
 
 **Subcomando `risk-budget`** é caso especial — comando direto (Plan 05 não usa agent); orquestrador delega aplicando skill [`sre-risk-management`](../skills/sre-risk-management/SKILL.md) inline ou re-encaminhando para `/risk-budget`.
 </execution_context>
+
+<context>
+**Argumentos:** `$ARGUMENTS` — primeiro token é o subcomando; restante é passado para o agent como prompt.
+
+**Subcomandos suportados (sinônimos PT-BR/EN):**
+
+| Subcomando | Sinônimos | Agent dispatched | Cap livro |
+|---|---|---|---|
+| `golden-signals` | `signals`, `4signals`, `golden` | `golden-signals-instrumenter` | 6 |
+| `auditar-toil` | `audit-toil`, `toil`, `auditar` | `toil-auditor` | 5 |
+| `postmortem` | `pm`, `post-mortem` | `postmortem-writer` | 15 |
+| `prr` | `production-readiness`, `readiness-review` | `prr-conductor` | 32 |
+| `risk-budget` | `budget`, `risk`, `continuum` | (comando direto — `/risk-budget`) | 3 |
+| `help` | `ajuda`, `?` | exibe esta tabela inline | — |
+
+**Roteamento de flags por subcomando:**
+
+- `golden-signals <target>` — args passados como `<target>` + flags `--service` `--saturation` `--runtime`
+- `auditar-toil` — flags `--time-window` `--team-size` `--output` `--runbooks-paths`
+- `postmortem` — flags **mutuamente exclusivas** `--from-investigation <id>` OU `--incident "<desc>"` + `--severity`
+- `prr` — flags **mutuamente exclusivas** `--service <name>` OU `--feature "<desc>"` + `--engagement` `--reviewer`
+- `risk-budget` — `[<slo_name>]` opcional + `--format` `--explain`
+
+**Exemplos:**
+
+```
+/sre golden-signals supabase/functions/process-emails    # instrumentar Edge Function
+/sre auditar-toil --time-window 6m                       # audit toil últimos 6 meses
+/sre postmortem --from-investigation incident-2026-05-06-1432-checkout-burn  # continuação de v1.9
+/sre prr --service orders-api --reviewer @sre-lead       # PRR de serviço existente
+/sre risk-budget checkout_success --explain              # budget + sabedoria 99.99% inline
+/sre help                                                # exibe tabela de subcomandos
+```
+</context>
