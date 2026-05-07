@@ -51,6 +51,7 @@ Adicionar camada SRE (Site Reliability Engineering) ao kit derivada do livro do 
 
 **Status execução (2026-05-07):**
 - Plan 02 (`sre-risk-management/SKILL.md`) — ✅ concluído (11.2 KB, SKFD-SRE-01)
+- Plan 04 (`eliminating-toil/SKILL.md`) — ✅ concluído (12.2 KB, SKFD-SRE-03; cap 5 Eliminating Toil — 6 critérios + ≤ 50% + L0-L4 + 5 anti-patterns)
 
 **REQs cobertos (8):** GLOS-01, GLOS-02, GLOS-03, SKFD-SRE-01, SKFD-SRE-02, SKFD-SRE-03, SKFD-SRE-04, SKFD-SRE-05
 
