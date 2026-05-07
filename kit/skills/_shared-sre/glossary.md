@@ -409,7 +409,131 @@ Se NÃO for toil mas repetitivo, classificar:
 
 ## (d) Anti-patterns explícitos
 
-_Em construção — preenchido em T5._
+> Comportamentos comuns que parecem corretos mas são ativamente prejudiciais. Cada um inclui ANTI-PATTERN (comportamento concreto), POR QUÊ É RUIM (consequência sistêmica) e CERTO (substituto canônico). Cap 3, 4, 5, 6, 12, 15.
+
+### Alert fatigue
+
+```text
+ANTI-PATTERN: paginar em todos os sintomas (CPU > 80%, mem < 10%, threads > N,
+              latência > X em qualquer endpoint, log com "ERROR", etc.).
+              Mais alertas = "mais cobertura", supostamente.
+
+POR QUÊ É RUIM: noise mascara real signals; pessoas começam a ignorar pages
+                ("é o cron job de novo"); psychological habituation;
+                próximo SEV1 chega no meio do ruído e é perdido.
+
+CERTO: SLO-based alerting (event burn rate) — alerta só quando customer
+       impact é mensurável. Deletar alertas threshold sem ação clara.
+       Regra: cada page deve ter runbook concreto OU ser deletada.
+```
+
+### Hero culture
+
+```text
+ANTI-PATTERN: celebrar quem fica acordado 36h em incident; bonus para
+              "incident champion"; on-call que "resolve tudo sozinho".
+              Cultura que premia heroísmo individual.
+
+POR QUÊ É RUIM: comportamento perverso (esperar pelo herói em vez de
+                investir em automation); evita investimento sistêmico;
+                burn-out garantido em 6-12 meses; conhecimento concentrado
+                em 1 pessoa = bus factor 1.
+
+CERTO: blameless postmortem foca em sistema; action items > "fulano salvou
+       o dia"; ≤ 50% toil rule (se 1 pessoa está apagando incêndio, é
+       sinal de subinvestimento em automation, não falta de heróis).
+```
+
+### SLO 99.99%+ default
+
+```text
+ANTI-PATTERN: definir SLO 99.99% sem justificativa; "queremos ser melhores
+              que a concorrência"; copiar SLO de cloud provider sem
+              adaptar ao serviço.
+
+POR QUÊ É RUIM: tolerância 30d = 4.3 min, sem tempo de reagir;
+                pressões para "esconder" outages para preservar number;
+                budget esgota antes do alert ser útil;
+                custo de innovation velocity 50× maior que SLO 99.9%.
+
+CERTO: target ≤ 99.95% para SLO real; 99.99%+ apenas com justificativa
+       explícita de user perception (raro — geralmente smartphone/Wi-Fi
+       já dilui qualquer ganho marginal); use métricas/dashboards
+       informativos para tracking de excellence sem comprometer.
+```
+
+### Fixed-window error budget
+
+```text
+ANTI-PATTERN: error budget reseta dia 1 do mês; "tivemos outage dia 31,
+              reseta amanhã"; calendar-aligned budget tracking.
+
+POR QUÊ É RUIM: cliente NÃO esquece outage por causa de calendar reset;
+                pressão para postpone fixes para depois do reset
+                (behavioral hazard); dificulta planejamento de capacity;
+                amplifica gaming do sistema.
+
+CERTO: sliding window 30d. Outage dia 31 fica no budget até dia 30 do
+       mês seguinte (sai gradualmente). Trata-se de função contínua,
+       não step function. Mais alinhado com user perception real.
+```
+
+### Blame culture (vs blameless)
+
+```text
+ANTI-PATTERN: postmortem nomeia "fulano fez deploy errado"; root cause
+              identificada como "human error"; punição/PIP após incident;
+              postmortem como ferramenta de accountability individual.
+
+POR QUÊ É RUIM: engineers escondem incidents próximos ao limite;
+                psychological safety colapsa; replicação garantida
+                (sistema não muda — só a pessoa); informação importante
+                some (quem viveu não fala, quem fala não viveu).
+
+CERTO: postmortem foca em sistema/processo (ausência de canary,
+       ausência de rollback automatizado, runbook desatualizado);
+       pessoas são parte do sistema, NÃO o root cause; revisão por par
+       sênior antes de arquivar; "no postmortem left unreviewed".
+```
+
+### Mean-only latency
+
+```text
+ANTI-PATTERN: alertar/reportar mean latency; dashboard com "average
+              response time"; SLA com "média mensal de latência";
+              p99 considerado "muito ruidoso" e descartado.
+
+POR QUÊ É RUIM: mean = 50ms, mas p99 = 5000ms (long tail invisível);
+                UX dominada por p99 (1% dos usuários têm experiência
+                terrível, mas média esconde); mean é métrica enganosa
+                em qualquer distribuição com cauda longa.
+
+CERTO: SEMPRE percentis (p50, p95, p99, p99.9); histogram com bucketing
+       exponencial (não gauge); latência success vs error separadas
+       (cap 6 — falhas rápidas mascaram falhas lentas); alertas
+       baseados em p99 ou p99.9, nunca mean.
+```
+
+### Monitoring causes não symptoms
+
+```text
+ANTI-PATTERN: alertar em "CPU > 80%", "memória < 10%", "threads > N",
+              "disk I/O > X"; mistura "what" (sintoma observável pelo
+              cliente) com "why" (causa raiz interna).
+
+POR QUÊ É RUIM: false positives (cron job legítimo dispara CPU alta;
+                page no domingo de manhã sem causa real);
+                false negatives (sistema lento sem CPU alta — ex: lock
+                contention, GC pause, network latency);
+                normalização do desvio (cap 12 do livro Observability
+                Engineering — Challenger disaster framing);
+                acoplamento alert × infra (cada novo serviço = N alertas).
+
+CERTO: alertar APENAS em SLO burn rate (event-based, customer-impacting).
+       Decouple "what" de "why" — alert diz que tem dor (SLO burn 4×),
+       debug descobre porquê (CPU? memória? lock? deploy?). Métricas de
+       saturação são gauge informativo no dashboard, não trigger de page.
+```
 
 ---
 
