@@ -305,3 +305,5 @@ function classifyError(e: unknown): string {
 - [distributed-tracing](../skills/distributed-tracing/SKILL.md) — context propagation
 - [structured-events](../skills/structured-events/SKILL.md) — campos canônicos
 - [observability-driven-development](../skills/observability-driven-development/SKILL.md) — 4 perguntas pré-PR
+- [four-golden-signals](../skills/four-golden-signals/SKILL.md) — 4 sinais canônicos (Latency, Traffic, Errors, Saturation) cap 6 livro Google SRE
+- [golden-signals-instrumenter](./golden-signals-instrumenter.md) — agent que retro-instrumenta Edge Functions existentes com os 4 signals
