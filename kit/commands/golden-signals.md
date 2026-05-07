@@ -131,3 +131,12 @@ Output: tabela de patches gerados + GOLDEN-SIGNALS.md por target.
 ```
 
 </process>
+
+<success_criteria>
+- [ ] `<target>` parseado de $ARGUMENTS (arquivo, diretório, ou número de fase)
+- [ ] `target_files` resolvido para lista não-vazia (3 modos suportados)
+- [ ] `golden-signals-instrumenter` invocado via `Task(subagent_type=...)`
+- [ ] Patches aplicados em todos os arquivos do target (4 signals cada)
+- [ ] Output forwarded transparentemente do agent (sem post-processing)
+- [ ] Próximos passos sugerem cross-ref para `/instrumentar-fase`, `/observabilidade slo`, `/prr`
+</success_criteria>
