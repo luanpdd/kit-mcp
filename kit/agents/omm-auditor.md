@@ -104,7 +104,7 @@ Para cada uma das 5 capacidades, atribuir score baseado em sintomas observados:
 5 = Optimizing: melhoria contínua
 ```
 
-**Regra específica Cap 3 (Complexidade / Tech Debt) — incorpora % toil:**
+**Regra específica Capacidade 3 — Complexidade / Tech Debt — incorpora % toil:**
 
 | Score | % toil pelo time | Sintoma operacional |
 |---|---|---|
