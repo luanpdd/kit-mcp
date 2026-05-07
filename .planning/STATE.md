@@ -2,13 +2,13 @@
 state_version: 1.0
 milestone: v1.10
 milestone_name: — SRE Engagement
-status: Phase 37 completa em paralelização (4 agentes core SRE entregues — golden-signals-instrumenter AGCORE-SRE-01 + toil-auditor AGCORE-SRE-02 + postmortem-writer AGCORE-SRE-03 + prr-conductor AGCORE-SRE-04)
-last_updated: "2026-05-07T06:23:43.203Z"
+status: Phase 38 em paralelização — Plan 03 (postmortem) concluído via parallel executor — kit/commands/postmortem.md 8.1 KB / 179 linhas, wrapper puro para postmortem-writer com 2 modos mutuamente exclusivos (--from-investigation v1.9 trail OU --incident standalone), CMD-SRE-03 coberto
+last_updated: "2026-05-07T07:30:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 2
-  total_plans: 10
-  completed_plans: 10
+  total_plans: 16
+  completed_plans: 12
 ---
 
 # STATE.md — sessão atual
@@ -17,10 +17,10 @@ progress:
 
 ## Posição Atual
 
-Fase: 37 — Agentes core SRE
-Plano: 04 (prr-conductor) — concluído (parallel executor) — TODOS 4 plans da Phase 37 entregues
-Status: Phase 37 completa em paralelização (4 agentes core SRE entregues — golden-signals-instrumenter AGCORE-SRE-01 + toil-auditor AGCORE-SRE-02 + postmortem-writer AGCORE-SRE-03 + prr-conductor AGCORE-SRE-04)
-Última atividade: 2026-05-07 — Plan 37-04 concluído (`kit/agents/prr-conductor.md` 14.5 KB / 288 linhas — frontmatter válido description 148 chars + 4 MCP Supabase tools (mcp__supabase__list_tables, mcp__supabase__execute_sql, mcp__supabase__get_advisors, mcp__supabase__list_edge_functions) + 6 standard tools; 6 seções canônicas Compatibilidade/Por que existe/Inputs esperados/Passos/Quando NÃO invocar/Ver também; tabela Compatibilidade IDE com 5 linhas — 2 Full Claude Code+Cursor com MCP + 2 Partial Codex+Gemini sem MCP + 4 Offline-only Windsurf+Antigravity+Copilot+Trae; 2 modos input --service <name> e --feature <description>; 4 sub-steps em Passos — Step 0 Preflight com detecção MCP via mcp__supabase__list_tables + declaração explícita MODO OFFLINE + AskUserQuestion engagement model + validação reviewer ≠ team dev anti-auto-PRR, Step 1 Auditar 6 axes literalmente nominados (System Architecture/Instrumentation/Emergency Response/Capacity Planning/Change Management/Performance) cada com tabela 5 items + coluna Evidence Full mode com MCP tools + coluna Evidence Offline fallback filesystem, Step 2 scoring 0-5 + status Pass/Pass with gaps/Fail + decisão Approved/Approved with conditions/Blocked + lista canônica de P0 items por axe, Step 3 Write PRR-REPORT.md template literal canônico (Sumário executivo + Detalhamento por axe + Action Items + Decisão + Re-PRR triggers + Reviewer signature) + console summary; Modo offline NÃO bloqueia — agente declara [MODO OFFLINE] e prossegue marcando items MCP-dependentes EVIDENCE_PENDING_MCP; cross-refs Markdown ativos production-readiness-review + four-golden-signals + event-based-slos v1.9 + burn-rate-alerting v1.9 + sre-risk-management + blameless-postmortems + eliminating-toil + supabase-architect v1.8; smoke T5 ALL_PASS — description 148/200 chars, 4 MCP tools no frontmatter, 6 âncoras count=1, 6 axes cada ≥ 4 ocorrências, 3 engagement models cada ≥ 6 ocorrências, MODO OFFLINE ≥ 6×, EVIDENCE_PENDING_MCP 2×, PRR-REPORT 8×, sync idempotente timestamp-stripped per design Phase 36 precedent ROADMAP crit-4).
+Fase: 38 — Comandos + orquestrador SRE
+Plano: 03 (postmortem) — concluído (parallel executor)
+Status: Phase 38 em paralelização — Plan 03 (postmortem) concluído via parallel executor; comando wrapper /postmortem dispatch para postmortem-writer com 2 modos mutuamente exclusivos
+Última atividade: 2026-05-07 — Plan 38-03 concluído (`kit/commands/postmortem.md` 8.1 KB / 179 linhas — frontmatter válido description 159 chars + allowed-tools com Task + AskUserQuestion; 4 âncoras canônicas objective/context/process/success_criteria cada count=1; 2 modos mutuamente exclusivos `--from-investigation <id>` (Modo A — preferido, continuação de v1.9 incident-investigator trail) E `--incident "<descrição>"` (Modo B — standalone com 9 perguntas guiadas); process com 5 steps numerados — parse args + validação mutual exclusivity + AskUserQuestion fallback se nenhum, validate investigation file (Modo A) + auto-gen postmortem_id (Modo B) + idempotency guard, list recent postmortems UX, Task() dispatch para postmortem-writer com prompt completo enumerando 9 seções canônicas Summary/Impact/Root Causes/Trigger/Resolution/Detection/Action Items/Lessons Learned/Timeline + padrões SMART/UTC/blameless, output com cross-refs para /prr + /observabilidade omm + /adicionar-tarefa; cross-refs Markdown ativos postmortem-writer + skill blameless-postmortems + agent incident-investigator (v1.9) + 3 menções a v1.9; smoke T3 ALL_PASS — description 159/200 chars, 4 âncoras count=1, subagent_type="postmortem-writer" 1×, --from-investigation 8×, --incident 10×, blameless 4× (≥3), "9 seções|9 perguntas|9 questões" 6× (≥2), SMART/UTC 3× (≥2), incident-investigator 1× (≥1), v1.9 3× (≥1), kit sync install claude-code → .claude/commands/postmortem.md OK).
 
 ## Milestone ativo
 
