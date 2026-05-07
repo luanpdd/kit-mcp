@@ -291,7 +291,7 @@ function classifyError(e: unknown): string {
 
 ### Anti-patterns prevenidos
 
-- `error.type = err.message` → SEMPRE enum fechado (5-15 valores)
+- Errors counter usando `error.type = err.message` → SEMPRE enum fechado (5-15 valores)
 - Latency mistura success + error → SEMPRE `result` dimension separa
 - Mean latency em vez de histogram → SEMPRE histogram com percentis derivados em backend
 - Saturation genérico (CPU%) sem identificar recurso real → SEMPRE escolher recurso scarcest da função
