@@ -16,7 +16,186 @@
 
 ## Em andamento
 
-(nada — v1.9.0 concluído. Use `/novo-marco` para iniciar próximo ciclo.)
+### v1.10 — SRE Engagement (Phases 36-41)
+
+**Milestone:** v1.10 — SRE Engagement
+**Numeração de fases:** continua de v1.9 (terminou em fase 35) → v1.10 começa em **Fase 36**
+**Total de REQs cobertos:** 32 (GLOS-01..03, SKFD-SRE-01..05, AGCORE-SRE-01..04, CMD-SRE-01..06, INT-OBS-01..02, INT-SB-V2-01..04, INT-FW-V2-01..03, QA-SRE-01..05)
+**Total de fases:** 6 (Fases 36-41)
+**Estrutura:** 3 ondas conforme PROJECT.md
+**Criado:** 2026-05-06
+
+---
+
+## Visão geral do milestone v1.10
+
+Adicionar camada SRE (Site Reliability Engineering) ao kit derivada do livro do Google (*Site Reliability Engineering: How Google Runs Production Systems* — Beyer, Jones, Petoff, Murphy — O'Reilly, 2016, ISBN 978-1-491-92912-4), complementando v1.9 (Observabilidade) com práticas de engagement: PRR (Production Readiness Review), Four Golden Signals, Postmortem blameless, Toil elimination, Risk management. v1.10 é **content-only por design** — zero alterações em `src/core/`. Stable API v1.0+ preservada. Conteúdo PT-BR alinhado.
+
+**Beneficiários principais:**
+- Suíte Observabilidade v1.9 (`event-based-slos` ganha contexto risk; `omm-auditor` consume `toil-auditor` para Cap 3)
+- Suíte Supabase v1.8 (`supabase-edge-fn-writer` ganha 4 golden signals; `supabase-architect` referencia PRR; `supabase-migration-writer` alerta toil; `supabase-storage-implementer` ganha saturation)
+- Fluxo framework (`/forense` → `/postmortem` chain; `/concluir-marco` PRR gate; `/auditar-marco` toil scoring)
+
+**Material-fonte:** Caps 3 (Embracing Risk), 4 (SLOs), 5 (Eliminating Toil), 6 (Four Golden Signals), 15 (Postmortem Culture), 32 (PRR / Engagement Model). Cap 22 (Cascading Failures) e Cap 8 (Release Engineering) ficam para v2.0+.
+
+---
+
+## Onda 1 — Núcleo SRE (Phases 36-38)
+
+> Glossário + 5 skills foundationais + 4 agentes + 5 comandos + orquestrador. Sem essa onda, INT/QA não compila.
+
+### Phase 36: Skills foundationais SRE — glossário + 5 SKFD
+
+**Tipo:** Conteúdo editorial — escrita de skills canônicas (Markdown puro)
+**Por que primeiro:** Glossário SRE e 5 skills foundationais são consultáveis standalone e referenciadas por todos agentes/comandos das fases seguintes. Sem vocabulário canônico em `_shared-sre/glossary.md` e definições de risk/golden-signals/toil/postmortem/PRR, links morrem em `kit/agents/sre-*.md` e `kit/commands/sre-*.md`. Sem dependências exceto contexto v1.9.
+
+**REQs cobertos (8):** GLOS-01, GLOS-02, GLOS-03, SKFD-SRE-01, SKFD-SRE-02, SKFD-SRE-03, SKFD-SRE-04, SKFD-SRE-05
+
+**Critérios de sucesso:**
+1. Glossário `kit/skills/_shared-sre/glossary.md` existe com vocabulário bilíngue (SLI, SLO, SLA, error budget, burn rate, toil, postmortem, blameless, PRR, golden signals — Latency/Traffic/Errors/Saturation, risk continuum, MTTR, MTBF), comandos canônicos (templates de postmortem, checklist PRR, queries SLI standardized) e seção de anti-patterns (alert fatigue, hero culture, SLO 99.99%+, fixed-window error budget, blame culture, mean-only latency); NÃO listado em `listKit` (precedente: `_shared-supabase/glossary.md`, `_shared-observability/glossary.md`)
+2. As 5 skills SKFD-SRE existem em `kit/skills/{sre-risk-management,four-golden-signals,eliminating-toil,blameless-postmortems,production-readiness-review}/SKILL.md` com frontmatter válido (`name`, `description ≤ 200 chars`); cada uma é auto-contida — LLM gera workflow completo sem ler outra skill (cross-refs apenas em "Ver também" no fim)
+3. Conteúdo conforme caps específicos: `sre-risk-management` ↔ cap 3 (continuum + 99.99% wisdom); `four-golden-signals` ↔ cap 6 (Latency/Traffic/Errors/Saturation, black-box vs white-box, percentis); `eliminating-toil` ↔ cap 5 (definição + ≤ 50% rule); `blameless-postmortems` ↔ cap 15 (template + cultura + Wheel of Misfortune); `production-readiness-review` ↔ cap 32 (checklist + 3 modelos engagement)
+4. Sync idempotente — `kit sync install claude-code --project-root <tmpdir>` rodado 2× produz `.claude/skills/{...}` byte-idêntico (excluindo timestamp regenerado por design)
+5. CLAUDE.md gerado cresce ≤ +1.0 KB após Phase 36 (description budget enforcement — anti-pitfall A2)
+
+**Estimativa:** ~12-15h. Cada skill ~2-3h em média; glossário ~3h.
+
+---
+
+### Phase 37: Agentes core — 4 agentes SRE
+
+**Tipo:** Conteúdo editorial — agentes (Markdown com frontmatter complexo + tabela compatibilidade IDE)
+**Por que segundo:** Com skills SKFD-SRE da Phase 36 no lugar, agentes podem cross-referenciar via Markdown link. `golden-signals-instrumenter` consome `four-golden-signals` + skills v1.9 (`structured-events`, `opentelemetry-standard`); `postmortem-writer` consome `blameless-postmortems` + estado de `incident-investigator` v1.9; `prr-conductor` consome `production-readiness-review` + Supabase MCP tools; `toil-auditor` consome `eliminating-toil`.
+
+**Dependência:** Phase 36 concluída (skills SKFD-SRE existem para cross-reference).
+
+**REQs cobertos (4):** AGCORE-SRE-01, AGCORE-SRE-02, AGCORE-SRE-03, AGCORE-SRE-04
+
+**Critérios de sucesso:**
+1. Agente `kit/agents/golden-signals-instrumenter.md` existe com tabela "Compatibilidade IDE", recebe código e retorna patches OTel com 4 golden signals (Latency: histogram bucketed exponencial, Traffic: counter, Errors: counter por error.type, Saturation: gauge resource-specific); cross-ref para `four-golden-signals` + `observability-instrumenter` (v1.9)
+2. Agente `kit/agents/toil-auditor.md` existe com preflight (lê git log, scripts shell, README/runbooks), produz `TOIL-AUDIT.md` com lista priorizada P0/P1/P2 + esforço estimado de automação; sem MCP requirements (analisa filesystem)
+3. Agente `kit/agents/postmortem-writer.md` existe com 2 modos (`--from-investigation <id>` lê `.planning/investigations/<id>.md` v1.9; `--incident "<descrição>"` standalone); produz postmortem blameless em `.planning/postmortems/<id>.md` seguindo template canônico (Summary, Impact, Root Causes, Trigger, Resolution, Detection, Action Items, Lessons Learned, Timeline)
+4. Agente `kit/agents/prr-conductor.md` existe com tools `mcp__supabase__list_tables`/`execute_sql`/`get_advisors`/`list_edge_functions`; produz `PRR-REPORT.md` scored em 6 axes (System architecture, Instrumentation, Emergency response, Capacity planning, Change management, Performance); modo offline fallback gracioso
+5. Smoke: invocar cada agente em fixture sintético — `golden-signals-instrumenter` produz código instrumentado; `toil-auditor` lista candidatos; `postmortem-writer` gera template preenchido; `prr-conductor` produz scoring 6-axes
+6. `description ≤ 200 chars` em todos os 4 agents (anti-pitfall A2)
+
+**Estimativa:** ~8-10h. `prr-conductor` é o mais complexo (cross-references com Supabase MCP + 6 axes).
+
+---
+
+### Phase 38: Comandos + orquestrador `/sre`
+
+**Tipo:** Conteúdo editorial — comandos com dispatch via Task() + orquestrador
+**Por que terceiro:** Com agentes da Phase 37, comandos são apenas wrappers que invocam `Task(subagent_type=...)`. Orquestrador `/sre` é análogo a `/supabase` (v1.8) e `/observabilidade` (v1.9) — terceiro orquestrador da família.
+
+**Dependência:** Phase 37 concluída.
+
+**REQs cobertos (6):** CMD-SRE-01, CMD-SRE-02, CMD-SRE-03, CMD-SRE-04, CMD-SRE-05, CMD-SRE-06
+
+**Critérios de sucesso:**
+1. Comando `kit/commands/golden-signals.md` existe — invoca `golden-signals-instrumenter` para serviço/Edge Function/fase; gera `GOLDEN-SIGNALS.md` por target
+2. Comando `kit/commands/auditar-toil.md` existe — invoca `toil-auditor`; gera `TOIL-AUDIT.md` na raiz `.planning/`
+3. Comando `kit/commands/postmortem.md` existe — flags `--from-investigation <id>` ou `--incident "<descrição>"`; dispatch para `postmortem-writer`
+4. Comando `kit/commands/prr.md` existe — flags `--service <name>` ou `--feature <description>`; dispatch para `prr-conductor`
+5. Comando `kit/commands/risk-budget.md` existe — exibe error budget vs risk continuum; lê `.planning/slos/` (v1.9 artifact); aplica `sre-risk-management`
+6. Comando orquestrador `kit/commands/sre.md` existe — análogo a `/supabase` e `/observabilidade`; dispatch via `Task(subagent_type=...)`; subcomandos: `golden-signals`, `auditar-toil`/`audit-toil`, `postmortem`, `prr`, `risk-budget`/`budget`, `help`/`ajuda`/`?`
+7. `description ≤ 200 chars` em todos
+8. Smoke: `kit sync install claude-code` lista 6 commands novos em `.claude/commands/`
+
+**Estimativa:** ~6-8h. Padrão maduro v1.8/v1.9.
+
+---
+
+## Onda 2 — Integração (Phases 39-40)
+
+> Patches em camadas existentes (Observabilidade v1.9 + Supabase v1.8 + fluxo framework).
+
+### Phase 39: Patches em Observabilidade v1.9 + Supabase v1.8
+
+**Tipo:** Patches editoriais — adicionar blocos `<sre_integration>` nos artefatos das suítes anteriores
+**Por que quarto:** Onda 1 (núcleo SRE) precisa estar consolidada para que cross-refs nas suítes existentes apontem para artefatos reais.
+
+**Dependência:** Phases 36-38 concluídas.
+
+**REQs cobertos (6):** INT-OBS-01, INT-OBS-02, INT-SB-V2-01, INT-SB-V2-02, INT-SB-V2-03, INT-SB-V2-04
+
+**Critérios de sucesso:**
+1. Skill `kit/skills/event-based-slos/SKILL.md` (v1.9) ganha bloco "Risk continuum" cross-referenciando `sre-risk-management` — explica que SLO target é escolha explícita no continuum risk × innovation, não meta arbitrária
+2. Agente `kit/agents/omm-auditor.md` (v1.9) consulta `toil-auditor` para Capacidade 3 (Complexidade/Tech Debt) — score OMM-3 considera % toil pelo time
+3. `kit/agents/supabase-edge-fn-writer.md` (v1.8) ganha seção "Four Golden Signals" — template Edge Function inclui histogram latência, counter tráfego, counter erros por error.type, gauge saturação (memory/CPU/connection pool)
+4. `kit/agents/supabase-architect.md` (v1.8) ganha menção a PRR — plano arquitetural sugere PRR antes de production; cross-ref para `production-readiness-review`
+5. `kit/agents/supabase-migration-writer.md` (v1.8) ganha alerta sobre toil — scripts SQL repetitivos (rebuild índices manuais, vacuums recorrentes) são candidatos a automação via pg_cron; cross-ref para `eliminating-toil`
+6. `kit/agents/supabase-storage-implementer.md` (v1.8) ganha saturation signal — uploads emitem gauge bucket size + counter de quota near-exhaustion; cross-ref para `four-golden-signals`
+7. Frontmatter (`description`, `tools`) inalterado em todos os 6 artefatos (anti-pitfall A2 preservado)
+
+**Estimativa:** ~5-7h.
+
+---
+
+### Phase 40: Patches em fluxo framework
+
+**Tipo:** Patches editoriais — adicionar blocos `<sre_integration>` em comandos do framework
+**Por que quinto:** Patches no fluxo viabilizam o uso real dos artefatos das ondas anteriores em `/forense`, `/concluir-marco`, `/auditar-marco`.
+
+**Dependência:** Phases 36-39 concluídas.
+
+**REQs cobertos (3):** INT-FW-V2-01, INT-FW-V2-02, INT-FW-V2-03
+
+**Critérios de sucesso:**
+1. Comando `kit/commands/forense.md` ganha bloco `<sre_integration>` que sugere chain `/postmortem` automaticamente após Core Analysis Loop fechar com root cause; documenta o fluxo
+2. Comando `kit/commands/concluir-marco.md` ganha gate PRR opcional — quando `workflow.complete_milestone_prr_gate=true`, exige `PRR-REPORT.md` com status passed para features production-bound antes de arquivar
+3. Comando `kit/commands/auditar-marco.md` invoca `/auditar-toil` automaticamente quando `workflow.audit_milestone_toil=true`; resultado alimenta scoring OMM Capacidade 3
+4. Frontmatter (`description`, `allowed-tools`) inalterado nos 3 commands (anti-pitfall A2 preservado)
+5. Patches são editoriais — workflows em `.claude/framework/workflows/*.md` continuam funcionais como antes
+
+**Estimativa:** ~3-4h.
+
+---
+
+## Onda 3 — Gates e docs (Phase 41)
+
+> Gates QA novos + README + CHANGELOG. Última fase do milestone.
+
+### Phase 41: Gates QA + README + CHANGELOG
+
+**Tipo:** Gates bash 3.2-portable + atualização editorial de docs externas
+**Por que último:** Gates dependem de todos os artefatos das ondas anteriores existirem para validarem corretamente. README/CHANGELOG documentam o entregável final.
+
+**Dependência:** Phases 36-40 concluídas.
+
+**REQs cobertos (5):** QA-SRE-01, QA-SRE-02, QA-SRE-03, QA-SRE-04, QA-SRE-05
+
+**Critérios de sucesso:**
+1. Gate `gates/golden-signals-coverage.md` (blocking, pre-verify) — verifica código de serviço/Edge Function tocado em fase tem os 4 golden signals presentes (regex sobre `histogram\|counter\|gauge\|saturation` em frontmatter `tools` ou em código)
+2. Gate `gates/postmortem-template-required.md` (blocking, pre-conclude) — em `/concluir-marco`, bloqueia se houve incident em `.planning/investigations/` sem `.planning/postmortems/` correspondente
+3. Gate `gates/prr-checklist-coverage.md` (blocking, pre-verify) — verifica que `PRR-REPORT.md` cobre os 6 axes do PRR (System architecture, Instrumentation, Emergency response, Capacity planning, Change management, Performance)
+4. README ganha seção "SRE Engagement (v1.10)" listando 6 skills + 4 agents + 6 commands + 3 gates com exemplo de uso end-to-end (e.g., "/sre prr <feature>" → "/sre golden-signals <service>" → após incident "/forense" → "/sre postmortem --from-investigation <id>")
+5. CHANGELOG ganha entrada v1.10.0 documentando: Camada SRE Engagement, integração com Suítes Observabilidade v1.9 + Supabase v1.8, audit gates novos, lifecycle hooks (PRR gate em concluir-marco, postmortem chain em forense, toil audit em auditar-marco)
+6. Smoke: rodar 3 gates novos em CI sintético — todos retornam exit 0 (pass) na codebase atual; falham corretamente em projetos sintéticos com gaps
+7. Sync idempotente preservado em todas as 6 fases (rodar 2× = byte-idêntico excluindo timestamps)
+
+**Estimativa:** ~5-6h.
+
+---
+
+## Total v1.10
+
+- **6 fases** (36-41)
+- **32 REQs** mapeados (100% cobertura)
+- **3 ondas:** Núcleo SRE (3 fases) + Integração (2 fases) + Gates/Docs (1 fase)
+- **Estimativa:** ~39-50h efetivas (média ~45h)
+- **Cadeia linear:** Phase 36 → 37 → 38 → 39 → 40 → 41
+- **Stable API v1.0+ preservada** — content-only milestone, zero alterações em `src/core/`
+
+## Próximo passo
+
+User vai limpar contexto. Após retomada:
+
+```
+/discutir-fase 36   # primeira fase — skills foundationais
+# ou
+/autonomo           # executar todas as 6 fases sequencialmente
+```
 
 ## ~~v1.9 — Observabilidade (Phases 29-35) — concluído 2026-05-06~~
 
