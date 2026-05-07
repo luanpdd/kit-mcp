@@ -172,3 +172,83 @@ Toda migration emite evento estruturado e cria audit hooks por default — não 
 3. **Atributos canônicos** em qualquer função criada: `set search_path = ''` + comments com `result.success`, `error.type` enum esperado (skill [`structured-events`](../skills/structured-events/SKILL.md)).
 
 **Output adicionado:** seção "## Audit hooks" + "## Migration event emit" no SQL gerado, comentadas em PT-BR.
+
+## Alerta toil — automação via pg_cron
+
+> Cross-ref canônico: [eliminating-toil](../skills/eliminating-toil/SKILL.md) (cap 5 do livro Google SRE — Eliminating Toil). Para auditoria sistemática de toil em todo o repo, delegar para [toil-auditor](./toil-auditor.md).
+
+Migrations SQL executadas **manualmente em cadência regular** (rebuild índice, VACUUM, REFRESH MATERIALIZED VIEW, ANALYZE) são toil canônico — passam todos os 6 critérios: manual, repetitivo, automatizável, tático, sem valor durável, escala linear. Este agent **detecta padrões de toil** ao escrever migration e **alerta proativamente** sugerindo automação via `pg_cron`.
+
+### 6 critérios — quando uma migration é toil-prone
+
+Migration descreve operação que será re-executada > 1× = toil-prone. Aplicar 6 critérios da skill `eliminating-toil`:
+
+| Critério | Pergunta | Sinal de toil |
+|---|---|---|
+| 1. Manual | Operador roda `psql` ou aplica migration "quando lembra"? | Sim |
+| 2. Repetitivo | Já foi executada 3+ vezes em milestones diferentes? | Sim |
+| 3. Automatizável | `pg_cron` consegue agendar sem julgamento humano? | Sim |
+| 4. Tático | Reage a sintoma (lentidão, bloat, stale view) sem planejar? | Sim |
+| 5. Sem valor durável | Não cria asset permanente — só "limpa" estado | Sim |
+| 6. Escala linear | Mais users / mais dados = mais frequência manual | Sim |
+
+Se TODOS os 6 = sim → **toil**. Bloquear migration manual recorrente; oferecer alternativa via `pg_cron`.
+
+### Padrões SQL canônicos que SEMPRE disparam alerta toil
+
+| Operação manual | Por quê é toil | Automação canônica |
+|---|---|---|
+| `REINDEX TABLE x` recorrente (a cada N semanas) | Rebuild de bloat de índice é tático, sem valor durável, repetitivo | `select cron.schedule('reindex_x', '0 3 * * 0', $$reindex table x$$);` (semanal 3am) |
+| `VACUUM ANALYZE x` manual | autovacuum não está acompanhando — sintoma de tuning, não fix manual | Tunar `autovacuum_vacuum_scale_factor` para tabela específica + `pg_cron` se necessário |
+| `REFRESH MATERIALIZED VIEW x` manual | Stale view detectada por user reclamação ou alert | `select cron.schedule('refresh_x', '*/30 * * * * *', $$refresh materialized view concurrently x$$);` |
+| `ANALYZE` em tabela após bulk insert manual | Estatísticas desatualizadas após ETL — bem conhecido | Trigger AFTER INSERT/COPY com `analyze` no fim do batch, ou `pg_cron` pós-ETL |
+| `delete from logs where created_at < now() - interval '90d'` manual recorrente | Retention manual = toil clássico | `select cron.schedule('purge_logs', '0 4 * * *', $$delete from logs where ...$$);` |
+| `dump + restore` periódico para estatísticas / planos cache | Operação repetitiva sem valor permanente | `pg_cron` job ou `pg_stat_reset_*()` calls automatizadas |
+
+### Snippet canônico — converter manual em pg_cron
+
+```sql
+-- PT-BR: ANTES — toil (operador roda manualmente)
+-- $ psql -c 'reindex table heavy_table;'   ← repetir a cada 2 semanas
+
+-- PT-BR: DEPOIS — automação via pg_cron (necessita extension pg_cron habilitada)
+create extension if not exists pg_cron;
+
+select cron.schedule(
+  'reindex_heavy_table_biweekly',
+  '0 3 1,15 * *',                            -- 3am dias 1 e 15
+  $$ reindex table public.heavy_table $$
+);
+
+-- PT-BR: monitor — falha em job pg_cron emite linha em cron.job_run_details
+-- alimentar alerta SLO se job falha 3+ vezes seguidas
+```
+
+### Quando NÃO automatizar (não é toil)
+
+- **Migration de schema (DDL one-shot)** — `create table`, `alter table add column` são project work, não toil. Não recorrentes.
+- **Backfill data único** — `update orders set status = ...` aplicado 1× para corrigir bug é grungy work, não toil.
+- **Rebuild que requer julgamento** — `reindex` que requer escolher hora baseada em load patterns variáveis, ou que precisa coordenação com release. Mantém manual mas documenta runbook.
+
+### Output do agent — adicionado ao SQL gerado
+
+Quando o agent detecta que a migration descreve operação toil-prone (regex em DDL: `reindex|vacuum|refresh materialized|delete from .* interval`), adiciona comentário-alerta no header do arquivo SQL gerado:
+
+```sql
+/*
+  ⚠ TOIL ALERT — esta operação parece recorrente.
+  
+  Se será executada em cadência regular, considere automação via pg_cron:
+    select cron.schedule('<job_name>', '<schedule>', $$ <sql> $$);
+  
+  Cross-ref: kit/skills/eliminating-toil/SKILL.md (6 critérios canônicos)
+             kit/agents/toil-auditor.md (audit sistemático para repo todo)
+*/
+```
+
+### Anti-patterns prevenidos
+
+- "Roda quando der" runbook → SEMPRE pg_cron + monitoring de falha do job
+- `pg_cron` schedule mas sem alerta de falha → SEMPRE incluir SLO em `cron.job_run_details` (% sucesso 30d)
+- Automação parcial (script humano-iniciado) → ainda é toil (humano pressiona botão); preferir cron.schedule completo
+- Migration manual recorrente "porque é só uma vez por mês" → 12×/ano = toil, regra ≤ 50% se acumular vários "só um por mês"
