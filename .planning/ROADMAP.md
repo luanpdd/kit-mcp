@@ -27,7 +27,7 @@
 
 ---
 
-## Visão geral do milestone v1.10
+## Visão geral do milestone
 
 Adicionar camada SRE (Site Reliability Engineering) ao kit derivada do livro do Google (*Site Reliability Engineering: How Google Runs Production Systems* — Beyer, Jones, Petoff, Murphy — O'Reilly, 2016, ISBN 978-1-491-92912-4), complementando v1.9 (Observabilidade) com práticas de engagement: PRR (Production Readiness Review), Four Golden Signals, Postmortem blameless, Toil elimination, Risk management. v1.10 é **content-only por design** — zero alterações em `src/core/`. Stable API v1.0+ preservada. Conteúdo PT-BR alinhado.
 
@@ -119,7 +119,7 @@ Adicionar camada SRE (Site Reliability Engineering) ao kit derivada do livro do 
 
 > Patches em camadas existentes (Observabilidade v1.9 + Supabase v1.8 + fluxo framework).
 
-### Phase 39: Patches em Observabilidade v1.9 + Supabase v1.8
+### Phase 39: Patches em Observabilidade e Supabase
 
 **Tipo:** Patches editoriais — adicionar blocos `<sre_integration>` nos artefatos das suítes anteriores
 **Por que quarto:** Onda 1 (núcleo SRE) precisa estar consolidada para que cross-refs nas suítes existentes apontem para artefatos reais.
@@ -187,7 +187,7 @@ Adicionar camada SRE (Site Reliability Engineering) ao kit derivada do livro do 
 
 ---
 
-## Total v1.10
+## Total do milestone
 
 - **6 fases** (36-41)
 - **32 REQs** mapeados (100% cobertura)

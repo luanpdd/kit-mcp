@@ -5,7 +5,7 @@ milestone_name: — SRE Engagement
 status: Phase 36 completa em paralelização (5 SKFD-SRE skills + glossário + smoke agregados validados)
 last_updated: "2026-05-07T05:56:05.402Z"
 progress:
-  total_phases: 1
+  total_phases: 6
   completed_phases: 1
   total_plans: 6
   completed_plans: 6
