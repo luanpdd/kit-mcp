@@ -216,3 +216,28 @@ CERTO: priorizar por (frequency × pain) / effort; baixa frequência +
        alto pain (e.g., DR exercise, schema migration crítica) = ainda
        P1. Frequência baixa ≠ toil baixo — soma de raras é alta.
 ```
+
+## Verificação
+
+Antes de marcar audit de toil como completo:
+
+1. **Aplicado os 6 critérios canônicos** — cada item passou pelo decision tree (manual, repetitivo, automatizável, tático, sem valor durável, escala linear)
+2. **Quantificado em hours/week** — não "muito toil" mas "3.5h/week por pessoa"
+3. **% do tempo do time** computado — comparado contra ≤ 50% rule
+4. **Priorização por (frequency × pain) / effort** — P0/P1/P2 atribuído
+5. **Owner nomeado** para cada item P0
+6. **Overhead identificado separadamente** — não conta para ≤ 50%
+7. **Grungy work identificado separadamente** — projeto engineering, não toil
+8. **Pelo menos 1 item P0 escalonado** com automação proposta + esforço estimado
+
+---
+
+## Ver também
+
+- [`_shared-sre/glossary.md`](../_shared-sre/glossary.md) — termos canônicos toil, overhead, grungy work, automation
+- [`observability-maturity-model`](../observability-maturity-model/SKILL.md) (v1.9) — Capacidade 3 (Complexidade/Tech Debt) consome toil score
+- [`production-readiness-review`](../production-readiness-review/SKILL.md) — PRR axis "Change Management" verifica deploy não é toil
+- [`blameless-postmortems`](../blameless-postmortems/SKILL.md) — postmortems de toil-induced incidents alimentam audit
+- [`sre-risk-management`](../sre-risk-management/SKILL.md) — toil reduz tempo para reduzir risk
+
+*Material-fonte: Site Reliability Engineering — Beyer, Jones, Petoff, Murphy (Google/O'Reilly, 2016) — Cap 5: "Eliminating Toil".*
