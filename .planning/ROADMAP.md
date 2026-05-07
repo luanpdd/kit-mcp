@@ -49,6 +49,9 @@ Adicionar camada SRE (Site Reliability Engineering) ao kit derivada do livro do 
 **Tipo:** Conteúdo editorial — escrita de skills canônicas (Markdown puro)
 **Por que primeiro:** Glossário SRE e 5 skills foundationais são consultáveis standalone e referenciadas por todos agentes/comandos das fases seguintes. Sem vocabulário canônico em `_shared-sre/glossary.md` e definições de risk/golden-signals/toil/postmortem/PRR, links morrem em `kit/agents/sre-*.md` e `kit/commands/sre-*.md`. Sem dependências exceto contexto v1.9.
 
+**Status execução (2026-05-07):**
+- Plan 02 (`sre-risk-management/SKILL.md`) — ✅ concluído (11.2 KB, SKFD-SRE-01)
+
 **REQs cobertos (8):** GLOS-01, GLOS-02, GLOS-03, SKFD-SRE-01, SKFD-SRE-02, SKFD-SRE-03, SKFD-SRE-04, SKFD-SRE-05
 
 **Critérios de sucesso:**
