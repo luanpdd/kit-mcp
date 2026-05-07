@@ -113,3 +113,85 @@ Para SLO ≥ 99.99%, o time DEVE responder afirmativamente a TODAS as perguntas:
 
 Se QUALQUER resposta = NÃO → use 99.95% ou menos. Justificar em SLO.md comentário inline.
 ```
+
+## Anti-patterns
+
+### ANTI: pursuit of 100% availability
+
+```text
+ANTI: perseguir 100% como meta de disponibilidade — rejeitar qualquer outage como
+      falha de engenharia; medir sucesso por "zero downtime"
+
+PROBLEMA: custo cresce assintoticamente perto de 100%; benefício marginal cai a zero
+          porque downstream (ISP do usuário, smartphone, ar do ambiente) já tem
+          < 99.99%; time burns out perseguindo target inalcançável; budget de
+          inovação some — toda capacidade vai para reliability sem ganho real.
+
+CERTO: aceitar imperfeição como design — error budget existe PARA SER GASTO em
+       deploys arriscados, experimentos, refactors. Reliability é trade-off
+       contra velocity, não absoluto.
+```
+
+### ANTI: SLO 99.99% sem justificativa
+
+```text
+ANTI: definir 99.99% como target por default — "queremos o melhor possível";
+      copiar número do AWS SLA; impor 99.99% sem checklist de justificação
+
+PROBLEMA: 4.3 min de tolerância em 30d é zero margem de manobra; alerts disparam
+          após budget esgotar (zero-level — tarde demais para ação preventiva);
+          comportamentos perversos (esconder outages para preservar number);
+          time-pressure compulsiva; aspiração ≠ realidade — real será 99.5%
+          por falta de cultura para sustentar.
+
+CERTO: ≤ 99.95% por default; 99.99%+ exige passar checklist de 4 perguntas
+       (ver Pattern: justificar 99.99%+ excepcional). Documentar racional em
+       SLO.md como comentário inline auditável.
+```
+
+### ANTI: SLO global "site availability"
+
+```text
+ANTI: 1 SLO genérico "site availability 99.9%" cobrindo tudo — /admin, /api,
+      /checkout, /search, /docs com mesmo target
+
+PROBLEMA: falha em /admin (uso 1×/dia por staff) não importa para customer;
+          falha em /checkout (uso 100×/min com revenue impact) é catastrófico;
+          mistura tudo no mesmo budget — alerts confusos, ações vagas; quando
+          burn dispara, time não sabe o que priorizar.
+
+CERTO: 1 SLO por jornada crítica do user (`checkout_success: 99.9%`,
+       `login_success: 99.95%`, `search_p95: 99% < 200ms`); cada um com target
+       apropriado ao seu risk; admin/docs SEM SLO formal (só metric informativo).
+```
+
+### ANTI: budget como score de "performance"
+
+```text
+ANTI: celebrar "atingimos SLO 99.99% este mês!" como vitória; KPIs comparam
+      times por % budget intacto; pressão de leadership para subir target
+
+PROBLEMA: budget vira métrica de vaidade; budget intacto significa SUBUTILIZAÇÃO
+          (não shippamos suficientes deploys arriscados/experimentos); leadership
+          pressiona por mais features sem reconhecer trade-off; quando budget
+          esgota uma vez, vira "fracasso" — time esconde problemas no próximo mês.
+
+CERTO: budget é orçamento — gastá-lo é OK e esperado. KPI é "shippamos N deploys
+       de valor sem queimar budget", não "budget alto". Budget esgotado = sinal
+       de aprender (quais releases custaram caro?), não punição.
+```
+
+### ANTI: SLA == SLO
+
+```text
+ANTI: usar SLA do contrato (99.9%) como SLO interno — "se prometemos 99.9% no
+      contrato, basta atingir 99.9% internamente"
+
+PROBLEMA: 0 margem de segurança entre compromisso comercial e meta interna;
+          primeira anomalia operacional quebra contrato; sem buffer para reagir;
+          SEV1 vira liability legal; cliente perde confiança no primeiro burn.
+
+CERTO: SLO interno mais rígido que SLA externo — fator de margem 5×.
+       SLA externo: 99.9% (compromisso ao cliente);
+       SLO interno: 99.95% (meta de engenharia com folga para reagir).
+```
