@@ -111,7 +111,160 @@
 
 ## (b) Comandos canônicos
 
-_Em construção — preenchido em T3._
+### Template canônico de Postmortem (Markdown)
+
+> Estrutura canônica do cap 15. Use literal este shape para qualquer postmortem do projeto. 9 headers obrigatórios + frontmatter de metadata.
+
+```markdown
+# Postmortem: <incident-id> — <título-curto>
+
+**Data do incident:** YYYY-MM-DD
+**Autores:** <nomes>
+**Status:** Draft | Reviewed | Final
+**Severidade:** SEV1 | SEV2 | SEV3
+
+## Summary
+
+1-2 parágrafos: o que aconteceu, quem foi afetado, como foi resolvido. Linguagem clara — postmortem deve ser legível para alguém que NÃO estava no incident.
+
+## Impact
+
+- Usuários afetados: <número/percentual>
+- Duração: HH:MM
+- Revenue/SLO impact: <quantificado>
+- Serviços downstream impactados: <lista>
+
+## Root Causes
+
+Condição mais profunda que, removida, previne recorrência. NÃO é "deploy do fulano" — é "ausência de canary release" ou "RPS limit não documentado". Pode haver múltiplas root causes.
+
+## Trigger
+
+Evento concreto que iniciou a falha (deploy X, config change Y, traffic spike Z). Distinto de root cause: trigger é o que acendeu a chama, root cause é a casa cheia de gás.
+
+## Resolution
+
+Passos tomados para recuperar serviço (ordem cronológica, com horários UTC). Inclui ações que NÃO funcionaram — para informar próximos incidents.
+
+## Detection
+
+Como descobrimos: alerta SLO burn rate? cliente reportou? monitoramento interno?
+Tempo de detecção (gap entre trigger e detecção). Se cliente reportou primeiro = falha de monitoring.
+
+## Action Items
+
+| # | Action | Owner | Priority | Due |
+|---|--------|-------|----------|-----|
+| 1 | <SMART action> | @user | P0/P1/P2 | YYYY-MM-DD |
+
+## Lessons Learned
+
+Insights generalizáveis. O que estamos fazendo BEM (reforçar)? O que faltou (corrigir)? Aplicável a OUTROS sistemas/times além do afetado.
+
+## Timeline (UTC)
+
+- HH:MM — <evento>
+- HH:MM — <evento>
+- HH:MM — <resolution>
+```
+
+### Checklist canônico de PRR (6 axes)
+
+> Checklist conduzido pelo SRE antes de aceitar serviço/feature em produção. Cap 32. Cada axis tem 3-5 itens; score 0-2 por item, total normalizado em 0-100% por axis. Threshold default: ≥ 80% em todos para handoff readiness.
+
+1. **System Architecture**
+   - Redundância: serviço tem replicas em ≥ 2 zonas? failover testado?
+   - Single point of failure: identificado e mitigado? (DB primary, Redis instance, etc.)
+   - Failure modes mapeados: cada dependência tem comportamento documentado em caso de falha?
+   - Load balancing strategy: round-robin? least-conn? consistent-hash? Adequada ao perfil?
+   - Graceful degradation: serviço opera (modo degradado) se dependência crítica falha?
+
+2. **Instrumentation, Metrics, Monitoring**
+   - 4 golden signals presentes: Latency (histogram), Traffic (counter), Errors (counter), Saturation (gauge)?
+   - SLI/SLO definidos: ≥ 1 SLI canônico (event-based) com SLO target acordado com stakeholders?
+   - Alertas SLO burn-rate (não threshold): paginam baseados em consumo de error budget, não CPU%?
+   - Logs estruturados: JSON com `request.id`, `user.id`, `tenant_id`, `duration_ms`, `error.type`?
+   - Traces propagados: `traceparent` header preservado cross-service via OTel SDK?
+
+3. **Emergency Response**
+   - Runbook existe e foi testado: documento PT-BR/EN para top-N incidents conhecidos?
+   - On-call rotation definida: escala via PagerDuty/Opsgenie/equivalente, com follow-the-sun se aplicável?
+   - Page routing: alerta certo chega na pessoa certa em ≤ 5 min?
+   - Escalation policy: se primary não ack em 10 min, secondary é paged?
+   - Wheel of Misfortune realizado nos últimos 90d: time praticou response em incident histórico?
+
+4. **Capacity Planning**
+   - Load test feito: serviço sustenta N% acima do peak observado em últimos 30d?
+   - RPS limit documentado: capacidade conhecida por endpoint, com hard-stop antes do colapso?
+   - Auto-scaling testado: regra de scale-up/down disparada em condição realista?
+   - Quota/rate-limit por tenant: prevenção de noisy-neighbor entre clients?
+   - Headroom ≥ 30%: utilization atual ≤ 70% para absorver spike?
+
+5. **Change Management**
+   - Canary release: novo deploy expõe a 1-10% antes de 100%?
+   - Feature flags: changes desacopladas de deploy, rollback sem rebuild?
+   - Rollback automatizado: SLO burn em canary dispara rollback em ≤ 5 min sem humano?
+   - CI/CD gates obrigatórios: tests + lint + security scan antes de merge?
+   - Deploy frequency mensurado: cadência conhecida + correlação com incidents?
+
+6. **Performance**
+   - Latência baseline (p50/p95/p99): valor conhecido + alerta em regressão?
+   - Error budget definido: budget remanescente visível em dashboard, atualizado em real-time?
+   - Saturation tracked: CPU/memória/conn pool/IO trackeados como gauge?
+   - Long tail (p99.9) monitored: percentil extremo medido — não basta p95?
+
+### Queries SLI standardized (Postgres)
+
+> Queries canônicas para materializar SLI events em SLO compliance. Use sobre tabela `observability.events` (precedente v1.9 — `obs.events` ou similar). Ajustar nome do schema/tabela ao projeto.
+
+```sql
+-- PT-BR: SLI event-based — boa request = HTTP 2xx + duration < 300ms
+-- Materializa contagem para alimentar burn rate e SLO compliance
+select
+  count(*) filter (where status_code < 400 and duration_ms < 300) as good,
+  count(*) filter (where status_code >= 400 or duration_ms >= 300) as bad,
+  count(*) as total
+from observability.events
+where service = 'orders-api' and timestamp > now() - interval '30 days';
+
+-- PT-BR: 4 golden signals em 1 query (Latency p50/p95/p99 + Traffic + Errors + Saturation)
+-- Use para dashboard real-time de saúde do serviço
+select
+  date_trunc('minute', timestamp) as minute,
+  count(*) as traffic_per_min,
+  count(*) filter (where result_success = false) as errors_per_min,
+  percentile_cont(0.50) within group (order by duration_ms) as latency_p50,
+  percentile_cont(0.95) within group (order by duration_ms) as latency_p95,
+  percentile_cont(0.99) within group (order by duration_ms) as latency_p99,
+  max(connection_pool_used_pct) as saturation_max
+from observability.events
+where service = 'orders-api' and timestamp > now() - interval '1 hour'
+group by minute
+order by minute desc;
+
+-- PT-BR: latência success vs error separadas (cap 6 — não misturar)
+-- Falhas rápidas mascaram falhas lentas; sempre splitar por result.success
+select
+  result_success,
+  percentile_cont(0.95) within group (order by duration_ms) as p95_ms,
+  percentile_cont(0.99) within group (order by duration_ms) as p99_ms,
+  count(*) as n
+from observability.events
+where service = 'orders-api' and timestamp > now() - interval '1 hour'
+group by result_success;
+```
+
+### MCP tools relevantes
+
+> Tools do Supabase MCP usados pelos agentes SRE da Phase 37 (golden-signals-instrumenter, toil-auditor, postmortem-writer, prr-conductor) para conduzir PRR / instrumentação / postmortem com dados reais.
+
+```text
+mcp__supabase__list_tables          — schema review (PRR axis "System Architecture")
+mcp__supabase__execute_sql          — queries SLI / golden signals / análise de incident
+mcp__supabase__get_advisors         — security/performance lints (PRR axis "Performance")
+mcp__supabase__list_edge_functions  — inventário de serviços para PRR
+mcp__supabase__get_logs             — verificação de instrumentação (PRR axis "Instrumentation")
+```
 
 ---
 
