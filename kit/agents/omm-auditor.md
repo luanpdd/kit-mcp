@@ -178,6 +178,21 @@ previous: v1.8
 - MTTR ainda não medido sistematicamente (sem instrumentação real)
 - Sem SLOs em produção (apenas patterns canônicos definidos em Phase 32)
 
+### Capacidade 3 — Complexidade / Tech Debt (3, ↑)
+
+**Doing well:**
+- TOIL-AUDIT.md gerado em 2026-05-06 (ver `.planning/TOIL-AUDIT.md`)
+- % toil pelo time = 38% (abaixo da regra ≤ 50%)
+- 4 itens P0 já automatizados desde milestone anterior (deploy manual, migration manual, log rotation, secret rotation)
+
+**Doing poorly:**
+- 6 itens P1 pendentes — agendados mas sem owner nomeado
+- Cap 3 ainda em score 3 (não 4) porque automação é reativa, não by-design — features novas adicionam toil que é eliminado depois
+
+**Action items derivados:**
+- **[Cap 3]** Adicionar gate "anti-toil-by-design" em fluxo `/discutir-fase` (P2)
+- **[Cap 3]** Designar owners para os 6 P1 da TOIL-AUDIT.md (P1)
+
 [... outras capacidades ...]
 
 ## Action Items
