@@ -152,3 +152,57 @@ Skill consultada: [`observability-maturity-model`](../skills/observability-matur
 
 **REQ:** INT-FW-05.
 </observability_integration>
+
+<sre_integration>
+**PRR gate opcional para features production-bound (v1.10 — INT-FW-V2-02):**
+
+Quando `workflow.complete_milestone_prr_gate = true` (default `false` — opt-in até maturidade SRE Engagement do projeto), o workflow inclui passo PRR coverage check **antes de arquivar** o milestone:
+
+1. Listar features production-bound do milestone (heurística: features com Edge Functions deployed, features com SLO definido em `.planning/slos/`, features marcadas explicitamente `production: true` em ROADMAP.md ou em `.planning/phases/<N>-CONTEXT.md`)
+2. Para cada feature production-bound, procurar `.planning/prr/<feature-id>-PRR-REPORT.md` (cross-ref [prr-conductor](../agents/prr-conductor.md) — agent que produz o relatório scored em 6 axes do cap 32)
+3. Verificar status do PRR-REPORT.md:
+   - Se ausente: BLOQUEAR conclusion — sugerir `/prr --feature "<descrição>"` ou `/sre prr --feature "..."` antes de re-rodar `/concluir-marco`
+   - Se presente mas status `failed` (≥ 1 axe P0 reprovado): BLOQUEAR conclusion — listar axes P0 reprovados e exigir remediation
+   - Se presente com status `passed`: incluir `PRR-REPORT.md` como anexo no `.planning/milestones/v<version>-MILESTONE.md` (audit trail)
+4. Quando todos os PRRs de features production-bound forem `passed`: prosseguir para passo 7 (commit + tag) do workflow `complete-milestone.md`
+
+**Distinção `passed` vs `failed`:**
+
+| Status | Definição | Resultado em /concluir-marco |
+|---|---|---|
+| `passed` | Todos os 6 axes scored ≥ 3/5 (cap 32 — System Architecture / Instrumentation / Emergency Response / Capacity Planning / Change Management / Performance) | Milestone arquivável (gate aprova) |
+| `passed-with-warnings` | 6/6 axes ≥ 3/5 mas ≥ 1 axe com action items P1 não resolvidos | Milestone arquivável; warnings explícitos no archive |
+| `failed` | ≥ 1 axe < 3/5 OU ≥ 1 action item P0 não resolvido | Gate BLOQUEIA — exige remediation antes de arquivar |
+
+**Default `false` por design:**
+
+`workflow.complete_milestone_prr_gate` default `false` (≠ `complete_milestone_omm_gate` que é `true`) — PRR Engagement Model do livro Google SRE assume **maturidade organizacional** (SRE team, on-call rotation, incident response). Para projetos em early stage / dogfooding, gate `false` é o correto. Quando o projeto atinge tier-1 (production-user-facing, paid tier, SLA contratual), user explicitamente liga setando `workflow.complete_milestone_prr_gate=true` no config.
+
+**Quando ligar gate:**
+
+- Projeto tem feature user-facing pagante (≥ 1 jornada crítica monetizada)
+- Projeto tem SLO definido em `.planning/slos/` com error budget tracking
+- Projeto tem on-call rotation documentada em runbook
+- Projeto tem postmortem culture estabelecida (≥ 1 postmortem blameless escrito em `.planning/postmortems/`)
+- **Pelo menos 2 dos 4 acima** = liga gate (sinal de production maturity)
+
+**Quando manter gate desligado:**
+
+- Projeto early stage / dogfooding interno (sem usuário pagante)
+- Solo developer side project sem on-call
+- Pesquisa / POC / experimento (não production-bound por design)
+- Equipe ainda construindo SRE muscle (PRR vira teatro se não há cultura de remediation)
+
+**Skill consultada:** [production-readiness-review](../skills/production-readiness-review/SKILL.md) (cap 32 livro Google SRE — *Evolving SRE Engagement Model* — define os 6 axes + 3 engagement models: Simple, Early Engagement, Frameworks/SRE Platform).
+
+**Gate executável:** `gates/prr-checklist-coverage.md` (criado em Phase 41 — QA-SRE-03). Workflow `.claude/framework/workflows/complete-milestone.md` consulta esse gate quando flag `true`.
+
+**Anti-patterns prevenidos:**
+
+- "Marcar feature como production-bound mas pular PRR" → gate exige PRR-REPORT.md presente
+- "PRR-REPORT.md gerado mas status `failed`" → gate exige `passed` (não basta existir)
+- "Auto-PRR pelo time dev" → cross-ref [prr-conductor](../agents/prr-conductor.md) reforça que `prr-conductor` agent é par externo (não o mesmo agent que escreveu a feature)
+- "Gate ligado em projeto early stage" → bloco "Quando ligar gate" exige ≥ 2 sinais de production maturity
+
+**REQ:** INT-FW-V2-02.
+</sre_integration>
