@@ -167,3 +167,13 @@ Padrões obrigatórios:
 ```
 
 </process>
+
+<success_criteria>
+- [ ] `--from-investigation <id>` E `--incident "<text>"` parseados (mutuamente exclusivos)
+- [ ] Modo A: arquivo `.planning/investigations/<id>.md` validado existe antes de dispatch
+- [ ] Modo B: postmortem_id auto-gerado a partir de date + slug
+- [ ] Idempotência: não sobrescreve postmortem existente sem `--output` explícito
+- [ ] `postmortem-writer` invocado via `Task(subagent_type=...)` com prompt completo (modo + 9 seções + padrões)
+- [ ] `.planning/postmortems/<id>.md` criado pelo agent
+- [ ] Próximos passos sugerem cross-ref para `/prr`, `/observabilidade omm`, `/adicionar-tarefa`
+</success_criteria>
