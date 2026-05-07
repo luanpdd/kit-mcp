@@ -69,6 +69,29 @@ where created_at > now() - interval '30 days';
 git log --pretty=format:"%cI %h" --since="30 days ago" | head -100
 ```
 
+**Capacidade 3 — Complexidade / Tech Debt (cross-ref [toil-auditor](./toil-auditor.md)):**
+
+Toil é evidência primária de complexidade operacional — quanto mais o time gasta em trabalho manual repetitivo, maior o tech debt operacional. Para alimentar score Cap 3 com evidência objetiva (não percepção), invoque `toil-auditor` antes de pontuar:
+
+```bash
+# PT-BR: 1) Tentar reusar TOIL-AUDIT.md existente (output canônico de toil-auditor)
+if [ -f .planning/TOIL-AUDIT.md ]; then
+  TOIL_AUDIT_EXISTS=1
+else
+  TOIL_AUDIT_EXISTS=0
+fi
+
+# PT-BR: 2) Extrair % do tempo do time gasto em toil (se TOIL-AUDIT.md existir)
+# Toda TOIL-AUDIT.md tem linha "Toil estimado: X.X horas-pessoa/semana (Y% do tempo do time)"
+if [ "$TOIL_AUDIT_EXISTS" = "1" ]; then
+  TOIL_PCT=$(grep -oE '[0-9]+(\.[0-9]+)?% do tempo do time' .planning/TOIL-AUDIT.md | head -1 | grep -oE '[0-9]+(\.[0-9]+)?')
+fi
+```
+
+**Se TOIL-AUDIT.md NÃO existe** — invoque `toil-auditor` antes de pontuar Cap 3 (caller pode delegar via `Task(subagent_type="toil-auditor", prompt="Audit toil em <project_root>; team_size <N>; output em .planning/TOIL-AUDIT.md")`). O resultado alimenta scoring abaixo.
+
+**Se TOIL-AUDIT.md existe MAS data > 30d** — sinalize stale na seção "Sintomas observados" e prefira re-executar `toil-auditor`.
+
 ### Step 1 — Score cada capacidade (1-5)
 
 Para cada uma das 5 capacidades, atribuir score baseado em sintomas observados:
