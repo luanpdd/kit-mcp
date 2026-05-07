@@ -195,3 +195,27 @@ CERTO: SLO interno mais rígido que SLA externo — fator de margem 5×.
        SLA externo: 99.9% (compromisso ao cliente);
        SLO interno: 99.95% (meta de engenharia com folga para reagir).
 ```
+
+## Verificação
+
+Antes de marcar SLO target como decidido:
+
+1. **Target justificado por customer perception** — não "queremos 99.99%" mas "usuário em smartphone percebe falha acima de X%"
+2. **Target ≤ 99.95%** OU passou checklist de 99.99%+ (ver Pattern: justificar 99.99%+ excepcional)
+3. **Tier-aware** — diferentes targets para `customer.tier` quando aplicável (enterprise/pro/free)
+4. **Budget policy documentada** — 4 estados (green/yellow/red/exhausted) com ações claras
+5. **Owner nomeado** — SLO sem dono = sem ação = sem valor
+6. **SLI customer-facing** — mede o que cliente sente, não estado interno
+7. **SLA externo > SLO interno** — margem entre compromisso comercial e meta interna
+
+## Ver também
+
+- [`_shared-sre/glossary.md`](../_shared-sre/glossary.md) — termos canônicos risk continuum, error budget, MTTR/MTBF
+- [`event-based-slos`](../event-based-slos/SKILL.md) (v1.9) — definir SLO event-based com sliding window
+- [`burn-rate-alerting`](../burn-rate-alerting/SKILL.md) (v1.9) — alertas predictive sobre error budget
+- [`production-readiness-review`](../production-readiness-review/SKILL.md) — PRR axis "Performance" usa risk continuum
+- [`blameless-postmortems`](../blameless-postmortems/SKILL.md) — postmortem documenta budget consumido
+
+---
+
+*Material-fonte: Site Reliability Engineering — Beyer, Jones, Petoff, Murphy (Google/O'Reilly, 2016) — Cap 3: "Embracing Risk".*
