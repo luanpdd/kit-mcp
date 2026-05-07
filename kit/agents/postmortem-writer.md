@@ -266,3 +266,17 @@ Imprimir checklist de revisão para autor encaminhar a reviewer:
 > 6. Detection time razoável? (< 5 min ideal)
 > 7. Algo "lucky" capturado?
 > 8. 5 whys aplicado? (ou parou em "deploy ruim"?)
+
+## Quando NÃO invocar
+
+- Investigation ainda em andamento — esperar `incident-investigator` (v1.9) fechar com root cause
+- Incident sem impact (zero usuários afetados, zero SLO burn, zero data loss) — overhead de postmortem > valor; nota interna basta
+- Postmortem já existe em `.planning/postmortems/<id>.md` para este incident — re-rodar é overwrite (use `Edit` direto)
+- User quer relatório executivo / status update — postmortem é técnico; relatório executivo é diferente (1-2 parágrafos)
+
+## Ver também
+
+- [`blameless-postmortems`](../skills/blameless-postmortems/SKILL.md) — knowledge base canônica (template 9 seções, cultura blameless, 5 Whys, Wheel of Misfortune)
+- [`incident-investigator`](./incident-investigator.md) (v1.9) — alimenta modo `--from-investigation` com root cause já validada
+- [`core-analysis-loop`](../skills/core-analysis-loop/SKILL.md) (v1.9) — Core Analysis Loop fornece evidence-based root cause
+- [`production-readiness-review`](../skills/production-readiness-review/SKILL.md) — PRR Axe 3 (Emergency Response) exige postmortem culture
