@@ -2,13 +2,13 @@
 state_version: 1.0
 milestone: v1.10
 milestone_name: — SRE Engagement
-status: Phase 37 Plan 01 (golden-signals-instrumenter) entregue em paralelização
-last_updated: "2026-05-07T06:31:00.000Z"
+status: Phase 37 Plans 01+02 (golden-signals-instrumenter + toil-auditor) entregues em paralelização
+last_updated: "2026-05-07T06:35:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 1
   total_plans: 10
-  completed_plans: 7
+  completed_plans: 8
 ---
 
 # STATE.md — sessão atual
@@ -18,9 +18,9 @@ progress:
 ## Posição Atual
 
 Fase: 37 — Agentes core SRE
-Plano: 01 (golden-signals-instrumenter) — concluído (parallel executor)
-Status: Phase 37 Plan 01 entregue em paralelização (golden-signals-instrumenter — AGCORE-SRE-01)
-Última atividade: 2026-05-07 — Plan 37-01 concluído (`kit/agents/golden-signals-instrumenter.md` 11.88 KB — frontmatter + 6 seções canônicas; tools sem MCP; cross-refs Markdown ativos para four-golden-signals + observability-instrumenter + slo-engineer + production-readiness-review; especialização do observability-instrumenter v1.9 focada em métricas dos 4 signals — Latency histogram bucketed exponencial, Traffic counter, Errors counter por error.type enum, Saturation ObservableGauge resource-specific; tabela 6 saturation variants + heurística por tipo de serviço; smoke T5 ALL_PASS — descrição 157 chars ≤ 200, 6 anchors count=1, histogram=7/counter=9/gauge=5/saturation=14/error_type=10, sync 2× IDEMPOTENT_OK_TIMESTAMP_STRIPPED preservando precedente Phase 36).
+Plano: 02 (toil-auditor) — concluído (parallel executor)
+Status: Phase 37 Plans 01+02 entregues em paralelização (golden-signals-instrumenter AGCORE-SRE-01 + toil-auditor AGCORE-SRE-02)
+Última atividade: 2026-05-07 — Plan 37-02 concluído (`kit/agents/toil-auditor.md` 11.95 KB / 277 linhas — frontmatter + 6 seções canônicas; tools sem MCP — Read/Write/Bash/Grep/Glob; tier Full em todos os 5 IDEs; cross-refs Markdown ativos para eliminating-toil + omm-auditor + production-readiness-review + blameless-postmortems; Step 1 Scan cobre 4 fontes — git log normalizado, scripts shell em paths canônicos, manual steps em docs PT/EN, cron jobs já automatizados; Step 2 Classify aplica 6 critérios canônicos literalmente Manual/Repetitiva/Automatizável/Tática/Sem valor durável/Escala linear + tabela 3 categorias não-toil OVERHEAD/GRUNGY WORK/PROJECT WORK; Step 3 score canônico (frequency × pain) / effort_days banding P0 ≥1.0 / P1 0.3-1.0 / P2 <0.3; Step 4 ≤ 50% rule GREEN<30%/YELLOW 30-50%/RED >50%; Step 5 template TOIL-AUDIT.md inline canônico; smoke T5 ALL_OK — description 143 chars ≤ 200, 6 headers cada count==1, 6 critérios mencionados, TOIL-AUDIT×8, L0-L4 stages×13, 4 cross-refs OK; sync timestamp não-determinístico documentado como limitação pre-existente do kit-mcp aplicável a TODOS os stubs).
 
 ## Milestone ativo
 
