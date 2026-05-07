@@ -268,3 +268,21 @@ P2: <count> — optional
 ## Output
 `<OUTPUT_PATH>`
 ```
+
+## Quando NÃO invocar
+
+- Serviço já em produção há > 6 meses sem incidents — Re-PRR é hygiene anual; não urgente
+- Internal tool com 5 usuários — overhead de PRR > valor; checklist mental basta
+- Mudança trivial em serviço já PRR-aprovado (adicionar coluna, refactor) — não trigger Re-PRR
+- Feature ainda em design (sem código escrito) — usar `supabase-architect` (v1.8) para design fase, depois PRR após implementação
+
+## Ver também
+
+- [`production-readiness-review`](../skills/production-readiness-review/SKILL.md) — knowledge base canônica (6 axes, 3 engagement models, handoff dev→SRE, anti-patterns)
+- [`four-golden-signals`](../skills/four-golden-signals/SKILL.md) — Axe 2 (Instrumentation) exige 4 signals
+- [`event-based-slos`](../skills/event-based-slos/SKILL.md) (v1.9) — Axe 6 (Performance) exige SLO definido
+- [`burn-rate-alerting`](../skills/burn-rate-alerting/SKILL.md) (v1.9) — Axe 2 exige SLO burn-rate alerts (não threshold CPU)
+- [`sre-risk-management`](../skills/sre-risk-management/SKILL.md) — Axe 6 exige risk continuum justificativa
+- [`blameless-postmortems`](../skills/blameless-postmortems/SKILL.md) — Axe 3 (Emergency Response) exige postmortem culture
+- [`eliminating-toil`](../skills/eliminating-toil/SKILL.md) — Axe 5 (Change Management) verifica deploy não é toil
+- [`supabase-architect`](./supabase-architect.md) (v1.8) — design feature ANTES do PRR; PRR pós-implementação
