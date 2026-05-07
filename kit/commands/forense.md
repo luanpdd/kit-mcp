@@ -73,3 +73,58 @@ Cada anomalia detectada vira hipótese com query de validação:
 
 **REQ:** INT-FW-06.
 </observability_integration>
+
+<sre_integration>
+**Chain `/postmortem` após Core Analysis Loop (v1.10 — INT-FW-V2-01):**
+
+Forense é diagnóstico evidence-based read-only — identifica o **o que** e o **como** via método científico (sintoma → hipótese → query → status `VALIDATED | REFUTED | INCONCLUSIVE`). Quando o Core Analysis Loop fecha com pelo menos uma hipótese `VALIDATED` apontando para root cause, o próximo passo canônico é **postmortem blameless** (cap 15 livro Google SRE — *Postmortem Culture: Learning from Failure*).
+
+Distinção fundamental:
+
+| Etapa | Pergunta respondida | Output | Audiência |
+|---|---|---|---|
+| Forense | "O que aconteceu? Onde está a evidência?" | `.planning/forensics/report-<ts>.md` | Investigador (você) |
+| Postmortem | "O que aprendemos? O que mudaremos?" | `.planning/postmortems/<id>.md` | Organização inteira (no postmortem left unreviewed) |
+
+Forense **diagnostica**; postmortem **transforma diagnóstico em aprendizado durável**. Pular postmortem = perder aprendizado organizacional (anti-pattern hero culture: "fixei o bug, vamos seguir").
+
+**Trigger automático sugerido (não-bloqueante):**
+
+Quando o relatório forense conclui com:
+- ≥ 1 hipótese `VALIDATED` apontando root cause acionável, OU
+- Incident impactou usuário (não apenas dev experience), OU
+- Workflow framework crashou em produção (não dogfooding)
+
+O comando `/forense` **sugere ao usuário** ao final do relatório:
+
+```text
+Próximo passo recomendado:
+  /postmortem --from-investigation <forensic-id>
+Continua o blameless write-up com Summary + Impact + Root Causes + Action Items.
+Cross-ref canônico: [blameless-postmortems](../skills/blameless-postmortems/SKILL.md) skill + [postmortem-writer](../agents/postmortem-writer.md) agent.
+```
+
+**Chain de fluxo canônico:**
+
+```text
+Falha detectada
+  ↓
+/forense "<descrição>"   ← diagnóstico evidence-based (este comando)
+  ↓ (Core Analysis Loop fecha com VALIDATED)
+/postmortem --from-investigation <id>   ← blameless write-up (chain sugerido)
+  ↓
+Action Items P0/P1 viram tarefas em milestone atual ou próximo
+  ↓
+Wheel of Misfortune: postmortem vira treino de novos engineers (cap 15)
+```
+
+**Quando NÃO sugerir chain `/postmortem`:**
+
+- Forense `INCONCLUSIVE` em todas as hipóteses (root cause não identificada — sugerir nova investigação ao invés)
+- Falha trivial documentada (typo em `.gitignore`) sem impacto a usuário
+- Investigação cancelada pelo user antes do Core Analysis Loop fechar
+
+**Cultura blameless é não-negociável:** o postmortem foca em **sistema** (controles ausentes, signals não monitorados, escalation paths frágeis), nunca em **pessoas** ("dev X esqueceu de testar"). Anti-pattern blame culture é explicitamente prevenido pelo template de `postmortem-writer` (cap 15 — *No postmortem left unreviewed*).
+
+**REQ:** INT-FW-V2-01.
+</sre_integration>
