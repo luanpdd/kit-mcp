@@ -2,13 +2,13 @@
 state_version: 1.0
 milestone: v1.10
 milestone_name: — SRE Engagement
-status: Phase 38 em paralelização — Plan 03 (postmortem) concluído via parallel executor — kit/commands/postmortem.md 8.1 KB / 179 linhas, wrapper puro para postmortem-writer com 2 modos mutuamente exclusivos (--from-investigation v1.9 trail OU --incident standalone), CMD-SRE-03 coberto
-last_updated: "2026-05-07T07:30:00.000Z"
+status: Phase 38 em paralelização — Plan 04 (prr) concluído via parallel executor — kit/commands/prr.md 9.6 KB / 205 linhas, wrapper command que dispatch para prr-conductor (Phase 37) com 2 modos mutuamente exclusivos --service|--feature, 6 axes obrigatórios, 3 engagement models (simple/early/platform), AskUserQuestion duplo (engagement + reviewer anti auto-PRR), offline fallback EVIDENCE_PENDING_MCP, CMD-SRE-04 coberto
+last_updated: "2026-05-07T08:30:00.000Z"
 progress:
   total_phases: 6
   completed_phases: 2
   total_plans: 16
-  completed_plans: 12
+  completed_plans: 14
 ---
 
 # STATE.md — sessão atual
@@ -18,9 +18,9 @@ progress:
 ## Posição Atual
 
 Fase: 38 — Comandos + orquestrador SRE
-Plano: 03 (postmortem) — concluído (parallel executor)
-Status: Phase 38 em paralelização — Plan 03 (postmortem) concluído via parallel executor; comando wrapper /postmortem dispatch para postmortem-writer com 2 modos mutuamente exclusivos
-Última atividade: 2026-05-07 — Plan 38-03 concluído (`kit/commands/postmortem.md` 8.1 KB / 179 linhas — frontmatter válido description 159 chars + allowed-tools com Task + AskUserQuestion; 4 âncoras canônicas objective/context/process/success_criteria cada count=1; 2 modos mutuamente exclusivos `--from-investigation <id>` (Modo A — preferido, continuação de v1.9 incident-investigator trail) E `--incident "<descrição>"` (Modo B — standalone com 9 perguntas guiadas); process com 5 steps numerados — parse args + validação mutual exclusivity + AskUserQuestion fallback se nenhum, validate investigation file (Modo A) + auto-gen postmortem_id (Modo B) + idempotency guard, list recent postmortems UX, Task() dispatch para postmortem-writer com prompt completo enumerando 9 seções canônicas Summary/Impact/Root Causes/Trigger/Resolution/Detection/Action Items/Lessons Learned/Timeline + padrões SMART/UTC/blameless, output com cross-refs para /prr + /observabilidade omm + /adicionar-tarefa; cross-refs Markdown ativos postmortem-writer + skill blameless-postmortems + agent incident-investigator (v1.9) + 3 menções a v1.9; smoke T3 ALL_PASS — description 159/200 chars, 4 âncoras count=1, subagent_type="postmortem-writer" 1×, --from-investigation 8×, --incident 10×, blameless 4× (≥3), "9 seções|9 perguntas|9 questões" 6× (≥2), SMART/UTC 3× (≥2), incident-investigator 1× (≥1), v1.9 3× (≥1), kit sync install claude-code → .claude/commands/postmortem.md OK).
+Plano: 04 (prr) — concluído (parallel executor)
+Status: Phase 38 em paralelização — Plan 04 (prr) concluído via parallel executor; comando wrapper /prr dispatch para prr-conductor com 2 modos mutuamente exclusivos --service|--feature
+Última atividade: 2026-05-07 — Plan 38-04 concluído (`kit/commands/prr.md` 9.6 KB / 205 linhas — frontmatter válido description 157/200 chars + allowed-tools com Task + AskUserQuestion + Read/Write/Bash/Grep/Glob; 4 âncoras canônicas objective/context/process/success_criteria cada count=1; 2 modos mutuamente exclusivos `--service <name>` (Modo A — audit serviço existente, output `.planning/prr/<service>.md`) E `--feature "<descrição>"` (Modo B — audit pré-launch, output `.planning/prr/feature-<slug>.md`); 6 axes obrigatórios literalmente nominados em <objective> E Step 5 prompt — System Architecture, Instrumentation/Metrics/Monitoring, Emergency Response, Capacity Planning, Change Management, Performance (cada ≥ 2× no doc); 3 engagement models (simple/early/platform) com critério outage cost (< $1k → simple, $1k-100k → early, > $100k → platform/frameworks) — 10× combinado; process com 6 steps numerados — Step 1 parse args + validação mutual exclusivity (ambos = ERROR; nenhum = ERROR), Step 2 resolve output_path por modo + slug auto-gen + re-PRR não-bloqueante (informa último PRR mas permite sobrescrever), Step 3 detectar `supabase/config.toml` para project_id (Full mode com MCP), Step 4 AskUserQuestion duplo — engagement (3 opções com critério outage cost) + reviewer (texto livre com nota anti auto-PRR "NUNCA team dev"), Step 5 Task() dispatch para prr-conductor com prompt completo enumerando 6 axes literalmente + evidence-based + offline mode com EVIDENCE_PENDING_MCP, Step 6 pós-output com cross-refs para /observabilidade omm Cap 4 + /concluir-marco Phase 40 INT-FW-V2-02 gate PRR opcional + P0/P1/P2 priorização; cross-refs Markdown ativos prr-conductor + skill production-readiness-review; smoke T3 ALL_PASS — description 157/200 chars, 4 âncoras count=1, subagent_type="prr-conductor" 1×, --service 11× --feature 9×, 6 axes cada ≥ 2× (System Architecture/Instrumentation/Emergency Response/Capacity Planning/Change Management/Performance), 3 engagement models 10× combinado, anti-pattern auto-PRR 6× (≥2), MODO OFFLINE/EVIDENCE_PENDING_MCP 5× (≥3), kit sync install claude-code → .claude/commands/prr.md 809 bytes stub OK).
 
 ## Milestone ativo
 
