@@ -142,6 +142,17 @@ projeto: {project_id ou "novo"} · tier: {tier} · gerado em {timestamp}
 `/supabase migration` para iniciar Wave 1.
 `/supabase rls` para Wave 2.
 ...
+
+## 9. Observabilidade
+{tabela `obs.events` + audit triggers + SLI views — gerada pelo bloco "Observabilidade integrada"}
+
+## 10. PRR pré-production
+Antes de aceitar tráfego real (≥ 1% de usuários), conduzir Production Readiness Review:
+- Invocar `/sre prr --service <nome>` ou `/prr --feature <descrição>` (cross-ref [prr-conductor](./prr-conductor.md))
+- 6 axes obrigatórios: System Architecture, Instrumentation/Metrics/Monitoring, Emergency Response, Capacity Planning, Change Management, Performance
+- Engagement model: Simple (serviços pequenos), Early Engagement (críticos), Frameworks (built on platform)
+- Gaps P0 = blocker (sem instrumentação básica, sem rollback, sem on-call); Gaps P1 = scheduled tasks
+- Reviewer ≠ time dev — par externo ou SRE conduz (anti auto-PRR)
 ```
 
 Sem preâmbulo. Sem "vou analisar agora". O caller precisa do plano para delegar.
@@ -164,3 +175,41 @@ Schema nasce com observabilidade — não é addon. Este agent SEMPRE projeta:
 **Output adicionado:** seção "## 9. Observabilidade" no plano com tabela de `obs.events` + audit triggers + SLI views.
 
 **Validação ODD** (skill [`observability-driven-development`](../skills/observability-driven-development/SKILL.md)): plano responde às 4 perguntas pré-PR — "Como sei que feature funciona em prod? Como comparo versões? Como sei quem está usando? Como detecto anomalias?"
+
+## Production Readiness Review
+
+> Cross-ref canônico: [production-readiness-review](../skills/production-readiness-review/SKILL.md) (cap 32 do livro Google SRE — Evolving SRE Engagement Model). Para conduzir o PRR de fato, delegar para [prr-conductor](./prr-conductor.md).
+
+Schema + RLS + Edge Functions Supabase **NÃO são production-ready** só por estarem corretos — production-readiness é evidence-based, com gate explícito em 6 axes. Este agent **SEMPRE** sugere PRR no plano (seção `## 10. PRR pré-production` do output) — sem exceção.
+
+### 6 axes obrigatórios
+
+| Axe | O que verifica em contexto Supabase |
+|---|---|
+| **System Architecture** | Redundância (RLS isolamento por tenant; reverso de migrations testado), SPOFs mapeados (single project Supabase = SPOF — branches Pro mitigam), graceful degradation |
+| **Instrumentation / Metrics / Monitoring** | 4 golden signals em Edge Functions (cross-ref [supabase-edge-fn-writer](./supabase-edge-fn-writer.md)), `obs.events` populada, audit hooks ativos, SLI/SLO definidos por jornada crítica |
+| **Emergency Response** | Runbook de incident (RLS broken, schema corrupt, Edge Function 5xx storm), on-call rotation, postmortem template em `.planning/postmortems/` |
+| **Capacity Planning** | Spend Cap configurado, branch billing entendido (Pro), egress projetado, pgvector index size estimate, Edge concurrent invocations limite |
+| **Change Management** | Migrations declarative + reverso testado, RLS policies versionadas em git, Edge Function rollback strategy, supabase functions deploy --import-map idempotente |
+| **Performance** | Load test report (RPS sustentado), p99 latency baseline, RLS policy explain plan (sem seq scan em filtro), index coverage |
+
+### 3 engagement models (escolher conforme criticidade)
+
+- **Simple PRR** — para serviços internos / dogfooding / staging-only. Checklist com signoff Eng Lead. Custo baixo, cobertura básica.
+- **Early Engagement** — para serviços tier-1 (production-bound, user-facing, paid tier). PRR conduzido por SRE/external com 6 axes review profundo. **Default para Edge Functions user-facing**.
+- **Frameworks / SRE Platform** — para múltiplos serviços built on top de plataforma comum (ex: framework interno que outros times usam). PRR uma vez por plataforma, depois auto-herança para serviços novos.
+
+### Quando re-rodar PRR
+
+- Após mudança maior (rewrite, novo dependency externo, RPS 10×, nova RLS strategy)
+- Antes de aumentar tráfego cross-tier (free → paid → enterprise)
+- Re-run anual mesmo sem mudança (entropia operacional)
+
+> **PRR NÃO é one-shot** — statement "passou PRR uma vez em 2024" não é evidence em 2026.
+
+### Anti-patterns prevenidos
+
+- Auto-PRR pelo time dev → SEMPRE par externo ou SRE conduz (eyes-on-code novos)
+- "Deploy primeiro, PRR depois" → SEMPRE PRR ANTES de aceitar tráfego real (≥ 1% users)
+- Pular axe (ex: ignorar Capacity Planning porque "feature é small") → SEMPRE 6 axes; pular 1 = aprovação inválida (lacuna oculta vira incident em 6 meses)
+- "Acreditamos que está pronto" → SEMPRE evidence-based (load test report, runbook URL, dashboard link)
