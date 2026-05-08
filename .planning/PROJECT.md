@@ -1,17 +1,69 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-07 — v1.10 SRE Engagement entregue.
+> Última atualização: 2026-05-08 — v1.11 SRE Resilience & Release Engineering iniciado.
 
 ## Estado Atual
 
-**v1.10.0 — SRE Engagement** entregue 2026-05-07. 6 fases (36-41), 30 plans, 32 REQs entregues: 6 skills + 4 agents + 6 commands + 3 audit gates + 9 patches em artefatos v1.8/v1.9 + framework flow. Material-fonte: *Site Reliability Engineering* (Beyer/Jones/Petoff/Murphy — Google/O'Reilly, 2016).
+**v1.10.0 — SRE Engagement** publicado em npm + GitHub release 2026-05-07. Stack acumulado v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) forma suíte coesa de production engineering. Stable API v1.0+ preservada (zero alterações em `src/core/`).
 
-Stack acumulado v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE) forma suíte coesa de production engineering. Stable API v1.0+ preservada (zero alterações em src/core/). Próximo milestone a definir.
+**v1.11 — SRE Resilience & Release Engineering** em planejamento. Cobre os 2 caps deferidos da v1.10 — Cap 22 (*Addressing Cascading Failures*) + Cap 8 (*Release Engineering*) — completando a série SRE iniciada na v1.10. Mesmo material-fonte: livro Google SRE 2016 (Beyer/Jones/Petoff/Murphy).
 
-## Objetivos do Próximo Milestone
+## Milestone Atual: v1.11 SRE Resilience & Release Engineering
 
-A definir. Use `/novo-marco` para iniciar próximo ciclo.
+**Objetivo:** Adicionar a 2ª camada de expertise SRE ao kit, derivada dos caps 22 e 8 do livro Google SRE — resiliência operacional (cascading failures, retries com jitter, load shedding, graceful degradation) e disciplina de release (hermetic builds, deployment philosophy, policy enforcement). Completa a v1.10 e estabelece base para projetos production-bound com tier-1 maturity.
+
+**Funcionalidades alvo (todas aditivas, zero superfície de API quebrada):**
+
+- **Skills (5 + 1 glossary patch)** — expertise consultável que viaja com o kit:
+  - `cascading-failures` — triggers, loops de feedback, prevenção (cap 22 main)
+  - `load-shedding-graceful-degradation` — queue management, load shedding patterns (cap 22 sub)
+  - `retry-strategies` — jitter + exponential backoff + deadlines + idempotency (cap 22 sub)
+  - `hermetic-builds` — reproducibility + isolation + provenance (cap 8 sub)
+  - `release-engineering` — deployment philosophy + self-service + policy enforcement (cap 8 main)
+  - Patch em `_shared-sre/glossary.md` (v1.10) — adiciona vocabulário cap 22+8 (cascading failure, retry storm, load shedding, graceful degradation, hermetic build, release pipeline, deployment policy, kill switch, throttle)
+
+- **Agentes (3)** — workers especializados:
+  - `cascading-failures-auditor` — analisa código de serviço para triggers de cascading (sem timeout, retry sem jitter, sem circuit breaker, dependências sem health check) e produz `CASCADING-AUDIT.md` priorizado
+  - `load-shedding-instrumenter` — aplica padrões de load shedding em código (queue depth gauge, drop policy, deadline propagation, server-side rate limit)
+  - `release-pipeline-auditor` — audita CI/CD para hermeticidade, reprodutibilidade, policy enforcement; produz `RELEASE-AUDIT.md`
+
+- **Comandos (3 + extensões /sre):**
+  - `/auditar-cascading` — invoca `cascading-failures-auditor`
+  - `/load-shedding` — invoca `load-shedding-instrumenter`
+  - `/auditar-release` — invoca `release-pipeline-auditor`
+  - Extensão do orquestrador `/sre` com 3 novos subcomandos (`cascading`, `load-shedding`, `release`)
+
+- **Integração com Suítes existentes (5 patches):**
+  - `four-golden-signals` (v1.10): Saturation signal documentada como early warning de cascading failure
+  - `prr-conductor` (v1.10): Axe 4 (Capacity Planning) ganha checks de cascading; Axe 5 (Change Management) ganha hermeticidade
+  - `supabase-edge-fn-writer` (v1.8): template ganha retry-with-jitter, deadline propagation, server-side load shedding
+  - `omm-auditor` (v1.9): Capacidade 1 (Resilience) consulta `cascading-failures-auditor`
+  - `/concluir-marco`: gate `release-pipeline-policy` opt-in (paralelo ao PRR gate v1.10)
+
+- **Audit gates (2):** `cascading-failures-prevention`, `release-pipeline-policy`
+
+**Decisões de stack:**
+- Zero deps novas. Apenas conteúdo de kit (markdown). Stable API v1.0+ preservada — só adições.
+- Material-fonte: mesmo livro v1.10 (*Site Reliability Engineering*, 978-1-491-92912-4). Caps 22 e 8 — sem expansão para Workbook por design (mantém narrativa SSOT).
+- Conteúdo em PT-BR (alinhado com v1.8/v1.9/v1.10). Code blocks EN com comentários PT-BR.
+- Roadmap começa em **Phase 42** (continuação de v1.10 que terminou em 41).
+- Numeração de skills: extension natural da família SKFD (existing 5 SKFD-SRE + 5 novas SKFD-SRE-2).
+
+**Beneficiários principais:**
+- Suíte SRE v1.10 — `prr-conductor` ganha checks Axe 4+5; `four-golden-signals` ganha contexto cascading
+- Suíte Observabilidade v1.9 — `omm-auditor` Capacidade 1 (Resilience) consulta cascading-auditor
+- Suíte Supabase v1.8 — `supabase-edge-fn-writer` ganha resiliência built-in
+- Fluxo framework — `/concluir-marco` ganha release-pipeline gate (opt-in)
+
+**Contrato preservado:** Quem usa kit-mcp em produção não percebe nada além de novos artefatos disponíveis ao sincronizar. CI permanece verde.
+
+## Histórico (arquivado abaixo)
+
+<details>
+<summary>v1.10 SRE Engagement — entregue 2026-05-07</summary>
+
+## Milestone v1.10 SRE Engagement (entregue 2026-05-07)
 
 ## Histórico (arquivado abaixo)
 
