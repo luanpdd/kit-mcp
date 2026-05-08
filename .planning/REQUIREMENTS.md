@@ -1,0 +1,116 @@
+# Requisitos: kit-mcp v1.11 — SRE Resilience & Release Engineering
+
+**Definidos:** 2026-05-08
+**Valor Central:** Adicionar 2ª camada de expertise SRE ao kit (resiliência operacional cap 22 + disciplina de release cap 8) completando a Suíte SRE iniciada na v1.10. Material-fonte: livro Google SRE 2016.
+
+## Requisitos v1.11
+
+Requisitos para v1.11. Cada um mapeia para fases do roadmap (continua numeração — v1.10 terminou em fase 41 → v1.11 começa em fase 42).
+
+### Glossary (extensão de v1.10)
+
+- [ ] **GLOS2-01**: Patch em `kit/skills/_shared-sre/glossary.md` (v1.10) adiciona vocabulário cap 22 — cascading failure, retry storm, thundering herd, load shedding, graceful degradation, circuit breaker, deadline propagation, kill switch, throttle, queue management, resource exhaustion (CPU/memory/file descriptors/threads)
+- [ ] **GLOS2-02**: Patch no mesmo glossário adiciona vocabulário cap 8 — hermetic build, reproducible build, release pipeline, deployment policy, self-service deployment, build provenance, configuration management, branching strategy, release engineering invariants
+- [ ] **GLOS2-03**: Patch declara anti-patterns explícitos cap 22 + cap 8 — retry sem jitter (retry storm), retry sem deadline (cascade amplification), thundering herd em recovery, deploy não-hermético (não reprodutível), config drift entre ambientes, release pipeline manual (toil + erro humano), no-rollback culture
+
+### Skills foundationais SRE-2 (5 skills SKFD-SRE-2)
+
+- [ ] **SKFD-SRE2-01**: Skill `kit/skills/cascading-failures/SKILL.md` documenta cap 22 (*Addressing Cascading Failures*) — triggers (process death/updates/config changes/kill switches/throttles), loops de feedback (retry storm, queue blow-up, dependency cascade), preventing server overload (queue management, load shedding, retries com jitter+exp backoff+deadlines, latency budgets, slow startup/cold caching, always-go-down-stack), testing for cascading failures, immediate response (increase resources, stop health check failures, restart servers, drop traffic, enter degraded mode, eliminate batch load, eliminate bad traffic)
+- [ ] **SKFD-SRE2-02**: Skill `kit/skills/load-shedding-graceful-degradation/SKILL.md` documenta cap 22 sub — queue depth gauge, drop policy (oldest/newest/random/priority), graceful degradation modes, server-side rate limiting, deadline propagation upstream→downstream, load shedding como invariante de design (não emergency response)
+- [ ] **SKFD-SRE2-03**: Skill `kit/skills/retry-strategies/SKILL.md` documenta cap 22 sub — jitter (full/equal/decorrelated), exponential backoff com cap, retry budget, deadline propagation (parent deadline > child deadline), idempotency requirements, when NOT to retry (auth errors, validation errors, permanent failures), retry-after header respect
+- [ ] **SKFD-SRE2-04**: Skill `kit/skills/hermetic-builds/SKILL.md` documenta cap 8 sub — reproducibility (mesmo input → mesmo output bit-a-bit), isolation (sem network access durante build), provenance (build atribuível a commit + ferramentas + dependências), pinned versions, lockfiles, content-addressed dependencies, common pitfalls (timestamps, random IDs, network calls)
+- [ ] **SKFD-SRE2-05**: Skill `kit/skills/release-engineering/SKILL.md` documenta cap 8 main — deployment philosophy (self-service, high velocity, hermetic, enforcement of policies), build orchestration (Blaze/Bazel-style), versioning (SemVer + commit SHA), branching strategies (trunk-based vs gitflow), continuous build/test/deploy, configuration management (config-as-code, environment promotion), release engineering invariants
+
+### Agentes core SRE-2 (3 agents)
+
+- [ ] **AGCORE-SRE2-01**: Agente `kit/agents/cascading-failures-auditor.md` analisa código de serviço para triggers de cascading (sem timeout em chamadas downstream, retry sem jitter, sem circuit breaker, dependências sem health check, queue sem limite, ausência de deadline propagation); produz `.planning/CASCADING-AUDIT.md` priorizado P0/P1/P2 com sugestões de patches
+- [ ] **AGCORE-SRE2-02**: Agente `kit/agents/load-shedding-instrumenter.md` aplica padrões de load shedding em código (queue depth gauge, drop policy, deadline-aware request handler, server-side rate limit middleware); foca em Edge Functions / serviços HTTP
+- [ ] **AGCORE-SRE2-03**: Agente `kit/agents/release-pipeline-auditor.md` audita CI/CD (`.github/workflows/*.yml`, `Dockerfile`, lockfiles) para hermeticidade (build sem network, deps pinadas), reprodutibilidade (lockfile commitado, sem timestamps), policy enforcement (signed commits, branch protection, required reviewers); produz `.planning/RELEASE-AUDIT.md` scored
+
+### Commands SRE-2 (3 + extensão /sre)
+
+- [ ] **CMD-SRE2-01**: Comando `kit/commands/auditar-cascading.md` — invoca `cascading-failures-auditor` para fase ou serviço específico; gera `.planning/CASCADING-AUDIT.md` na raiz
+- [ ] **CMD-SRE2-02**: Comando `kit/commands/load-shedding.md` — invoca `load-shedding-instrumenter` para target (Edge Function path ou phase number); aplica patches via Edit
+- [ ] **CMD-SRE2-03**: Comando `kit/commands/auditar-release.md` — invoca `release-pipeline-auditor`; gera `.planning/RELEASE-AUDIT.md` scored em hermeticidade + reprodutibilidade + policy enforcement
+- [ ] **CMD-SRE2-04**: Patch em `kit/commands/sre.md` (v1.10 orquestrador) adiciona 3 subcomandos `cascading`, `load-shedding`, `release` com sinônimos PT/EN — paridade com 5 subcomandos v1.10 existentes
+
+### Integração com Suítes existentes (5 patches)
+
+- [ ] **INT-SRE-V2-01**: Patch em `kit/skills/four-golden-signals/SKILL.md` (v1.10) — adiciona seção "Saturation as cascading failure trigger" cross-referenciando `cascading-failures` skill; saturation > threshold é early warning antes de cascade. Frontmatter inalterado (anti-pitfall A2).
+- [ ] **INT-SRE-V2-02**: Patch em `kit/agents/prr-conductor.md` (v1.10) — Axe 4 (Capacity Planning) ganha checks de cascading prevention (timeout configurado, retry com jitter, circuit breaker presente); Axe 5 (Change Management) ganha checks de hermeticidade (lockfile commitado, build reprodutível). Cross-refs para `cascading-failures-auditor` + `release-pipeline-auditor`. Frontmatter inalterado.
+- [ ] **INT-SB-V3-01**: Patch em `kit/agents/supabase-edge-fn-writer.md` (v1.8) — template Edge Function ganha retry-with-jitter wrapper, deadline propagation via `AbortSignal.timeout()`, server-side load shedding via queue depth check (drop request quando saturation > 95%). Cross-refs para `retry-strategies` + `load-shedding-graceful-degradation`. Frontmatter inalterado.
+- [ ] **INT-OBS-V2-01**: Patch em `kit/agents/omm-auditor.md` (v1.9) — Capacidade 1 (Resilience) consulta `cascading-failures-auditor` para score; tabela 5-row mapeando severity de findings (P0/P1/P2 counts) → score 1-5. Regra absoluta "score Cap 1 > 3 exige CASCADING-AUDIT.md fresco ≤ 30d" análoga à regra Cap 3 (TOIL-AUDIT.md). Frontmatter inalterado.
+- [ ] **INT-FW-V3-01**: Patch em `kit/commands/concluir-marco.md` (framework) — gate `release-pipeline-policy` opt-in via `workflow.complete_milestone_release_gate=true` (default false, paralelo ao PRR gate v1.10). Bloqueia `/concluir-marco` se RELEASE-AUDIT.md ausente OU status `failed`. Frontmatter + bloco `<observability_integration>` v1.9 + bloco `<sre_integration>` v1.10 preservados byte-a-byte.
+
+### Audit gates (2 novos)
+
+- [ ] **QA-SRE2-01**: Gate `gates/cascading-failures-prevention.md` (blocking, pre-verify) — verifica código de serviço/Edge Function tocado em fase tem patterns de prevenção (regex sobre `setTimeout|AbortSignal|withTimeout|deadline` + `jitter|backoff|retry-after` + `circuit.?breaker|fail.?fast`). Skip gracefully em projetos content-only. Bash 3.2-portable.
+- [ ] **QA-SRE2-02**: Gate `gates/release-pipeline-policy.md` (blocking, pre-conclude) — verifica `.github/workflows/*.yml` tem patterns de hermeticidade (`actions/setup-node@v[4-9]` com cache, lockfile commitado existe, sem `npm install` sem `--frozen-lockfile`/`ci`); verifica branch protection sinalizada via README ou config. Skip gracefully em projetos sem CI. Bash 3.2-portable.
+
+### Documentação
+
+- [ ] **QA-SRE2-03**: README ganha seção "SRE Resilience & Release Engineering (v1.11)" listando 5 skills + 3 agents + 3 commands + 2 gates com exemplo end-to-end (e.g., `/sre cascading <service>` → `/sre load-shedding <target>` → `/sre release` → após hardening, `/sre prr` valida 6 axes incluindo Axe 4+5 patcheados)
+- [ ] **QA-SRE2-04**: CHANGELOG ganha entrada `## [1.11.0] - <data>` documentando: SRE Resilience & Release Engineering layer (5 skills + 3 agents + 3 commands + 2 gates), integração com Suíte SRE v1.10 (PRR Axe 4+5, four-golden-signals saturation), Supabase v1.8 (edge-fn-writer retry+deadline+load-shedding), Observabilidade v1.9 (omm-auditor Cap 1 Resilience), framework (concluir-marco release gate opt-in)
+
+## Requisitos Futuros (v1.12+)
+
+Caps SRE deferidos para milestones futuros:
+
+- **Cap 9** (Simplicity) — anti-complexity patterns
+- **Caps 10-14** (Practical Alerting, Being On-Call, Effective Troubleshooting, Emergency Response, Managing Incidents) — bloco "Operações" coeso
+- **Caps 17-18** (Testing for Reliability, Software Engineering in SRE) — DPE/SRE engineering
+- **Caps 19-21** (Load Balancing, Handling Overload) — distributed systems patterns
+- **Cap 23** (Distributed Consensus) — Paxos/Raft fundamentals
+- **Caps 25-26** (Data Processing Pipelines, Data Integrity) — data SRE
+- **Cap 27** (Reliable Product Launches) — launch coordination
+- **Workbook Google SRE** — sequel 2018 com exemplos práticos
+
+## Fora do Escopo
+
+| Funcionalidade | Motivo |
+|----------------|--------|
+| Implementar circuit breaker library | Skill documenta o pattern + cross-refs para libs maduras (`opossum` Node.js, `failsafe-go` Go); kit-mcp não inventa libs |
+| Build hermetic enforcement em runtime | kit-mcp é content-only por design; gate verifica patterns mas não força execução |
+| Workbook Google SRE 2018 | Decisão upfront — manter SSOT no livro original 2016 (mesma decisão da v1.10) |
+| Caps SRE pós-22/8 | Reservados para v1.12+ — escopo focado em v1.11 |
+| Mudanças em `src/core/` | Stable API v1.0+ preservada (content-only milestone, decisão v1.8/v1.9/v1.10) |
+
+## Rastreabilidade
+
+Quais fases cobrem quais requisitos. Atualizado durante a criação do roadmap (Phase 10 deste workflow).
+
+| Requisito | Fase | Status |
+|-----------|------|--------|
+| GLOS2-01 | TBD | Pending |
+| GLOS2-02 | TBD | Pending |
+| GLOS2-03 | TBD | Pending |
+| SKFD-SRE2-01 | TBD | Pending |
+| SKFD-SRE2-02 | TBD | Pending |
+| SKFD-SRE2-03 | TBD | Pending |
+| SKFD-SRE2-04 | TBD | Pending |
+| SKFD-SRE2-05 | TBD | Pending |
+| AGCORE-SRE2-01 | TBD | Pending |
+| AGCORE-SRE2-02 | TBD | Pending |
+| AGCORE-SRE2-03 | TBD | Pending |
+| CMD-SRE2-01 | TBD | Pending |
+| CMD-SRE2-02 | TBD | Pending |
+| CMD-SRE2-03 | TBD | Pending |
+| CMD-SRE2-04 | TBD | Pending |
+| INT-SRE-V2-01 | TBD | Pending |
+| INT-SRE-V2-02 | TBD | Pending |
+| INT-SB-V3-01 | TBD | Pending |
+| INT-OBS-V2-01 | TBD | Pending |
+| INT-FW-V3-01 | TBD | Pending |
+| QA-SRE2-01 | TBD | Pending |
+| QA-SRE2-02 | TBD | Pending |
+| QA-SRE2-03 | TBD | Pending |
+| QA-SRE2-04 | TBD | Pending |
+
+**Cobertura:**
+- Requisitos v1.11: 24 total
+- Mapeados para fases: 0 (preenchido pelo roadmapper)
+- Não mapeados: 24 ⚠️ (esperado neste estágio)
+
+---
+*Requisitos definidos: 2026-05-08*
+*Última atualização: 2026-05-08 após definição inicial*
