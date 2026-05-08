@@ -77,40 +77,48 @@ Caps SRE deferidos para milestones futuros:
 
 ## Rastreabilidade
 
-Quais fases cobrem quais requisitos. Atualizado durante a criação do roadmap (Phase 10 deste workflow).
+Quais fases cobrem quais requisitos. Atualizado pelo roadmapper em 2026-05-08.
 
 | Requisito | Fase | Status |
 |-----------|------|--------|
-| GLOS2-01 | TBD | Pending |
-| GLOS2-02 | TBD | Pending |
-| GLOS2-03 | TBD | Pending |
-| SKFD-SRE2-01 | TBD | Pending |
-| SKFD-SRE2-02 | TBD | Pending |
-| SKFD-SRE2-03 | TBD | Pending |
-| SKFD-SRE2-04 | TBD | Pending |
-| SKFD-SRE2-05 | TBD | Pending |
-| AGCORE-SRE2-01 | TBD | Pending |
-| AGCORE-SRE2-02 | TBD | Pending |
-| AGCORE-SRE2-03 | TBD | Pending |
-| CMD-SRE2-01 | TBD | Pending |
-| CMD-SRE2-02 | TBD | Pending |
-| CMD-SRE2-03 | TBD | Pending |
-| CMD-SRE2-04 | TBD | Pending |
-| INT-SRE-V2-01 | TBD | Pending |
-| INT-SRE-V2-02 | TBD | Pending |
-| INT-SB-V3-01 | TBD | Pending |
-| INT-OBS-V2-01 | TBD | Pending |
-| INT-FW-V3-01 | TBD | Pending |
-| QA-SRE2-01 | TBD | Pending |
-| QA-SRE2-02 | TBD | Pending |
-| QA-SRE2-03 | TBD | Pending |
-| QA-SRE2-04 | TBD | Pending |
+| GLOS2-01 | Phase 42 | Pending |
+| GLOS2-02 | Phase 42 | Pending |
+| GLOS2-03 | Phase 42 | Pending |
+| SKFD-SRE2-01 | Phase 42 | Pending |
+| SKFD-SRE2-02 | Phase 42 | Pending |
+| SKFD-SRE2-03 | Phase 42 | Pending |
+| SKFD-SRE2-04 | Phase 42 | Pending |
+| SKFD-SRE2-05 | Phase 42 | Pending |
+| AGCORE-SRE2-01 | Phase 43 | Pending |
+| AGCORE-SRE2-02 | Phase 43 | Pending |
+| AGCORE-SRE2-03 | Phase 43 | Pending |
+| CMD-SRE2-01 | Phase 44 | Pending |
+| CMD-SRE2-02 | Phase 44 | Pending |
+| CMD-SRE2-03 | Phase 44 | Pending |
+| CMD-SRE2-04 | Phase 44 | Pending |
+| INT-SRE-V2-01 | Phase 45 | Pending |
+| INT-SRE-V2-02 | Phase 45 | Pending |
+| INT-SB-V3-01 | Phase 45 | Pending |
+| INT-OBS-V2-01 | Phase 45 | Pending |
+| INT-FW-V3-01 | Phase 46 | Pending |
+| QA-SRE2-01 | Phase 47 | Pending |
+| QA-SRE2-02 | Phase 47 | Pending |
+| QA-SRE2-03 | Phase 47 | Pending |
+| QA-SRE2-04 | Phase 47 | Pending |
 
 **Cobertura:**
 - Requisitos v1.11: 24 total
-- Mapeados para fases: 0 (preenchido pelo roadmapper)
-- Não mapeados: 24 ⚠️ (esperado neste estágio)
+- Mapeados para fases: 24 (100%)
+- Não mapeados: 0
+
+**Distribuição por fase:**
+- Phase 42 (Skills foundationais SRE-2): 8 REQs
+- Phase 43 (Agentes core SRE-2): 3 REQs
+- Phase 44 (Commands + extensão /sre): 4 REQs
+- Phase 45 (Patches em Suítes existentes): 4 REQs
+- Phase 46 (Patch em fluxo framework): 1 REQ
+- Phase 47 (Gates QA + README + CHANGELOG): 4 REQs
 
 ---
 *Requisitos definidos: 2026-05-08*
-*Última atualização: 2026-05-08 após definição inicial*
+*Rastreabilidade preenchida pelo roadmapper: 2026-05-08*

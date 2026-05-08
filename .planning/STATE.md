@@ -2,10 +2,10 @@
 state_version: 1.0
 milestone: v1.11
 milestone_name: — SRE Resilience & Release Engineering
-status: Definindo requisitos
-last_updated: "2026-05-08T18:00:00.000Z"
+status: Roadmap criado — pronto para iniciar Phase 42
+last_updated: "2026-05-08T18:30:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 6
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -17,26 +17,31 @@ progress:
 
 ## Posição Atual
 
-Fase: Não iniciada (definindo requisitos)
+Fase: Não iniciada (roadmap criado, aguardando início da Phase 42)
 Plano: —
-Status: Definindo requisitos
-Última atividade: 2026-05-08 — Milestone v1.11 iniciado via `/novo-marco`
+Status: Roadmap criado — pronto para iniciar Phase 42
+Última atividade: 2026-05-08 — ROADMAP.md criado (6 fases 42-47, 24 REQs 100% cobertura)
 
 ## Milestone ativo
 
 **v1.11 SRE Resilience & Release Engineering** — cobre os 2 caps deferidos da v1.10 (Cap 22 *Addressing Cascading Failures* + Cap 8 *Release Engineering*), completando a série SRE iniciada na v1.10. Material-fonte: livro Google SRE 2016 (mesma fonte da v1.10, sem expansão para Workbook).
 
-**Estrutura proposta em 3 ondas (Phases 42-47):**
+**Estrutura em 3 ondas (Phases 42-47) — 24 REQs mapeados (100% cobertura):**
 
-- Onda 1 — Núcleo SRE-2 (Phases 42-44): 5 skills foundationais SKFD-SRE-2 + glossary patch + 3 agentes + 3 commands + extensão `/sre` orchestrator
-- Onda 2 — Integração (Phases 45-46): 5 patches em v1.8/v1.9/v1.10 + framework
-- Onda 3 — Gates e docs (Phase 47): 2 audit gates + README + CHANGELOG
+- Onda 1 — Núcleo SRE-2 (Phases 42-44, 15 REQs):
+  - Phase 42: glossary patch + 5 skills foundationais SKFD-SRE-2 (8 REQs)
+  - Phase 43: 3 agentes core SRE-2 (3 REQs)
+  - Phase 44: 3 commands + extensão `/sre` orchestrator (4 REQs)
+- Onda 2 — Integração (Phases 45-46, 5 REQs):
+  - Phase 45: 4 patches em Suítes SRE/Supabase/Observabilidade (4 REQs)
+  - Phase 46: 1 patch em fluxo framework — `/concluir-marco` gate (1 REQ)
+- Onda 3 — Gates e docs (Phase 47, 4 REQs):
+  - Phase 47: 2 audit gates + README + CHANGELOG (4 REQs)
 
 ## Próximo passo
 
-1. Definir requisitos (REQUIREMENTS.md) com REQ-IDs e mapeamento para fases
-2. Criar ROADMAP.md via roadmapper agent (continua numeração — v1.10 terminou em fase 41 → v1.11 começa em fase 42)
-3. `/discutir-fase 42` ou `/autonomo` para iniciar execução
+1. `/discutir-fase 42` para iniciar primeira fase (skills foundationais SRE-2 — glossary patch + 5 SKFD)
+2. OU `/autonomo` para executar todas as 6 fases sequencialmente
 
 ## Bloqueadores
 
@@ -44,7 +49,7 @@ Status: Definindo requisitos
 
 ## Todos pendentes
 
-(vazio — definindo requisitos)
+(vazio — pronto para iniciar Phase 42)
 
 ## Histórico
 
@@ -56,7 +61,7 @@ Status: Definindo requisitos
 - v1.8.1 — concluído 2026-05-06 (integração Supabase no fluxo)
 - v1.9.0 — concluído 2026-05-06 (Suíte Observabilidade: 11 skills + 5 agents + 6 commands + 3 gates + 11 patches)
 - v1.10.0 — **publicado 2026-05-07** (SRE Engagement: 6 skills + 4 agents + 6 commands + 3 audit gates + 9 patches; npm latest)
-- **v1.11 — em planejamento** (SRE Resilience & Release Engineering; iniciado 2026-05-08)
+- **v1.11 — em planejamento** (SRE Resilience & Release Engineering; iniciado 2026-05-08; ROADMAP criado 2026-05-08)
 
 ## Contexto Acumulado
 
@@ -73,6 +78,8 @@ v1.11 estende a Suíte SRE (v1.10) com 2ª camada de expertise — resiliência 
 - Novos subcomandos `/sre cascading|release|load-shedding` extendem orquestrador da família
 
 **v1.11 é content-only por design** — zero alterações em `src/core/`. Stable API v1.0+ preservada. Mantém budget 6/6 deps.
+
+**Estimativa total v1.11:** ~32-44h efetivas (média ~38h) — menor que v1.10 (~45h) por escopo focado em apenas 2 caps + zero patches em fluxo framework redundantes (apenas 1 patch isolado em `/concluir-marco`).
 
 ## Evolução
 
