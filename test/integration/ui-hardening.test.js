@@ -45,11 +45,8 @@ test('OPS-03: stale lockfile (dead pid) is reclaimable on next start', async () 
 
 // ----- OPS-04: multi-publisher race -----
 
-// SEC-14-02: src/ui/client.js publish() does NOT yet read lock.token and
-// attach Authorization. Plan 02 (auto-spawn-token-propagation) updates client.js
-// and unskips this test. Until then, calling publish() against a token-protected
-// /publish endpoint returns 401, which would make this test fail incorrectly.
-test.skip('OPS-04 [SKIPPED until Plan 02]: 2 concurrent publishers both succeed; events arrive in order', async () => {
+// SEC-14-02: Plan 02 propagated token through src/ui/client.js publish(); test reactivated.
+test('OPS-04: 2 concurrent publishers both succeed; events arrive in order', async () => {
   const root = mkProjectRoot();
   releaseLock(root);
   clearPortCache();
@@ -310,4 +307,110 @@ test('SEC-14-02: timingSafeEqual unit — same/diff-length/diff-char/empty', asy
   assert.equal(serverConst.timingSafeEqual('', ''), true);
   assert.equal(serverConst.timingSafeEqual('a', 'b'), false);
   assert.equal(serverConst.timingSafeEqual('a', null), false);
+});
+
+// ────────────────────────────────────────────────────────────────────
+// SEC-14-02 / Plan 02: token propagation E2E — proves publish() now
+// reads lock.token from the lockfile, attaches Authorization Bearer,
+// and recovers gracefully when the lockfile lacks a token (older
+// sidecar) or when 401 should bust the in-process port cache.
+// ────────────────────────────────────────────────────────────────────
+
+test('SEC-14-02 prop: client.js publish() attaches Bearer token from lockfile', async () => {
+  const root = mkProjectRoot();
+  releaseLock(root);
+  clearPortCache();
+  const srv = createServer({ projectRoot: root, idleMs: 0 });
+  await srv.start();
+  try {
+    const r = await publish(
+      { type: 'progress', ts: Date.now(), runId: null, payload: { percent: 50 } },
+      { projectRoot: root },
+    );
+    assert.equal(r.sent, true, `publish should succeed: ${r.reason}`);
+    assert.equal(r.status, 202);
+  } finally {
+    await srv.shutdown('test_cleanup');
+    releaseLock(root);
+    clearPortCache();
+  }
+});
+
+test('SEC-14-02 prop: client.js publish() returns http_401 when lockfile has no token', async () => {
+  const root = mkProjectRoot();
+  releaseLock(root);
+  clearPortCache();
+  // Need a real sidecar listening so the connection succeeds at TCP level;
+  // start a fresh server, then strip token from disk to simulate v1.13 client
+  // talking to v1.14 sidecar (or vice versa) without a token in the lockfile.
+  const srv = createServer({ projectRoot: root, idleMs: 0 });
+  await srv.start();
+  try {
+    const lockPath = lockPathFor(root);
+    const lock = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+    delete lock.token;
+    fs.writeFileSync(lockPath, JSON.stringify(lock));
+    clearPortCache(); // force re-read from disk
+
+    const r = await publish(
+      { type: 'progress', ts: Date.now(), runId: null, payload: {} },
+      { projectRoot: root },
+    );
+    assert.equal(r.sent, false);
+    assert.match(r.reason, /http_401/, `expected http_401, got: ${r.reason}`);
+  } finally {
+    await srv.shutdown('test_cleanup');
+    releaseLock(root);
+    clearPortCache();
+  }
+});
+
+test('SEC-14-02 prop: 401 invalidates port cache (recovery after sidecar restart)', async () => {
+  const root = mkProjectRoot();
+  releaseLock(root);
+  clearPortCache();
+  const srv = createServer({ projectRoot: root, idleMs: 0 });
+  await srv.start();
+  try {
+    // 1st publish: succeed → cache populated with good token
+    const r1 = await publish(
+      { type: 'progress', ts: Date.now(), runId: null, payload: {} },
+      { projectRoot: root },
+    );
+    assert.equal(r1.sent, true, `1st publish should succeed: ${r1.reason}`);
+
+    // Tamper lockfile with BAD token; force cache eviction so the next call
+    // re-reads the bad token. Real sidecar still has the good token in its
+    // closure (it doesn't re-read the lockfile), so a request authenticated
+    // against the disk-side bad token gets 401 from the server.
+    const lockPath = lockPathFor(root);
+    const lock = JSON.parse(fs.readFileSync(lockPath, 'utf8'));
+    const goodToken = lock.token;
+    lock.token = 'x'.repeat(64);
+    fs.writeFileSync(lockPath, JSON.stringify(lock));
+    clearPortCache(); // force client to read fake token from disk
+
+    const r2 = await publish(
+      { type: 'progress', ts: Date.now(), runId: null, payload: {} },
+      { projectRoot: root },
+    );
+    assert.equal(r2.sent, false);
+    assert.match(r2.reason, /http_401/);
+
+    // Restore good token to disk. We do NOT clearPortCache() here — we want
+    // to prove the 401 itself triggered the in-process cache invalidation,
+    // so the next publish picks up the restored disk-side token.
+    lock.token = goodToken;
+    fs.writeFileSync(lockPath, JSON.stringify(lock));
+
+    const r3 = await publish(
+      { type: 'progress', ts: Date.now(), runId: null, payload: {} },
+      { projectRoot: root },
+    );
+    assert.equal(r3.sent, true, `cache should have been invalidated by 401: ${r3.reason}`);
+  } finally {
+    await srv.shutdown('test_cleanup');
+    releaseLock(root);
+    clearPortCache();
+  }
 });
