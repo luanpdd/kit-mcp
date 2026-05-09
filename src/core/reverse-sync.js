@@ -31,16 +31,33 @@ export async function detectReverse(targetId, opts = {}) {
 
   const candidates = [];
 
-  // For each capability that this target supports AND that has files on disk,
-  // walk and classify.
-  if (target.agents)   await scanCapability(candidates, 'agent',   target.agents,   projectRoot, kit.agents,   kitRoot);
-  if (target.commands) await scanCapability(candidates, 'command', target.commands, projectRoot, kit.commands, kitRoot);
-  if (target.skills)   await scanSkills    (candidates,            target.skills,   projectRoot, [...kit.skills, ...kit.skillsExtras], kitRoot);
+  // PERF-16-03: parallelize the 5 scans. Each scan reads a distinct subdirectory
+  // of the IDE layout (.claude/agents, .claude/commands, .claude/skills,
+  // .claude/framework, .claude/hooks) — there is no I/O contention between them.
+  //
+  // Each scan continues to push into the shared `candidates` array. This is safe
+  // under the single-threaded JS event loop: `Array.prototype.push` is a
+  // synchronous operation that completes between awaits, so concurrent scans
+  // never produce a torn write. The trade-off is that candidate ordering is no
+  // longer deterministic across categories — existing reverse-sync tests use
+  // `.find` / `.some` / `.filter` and never index `candidates[N]`, so this is a
+  // safe widening of the contract.
+  //
+  // Error semantics: `Promise.all` rejects on the first rejection — identical to
+  // the previous sequential `await` chain (which also propagated the first error
+  // and aborted the rest). Fail-fast is preserved.
+  const pending = [];
+
+  if (target.agents)   pending.push(scanCapability(candidates, 'agent',   target.agents,   projectRoot, kit.agents,   kitRoot));
+  if (target.commands) pending.push(scanCapability(candidates, 'command', target.commands, projectRoot, kit.commands, kitRoot));
+  if (target.skills)   pending.push(scanSkills    (candidates,            target.skills,   projectRoot, [...kit.skills, ...kit.skillsExtras], kitRoot));
   for (const cap of ['framework', 'hooks']) {
     const spec = target[cap];
     if (!spec || spec.mode !== 'mirror-tree') continue;
-    await scanMirrorTree(candidates, cap, spec, projectRoot, kitRoot);
+    pending.push(scanMirrorTree(candidates, cap, spec, projectRoot, kitRoot));
   }
+
+  await Promise.all(pending);
 
   return { target: targetId, projectRoot, kitRoot, candidates };
 }
