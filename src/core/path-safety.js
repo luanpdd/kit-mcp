@@ -32,6 +32,36 @@ import fs from 'node:fs/promises';
 // six regexes; one suffices.
 const SENTINEL = 'MCP sync requires projectRoot to be a git workspace';
 
+/**
+ * SEC-14-03: validate that a `projectRoot` supplied via MCP message points to
+ * a real git workspace before any handler dispatches into sync.js / reverse-sync.js.
+ *
+ * Pure function — never throws. Returns a discriminated union so MCP handlers
+ * can wrap rejections in `{ error }` envelopes without try/catch boilerplate
+ * (matches handleSync/handleGates/handleForensics in src/mcp-server/index.js).
+ *
+ * Validation chain (each step short-circuits on rejection):
+ *   1. `projectRoot` is non-empty string (rejects nullish, empty, non-string types).
+ *   2. `path.resolve()` collapses `..` segments and produces an absolute path.
+ *   3. The resolved path exists and is a directory (UNC failures bubble up here).
+ *   4. A `.git` entry exists somewhere in the ancestor chain (file or directory —
+ *      `git worktree` uses a file). Walk-up bounded by `path.dirname()` fixed point.
+ *
+ * The CLI does NOT call this — `bin/cli.js` trusts whoever invoked it (same
+ * trust model as Phase 79.01's gates.run guard). Only MCP-message-sourced paths
+ * need this check.
+ *
+ * Rejection reasons all embed the literal `"git workspace"` string — public
+ * contract relied on by test/unit/mcp-projectroot-guard.test.js and downstream
+ * MCP clients. Don't rephrase without coordinating callers.
+ *
+ * @param {unknown} projectRoot - the candidate path supplied by an MCP client.
+ *   Expected to be an absolute filesystem path; any other shape is rejected.
+ * @returns {Promise<{ok: true, resolvedPath: string} | {ok: false, reason: string}>}
+ *   On success, `resolvedPath` is the path-resolved absolute form of `projectRoot`
+ *   (callers should use it instead of the raw input). On failure, `reason` is a
+ *   human-readable string suitable for MCP `{error}` envelopes.
+ */
 export async function validateProjectRoot(projectRoot) {
   // Reject empty / nullish up-front. We require an explicit projectRoot from
   // MCP messages — falling back to `process.cwd()` of the MCP server would let
