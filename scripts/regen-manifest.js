@@ -37,7 +37,11 @@ async function walkRel(rootAbs, prefix = '') {
 
 async function sha256(absPath) {
   const buf = await readFile(absPath);
-  return crypto.createHash('sha256').update(buf).digest('hex');
+  // Normalize CRLF→LF before hashing so manifest is platform-stable.
+  // git checkout converts EOL on Windows but Linux CI checks out LF —
+  // hashing raw bytes would diverge across platforms.
+  const normalized = Buffer.from(buf.toString('binary').replace(/\r\n/g, '\n'), 'binary');
+  return crypto.createHash('sha256').update(normalized).digest('hex');
 }
 
 export async function regenManifest(repoRoot = REPO_ROOT_DEFAULT) {

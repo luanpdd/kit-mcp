@@ -59,7 +59,11 @@ export async function verifyManifest(kitRoot) {
       missing.push(rel);
       continue;
     }
-    const actual = crypto.createHash('sha256').update(buf).digest('hex');
+    // Normalize CRLF→LF before hashing so manifest is platform-stable.
+    // git checkout converts EOL on Windows but Linux CI checks out LF —
+    // hashing raw bytes would diverge across platforms.
+    const normalized = Buffer.from(buf.toString('binary').replace(/\r\n/g, '\n'), 'binary');
+    const actual = crypto.createHash('sha256').update(normalized).digest('hex');
     if (actual !== expected) {
       mismatches.push({ path: rel, expected: expected.slice(0, 16), actual: actual.slice(0, 16) });
     }
