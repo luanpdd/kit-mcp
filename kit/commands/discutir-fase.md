@@ -88,3 +88,44 @@ O `plan-checker` invocado pelo `/planejar-fase` (Phase 33 — INT-FW-02) lê est
 
 **REQ:** INT-FW-01.
 </observability_integration>
+
+<legacy_refactor_integration>
+**Integração com Suíte Legacy Code (Feathers):**
+
+Quando o workflow detecta intent de **refactor** (palavras-chave em descrição da fase: "refator", "refactor", "extrair", "limpar", "reorganizar", "split", "quebrar classe/módulo"), inclui pergunta canônica:
+
+> "Esta fase envolve refactor de arquivo existente? Se sim, qual é o arquivo alvo?"
+
+Para cada arquivo identificado:
+1. Coleta line count + checa se path matches contrato externo (supabase/functions, src/api, webhooks, pages/api)
+2. Invoca [`refactor-safety-auditor`](../agents/refactor-safety-auditor.md) **em modo dry-run** para coletar evidências sem bloquear
+3. Resultado registrado em CONTEXT.md em seção `<refactor_safety>`:
+
+```markdown
+<refactor_safety>
+## Arquivos alvo de refactor
+
+| Arquivo | Linhas | Contrato externo | Cobertura | Char tests | Veredito do gate |
+|---|---|---|---|---|---|
+| src/orders/handler.ts | 724 | true | 12% | absent | BLOCK |
+| src/orders/utils.ts | 89 | false | 78% | absent | GO |
+
+## Recomendação
+
+Para `src/orders/handler.ts`:
+  - Caminho preferido: /caracterizar antes de refactor (custo: 8-16h)
+  - Alternativa: /refactor-seguro --mode=sprout (se mudança ADICIONA, não modifica)
+  - Para safe-extract: assinar checklist canônico de safe extraction
+  - Override possível com ticket + reason
+
+Para `src/orders/utils.ts`:
+  - Refactor pode prosseguir; cobertura adequada existe.
+</refactor_safety>
+```
+
+`plan-checker` consume essa seção. Se gate retorna BLOCK e mode=blocking, plano não é aprovado até user escolher caminho explícito.
+
+**Skill canônica:** [`pre-refactor-characterization`](../skills/pre-refactor-characterization/SKILL.md)
+
+**Quando skip:** fase puramente de infraestrutura (markdown, config, tooling), fase greenfield (sem arquivos existentes a modificar), OR `workflow.legacy_refactor_questions=false` em config.
+</legacy_refactor_integration>

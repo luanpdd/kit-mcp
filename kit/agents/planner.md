@@ -64,12 +64,41 @@ Se a fase menciona qualquer destes patterns, considere delegação:
 
 **Regra crítica:** agents `supabase-*` NÃO devem se chamar uns aos outros (anti-pitfall A10). Toda chain de agents Supabase deve passar pelo command `/supabase` ou pelo plan que o `executor` lê.
 
+### Suíte Legacy Code (Feathers)
+
+Se a fase menciona qualquer destes patterns, considere delegação:
+
+| Pattern detectado | Agent especializado | Skill relacionada |
+|---|---|---|
+| Refactor de arquivo > 500 linhas OR contrato externo (webhook, API pública, edge fn) | `refactor-safety-auditor` PRIMEIRO (gate) → `legacy-characterizer` | `pre-refactor-characterization`, `legacy-characterization-tests` |
+| Quebrar dependência (DB real, HTTP, framework type) bloqueando teste | `seam-finder` | `legacy-seams-and-test-harness` |
+| Gerar characterization tests (cap 13 Feathers) | `legacy-characterizer` | `legacy-characterization-tests` |
+| Adicionar comportamento via sprout/wrap em código untested | (consulta skill direta) | `legacy-sprout-wrap-techniques` |
+| Refactor de monster method (> 100 linhas) | (consulta skill direta — safe extraction) | `legacy-monster-methods` |
+
+**Regra crítica de gate:** se task é `kind=refactor` E arquivo alvo > 500 linhas OR é contrato externo, **planner DEVE incluir step prévio** invocando `refactor-safety-auditor` ANTES da task de refactor real. Sem esse gate, plano viola pre-refactor-characterization skill — é "edit and pray" automatizado.
+
+**Default workflow para refactor de arquivo flagged:**
+
+```text
+Task 1 (gate)        → /auditar-refactor <file>            (safety check)
+Task 2 (se BLOCK)    → /encontrar-seams <file>             (se necessário)
+Task 3 (se BLOCK)    → /caracterizar <file>                (gera safety net)
+Task 4 (real refactor) → executor com PLAN.md detalhado    (cover-and-modify)
+```
+
+Se OMM Capacidade 1 (Resilience) < 3 OU `workflow.legacy_refactor_gate_blocking=false`:
+gate é consultive — gera warning em CONTEXT.md mas plano pode prosseguir.
+
 ### Outros agents especializados existentes
 
 - `schema-checker` — validação pré-migration de SQL (FK, JOIN, INSERT) contra schema real
 - `ui-researcher` / `ui-checker` / `ui-auditor` — fases frontend com contrato de design
 - `debugger` — investigação de bug com método científico (já invocado por `/depurar`)
 - `nyquist-auditor` — preenchimento de gaps de validação retroativa
+- `refactor-safety-auditor` — gate canônico antes de refactor de risco (cap 1 Feathers)
+- `legacy-characterizer` — gera characterization tests (cap 13 Feathers)
+- `seam-finder` — análise de seams para dependency-breaking (cap 25 Feathers)
 
 Em todos os casos: prefira o especialista quando o domínio bate; degrade para `executor` genérico apenas quando não há especialista.
 </specialized_agents>

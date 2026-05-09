@@ -62,6 +62,25 @@ from observability.alerts
 where created_at > now() - interval '30 days';
 ```
 
+**Adicional v1.12 (Suíte Legacy):** Capacidade 1 também consume **% de refactors com safety net** dos últimos 90 dias:
+
+```bash
+# PT-BR: contar PRs de refactor com REFACTOR-SAFETY.md GO vs sem char
+git log --since="90 days ago" --pretty=format:"%H" --grep="^refactor:" | while read sha; do
+  # PR refactor sem REFACTOR-SAFETY.md ou veredito BLOCK = unsafe
+  # PR refactor com GO/GO-OVERRIDE + characterization linkado = safe
+  git show "$sha" --name-only | grep -E "REFACTOR-SAFETY|tests/characterization/" >/dev/null \
+    && echo "safe" || echo "unsafe"
+done | sort | uniq -c
+
+# % refactors com safety:
+# - 90%+ → bonus para Capacidade 1 (sinal de mature change management)
+# - < 60% → penalty (refactors arriscados sem oracle)
+# - < 30% → red flag — equipe em "edit and pray" mode
+```
+
+Cross-ref: agent [`refactor-safety-auditor`](./refactor-safety-auditor.md) (v1.12), comando [`/auditar-refactor`](../commands/auditar-refactor.md), gate [`legacy-refactor-safety`](../../gates/legacy-refactor-safety.md).
+
 **Capacidade 4 — Cadência:**
 ```bash
 # PT-BR: tempo médio commit → deploy (precisa instrumentação no CI)

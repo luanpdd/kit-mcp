@@ -55,6 +55,36 @@ A verificação reversa a partir do objetivo começa pelo resultado e trabalha d
 Depois verifique cada nível na codebase real.
 </core_principle>
 
+<legacy_refactor_verification>
+**Verificação especial para fases de refactor:**
+
+Se PLAN.md tem tasks com `kind=refactor` em arquivos flagged (> 500 linhas OR contrato externo), aplique verificação adicional baseada na skill [`pre-refactor-characterization`](../skills/pre-refactor-characterization/SKILL.md) e [`legacy-characterization-tests`](../skills/legacy-characterization-tests/SKILL.md):
+
+1. **Characterization tests existem?**
+   - Verificar `tests/characterization/<file_stem>/` ou equivalente
+   - Se ausente E refactor de risco aconteceu → **veredito: regressão indeterminável**
+   - Marca em VERIFICATION.md como gap crítico (não passa fase)
+
+2. **Characterization tests passam VERDE?**
+   - Rodar suite com framework adequado (Vitest, Pytest, etc.)
+   - Snapshot diff = 0 → comportamento preservado → ✓
+   - Snapshot diff > 0 → comportamento mudou → investigar:
+     - Se documentado como behavior change intencional → ✓ com nota
+     - Se não documentado → **regressão real** → falha de fase
+
+3. **Mutation kill score adequado?**
+   - Rodar mutation testing (Stryker / mutmut / Pitest)
+   - Kill ≥ 70% → safety net adequado
+   - Kill < 70% → warning (pode ter pontos cegos)
+
+4. **Modo override usado?**
+   - Verificar `.planning/REFACTOR-SAFETY.md` com seção `Aprovação manual`
+   - Se ticket linkado existe e é válido → ✓ (débito documentado)
+   - Se sem ticket OR ticket inválido → falha de auditoria
+
+Adicione resultados ao VERIFICATION.md em seção `## Legacy Refactor Verification`. Block phase close se characterization ausente em refactor de risco.
+</legacy_refactor_verification>
+
 <verification_process>
 
 ## Passo 0: Verificar Verificação Anterior

@@ -136,3 +136,42 @@ Wheel of Misfortune: postmortem vira treino de novos engineers (cap 15)
 
 **REQ:** INT-FW-V2-01.
 </sre_integration>
+
+<legacy_refactor_integration>
+**Forensics em failure de refactor (Suíte Legacy):**
+
+Se o forense identifica root cause como "regressão silenciosa pós-refactor", consulta automaticamente artefatos da Suíte Legacy:
+
+```text
+Falha pós-refactor detectada
+  ↓
+/forense "<descrição>"   ← diagnóstico
+  ↓ se root cause = refactor regression
+forensics agent lê:
+  - .planning/REFACTOR-SAFETY.md (qual veredito do gate? GO? GO-OVERRIDE?)
+  - tests/characterization/<file_stem>/ (existia? rodou verde antes do refactor?)
+  - REFACTOR-SAFETY-<file_stem>.md (audit retroativo)
+  ↓
+/postmortem --incident "<one-liner>" --legacy-refactor   ← consulta extra
+```
+
+**Lessons learned canônicas para regression em refactor (cap 23 Feathers):**
+
+| Cause root | Lesson learned canônica |
+|---|---|
+| Refactor sem characterization tests | Aplicar gate `legacy-refactor-safety` em modo blocking; sem char = "edit and pray" |
+| Char tests existiam mas line cov apenas (não behavioral) | Habilitar mutation testing no gate; line cov 80% pode mascarar 30% mutation kill |
+| Override usado sem ticket válido | Validar tickets em `/auditar-marco` opt-in; tickets > 90 dias = bloquear novos overrides |
+| Snapshots não-revisados, congelaram bugs | `/caracterizar` deve emitir warning de revisão obrigatória; PR review verifica leitura |
+| Mudança comportamental misturada com refactor | Single-goal editing (cap 22 Feathers); separar PRs |
+
+Action items P0 sugeridos em postmortem de regression refactor:
+1. Habilitar `workflow.legacy_refactor_gate_blocking = true`
+2. Adicionar mutation testing à CI para arquivos legacy
+3. Auditar overrides ainda abertos via `/auditar-marco`
+4. Treinar equipe via Wheel of Misfortune com este caso
+
+**Skill canônica:** [`pre-refactor-characterization`](../skills/pre-refactor-characterization/SKILL.md), [`legacy-characterization-tests`](../skills/legacy-characterization-tests/SKILL.md)
+
+**REQ:** INT-LEGACY-FW-02.
+</legacy_refactor_integration>

@@ -55,8 +55,21 @@ Isso garante que padrões, convenções e melhores práticas específicas do pro
 | Bootstrap Next.js + `@supabase/ssr` | `Task(subagent_type=supabase-auth-bootstrapper)` | Audita `.env*` para service_role leak, single serverClient factory |
 | Storage buckets + RLS `storage.objects` | `Task(subagent_type=supabase-storage-implementer)` | Multi-tenant path isolation, signed URLs, image transforms |
 | Validar SQL antes de aplicar | `Task(subagent_type=schema-checker)` | Valida FKs/colunas/tabelas via Supabase MCP |
+| Refactor de arquivo > 500 linhas OR contrato externo (webhook, API, edge fn consumida externamente) | `Task(subagent_type=refactor-safety-auditor)` PRIMEIRO (gate) | Aplica skill `pre-refactor-characterization` (cap 1+13 Feathers); BLOCK refactor sem characterization tests |
+| Gerar characterization tests para código sem cobertura | `Task(subagent_type=legacy-characterizer)` | Aplica skill `legacy-characterization-tests`; 7 grupos canônicos + golden snapshots |
+| Quebrar dependência (DB, HTTP, framework type) que bloqueia teste | `Task(subagent_type=seam-finder)` | Aplica skill `legacy-seams-and-test-harness`; cap 25 Feathers |
 
 **Quando NÃO delegar:** tasks que só leem, fazem grep, ou aplicam mudança trivial em arquivo Supabase (ex: corrigir typo em comment de migration existente). Use seu próprio Edit nesses casos.
+
+**Pre-execute gate em refactor:** ANTES de modificar arquivo cuja task é `kind=refactor` E (line count > 500 OR path matches `supabase/functions/**|src/api/**|src/handlers/webhooks/**|pages/api/**`):
+
+1. Invocar `refactor-safety-auditor` com target_file e change_kind
+2. Se veredito = BLOCK e mode = blocking → **abortar tarefa**, registrar como `desvio: characterization-required`, sugerir caminhos (caracterizar / sprout / safe-extract / override) no SUMMARY.md
+3. Se veredito = WARN → prosseguir com warning logged em SUMMARY
+4. Se veredito = GO ou GO-OVERRIDE → prosseguir normalmente
+5. Se mode = consultive → sempre prossegue, gera apenas warning
+
+Esse gate é canônico — equivale ao que `golden-signals-coverage` (v1.10) faz para Edge Functions sem golden signals. Skill canônica: `pre-refactor-characterization`. Configurável via `.planning/config.json#workflow.legacy_refactor_gate_blocking`.
 
 **Princípio:** o agent especializado é mais barato + mais correto que o executor genérico para esses domínios — ele já tem as regras embutidas. Delegação não é overhead; é correção.
 </project_context>

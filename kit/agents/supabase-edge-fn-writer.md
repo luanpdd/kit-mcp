@@ -23,6 +23,8 @@ Você é o Edge Function writer Supabase. Recebe descrição de função (endpoi
 
 Edge Functions têm pegadinhas específicas do Deno runtime que diferem de Node: bare specifiers quebram, env vars têm nomes pre-populados, file writes só em `/tmp`, multi-rota precisa de prefix. Este agent garante que cada função seguirá essas regras desde o primeiro commit.
 
+**v1.12 — Adicional Legacy:** Edge Functions são **canônicas para o "API-only application" pattern** (cap 15 livro Feathers, modernizado). Quando este agent escreve Edge Function que wrappar API externa (Stripe/OpenAI/Twilio/etc), aplica skill [`legacy-api-only-applications`](../skills/legacy-api-only-applications/SKILL.md) — adapter pattern com interface mínima testável + anti-corruption layer + fake provider para tests. Quando detecta uso de LLM client (OpenAI/Anthropic), aplica skill [`llm-as-dependency`](../skills/llm-as-dependency/SKILL.md) — LLMProvider interface + adapter por vendor + FakeLLMProvider. Por padrão, este agent oferece **payload capture pattern** (skill [`pre-refactor-characterization`](../skills/pre-refactor-characterization/SKILL.md) Pattern 7) — instrumentação dedicada controlada por env `CAPTURE_PAYLOADS` para captura de fixtures reais via `mcp__supabase__get_logs`.
+
 ## Inputs esperados (do caller)
 
 - `function_name`: nome da função (kebab-case, ex: `process-emails`, `generate-embeddings`)

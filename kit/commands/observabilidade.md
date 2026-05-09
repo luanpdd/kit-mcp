@@ -38,6 +38,7 @@ Agents disponíveis: `kit/agents/observability-instrumenter.md` (Phase 30), `kit
 | `slo` | `definir-slo`, `slo-engineer` | `slo-engineer` |
 | `burn-rate` | `burn`, `burn-rate-forecaster`, `forecast` | `burn-rate-forecaster` |
 | `omm` | `auditar`, `audit`, `maturity` | `omm-auditor` |
+| `audit-coverage` | `cobertura`, `coverage` | `observability-coverage-auditor` (v1.12 cross-suite) |
 | `help` | `ajuda`, `?` | exibe esta tabela inline |
 </context>
 
@@ -60,6 +61,7 @@ investigar, investigate, incident                   → incident-investigator
 slo, definir-slo, slo-engineer                      → slo-engineer
 burn-rate, burn, burn-rate-forecaster, forecast     → burn-rate-forecaster
 omm, auditar, audit, maturity                       → omm-auditor
+audit-coverage, cobertura, coverage                 → observability-coverage-auditor (v1.12 — cross-suite com Legacy)
 ```
 
 **Se subcomando não resolve:** exibir erro inline com lista de subcomandos válidos. Sair.

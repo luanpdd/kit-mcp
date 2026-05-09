@@ -135,3 +135,46 @@ Para esses casos: `workflow.audit_milestone_toil = false`. Para projetos team-ba
 
 **REQ:** INT-FW-V2-03.
 </sre_integration>
+
+<legacy_refactor_integration>
+**Legacy refactor safety audit (opt-in):**
+
+Quando `workflow.audit_milestone_legacy_refactor = true` (default: false em projetos < 50% OMM maturity, true acima), o workflow inclui passo de auditoria de refactor safety:
+
+```text
+Para cada arquivo modificado por tasks com kind=refactor no milestone:
+  Task(
+    subagent_type="refactor-safety-auditor",
+    prompt="
+target_file: <file>
+change_kind: refactor
+mode: blocking
+output_path: .planning/REFACTOR-SAFETY-<file_stem>.md
+
+Aplicar skill pre-refactor-characterization. Validar retroativamente que safety net foi aplicado.
+"
+  )
+```
+
+**Critérios de aprovação:**
+- Cada refactor de risco no milestone tem characterization tests linkados E pass verde
+- Cada `--mode=override` tem ticket linkado válido (ainda aberto OR resolvido com follow-up)
+- Mutation kill score ≥ 70% nos arquivos refatorados (warning se line cov OK mas mutation baixo)
+
+**Resultado de regression:**
+- 0 refactors sem char → audit aprovado
+- 1+ refactors sem char e sem override → audit fail; bloqueia close de milestone até resolução
+- 1+ overrides com tickets ainda abertos > 90 dias → warning explícito (débito técnico envelhecido)
+
+Skill canônica: [`pre-refactor-characterization`](../skills/pre-refactor-characterization/SKILL.md)
+Cross-ref ativo: `omm-auditor` Capacidade 1 (Resilience) score consulta REFACTOR-SAFETY summaries para fator "% refactors com safety net"; baixa adequação reduz score.
+
+**Quando desligar gate:**
+- Projeto greenfield com < 3 meses de idade (legacy code não existe ainda)
+- Solo dev side project sem stakes de produção (audit é overhead)
+- Toda codebase é < 50% código não-trivial (a maior parte é config/markdown/tests)
+
+Para esses casos: `workflow.audit_milestone_legacy_refactor = false`. Para projetos com stakes de produção e equipe ≥ 2 pessoas, **manter `true`**.
+
+**REQ:** INT-LEGACY-FW-01.
+</legacy_refactor_integration>

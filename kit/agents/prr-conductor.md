@@ -132,6 +132,8 @@ Para cada axe, coletar evidence via MCP tool específico (Full mode) ou filesyst
 | Rollback automatizado (SLO burn > N) | filesystem `rollback-config.yml` ou alert routing | idem |
 | CI/CD gates obrigatórios | filesystem `.github/workflows/*.yml` + `gates/` | idem |
 | Deploy frequency mensurado | git log analysis (`git log --since='30 days ago' --oneline | wc -l`) | idem |
+| **Refactor safety net** (v1.12) — refactors críticos têm characterization tests | filesystem `.planning/REFACTOR-SAFETY*.md` + `tests/characterization/` presente | git log search por refactor commits + characterization linkados |
+| **Override audit trail** (v1.12) — overrides de safety gate têm ticket + reason válidos | filesystem `.planning/REFACTOR-SAFETY*.md` seção "Aprovação manual" parseada | grep "override" + "ticket: REQ-" em commits recentes |
 
 #### Axe 6: Performance (5 items)
 
