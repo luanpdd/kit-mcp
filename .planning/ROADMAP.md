@@ -33,7 +33,7 @@
 **Plans:** 3 plans (paralelos — Wave 1)
 
 Plans:
-- [ ] 88-01-sync-promise-all-PLAN.md — syncTo() Promise.all em batches (PERF-16-01)
+- [x] 88-01-sync-promise-all-PLAN.md — syncTo() Promise.all em batches (PERF-16-01)
 - [ ] 88-02-watch-debounce-PLAN.md — watch debounce 500ms + clearKitCache invalidation (PERF-16-02)
 - [ ] 88-03-reverse-sync-parallel-PLAN.md — detectReverse() scans paralelos (PERF-16-03)
 

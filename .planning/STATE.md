@@ -3,12 +3,12 @@ state_version: 1.0
 milestone: v1.16
 milestone_name: — Performance Runtime Wave
 status: Roadmap criado — pronto para iniciar Phase 88
-last_updated: "2026-05-09T13:15:00.000Z"
+last_updated: "2026-05-09T13:45:18.301Z"
 progress:
   total_phases: 2
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 3
+  completed_plans: 1
 ---
 
 # STATE.md — sessão atual
@@ -24,6 +24,7 @@ Status: Roadmap criado — pronto para iniciar Phase 88
 **v1.16 Performance Runtime Wave** — fecha P1-P6 (perf runtime) que ficaram fora das waves anteriores. Last batch da meta-auditoria de v1.12.1.
 
 **2 fases:**
+
 - Phase 88 — Concurrent I/O: sync.js Promise.all batches + watch.js debounce + reverse-sync paralelo
 - Phase 89 — Lazy Imports & Optional Deps: CLI cold start + optionalDependencies
 
