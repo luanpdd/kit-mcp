@@ -1,5 +1,19 @@
 # MILESTONES.md — Histórico de releases
 
+## v1.15 DX & Token Economy Wave 2 (Shipped: 2026-05-09)
+
+**Phases completed:** 3 phases, 5 plans, 9 tasks
+
+**Key accomplishments:**
+
+- `terse:true` param + `--terse` CLI flag em list-agents/list-commands/list-skills retornam apenas `{kind, name}` — payload medido em corpus real reduz 68.8% (well above ≥40% threshold)
+- Single canonical kit/COMPATIBILITY.md substitui 27 tabelas inline duplicadas em agents — cada agent ganhou linha `
+- Idempotent ESM script regen the AUTOGEN-COUNTS block in README.md from real kit/ disk counts (47 agents · 87 commands · 45 skills · 20 gates), with cross-platform EOL preservation and 4 regression tests guarding against future drift.
+- Idempotent SHA256 manifest regenerator script + prepublishOnly chain + CI drift gate that fails any PR shipping a stale `kit/file-manifest.json`, formally fixing recurring drift seen in v1.13/v1.14/v1.15.85.
+- CI smoke matrix expanded from 1 → 8 IDE targets via `target` axis with step gating (`if: matrix.target == claude-code`) for target-agnostic steps; generic registry-driven Sync round-trip step replaces hardcoded claude-code asserts; local regression test (10 cases) mirrors the same contract for defense in depth
+
+---
+
 ## v1.14 Web/Core Security Hardening (Shipped: 2026-05-09)
 
 **Phases completed:** 3 phases, 6 plans, 14 tasks

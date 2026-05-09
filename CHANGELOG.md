@@ -6,6 +6,37 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.15.0] - 2026-05-09
+
+Fecha o **backlog completo da meta-auditoria de v1.12.1**. Após esta release, os 17 items identificados pelos 12 agentes paralelos estão TODOS endereçados (CRITICAL em v1.13, HIGH em v1.14, DX/economy em v1.15).
+
+3 fases (85-87), 5 plans, 26 testes novos (299 baseline final, +26 vs v1.14).
+
+### Token Economy Wave 2 (Phase 85)
+- **PERF-15-01:** terse mode em `list-agents`/`list-commands`/`list-skills` via arg `terse:true` (MCP) e flag `--terse` (CLI). Retorna apenas `{name, kind}` sem description. **Redução real de 68.8%** medida em corpus real (target era 40%) — 25486 → 7942 bytes em 179 items.
+- **PERF-15-02:** Tabela `## Compatibilidade` repetida em 27 agents extraída para `kit/COMPATIBILITY.md` canônico (single source of truth, matriz horizontal 27 agents × IDE × tier × capability + Troubleshooting). Cada agent agora tem linha `**Compat:**` com link para o canônico. -271 linhas eliminadas, +27 referências limpas.
+
+### Drift Auto-Prevention (Phase 86)
+- **DX-15-01:** `scripts/update-readme-counts.js` (NEW) lê `kit/agents/*.md`, `kit/commands/*.md`, `kit/skills/*/SKILL.md`, `gates/*.md`, conta, substitui bloco `<!-- AUTOGEN-COUNTS-START -->...<!-- AUTOGEN-COUNTS-END -->` no README. Idempotente (zero diff em re-run). README com contagem auto-gerada em vez de hardcoded.
+- **DX-15-02:** `scripts/regen-manifest.js` (NEW) regenera `kit/file-manifest.json` com SHA256 de cada arquivo distribuído. Idempotente (preserva timestamp quando files+version unchanged). `package.json prepublishOnly` agora chama ambos scripts antes dos tests (`regen-manifest && update-readme-counts && unit && integration`). CI drift gate em `.github/workflows/ci.yml` falha hard se algum dev esqueceu de rodar local.
+
+**Bonus catch:** primeira execução do `regen-manifest` detectou drift pré-existente do Plan 85.02 (manifest stale, faltava `COMPATIBILITY.md` + 4 framework templates) — corrigiu no mesmo commit, validando a premissa da automação.
+
+### CI Matrix Expansion (Phase 87)
+- **DX-15-03:** `.github/workflows/ci.yml` smoke job ganha matrix axis `target: [claude-code, cursor, codex, gemini-cli, copilot, windsurf, antigravity, trae]` (8 IDEs). `fail-fast: false` permite cada target ser testado independentemente. Hardcoded `claude-code` no sync round-trip body substituído por `${{ matrix.target }}`. Step gating com `if: matrix.target == 'claude-code'` em 7 steps target-agnostic (tests unit, tests integration, audit drift, CLI smoke, Supabase gates, mirror-tree safety, MCP boot) economiza ~55% de step-executions (~351 vs naïve ~720). Regression test `test/unit/sync-round-trip-all-targets.test.js` valida todos 8 IDs no registry.
+
+### Backlog meta-auditoria: ZERADO
+- v1.13: 4 CRITICAL + 4 quick wins ✅
+- v1.14: 6 HIGH ✅
+- v1.15: 5 DX/economy ✅
+- **Total: 17 items ✅ todos resolvidos.** v1.16+ pode focar em features novas (não hardening).
+
+### Tech debt → v1.16+
+- CI matrix size optimization (PR-mode subset 8 runs vs main full 72)
+- YAML lint runtime confirmation (deferred para primeira CI run real em ubuntu-latest)
+
+[v1.15 milestone audit](./.planning/v1.15-MILESTONE-AUDIT.md) · [v1.15 ROADMAP](./.planning/milestones/v1.15-ROADMAP.md)
+
 ## [1.14.0] - 2026-05-09
 
 Continuação direta da v1.13 — fecha as **6 vulnerabilidades HIGH** explicitamente deferidas em `.planning/milestones/v1.13-MILESTONE-AUDIT.md` "Tech Debt". Mesma origem auditiva (meta-auditoria com 12 agentes paralelos sobre v1.12.1). Content-zero por design.
