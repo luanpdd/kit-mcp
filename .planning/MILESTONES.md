@@ -1,5 +1,17 @@
 # MILESTONES.md — Histórico de releases
 
+## v1.17 Performance Wave 2 + Quick Wins (Shipped: 2026-05-09)
+
+**Phases completed:** 4 phases, 2 plans, 10 tasks
+
+**Key accomplishments:**
+
+- 1. [Rule 1 — Bug fix] Test 1 assertion relaxed from `==` to `<=`.
+- Four-item polish sweep: `open` moved to optionalDependencies, regen-manifest.js parallelized (~37% faster), dead `getLocalVersion` import removed from src/cli/index.js, and validateProjectRoot in path-safety.js gained @param/@returns JSDoc.
+- Deps budget gate now sums `dependencies + optionalDependencies` (closes pre-v1.17 loophole that allowed 9 effective deps) and a new line-coverage gate fails CI below 65% via `node --experimental-test-coverage` parsed from the node:test reporter footer.
+
+---
+
 ## v1.16 Performance Runtime Wave (Shipped: 2026-05-09)
 
 **Phases completed:** 2 phases, 5 plans, 2 tasks

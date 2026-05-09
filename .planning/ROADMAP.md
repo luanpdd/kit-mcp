@@ -4,95 +4,7 @@
 
 ## Em andamento
 
-## v1.17 — Performance Wave 2 + Quick Wins (Fases 90-93)
-
-**Milestone:** v1.17 — Performance Wave 2 + Quick Wins (P0 hotspots novos da meta-auditoria v1.16 + polish items)
-**Numeração de fases:** continua de v1.16 (último concluído: Fase 89) → v1.17 começa em **Fase 90**
-**Total de fases:** 4 (Fases 90-93)
-**Status:** Feature-complete (4/4 fases) — pronto para `/auditar-marco v1.17` + `/publicar`
-**Criado:** 2026-05-09
-**Origem:** meta-auditoria pós-v1.16.0 ([.planning/audits/v1.16/AUDIT-SYNTHESIS.md](.planning/audits/v1.16/AUDIT-SYNTHESIS.md), [.planning/audits/v1.16/PRR-REPORT.md](.planning/audits/v1.16/PRR-REPORT.md)). 2 P0 perf hotspots novos + polish de items P1/P2.
-[Detalhes](./milestones/v1.17-ROADMAP.md)
-
-### Phase 90: verifyManifest Parallel + Cache
-
-**Goal:** Paralelizar SHA256 hashing em `manifest-verify.js` (47% do syncTo era serial) + cache em-memória com TTL 30s. Resolve maior bottleneck identificado pós-v1.16 (~50ms/sync, ~100-123ms/watch trigger).
-
-**Escopo:**
-- `src/core/manifest-verify.js` — substituir for-loop sequencial por `Promise.all` em batches de 16 (mesmo pattern de Phase 88.01 sync.js).
-- Cache em-memória `verifyManifestCache` com chave=`kitRoot`, TTL 30s.
-- Preservar CRLF→LF normalize fix (commit 0130c5b).
-
-**Critérios de sucesso:**
-- Benchmark `verifyManifest('kit')` em workspace 327 files: ≥40% redução wall time vs v1.16 baseline (123ms → ≤74ms target).
-- Watch trigger consecutivo (2º+) usa cache → <5ms.
-- Cache invalidation funcional em mismatch path (test).
-- Suite continua passing + 4+ regression tests novos.
-
-**Plans:** 1 plan
-- [x] 90-01-verify-manifest-parallel-cache-PLAN.md — Promise.all batches=16 + cache TTL 30s + 5 regression tests
-
-### Phase 91: Diff-Based Sync
-
-**Goal:** Eliminar writes desnecessárias quando `kit sync` é re-rodado com kit já-sincronizado. Stat-based diff (mtime/size + opcional hash) skip files cujo destination já bate.
-
-**Depends on:** Phase 90
-
-**Escopo:**
-- `src/core/sync.js` — em `syncTo()`, antes do batch loop, comparar source vs target via fs.stat (mtime + size). Skip ops onde já idênticos.
-- Opt-out via env `KIT_MCP_FORCE_FULL_SYNC=1` (caso de cleanup/recovery).
-- Preservar onProgress callback (chamar para skipped files também, com flag).
-
-**Critérios de sucesso:**
-- `kit sync install claude-code` 2× consecutive em workspace estável: 2ª vez ≤30% do tempo da 1ª (target ~49ms vs 163ms baseline).
-- `KIT_MCP_FORCE_FULL_SYNC=1` força full sync (regression test).
-- Edit em 1 file → next sync escreve apenas o file mudado (regression test).
-- Suite passing + 4+ regression tests novos.
-
-**Plans:** 1 plan
-- [x] 91-01-diff-based-sync-PLAN.md — stat-based diff filter (treeCopy ops) + KIT_MCP_FORCE_FULL_SYNC env opt-out + onProgress skipped flag + 4 regression tests
-
-### Phase 92: Quick Wins Polish
-
-**Goal:** Capturar 4 polish items identificados pela meta-auditoria — `open` para optionalDependencies, paralelizar regen-manifest.js, remover import morto, adicionar JSDoc.
-
-**Depends on:** Phase 90
-
-**Escopo:**
-- `package.json` — mover `open` de `dependencies` para `optionalDependencies` (3 deps + 3 opt = 6 total).
-- `src/ui/browser.js` — `await import('open')` já lazy. Adicionar fallback graceful se ausente.
-- `scripts/regen-manifest.js` — paralelizar SHA256 hashing (mesmo Promise.all batches=16). −100ms prepublishOnly.
-- `src/cli/index.js:33` — remover import morto `getLocalVersion` (Plan 89.01 deviation).
-- `src/core/path-safety.js` + `src/core/manifest-verify.js` — adicionar JSDoc no padrão de `error-redaction.js`.
-
-**Critérios de sucesso:**
-- `open` em `package.json optionalDependencies` (não `dependencies`).
-- Tarball npm reduz ≥30KB.
-- `npm install --omit=optional` resulta em CLI core funcional sem `open`.
-- regen-manifest.js benchmark mostra ≥40% speedup.
-- `grep "getLocalVersion" src/cli/index.js` retorna 0 matches.
-- JSDoc presente nos 2 helpers.
-- Suite continua passing + 4+ regression tests.
-
-### Phase 93: CI Deps Gate + Coverage Tooling ✅
-
-**Goal:** Fechar 2 gaps da meta-auditoria — CI deps budget gate ignora `optionalDependencies`, e ausência de coverage tooling impede surfacing de branches não-testadas.
-
-**Depends on:** Phase 92
-
-**Escopo entregue:**
-- `.github/workflows/ci.yml` — deps budget gate agora soma `dependencies + optionalDependencies` (TOTAL=$((DEPS+OPT)), fail se >6) ✅
-- `.github/workflows/ci.yml` — novo step `Audit — line coverage threshold` via `node --experimental-test-coverage`; gated a Linux+Node22+claude-code (single-shot, não 72×); threshold 65 (baseline 69.00, margem -4 com ratchet plan documentado) ✅
-
-**Critérios de sucesso:**
-- ✅ CI gate aceita até `dependencies + optionalDependencies = 6` total; falha em 7+ (verified via local simulation).
-- ✅ Coverage report gerado em CI (Linux Node 22 single run, gated by 3 matrix conditions).
-- ✅ Coverage line% threshold = 65 (4 abaixo do baseline 69.00; CONTEXT.md autorizou ajuste por baseline < 75).
-- ✅ Workflow file passa parsing (verified via local node `--test` simulation of all gate logic).
-- ✅ Suite continua passing (250 unit + 94 integration; +9 novos tests).
-
-**Plans:** 1 plan
-- [x] 93-01-ci-deps-gate-coverage-PLAN.md — INFRA-17-01 (deps gate sums deps+opt) + INFRA-17-02 (coverage gate ≥65%) + 9 regression tests
+(Nenhum milestone ativo — execute `/novo-marco` para iniciar v1.18.)
 
 <details>
 <summary>✅ Concluídos</summary>
@@ -108,5 +20,6 @@
 - **v1.14.0 — Web/Core Security Hardening (Phases 82-84)** — 2026-05-09 11:46Z. 6 REQs HIGH, 63 tests. [Audit](./milestones/v1.14-MILESTONE-AUDIT.md)
 - **v1.15.0 — DX & Token Economy Wave 2 (Phases 85-87)** — 2026-05-09 13:11Z. 5 REQs, 26 tests. [Audit](./milestones/v1.15-MILESTONE-AUDIT.md)
 - **v1.16.0 — Performance Runtime Wave (Phases 88-89)** — 2026-05-09 14:17Z. 6 REQs, 18 tests. **Backlog meta-auditoria v1.12.1: 100% ZERADO**. [Audit](./milestones/v1.16-MILESTONE-AUDIT.md)
+- **v1.17.0 — Performance Wave 2 + Quick Wins (Phases 90-93)** — 2026-05-09. 9 REQs (PERF-17-01..02, POL-17-01..04, INFRA-17-01..03), 27 tests, 344 baseline. PRR 22→24/30. Origem: meta-auditoria pós-v1.16. [Audit](./milestones/v1.17-MILESTONE-AUDIT.md)
 
 </details>

@@ -6,6 +6,34 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.17.0] - 2026-05-09
+
+Primeira release **pós-zerada-meta-auditoria-original**. Origem: nova meta-auditoria (5 agents) sobre v1.16.0 que identificou 2 P0 perf hotspots novos + items P1/P2 polish. PRR score sobe 22/30 → 24/30.
+
+4 fases (90-93), 4 plans, 27 testes novos (344 baseline final, +27 vs v1.16).
+
+### Performance Wave 2 (Phases 90-91)
+- **PERF-17-01:** `verifyManifest` em `src/core/manifest-verify.js` agora usa `Promise.all` batches=16 (mesmo pattern da Phase 88.01 sync) + cache em-memória com TTL 30s. Watch trigger consecutivo (2º+) usa cache → <5ms. Mismatch path NUNCA cacheia (devs corrigindo files veem recovery imediato). Bypass via `KIT_MCP_VERIFY_NO_CACHE=1`. CRLF→LF normalize fix do v1.15 preservado.
+- **PERF-17-02:** `syncTo()` em `src/core/sync.js` agora aplica diff filter via `fs.stat` (mtime + size) em treeCopy ops antes do batch loop. Files cujo destination já bate são skip. **~42% median speedup** medido em 327-file kit (bem dentro da banda 30-50% target). `KIT_MCP_FORCE_FULL_SYNC=1` força full sync (cleanup/recovery). `onProgress` recebe `{skipped: true}` para granularidade preservada. Content ops (rules/agents/commands/skills) NÃO afetadas — embedam timestamp em `renderReference()` que diff sempre acharia "different".
+
+### Quick Wins Polish (Phase 92)
+- **POL-17-01:** `open` movida de `dependencies` para `optionalDependencies`. Budget mantido: 3 deps (@modelcontextprotocol/sdk, commander, picocolors) + 3 optionalDependencies (@inquirer/prompts, chokidar, open) = 6 total. Fallback graceful em `src/ui/browser.js` quando ausente.
+- **POL-17-02:** `scripts/regen-manifest.js` paralelizado (~37% speedup, 86ms → 54ms). Idempotência preservada — output bytes idênticos quando inputs iguais.
+- **POL-17-03:** Removido import morto `getLocalVersion` em `src/cli/index.js` (Plan 89.01 deviation).
+- **POL-17-04:** JSDoc `@param/@returns` adicionado em `validateProjectRoot` de `src/core/path-safety.js`.
+
+### CI Infrastructure (Phase 93)
+- **INFRA-17-01:** `.github/workflows/ci.yml` deps budget gate agora soma `dependencies + optionalDependencies` (cap=6 total). Fix gap onde gate ignorava optionalDependencies pós-v1.16 reorganização.
+- **INFRA-17-02:** Novo step CI usando `node --experimental-test-coverage` em test/unit; gera coverage report; fail se line coverage < 65% (baseline measured 69%, threshold conservador). Ratchet plan documentado para 80% em v1.18+ (priorities cli/index.js 37%, mcp-server/install.js 19%, ui/auto-spawn.js 31%, core/failures.js 17%).
+
+### Tech debt → v1.18+
+- Coverage threshold ratchet 65% → 80%
+- Mutation testing (stryker)
+- Worker threads para hash (rejected — files pequenos, I/O bound)
+- Os 4 P1 do PRR v1.12.1 que continuam abertos (Instrumentation fail axe — counter `tool_invocations_total`, `.planning/slos/`, `RUNBOOK.md`, `FAILURE-MODES.md`)
+
+[v1.17 milestone audit](./.planning/v1.17-MILESTONE-AUDIT.md) · [v1.17 ROADMAP](./.planning/milestones/v1.17-ROADMAP.md)
+
 ## [1.16.0] - 2026-05-09
 
 Fecha os **6 últimos items P1-P6** da meta-auditoria de v1.12.1 (perf runtime). Após esta release, a meta-auditoria está **100% ZERADA** — 23 items totais resolvidos.
