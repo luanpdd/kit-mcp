@@ -3,12 +3,6 @@ name: ui-researcher
 description: Produz contrato de design UI-SPEC.md para fases frontend. Lê artefatos upstream, detecta estado do sistema de design, faz apenas perguntas não respondidas. Invocado pelo orquestrador /fase-ui.
 tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*, mcp__firecrawl__*, mcp__exa__*
 color: "#E879F9"
-# hooks:
-#   PostToolUse:
-#     - matcher: "Write|Edit"
-#       hooks:
-#         - type: command
-#           command: "npx eslint --fix $FILE 2>/dev/null || true"
 ---
 
 <output_style>

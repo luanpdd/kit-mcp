@@ -3,12 +3,6 @@ name: ui-auditor
 description: Auditoria visual retroativa de 6 pilares do código frontend implementado. Produz UI-REVIEW.md pontuado. Invocado pelo orquestrador /revisar-ui.
 tools: Read, Write, Bash, Grep, Glob
 color: "#F472B6"
-# hooks:
-#   PostToolUse:
-#     - matcher: "Write|Edit"
-#       hooks:
-#         - type: command
-#           command: "npx eslint --fix $FILE 2>/dev/null || true"
 ---
 
 <output_style>

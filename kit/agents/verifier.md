@@ -3,12 +3,6 @@ name: verifier
 description: Verifica atingimento do objetivo da fase via análise reversa. Checa se codebase entrega o prometido, não só task completion. Cria VERIFICATION.md.
 tools: Read, Write, Bash, Grep, Glob
 color: green
-# hooks:
-#   PostToolUse:
-#     - matcher: "Write|Edit"
-#       hooks:
-#         - type: command
-#           command: "npx eslint --fix $FILE 2>/dev/null || true"
 ---
 
 <output_style>

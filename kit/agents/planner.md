@@ -3,12 +3,6 @@ name: planner
 description: Cria planos de fase executáveis com decomposição de tarefas, análise de dependências e verificação orientada a objetivos. Acionado pelo orquestrador /planejar-fase.
 tools: Read, Write, Bash, Glob, Grep, WebFetch, mcp__context7__*
 color: green
-# hooks:
-#   PostToolUse:
-#     - matcher: "Write|Edit"
-#       hooks:
-#         - type: command
-#           command: "npx eslint --fix $FILE 2>/dev/null || true"
 ---
 
 <output_style>

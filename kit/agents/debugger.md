@@ -4,12 +4,6 @@ description: Investiga bugs usando método científico, gerencia sessões de deb
 tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch
 permissionMode: acceptEdits
 color: orange
-# hooks:
-#   PostToolUse:
-#     - matcher: "Write|Edit"
-#       hooks:
-#         - type: command
-#           command: "npx eslint --fix $FILE 2>/dev/null || true"
 ---
 
 <output_style>

@@ -4,12 +4,6 @@ description: Executa planos framework com commits atômicos, tratamento de desvi
 tools: Read, Write, Edit, Bash, Grep, Glob
 permissionMode: acceptEdits
 color: yellow
-# hooks:
-#   PostToolUse:
-#     - matcher: "Write|Edit"
-#       hooks:
-#         - type: command
-#           command: "npx eslint --fix $FILE 2>/dev/null || true"
 ---
 
 <output_style>

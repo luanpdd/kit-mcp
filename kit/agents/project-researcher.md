@@ -3,12 +3,6 @@ name: project-researcher
 description: Pesquisa ecossistema do domínio antes do roadmap. Produz arquivos em .planning/research/ consumidos pelo roadmapper. Invocado por /novo-projeto ou /novo-marco.
 tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*, mcp__firecrawl__*, mcp__exa__*
 color: cyan
-# hooks:
-#   PostToolUse:
-#     - matcher: "Write|Edit"
-#       hooks:
-#         - type: command
-#           command: "npx eslint --fix $FILE 2>/dev/null || true"
 ---
 
 <output_style>

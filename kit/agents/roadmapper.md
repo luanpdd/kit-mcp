@@ -3,12 +3,6 @@ name: roadmapper
 description: Cria roadmaps de projeto com divisão de fases, mapeamento de requisitos, derivação de critérios de sucesso e validação de cobertura. Invocado pelo orquestrador /novo-projeto.
 tools: Read, Write, Bash, Glob, Grep
 color: purple
-# hooks:
-#   PostToolUse:
-#     - matcher: "Write|Edit"
-#       hooks:
-#         - type: command
-#           command: "npx eslint --fix $FILE 2>/dev/null || true"
 ---
 
 <output_style>
