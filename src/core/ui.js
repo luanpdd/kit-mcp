@@ -10,7 +10,23 @@
 //   - Zero hidden globals — every primitive is a plain function/class.
 
 import pc from 'picocolors';
-import { select as inqSelect, confirm as inqConfirm } from '@inquirer/prompts';
+
+// PERF-16-05: @inquirer/prompts é optionalDependency. Carregamos lazy dentro
+// de select()/confirm() para que (a) modo MCP server e CI não paguem o custo
+// de boot, e (b) `npm install --omit=optional` produza CLI core funcional
+// (apenas comandos interativos falham com mensagem descritiva).
+let _inquirerModule = null;
+async function loadInquirer() {
+  if (_inquirerModule) return _inquirerModule;
+  try {
+    _inquirerModule = await import('@inquirer/prompts');
+    return _inquirerModule;
+  } catch (err) {
+    throw new Error(
+      'Interactive prompts require @inquirer/prompts. Install with `npm i @inquirer/prompts` or pass --yes / --no-interactive to skip the prompt.'
+    );
+  }
+}
 
 // --- color helpers ---
 
@@ -127,6 +143,7 @@ export async function select(opts) {
   if (!process.stdin.isTTY) {
     throw new Error('Interactive prompt unavailable: stdin is not a TTY. Pass the value as a flag instead.');
   }
+  const { select: inqSelect } = await loadInquirer();
   return inqSelect(opts);
 }
 
@@ -134,6 +151,7 @@ export async function confirm(opts) {
   if (!process.stdin.isTTY) {
     throw new Error('Interactive prompt unavailable: stdin is not a TTY. Pass --yes to skip confirmation.');
   }
+  const { confirm: inqConfirm } = await loadInquirer();
   return inqConfirm(opts);
 }
 

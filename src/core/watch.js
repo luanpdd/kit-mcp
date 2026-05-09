@@ -11,10 +11,27 @@
 
 import path from 'node:path';
 import fs from 'node:fs/promises';
-import chokidar from 'chokidar';
 import { syncTo } from './sync.js';
 import { listTargets } from './registry.js';
 import { resolveKitRoot, clearKitCache } from './kit.js';
+
+// PERF-16-06: chokidar é optionalDependency. Carregamos lazy dentro de watchKit()
+// para que (a) `kit sync install` (que NÃO usa watch) não pague o custo de boot,
+// e (b) `npm install --omit=optional` produza CLI core funcional (apenas
+// `kit sync watch` falha com mensagem descritiva).
+let _chokidarModule = null;
+async function loadChokidar() {
+  if (_chokidarModule) return _chokidarModule;
+  try {
+    const mod = await import('chokidar');
+    _chokidarModule = mod.default || mod;
+    return _chokidarModule;
+  } catch (err) {
+    throw new Error(
+      'kit sync watch requires chokidar. Install with `npm i chokidar` or use `kit sync install <target>` for one-shot syncing instead.'
+    );
+  }
+}
 
 export async function watchKit(targets, opts = {}) {
   const projectRoot = path.resolve(opts.projectRoot ?? process.cwd());
@@ -35,6 +52,7 @@ export async function watchKit(targets, opts = {}) {
     onLog(`✓ initial sync → ${t} (${r.written.length} files)`);
   }
 
+  const chokidar = await loadChokidar();
   const watcher = chokidar.watch(kitRoot, {
     ignored: (p) => /(^|[/\\])\.[^/\\]/.test(p),  // ignore dotfiles/dotdirs
     persistent: true,

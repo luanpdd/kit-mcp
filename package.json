@@ -47,11 +47,13 @@
     "prepublishOnly": "node scripts/regen-manifest.js && node scripts/update-readme-counts.js && node test/run.mjs test/unit && node test/run.mjs test/integration"
   },
   "dependencies": {
-    "@inquirer/prompts": "^8.4.2",
     "@modelcontextprotocol/sdk": "^1.0.0",
-    "chokidar": "^5.0.0",
     "commander": "^14.0.3",
     "open": "^11.0.0",
     "picocolors": "^1.1.1"
+  },
+  "optionalDependencies": {
+    "@inquirer/prompts": "^8.4.2",
+    "chokidar": "^5.0.0"
   }
 }
