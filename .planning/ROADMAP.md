@@ -34,8 +34,8 @@
 
 Plans:
 - [x] 88-01-sync-promise-all-PLAN.md — syncTo() Promise.all em batches (PERF-16-01)
-- [ ] 88-02-watch-debounce-PLAN.md — watch debounce 500ms + clearKitCache invalidation (PERF-16-02)
-- [ ] 88-03-reverse-sync-parallel-PLAN.md — detectReverse() scans paralelos (PERF-16-03)
+- [x] 88-02-watch-debounce-PLAN.md — watch debounce 500ms + clearKitCache invalidation (PERF-16-02)
+- [x] 88-03-reverse-sync-parallel-PLAN.md — detectReverse() scans paralelos (PERF-16-03)
 
 ### Phase 89: Lazy Imports & Optional Deps
 
