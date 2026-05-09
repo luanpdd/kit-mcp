@@ -123,6 +123,21 @@ jobs:
       - name: Tests (integration)
         run: npm run test:integration
 
+      - name: Audit — drift gate (manifest + README counts) (REQ DX-15-02)
+        shell: bash
+        run: |
+          # DX-15-02: prepublishOnly regenerates kit/file-manifest.json + README
+          # AUTOGEN counts. If a PR forgot to run them locally, this gate fails
+          # before the package would ship stale.
+          node scripts/regen-manifest.js
+          node scripts/update-readme-counts.js
+          if ! git diff --exit-code kit/file-manifest.json README.md; then
+            echo "::error::DX-15-02 drift detected — run scripts locally and commit"
+            git --no-pager diff --stat kit/file-manifest.json README.md || true
+            exit 1
+          fi
+          echo "OK: manifest + README counts in sync with kit/"
+
       - name: CLI smoke
         run: |
           node bin/cli.js kit list-agents
