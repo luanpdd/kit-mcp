@@ -1,5 +1,16 @@
 # MILESTONES.md — Histórico de releases
 
+## v1.19 Maturidade Operacional (Shipped: 2026-05-09)
+
+**Phases completed:** 2 phases, 0 plans, 0 tasks
+
+**Key accomplishments:**
+
+- Coverage line threshold raised 75 → 80% via 33 new tests in 2 files; auto-spawn.js 57→88%, cli/index.js 55→75%; overall baseline 77.89→81.51% (+3.6 pp).
+- Adds disk-persistent rolling 30d snapshots to src/core/metrics.js (persistSnapshot + loadSnapshots) and wires /burn-rate-status to consume real SLO YAMLs + snapshots — replaces prior skill-driven skeleton with end-to-end SLI + burn rate + status enum + ETA exhaustion calc; 31 new regression tests pin every step of the math.
+
+---
+
 ## v1.18 Eat Your Own Dog Food (Shipped: 2026-05-09)
 
 **Phases completed:** 4 phases, 1 plans, 9 tasks

@@ -6,6 +6,33 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.19.0] - 2026-05-09
+
+**Maturidade Operacional** — fecha tech debt remanescente da v1.18 (coverage 75→80% + metrics retention + burn-rate live).
+
+2 fases (98-99), 2 plans, 64 testes novos (482 baseline final, +64 vs v1.18). Coverage 77.89% → **81.51%**. PRR 27/30 → 28/30.
+
+### Coverage Ratchet 75% → 80% (Phase 98)
+- **INFRA-19-01:** Threshold CI bumped 75 → 80%. Coverage real **81.51%**. 2 hot files lifted via 33 tests novos:
+  - `src/ui/auto-spawn.js`: 56.64% → **87.61%** (+31pp)
+  - `src/cli/index.js`: 54.85% → **75.07%** (+20pp)
+- Pattern estabelecido: `runCLIAsync` helper para tests com mock HTTP + subprocess concurrency.
+
+### Metrics Retention + Burn-rate Calculator (Phase 99)
+- **OBS-19-01..03:** `src/core/metrics.js` ganha `persistSnapshot(rootDir)` + `loadSnapshots(rootDir, windowMs)` + cleanup automático >30d. Persiste em `.planning/metrics/snapshots/<ISO-timestamp>.json` (gitignored). Zero deps novas.
+- **OBS-19-04:** `kit/commands/burn-rate-status.md` rewrite — consome `.planning/slos/*.yml` (Phase 95) + `.planning/metrics/snapshots/` (Phase 99). Calcula SLI atual (ratio para availability, p95 para latency), burn rate (% budget gasto/h), ETA exhaustão, ação (PAGE/TICKET/WARN/OK). Aplica skill `burn-rate-alerting`.
+- 31 regression tests novos (12 retention + 19 burn-rate calc).
+
+### PRR re-projection (27/30 → 28/30)
+- Capacity Planning 4/5 → **5/5** (burn-rate live consumindo SLOs reais).
+
+### Tech debt → v1.20+
+- Auto-snapshot triggered no `metrics-snapshot` tool call
+- Multi-window burn-rate (1h fast + 6h slow simultaneous)
+- Mutation testing (stryker)
+
+[v1.19 milestone audit](./.planning/v1.19-MILESTONE-AUDIT.md) · [v1.19 ROADMAP](./.planning/milestones/v1.19-ROADMAP.md)
+
 ## [1.18.0] - 2026-05-09
 
 **Eat Your Own Dog Food** — kit-mcp agora APLICA as observability/SRE skills que sempre ENSINOU. Fecha fail axe Instrumentation (PRR 2/5 → 5/5) que vinha aberto desde v1.12.1.
