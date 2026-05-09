@@ -37,17 +37,24 @@ jobs:
             echo "OK: src/ui/ does not exist yet — gate is armed for when it does"
           fi
 
-      - name: Audit — runtime deps budget
+      - name: Audit — runtime deps budget (REQ INFRA-17-01)
         shell: bash
         run: |
-          # Budget: 6 deps (5 v1.1 baseline @modelcontextprotocol/sdk, commander,
-          # chokidar, picocolors, @inquirer/prompts + 1 v1.2 addition open@11).
-          # New deps require a conscious budget bump and an ADR.
+          # Budget: 6 deps total across `dependencies` + `optionalDependencies`.
+          # v1.17 (Phase 92) reorganized the 6 into 3 required + 3 optional:
+          #   dependencies: @modelcontextprotocol/sdk, commander, picocolors
+          #   optionalDependencies: @inquirer/prompts, chokidar, open
+          # Pre-v1.17 the gate counted `dependencies` only — that allowed silently
+          # adding 3 deps before the gate fired (effective budget was 6+optional=9).
+          # INFRA-17-01: fix by summing dynamics — total must be ≤6.
+          # New deps require a conscious budget bump AND an ADR in .planning/decisions.md.
           BUDGET=6
-          CURRENT=$(node -e "console.log(Object.keys(require('./package.json').dependencies || {}).length)")
-          echo "Runtime deps: $CURRENT / $BUDGET"
-          if [ "$CURRENT" -gt "$BUDGET" ]; then
-            echo "::error::Runtime deps grew to $CURRENT — current budget is $BUDGET"
+          DEPS=$(node -p "Object.keys(require('./package.json').dependencies||{}).length")
+          OPT=$(node -p "Object.keys(require('./package.json').optionalDependencies||{}).length")
+          TOTAL=$((DEPS + OPT))
+          echo "Runtime deps: $TOTAL / $BUDGET (deps=$DEPS opt=$OPT)"
+          if [ "$TOTAL" -gt "$BUDGET" ]; then
+            echo "::error::deps budget exceeded: $TOTAL > $BUDGET (deps=$DEPS opt=$OPT)"
             echo "If a new dep is genuinely necessary, bump BUDGET here AND record the rationale in .planning/decisions.md."
             exit 1
           fi
