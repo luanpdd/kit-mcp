@@ -3,12 +3,12 @@ state_version: 1.0
 milestone: v1.16
 milestone_name: — Performance Runtime Wave
 status: Roadmap criado — pronto para iniciar Phase 88
-last_updated: "2026-05-09T13:52:47.748Z"
+last_updated: "2026-05-09T14:06:02.753Z"
 progress:
   total_phases: 2
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 5
+  completed_plans: 4
 ---
 
 # STATE.md — sessão atual

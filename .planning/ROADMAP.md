@@ -55,6 +55,12 @@ Plans:
 - Tarball npm reduz ≥5% (medido `npm pack --dry-run`).
 - Suite continua passing + 4+ regression tests.
 
+**Plans:** 2 plans (paralelos — Wave 1)
+
+Plans:
+- [x] 89-01-cli-lazy-imports-PLAN.md — CLI lazy imports de UI sidecar (PERF-16-04)
+- [ ] 89-02-optional-dependencies-PLAN.md — @inquirer/prompts + chokidar como optionalDependencies (PERF-16-05 + PERF-16-06)
+
 <details>
 <summary>✅ Concluídos</summary>
 
