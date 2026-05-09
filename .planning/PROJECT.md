@@ -7,7 +7,7 @@
 
 **v1.10.0 — SRE Engagement** publicado em npm + GitHub release 2026-05-07. Stack acumulado v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) forma suíte coesa de production engineering. Stable API v1.0+ preservada (zero alterações em `src/core/`).
 
-**v1.11 — SRE Resilience & Release Engineering** em planejamento (Phases 42-47). Cobre os 2 caps deferidos da v1.10 — Cap 22 (*Addressing Cascading Failures*) + Cap 8 (*Release Engineering*) — completando a série SRE iniciada na v1.10.
+**v1.11 — SRE Resilience & Release Engineering** **entregue** (Phases 42-47, 24 REQs). Cobre os 2 caps deferidos da v1.10 — Cap 22 (*Addressing Cascading Failures*) + Cap 8 (*Release Engineering*) — completando a série SRE iniciada na v1.10. 5 skills + 3 agents + 3 commands + 4 cross-suite patches + audit gate `release-pipeline-policy`.
 
 **v1.12 — Legacy Code Mastery & AI-Era Refactoring** em planejamento (Phases 48-78). 5ª suíte do kit (Legacy) derivada do livro **Working Effectively with Legacy Code — Michael Feathers (2004)** + modernizações para era 2026 (IA generativa, LLMs como dependência, Supabase Edge Functions como API-only applications, embeddings para detecção semântica). Endereça o problema clássico que toda equipe enfrenta: refatorar código crítico sem testes prévios.
 

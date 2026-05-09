@@ -537,6 +537,140 @@ CERTO: alertar APENAS em SLO burn rate (event-based, customer-impacting).
 
 ---
 
+## (f) Vocabulário v1.11 — Cascading Failures (cap 22)
+
+> Vocabulário do cap 22 (Addressing Cascading Failures). Cascading failure é falha que se amplifica via loops de feedback — primeiro nó cai, traffic flui para outros, eles também caem, etc. Prevenção custa muito menos que recuperação.
+
+| EN | PT-BR / Significado |
+|---|---|
+| **cascading failure** | Falha em cascata — failure que se amplifica via loops de feedback. Triggers comuns: server overload, resource exhaustion (CPU/mem/FDs/threads), service unavailability gera retry storm. |
+| **retry storm** | Tempestade de retries — clientes retentam após failure simultaneamente, multiplicando carga e prolongando outage. Prevenção: jitter + retry budget + deadline propagation. |
+| **thundering herd** | Manada trovejante — N clientes acordam ao mesmo tempo após recovery e batem no servidor recém-recuperado, derrubando-o de novo. Prevenção: jitter em wake-up, slow-start. |
+| **load shedding** | Descarte de carga — server intencionalmente rejeita requests quando overloaded (HTTP 503 + Retry-After) em vez de aceitar e cair. Preserva capacidade para subset de tráfego. |
+| **graceful degradation** | Degradação graciosa — modo reduzido sob carga (e.g., desligar features não-críticas, retornar cached/stale data, reduzir precision). Preferível a falha total. |
+| **circuit breaker** | Disjuntor — pattern: após N failures consecutivas, "abre o circuito" e falha rápido (sem chamar dep) por window T. Protege caller e dep. Estados: closed/open/half-open. |
+| **deadline propagation** | Propagação de deadline — request chega com TTL X; cada hop downstream subtrai tempo gasto até aqui e aborta se restante ≤ 0. Evita work zumbi após client desistir. |
+| **kill switch** | Chave-mata — flag que desabilita feature inteira via 1 comando (config update / feature flag). Útil em incident pra parar bleed de feature problemática. |
+| **throttle** | Estrangular — limitar rate de operações (per-user, per-tenant, global). Diferente de load shedding: throttle é per-policy contínuo; shed é reactive a saturation. |
+| **queue management** | Gestão de fila — política sobre o que fazer quando queue lota: drop oldest (LIFO), drop newest (FIFO), drop random, drop by priority. Default `drop oldest` evita starvation. |
+| **resource exhaustion** | Esgotamento de recurso — CPU 100%, memory OOM, file descriptors esgotados, threads bloqueadas, conn pool empty. Cada um é trigger comum de cascade. |
+| **server overload** | Sobrecarga de servidor — load > capacity. Lab leve sintoma: latency p99 sobe 10×, then errors, then crashes. Detect via Saturation (cap 6). |
+| **slow start** | Início lento — após recovery, aceita tráfego gradual (10% → 25% → 50% → 100%) em vez de full blast. Permite caches aquecerem, conn pools abrirem. |
+| **degraded mode** | Modo degradado — fallback path quando dep crítica está down (cache stale, default values, simplified algorithm). Distinct de graceful degradation: degraded mode é design-time, not load-driven. |
+
+## (g) Vocabulário v1.11 — Release Engineering (cap 8)
+
+> Vocabulário do cap 8 (Release Engineering). Release engineering é disciplina específica que existe em paralelo a SRE e dev — cuida da pipeline de "código no merge → bits em prod". Foco: reproducibilidade, hermeticidade, policy enforcement.
+
+| EN | PT-BR / Significado |
+|---|---|
+| **hermetic build** | Build hermético — build que produz output bit-idêntico em qualquer máquina, qualquer momento, dado mesmo input. Sem network, sem timestamps, sem env vars não-pinadas. |
+| **reproducible build** | Build reprodutível — sinônimo de hermetic OU subset (apenas determinismo de output, sem requirement de network isolation). |
+| **release pipeline** | Pipeline de release — sequência canônica: source → build → test → package → deploy. Cada estágio com inputs/outputs versionados. |
+| **deployment policy** | Política de deploy — regras sobre QUEM pode deployar, QUANDO (freeze windows), ONDE (canary → 100%), COMO (signed commits, required reviewers, CI gates verde). |
+| **self-service deployment** | Deploy self-service — engenheiros deployam sozinhos via UI/CLI sem precisar pedir SRE. Pré-requisito: policies enforced em ferramenta, não via aprovação manual. |
+| **build provenance** | Proveniência de build — metadata sobre COMO o artefato foi construído (commit SHA, builder ID, build env, deps versions, signature). SLSA framework moderniza. |
+| **configuration management** | Gestão de config — config separada de código (12-factor); config versionada, auditável, rollback-able. ConfigMaps, env vars, feature flags. |
+| **branching strategy** | Estratégia de branching — Trunk-based (preferred) vs Gitflow. Trunk: main sempre deployable; feature flags para work in progress. Gitflow: branches longos, harder to rollback. |
+| **release engineering invariant** | Invariante de release engineering — propriedade que NUNCA é violada, mesmo sob pressão. Examples: "build sem network", "deploy só com CI verde", "rollback < 5min em qualquer release". |
+| **continuous build** | Build contínuo — toda commit dispara build automático. Quebra detectada em minutos vs dias. |
+| **continuous test** | Teste contínuo — toda commit dispara suite. Failure visível antes de merge (na PR). |
+| **continuous deployment** | Deploy contínuo — todo commit que passa CI vai pra prod automaticamente. Distinct de continuous delivery (deploy disponível mas não auto). |
+| **canary release** | Release canário — rollout gradual: 1% → 10% → 50% → 100% com SLO check em cada estágio. Limita blast radius de bug. |
+| **rollback** | Rollback — reverter para release anterior. Tempo target: < 5 min em qualquer release. Pré-requisito: artefato anterior preservado, schema migrations forward-only OR reversible. |
+| **forward-fix** | Forward fix — em vez de rollback, fazer hotfix forward. Preferível quando rollback custaria perda de dado (e.g., schema migration que adicionou coluna NOT NULL). |
+| **lockfile** | Arquivo de trava — `package-lock.json`/`pnpm-lock.yaml`/`deno.lock`/`Cargo.lock`/`go.sum`. Pin de TODAS deps transitivas a versões específicas. **Sem lockfile = não-reprodutível.** |
+| **frozen-lockfile** | Lockfile congelado — modo CI (`npm ci`, `pnpm install --frozen-lockfile`, `cargo install --locked`) que falha se lockfile não-sincronizado. Garante deterministic install. |
+| **config drift** | Drift de config — config em prod divergiu de config em git. Causa: changes ad-hoc via UI/CLI sem PR. Solução: GitOps (config = git, prod = mirror). |
+| **no-rollback culture** | Cultura sem rollback — equipe que sempre forward-fixes, nunca rollbacks. Sintoma: rollback "nunca foi testado", quando precisa não funciona. Anti-pattern. |
+| **build cache** | Cache de build — output de etapas determinísticas reusado entre runs. Acelera 10-100×. Requirement: hermeticidade (input idêntico → output idêntico → cacheável). |
+
+## (h) Anti-patterns v1.11 (cap 22 + 8)
+
+> Comportamentos comuns que ativamente causam cascade ou release fragility. Format: ANTI-PATTERN / POR QUÊ É RUIM / CERTO.
+
+### Retry sem jitter (retry storm trigger)
+
+```text
+ANTI-PATTERN: client falha → retry após 1s; 1000 clients fazem isso
+              simultaneamente; servidor recebe 1000 retries no mesmo segundo
+              após cada delay window.
+
+POR QUÊ É RUIM: thundering herd. Server cai, recupera, cai de novo no
+                wake-up coordenado. Outage prolonga indefinidamente.
+
+CERTO: full jitter — `delayMs = random(0, base * 2^attempt)`. Spread aleatório
+       distribui carga ao longo da janela. Retry budget global limita N total
+       de retries por segundo (se exceder = circuit breaker abre).
+```
+
+### Retry sem deadline (cascade amplification)
+
+```text
+ANTI-PATTERN: request chega no nó A com timeout 30s; A chama B com retry 3×
+              (timeout 30s cada). B chama C com retry 3× (timeout 30s).
+              Worst-case path: 30s × 3 × 3 = 270s, mas client já desistiu em 30s.
+
+POR QUÊ É RUIM: 240s de work zumbi após client gone. Recursos consumidos
+                inutilmente. Cascade amplifica — 1 retry de A vira 9 calls
+                pra C.
+
+CERTO: deadline propagation. A recebe TTL=30s. Antes de chamar B, calcula
+       remaining = 30s - elapsed. Passa remaining como deadline a B (header
+       grpc-timeout, AbortSignal.timeout). B faz mesmo com C. Quando deadline
+       chega a 0, falha rápido sem retry. Retry budget também limita amplificação.
+```
+
+### Deploy não-hermético (config drift entre environments)
+
+```text
+ANTI-PATTERN: build em CI usa `npm install` (não `npm ci`). Local dev usa
+              versão diferente de deps porque resolveu o range diferente.
+              Deploy passa em CI, falha em prod com NPE em dep transitiva.
+
+POR QUÊ É RUIM: bug não-reproduzível. Reviewer aprova "no meu ambiente
+                roda". Prod cai com bug que CI não detectou. Forensics
+                impossível porque "que versão de X estava em prod naquele
+                momento?" não tem resposta.
+
+CERTO: lockfile commitado + `npm ci` (ou `pnpm install --frozen-lockfile`,
+       `pip install --require-hashes`). Build hermético — input idêntico
+       (commit SHA + lockfile) → output bit-idêntico. Toda deploy tem
+       artefato reproducible.
+```
+
+### No-rollback culture (acumulação de risk)
+
+```text
+ANTI-PATTERN: equipe sempre forward-fixes. "Rollback é complicado".
+              Última vez que rolledback foi há 18 meses. Não está
+              testado.
+
+POR QUÊ É RUIM: quando incident grave ocorre, rollback é a opção certa
+                — mas não funciona porque nunca foi exercitado. Forward-fix
+                em meio a outage adiciona complexidade. MTTR cresce.
+
+CERTO: rollback testado em DR exercise mensal. Cada release verifica
+       que rollback funciona em < 5 min. Schema migrations sempre
+       reversible (ADD col nullable, never DROP). Artefato N-1 sempre
+       preservado e re-deployable.
+```
+
+### Release pipeline manual (toil + risk)
+
+```text
+ANTI-PATTERN: deploy = "engineer X faz SSH em prod, copia artefato,
+              kill+restart". Documentado em runbook de 30 passos.
+
+POR QUÊ É RUIM: toil (cap 5 — manual + repetitivo + automatizável).
+                Drift entre runbook e realidade. Erros humanos.
+                Sem audit trail (quem deployou o quê quando).
+
+CERTO: deploy = git push tag (ou merge em main). CI/CD pipeline cuida
+       de build hermético + tests + canary + rollback config. Self-service
+       deployment com policies enforced. Audit trail automático via CI logs.
+```
+
 ## (e) Cross-references
 
 Skills que consultam este glossário:
@@ -546,6 +680,11 @@ Skills que consultam este glossário:
 - `kit/skills/eliminating-toil/SKILL.md`
 - `kit/skills/blameless-postmortems/SKILL.md`
 - `kit/skills/production-readiness-review/SKILL.md`
+- `kit/skills/cascading-failures/SKILL.md` (v1.11)
+- `kit/skills/load-shedding-graceful-degradation/SKILL.md` (v1.11)
+- `kit/skills/retry-strategies/SKILL.md` (v1.11)
+- `kit/skills/hermetic-builds/SKILL.md` (v1.11)
+- `kit/skills/release-engineering/SKILL.md` (v1.11)
 
 Agentes que consultam este glossário (Phase 37):
 
