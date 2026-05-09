@@ -2,13 +2,13 @@
 state_version: 1.0
 milestone: v1.13
 milestone_name: — Security & Performance Hardening
-status: Phase 79 plan 01 (MCP gates.run guard) e plan 02 (replayId path traversal) entregues
-last_updated: "2026-05-09T04:42:57.024Z"
+status: Phase 79 plan 01+02 entregues; Phase 80 plan 02 (slim cap PERF-13-01) entregue em paralelo
+last_updated: "2026-05-09T04:59:46Z"
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 3
-  completed_plans: 3
+  total_plans: 7
+  completed_plans: 4
 ---
 
 # STATE.md — sessão atual
@@ -17,10 +17,10 @@ progress:
 
 ## Posição Atual
 
-Fase: 79 (Critical Security Fixes) — executada em paralelo
-Plano: 79.01 + 79.02 concluídos; 79.03 em execução paralela
-Status: Phase 79 plan 01 (MCP gates.run guard) e plan 02 (replayId path traversal) entregues
-Última atividade: 2026-05-09 — Plan 79.02 concluído (commits d19d6ac fix + e905a96 test, SEC-13-02; 4 regression tests; suite verde)
+Fase: 79 + 80 (paralelo)
+Plano: 79.01 + 79.02 + 80.02 concluídos; 79.03 em execução paralela
+Status: Phase 79 plan 01+02 entregues; Phase 80 plan 02 entregue em paralelo
+Última atividade: 2026-05-09 — Plan 80.02 concluído (commits ab4fb2c+6549095+6566f26+32a7aaa, PERF-13-01; 7 regression tests; redução real 44.4% medida em corpus kit-mcp; suite 130/130)
 
 ## Milestone ativo
 
