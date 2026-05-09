@@ -1,5 +1,19 @@
 # MILESTONES.md — Histórico de releases
 
+## v1.16 Performance Runtime Wave (Shipped: 2026-05-09)
+
+**Phases completed:** 2 phases, 5 plans, 2 tasks
+
+**Key accomplishments:**
+
+- 1. `src/core/sync.js` — write loop refactored.
+- Cache-aware 500ms debounce in watchKit() — coalesces IDE save-bursts and invalidates kitCache before re-sync, eliminating stale TTL-cached projections after edits
+- detectReverse() executa os 5 walks (agents, commands, skills, framework, hooks) via Promise.all em vez de awaits sequenciais, mantendo Stable API e fail-fast error semantics — synthetic A/B no kit-mcp tree mostra ~52% speedup das walks orchestration.
+- Top-level eager imports of `../ui/server.js`, `../ui/wrapper.js`, and `../ui/browser.js` were moved to dynamic `await import()` inside the subcommand handlers that actually use them, with a 3-test regression suite asserting cold-start stays under a 1500ms ceiling.
+- `@inquirer/prompts` and `chokidar` moved to optionalDependencies + lazy-loaded via closure-cached `await import()` with descriptive fallback errors instructing `npm i <package>` — consumers running `npm install --omit=optional` now get functional core CLI while interactive/watch commands fail with actionable messages.
+
+---
+
 ## v1.15 DX & Token Economy Wave 2 (Shipped: 2026-05-09)
 
 **Phases completed:** 3 phases, 5 plans, 9 tasks

@@ -6,6 +6,32 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.16.0] - 2026-05-09
+
+Fecha os **6 últimos items P1-P6** da meta-auditoria de v1.12.1 (perf runtime). Após esta release, a meta-auditoria está **100% ZERADA** — 23 items totais resolvidos.
+
+2 fases (88-89), 5 plans, 18 testes novos (317 baseline final, +18 vs v1.15).
+
+### Concurrent I/O (Phase 88)
+- **PERF-16-01:** `syncTo()` em `src/core/sync.js` agora usa `Promise.all` em batches de 16 (configurável via `KIT_MCP_SYNC_BATCH_SIZE`, fallback safe `[1,256]`). **50.5% speedup real** medido em workspace típico de 321 files (target era 30%). `verifyManifest()` continua sendo chamado ANTES dos writes paralelos (sem TOCTOU).
+- **PERF-16-02:** `src/core/watch.js` agora coalesce edit-burst via debounce 500ms — 10 saves rápidos durante save de IDE → 1 invalidação `clearKitCache()` em vez de 10. Default debounceMs bumped 300 → 500.
+- **PERF-16-03:** `detectReverse()` em `src/core/reverse-sync.js` paraleliza 5 scans via `Promise.all`. **52.4% speedup real** (110.6ms → 52.7ms; target 10%). Helpers byte-idênticos — só body do `detectReverse` mudou.
+
+### Lazy Imports & Optional Deps (Phase 89)
+- **PERF-16-04:** `src/cli/index.js` agora tem 0 top-level imports de UI sidecar — 4 dynamic `await import('../ui/...')` sites scoped aos handlers que precisam (`sync watch`, `ui start/stop/status/open`). Cold start improvement de 18.8% (271ms → 220ms median, dev machine; abaixo do target 30% porque Phase 88 já tinha encurtado baseline). Pattern de referência: `src/ui/browser.js` `await import('open')`.
+- **PERF-16-05 + PERF-16-06:** `package.json` move `@inquirer/prompts` e `chokidar` de `dependencies` para `optionalDependencies` (4 deps + 2 opt = 6 budget mantido). `src/core/ui.js` `loadInquirer()` + `src/core/watch.js` `loadChokidar()` helpers com closure cache + descriptive throw se ausente. `npm install --omit=optional` resulta em CLI core funcional com fallback graceful em commands que precisam dessas deps.
+
+### Backlog meta-auditoria de v1.12.1: 100% ZERADO ✅
+- v1.13: 4 CRITICAL + 4 quick wins
+- v1.14: 6 HIGH
+- v1.15: 5 DX/economy
+- **v1.16: 6 PERF runtime**
+- **Total: 23/23 items resolvidos.**
+
+v1.17+ pode mover para features novas (não mais hardening).
+
+[v1.16 milestone audit](./.planning/v1.16-MILESTONE-AUDIT.md) · [v1.16 ROADMAP](./.planning/milestones/v1.16-ROADMAP.md)
+
 ## [1.15.0] - 2026-05-09
 
 Fecha o **backlog completo da meta-auditoria de v1.12.1**. Após esta release, os 17 items identificados pelos 12 agentes paralelos estão TODOS endereçados (CRITICAL em v1.13, HIGH em v1.14, DX/economy em v1.15).
