@@ -1,10 +1,12 @@
-// Regression tests for PERF-16-05 (P5) and PERF-16-06 (P6) — Phase 89.02.
+// Regression tests for PERF-16-05 (P5), PERF-16-06 (P6) — Phase 89.02
+// + POL-17-01 — Phase 92.01 (open moved to optionalDependencies).
 //
 // Validates:
-//   1. package.json has 4 dependencies + 2 optionalDependencies (budget = 6).
+//   1. package.json has 3 dependencies + 3 optionalDependencies (budget = 6).
 //   2. Total dep budget invariant — guards against accidental drops or additions.
 //   3. select()/confirm() throw descriptive error if @inquirer/prompts unavailable.
 //   4. watchKit() throws descriptive error if chokidar unavailable.
+//   5. openBrowser() returns {opened:false, reason:'no_module'} if `open` unavailable.
 //
 // Why these tests: optional deps are silently NOT installed when a downstream
 // project runs `npm install --omit=optional`. We need MCP-server-style runs
@@ -82,7 +84,7 @@ async function withMissingModule(modName, triggerScript) {
   }
 }
 
-test('PERF-16-05/06: package.json declares 4 dependencies + 2 optionalDependencies', async () => {
+test('POL-17-01: package.json declares 3 dependencies + 3 optionalDependencies', async () => {
   const raw = await readFile(path.join(REPO_ROOT, 'package.json'), 'utf8');
   const pkg = JSON.parse(raw);
 
@@ -91,19 +93,18 @@ test('PERF-16-05/06: package.json declares 4 dependencies + 2 optionalDependenci
 
   assert.equal(
     deps.length,
-    4,
-    `expected 4 dependencies, got ${deps.length}: ${deps.join(',')}`,
+    3,
+    `expected 3 dependencies, got ${deps.length}: ${deps.join(',')}`,
   );
   assert.equal(
     optDeps.length,
-    2,
-    `expected 2 optionalDependencies, got ${optDeps.length}: ${optDeps.join(',')}`,
+    3,
+    `expected 3 optionalDependencies, got ${optDeps.length}: ${optDeps.join(',')}`,
   );
 
   // Specific entries — protects against accidental swaps.
   assert.ok(deps.includes('@modelcontextprotocol/sdk'), 'sdk must be in dependencies');
   assert.ok(deps.includes('commander'), 'commander must be in dependencies');
-  assert.ok(deps.includes('open'), 'open must be in dependencies');
   assert.ok(deps.includes('picocolors'), 'picocolors must be in dependencies');
 
   assert.ok(
@@ -111,13 +112,14 @@ test('PERF-16-05/06: package.json declares 4 dependencies + 2 optionalDependenci
     '@inquirer/prompts must be in optionalDependencies',
   );
   assert.ok(optDeps.includes('chokidar'), 'chokidar must be in optionalDependencies');
+  assert.ok(optDeps.includes('open'), 'open must be in optionalDependencies (POL-17-01)');
 
   // Sanity: no overlap between dependencies and optionalDependencies.
   const overlap = deps.filter((d) => optDeps.includes(d));
   assert.deepEqual(overlap, [], `dep cannot be in both lists: ${overlap.join(',')}`);
 });
 
-test('PERF-16-05/06: total dep budget = 6 (invariant from v1.12.1 audit)', async () => {
+test('PERF-16-05/06 + POL-17-01: total dep budget = 6 (invariant since v1.12.1 audit)', async () => {
   const raw = await readFile(path.join(REPO_ROOT, 'package.json'), 'utf8');
   const pkg = JSON.parse(raw);
   const total =
@@ -126,7 +128,7 @@ test('PERF-16-05/06: total dep budget = 6 (invariant from v1.12.1 audit)', async
   assert.equal(
     total,
     6,
-    `dep budget violated: total=${total}, expected 6 (4 deps + 2 optional)`,
+    `dep budget violated: total=${total}, expected 6 (3 deps + 3 optional)`,
   );
 });
 
@@ -210,5 +212,53 @@ test('PERF-16-06: watchKit() throws descriptive error when chokidar unavailable'
     result.stdout,
     /npm i chokidar/,
     'watchKit() must throw with message instructing `npm i chokidar`',
+  );
+});
+
+test('POL-17-01: openBrowser() returns {opened:false, reason:"no_module"} when `open` unavailable', async (t) => {
+  // openBrowser is the stricter contract: instead of throwing, it returns a
+  // discriminated result so calling code (cli/ui.js, mcp-server/handle-ui.js)
+  // can degrade gracefully — print URL on stderr and continue.
+  // Force `force:true` to skip the headless detection path (which would short
+  // circuit before ever reaching loadOpen()).
+  const triggerScript = `
+    import('./src/ui/browser.js').then(async (browser) => {
+      try {
+        const r = await browser.openBrowser('http://127.0.0.1:9999/', { force: true });
+        process.stdout.write('RESULT:' + JSON.stringify(r));
+        process.exit(0);
+      } catch (e) {
+        process.stdout.write('THREW:' + e.message);
+        process.exit(1);
+      }
+    }).catch((e) => {
+      process.stdout.write('IMPORT_FAILED:' + e.message);
+      process.exit(2);
+    });
+  `;
+
+  const result = await withMissingModule('open', triggerScript);
+  if (result.skipped) {
+    t.skip(result.reason);
+    return;
+  }
+
+  assert.equal(
+    result.status,
+    0,
+    `child should exit 0 (graceful return). stdout="${result.stdout}" stderr="${result.stderr.slice(0, 200)}"`,
+  );
+  assert.match(
+    result.stdout,
+    /^RESULT:/,
+    `openBrowser must return an object, not throw. stdout="${result.stdout}"`,
+  );
+
+  const payload = JSON.parse(result.stdout.slice('RESULT:'.length));
+  assert.equal(payload.opened, false, 'opened must be false when module missing');
+  assert.equal(
+    payload.reason,
+    'no_module',
+    `reason must be exactly 'no_module' (got '${payload.reason}')`,
   );
 });
