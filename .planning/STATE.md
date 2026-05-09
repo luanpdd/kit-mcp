@@ -2,8 +2,8 @@
 state_version: 1.0
 milestone: v1.14
 milestone_name: — Web/Core Security Hardening
-status: Phase 82 concluída — Plans 01+02 entregues; Phase 83 próxima
-last_updated: "2026-05-09T10:25:43Z"
+status: Phase 82 concluída — Plans 01+02 entregues; Phase 83 (Core Filesystem Hardening) próxima
+last_updated: "2026-05-09T10:34:31.666Z"
 progress:
   total_phases: 3
   completed_phases: 1
@@ -57,6 +57,7 @@ Status: Phase 82 concluída — Plans 01+02 entregues; Phase 83 (Core Filesystem
 v1.14 é continuação tática da v1.13 — mesmo ciclo de auditoria (12-agent parallel sweep), só com escopo diferente. v1.13 foi os 4 CRITICAL + 4 quick wins; v1.14 são os 6 HIGH deferidos.
 
 **Phase 82 acumulado (Plans 01 + 02):**
+
 - Lockfile estendido com `token: randomBytes(32).toString('hex')` (additive, sem LOCK_VERSION bump).
 - CSP estrito sem `'unsafe-inline'` em script-src, via SHA-256 hash do `<script>` inline (computado uma vez no boot).
 - `requireAuth` middleware em `/publish`, `/shutdown`, `/events`, `/state`. `/healthz` continua aberto (boot handshake).
