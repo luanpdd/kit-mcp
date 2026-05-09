@@ -13,6 +13,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { getTarget } from './registry.js';
 import { listKit, resolveKitRoot } from './kit.js';
+import { verifyManifest } from './manifest-verify.js';
 
 const STUB_MARKER = '<!-- kit-mcp:reference -->';
 const MANAGED_MARKER_FILE = '.kit-mcp-managed';
@@ -25,6 +26,18 @@ export async function syncTo(targetId, opts = {}) {
   const mode        = opts.mode ?? 'reference';
   const dryRun      = !!opts.dryRun;
   const onProgress  = opts.onProgress ?? (() => {});
+
+  // SEC-14-05: verify kit integrity before projecting. Refuses tampered kit/.
+  // Opt-out via KIT_MCP_SKIP_MANIFEST_CHECK=1 (handled inside verifyManifest).
+  // Only runs on install path (syncTo); removeFrom/statusOf/applyReverse don't
+  // call this — see plan 83-03 for rationale (apply path is the introduction
+  // vector, not the trust point; stale-but-intact kits in dev are skipped).
+  const manifestCheck = await verifyManifest(kitRoot);
+  if (!manifestCheck.ok) {
+    const err = new Error(manifestCheck.reason);
+    err.code = 'EMANIFESTMISMATCH';
+    throw err;
+  }
 
   // PERF-03: accept a pre-loaded kit to avoid re-walking the disk when callers
   // already have one in hand (CLI sync that follows reverse-sync detect, etc).
