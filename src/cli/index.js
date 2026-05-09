@@ -18,7 +18,7 @@ import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { listKit, searchKit, findItem } from '../core/kit.js';
 import { listTargets } from '../core/registry.js';
-import { syncTo, statusOf, removeFrom } from '../core/sync.js';
+import { syncTo, statusOf, removeFrom, summarize } from '../core/sync.js';
 import { watchKit, detectExistingTargets } from '../core/watch.js';
 import { listGates, getGate, gatesForStage } from '../core/gates.js';
 import { runGate } from '../core/gate-runner.js';
@@ -148,7 +148,10 @@ function fail(msg) {
 }
 
 function slim(x) {
-  return { kind: x.kind, name: x.name, description: x.description };
+  // PERF-13-01: cap description at SUMMARY_MAX_CHARS via shared summarize()
+  // helper from src/core/sync.js — keeps cross-surface behavior identical
+  // (CLI listing == MCP listing). Full text remains in each item's source file.
+  return { kind: x.kind, name: x.name, description: summarize(x.description) };
 }
 
 // --- kit ---
