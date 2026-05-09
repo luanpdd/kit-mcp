@@ -30,7 +30,7 @@
 - Suite continua passing + 4+ regression tests novos.
 
 **Plans:** 1 plan
-- [ ] 90-01-verify-manifest-parallel-cache-PLAN.md — Promise.all batches=16 + cache TTL 30s + 5 regression tests
+- [x] 90-01-verify-manifest-parallel-cache-PLAN.md — Promise.all batches=16 + cache TTL 30s + 5 regression tests
 
 ### Phase 91: Diff-Based Sync
 
