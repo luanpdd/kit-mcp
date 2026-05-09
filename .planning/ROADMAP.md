@@ -17,6 +17,11 @@
 ### Phase 85: Token Economy Wave 2
 
 **Goal:** Capturar os 2 últimos token wins identificados pela meta-auditoria que foram explicitamente deferred em v1.13 — terse mode para listings (T2) e dedup da tabela `## Compatibilidade` repetida em 27 agents (T3).
+**Plans:** 2 plans (ambos onda 1, paralelos — files disjoints)
+
+Plans:
+- [ ] 85-01-terse-mode-PLAN.md — terse:true em handleKit + --terse flag CLI + 4 regression tests (PERF-15-01)
+- [ ] 85-02-compatibility-dedup-PLAN.md — kit/COMPATIBILITY.md canonical + edita 27 agents + regen file-manifest.json + 3 regression tests (PERF-15-02)
 
 **Escopo:**
 - `src/mcp-server/index.js` + `src/cli/index.js` — adicionar suporte a `?terse=true` (ou tool variant `list-*-terse`) em `list-agents`/`list-commands`/`list-skills` que retorna apenas `name + slug` (sem description), permitindo MCP clients listar nomes sem inflar contexto.
