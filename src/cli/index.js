@@ -30,7 +30,7 @@ import { installMcp, listInstallTargets } from '../mcp-server/install.js';
 import * as render from './render.js';
 import { c, icons, spinner, progress, select, confirm } from '../core/ui.js';
 import { readLock, lockPathFor } from '../ui/lockfile.js';
-import { checkUpgrade, getLocalVersion } from './upgrade-check.js';
+import { checkUpgrade } from './upgrade-check.js';
 // PERF-16-04: ui/server.js, ui/wrapper.js, ui/browser.js are loaded LAZILY
 // inside the subcommand handlers that need them. See:
 //   - maybeWrapForUi (gated on lockfile presence)
