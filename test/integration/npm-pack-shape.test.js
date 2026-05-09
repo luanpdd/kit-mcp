@@ -101,3 +101,33 @@ test('PERF-13-03: package.json files[] does not contain CHANGELOG entry', async 
     `package.json files[] still references CHANGELOG: ${offenders.join(', ')}`,
   );
 });
+
+test('PERF-16-05/06: tarball package.json declares optionalDependencies (Phase 89)', async () => {
+  // npm pack ships package.json verbatim. Validate the structure that
+  // Phase 89.02 introduced — `@inquirer/prompts` and `chokidar` declared
+  // under optionalDependencies (not dependencies). Anti-regression: if anyone
+  // moves them back to dependencies, this test fails and forces justification.
+  const raw = await readFile(path.join(REPO_ROOT, 'package.json'), 'utf8');
+  const pkg = JSON.parse(raw);
+  assert.ok(
+    pkg.optionalDependencies,
+    'package.json must declare optionalDependencies (Phase 89)',
+  );
+  assert.ok(
+    pkg.optionalDependencies['@inquirer/prompts'],
+    '@inquirer/prompts must be optional (PERF-16-05)',
+  );
+  assert.ok(
+    pkg.optionalDependencies['chokidar'],
+    'chokidar must be optional (PERF-16-06)',
+  );
+  // Sanity: they must NOT be in dependencies anymore.
+  assert.ok(
+    !pkg.dependencies?.['@inquirer/prompts'],
+    '@inquirer/prompts must not be in dependencies after Phase 89',
+  );
+  assert.ok(
+    !pkg.dependencies?.['chokidar'],
+    'chokidar must not be in dependencies after Phase 89',
+  );
+});
