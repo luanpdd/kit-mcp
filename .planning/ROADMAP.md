@@ -30,6 +30,13 @@
 - Suite continua passing + 6+ regression tests novos.
 - Nenhuma race condition introduzida (test simulando edits concorrentes).
 
+**Plans:** 3 plans (paralelos — Wave 1)
+
+Plans:
+- [ ] 88-01-sync-promise-all-PLAN.md — syncTo() Promise.all em batches (PERF-16-01)
+- [ ] 88-02-watch-debounce-PLAN.md — watch debounce 500ms + clearKitCache invalidation (PERF-16-02)
+- [ ] 88-03-reverse-sync-parallel-PLAN.md — detectReverse() scans paralelos (PERF-16-03)
+
 ### Phase 89: Lazy Imports & Optional Deps
 
 **Goal:** Reduzir cold start do CLI e lighten tarball ao deferrir imports só-quando-necessários — `@inquirer/prompts` e `chokidar` viram `optionalDependencies`, UI stack é dynamic-imported.
