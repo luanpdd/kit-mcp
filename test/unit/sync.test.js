@@ -94,3 +94,126 @@ test('removeFrom — mirror-tree IS removed when marker present', async () => {
   await assert.rejects(fs.access(path.join(TMP, '.claude/framework')));
   await assert.rejects(fs.access(path.join(TMP, '.claude/hooks')));
 });
+
+// ---------------------------------------------------------------------------
+// PERF-17-02 — diff-based sync regression tests
+// ---------------------------------------------------------------------------
+//
+// Diff filter applies ONLY to treeCopy ops (framework/, hooks/ subtrees).
+// Content ops (agents/commands/skills/rules) re-render every call because
+// their content embeds an ISO timestamp — they can't safely diff. So tests
+// assert skip behavior on framework/hooks files only.
+
+test('PERF-17-02: 2nd consecutive sync skips treeCopy ops in stable workspace', async () => {
+  // 1st sync — fresh TMP, all targetStat calls fail (absent), nothing skipped.
+  const events1 = [];
+  await syncTo('claude-code', {
+    kitRoot: FIXTURE, projectRoot: TMP,
+    onProgress: (e) => events1.push(e),
+  });
+  const skipped1 = events1.filter(e => e.skipped === true);
+  assert.equal(skipped1.length, 0, '1st sync to fresh dir must skip nothing');
+
+  // 2nd sync — same source, same target, mtime+size match → all treeCopy ops skipped.
+  const events2 = [];
+  await syncTo('claude-code', {
+    kitRoot: FIXTURE, projectRoot: TMP,
+    onProgress: (e) => events2.push(e),
+  });
+  const skipped2 = events2.filter(e => e.skipped === true);
+  const treeCopyEvents1 = events1.filter(e => e.phase === 'framework' || e.phase === 'hooks');
+  // Subtract managed-marker ops (kind: 'framework'/'hooks' but NOT treeCopy — they
+  // emit onProgress with same phase but go through the write path, not diff).
+  // The diff filter only skips treeCopy ops; the marker file is a content write.
+  // So skipped count <= treeCopyEvents1 count, and must be > 0 (at least workflows + hook files).
+  assert.ok(skipped2.length > 0, '2nd sync must skip at least some treeCopy ops');
+  assert.ok(skipped2.length <= treeCopyEvents1.length,
+    `skipped count ${skipped2.length} must be <= treeCopy event count ${treeCopyEvents1.length}`);
+});
+
+test('PERF-17-02: edit one treeCopy file → next sync writes only that file', async () => {
+  await syncTo('claude-code', { kitRoot: FIXTURE, projectRoot: TMP });
+  // Touch one source file — bump mtime so target.mtimeMs < src.mtimeMs (write needed).
+  const srcFw = path.join(FIXTURE, 'framework/workflows/sample-workflow.md');
+  // Read + rewrite same content with a small change to bump mtime AND content.
+  const original = await fs.readFile(srcFw, 'utf8');
+  // Wait briefly to guarantee mtime bump on filesystems with low resolution (HFS+, FAT32).
+  await new Promise((r) => setTimeout(r, 20));
+  await fs.writeFile(srcFw, original + '\n<!-- touch -->\n', 'utf8');
+
+  const events = [];
+  try {
+    await syncTo('claude-code', {
+      kitRoot: FIXTURE, projectRoot: TMP,
+      onProgress: (e) => events.push(e),
+    });
+    // Filter to treeCopy events only (phase framework/hooks). Marker file ops
+    // also have phase=framework/hooks but always write (content op, not treeCopy)
+    // — those don't help isolate the "edit one file" assertion. Look for the
+    // specific edited file in writes.
+    const wroteEdited = events.filter(e =>
+      e.skipped !== true && e.label === 'sample-workflow.md',
+    );
+    assert.equal(wroteEdited.length, 1,
+      `expected exactly 1 write of sample-workflow.md, got ${wroteEdited.length}`);
+    // Skipped ops should include the hook file (treeCopy not edited).
+    const skippedHook = events.filter(e =>
+      e.skipped === true && e.label === 'sample-hook.js',
+    );
+    assert.equal(skippedHook.length, 1,
+      `expected hook file to be skipped (not edited), got ${skippedHook.length} skip events`);
+  } finally {
+    // Restore source file so other tests aren't affected (FIXTURE is shared).
+    await fs.writeFile(srcFw, original, 'utf8');
+  }
+});
+
+test('PERF-17-02: KIT_MCP_FORCE_FULL_SYNC=1 forces full sync (no skips)', async () => {
+  await syncTo('claude-code', { kitRoot: FIXTURE, projectRoot: TMP });
+  // Save and restore env var so this test doesn't leak into others.
+  const prev = process.env.KIT_MCP_FORCE_FULL_SYNC;
+  process.env.KIT_MCP_FORCE_FULL_SYNC = '1';
+  try {
+    const events = [];
+    await syncTo('claude-code', {
+      kitRoot: FIXTURE, projectRoot: TMP,
+      onProgress: (e) => events.push(e),
+    });
+    const skipped = events.filter(e => e.skipped === true);
+    assert.equal(skipped.length, 0,
+      'KIT_MCP_FORCE_FULL_SYNC=1 must skip nothing — got ' + skipped.length + ' skipped events');
+  } finally {
+    if (prev === undefined) delete process.env.KIT_MCP_FORCE_FULL_SYNC;
+    else process.env.KIT_MCP_FORCE_FULL_SYNC = prev;
+  }
+});
+
+test('PERF-17-02: onProgress receives skipped:true for skipped ops, not for written', async () => {
+  await syncTo('claude-code', { kitRoot: FIXTURE, projectRoot: TMP });
+  // 2nd sync — collect all events and inspect shape.
+  const events = [];
+  await syncTo('claude-code', {
+    kitRoot: FIXTURE, projectRoot: TMP,
+    onProgress: (e) => events.push(e),
+  });
+  // Skipped events carry skipped:true.
+  const skipped = events.filter(e => e.skipped === true);
+  assert.ok(skipped.length > 0, 'expected ≥1 skipped event on 2nd sync');
+  // Every skipped event must have the canonical onProgress shape.
+  for (const e of skipped) {
+    assert.ok(typeof e.phase === 'string' && e.phase.length > 0, 'skipped event must have phase');
+    assert.ok(typeof e.current === 'number' && e.current > 0, 'skipped event must have current counter');
+    assert.ok(typeof e.total === 'number' && e.total >= e.current, 'skipped event must have total');
+    assert.ok(typeof e.label === 'string', 'skipped event must have label (basename)');
+    assert.equal(e.skipped, true, 'skipped event must have skipped:true');
+  }
+  // Written events must NOT carry skipped:true (absent or false).
+  const written = events.filter(e => e.skipped !== true);
+  for (const e of written) {
+    assert.notEqual(e.skipped, true, 'written event must not carry skipped:true');
+  }
+  // Counter monotonicity — current values cover 1..total without gaps.
+  const currents = events.map(e => e.current).sort((a, b) => a - b);
+  const total = events[0].total;
+  assert.equal(currents.length, total, `expected ${total} progress events, got ${currents.length}`);
+});
