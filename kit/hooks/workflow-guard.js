@@ -88,7 +88,12 @@ process.stdin.on('end', () => {
       }
     };
 
-    process.stdout.write(JSON.stringify(output));
+    // SEC-13-05: aguardar flush do stdout antes do exit. Sem callback, em
+    // pipes lentos (CI/Windows/Git Bash) o JSON pode ser dropado quando o
+    // process termina antes do kernel drenar o buffer.
+    process.stdout.write(JSON.stringify(output), () => {
+      process.exit(0);
+    });
   } catch (e) {
     // Silent fail — never block tool execution
     process.exit(0);
