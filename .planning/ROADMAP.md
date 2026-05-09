@@ -39,6 +39,11 @@ Plans:
 **Goal:** Eliminar 2 fontes de drift recorrente que v1.13 mitigou estaticamente — README counters drift e manifest staleness — automatizando a regeneração via `prepublishOnly` hook.
 
 **Depends on:** Phase 85
+**Plans:** 2 plans (ambos onda 1, paralelos — files disjoints)
+
+Plans:
+- [x] 86-01-readme-counts-PLAN.md — scripts/update-readme-counts.js + bloco AUTOGEN-COUNTS no README + 4 regression tests (DX-15-01)
+- [x] 86-02-manifest-regen-PLAN.md — scripts/regen-manifest.js + prepublishOnly + CI drift gate + 3 regression tests (DX-15-02)
 
 **Escopo:**
 - `scripts/update-readme-counts.js` (novo) — lê `kit/agents/*.md`, `kit/commands/*.md`, `kit/skills/**/SKILL.md`, `gates/*.md`; conta; substitui bloco `<!-- AUTOGEN-COUNTS-START -->...<!-- AUTOGEN-COUNTS-END -->` no README.md.

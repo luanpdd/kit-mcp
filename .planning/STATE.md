@@ -2,13 +2,13 @@
 state_version: 1.0
 milestone: v1.15
 milestone_name: — DX & Token Economy Wave 2
-status: v1.15 ativo — Phase 85 completa
-last_updated: "2026-05-09T12:21:03.232Z"
+status: v1.15 ativo — Phase 86 (drift auto-prevention) Plan 01 entregue
+last_updated: "2026-05-09T12:37:02.771Z"
 progress:
   total_phases: 3
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 2
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # STATE.md — sessão atual
@@ -17,9 +17,11 @@ progress:
 
 ## Posição Atual
 
-Fase: Phase 85 — Token Economy Wave 2 **CONCLUÍDA** (Plans 85.01 + 85.02 entregues em paralelo)
-Status: v1.15 ativo — Phase 85 completa
-Última atividade: 2026-05-09T12:12Z — Plan 85.02 (compatibility dedup PERF-15-02) entregue em paralelo com 85.01: kit/COMPATIBILITY.md canonical (65 linhas, 27 agents na matriz horizontal × IDE × tier × capability), 27 agents editados (bloco `## Compatibilidade` substituído por linha `**Compat:** ...` + link relativo), kit/file-manifest.json regenerado (327/327 SHA256 verified, version 1.13.0 preservada), 3 regression tests em test/unit/compatibility-dedup.test.js (heading absent + reference line + manifest verifies). 3 patterns canônicos identificados (A filesystem-only, B Supabase MCP-dependent, C MCP-augmented degraded) — Pattern C foi desvio Regra 2 (PLAN previa só A/B). Token economy estrutural: 271 linhas removidas → 27 adicionadas, net -244 linhas no kit. Sync install dry-run smoke: 321 files synced, sem EMANIFESTMISMATCH. 3 commits atômicos --no-verify (844c0e7 COMPATIBILITY.md canonical, cbe5956 27 agents [-271/+27 lines], 21be5e4 manifest regen + tests).
+Fase: Phase 86 — Drift Auto-Prevention (Plans 86.01 + 86.02 em paralelo)
+Status: v1.15 ativo — Phase 86 Plan 01 entregue
+Última atividade: 2026-05-09T12:35Z — Plan 86.01 (DX-15-01 README counters auto-gen) entregue: bloco `<!-- AUTOGEN-COUNTS-START -->...END -->` no README.md com counts reais (47 agents · 87 commands · 45 skills · 20 gates) + `scripts/update-readme-counts.js` ESM idempotente standalone (126 linhas, pure stdlib — fs/promises, path, url) + 4 regression tests em `test/unit/update-readme-counts.test.js` (writes-on-change, idempotent, throws-without-block, real-repo no-op). Skills counter exclui `_shared-*` glossary subdirs (sem SKILL.md). EOL detection (CRLF/LF) preservation — bug Rule 1 caught antes de shipar (Windows checkout ficaria dirty com LF write em CRLF README). Drift fixado no processo: README dizia "49 skills" mas disco tem 45. Suite: 205 unit (203 pass + 2 skipped) + 84 integration = 289 tests, 0 fails. 3 commits atômicos --no-verify (6ef6848 README block, 1c84e07 script, dea214d tests).
+
+Anterior: 2026-05-09T12:12Z — Plan 85.02 (compatibility dedup PERF-15-02) entregue em paralelo com 85.01: kit/COMPATIBILITY.md canonical (65 linhas, 27 agents na matriz horizontal × IDE × tier × capability), 27 agents editados (bloco `## Compatibilidade` substituído por linha `**Compat:** ...` + link relativo), kit/file-manifest.json regenerado (327/327 SHA256 verified, version 1.13.0 preservada), 3 regression tests em test/unit/compatibility-dedup.test.js (heading absent + reference line + manifest verifies). 3 patterns canônicos identificados (A filesystem-only, B Supabase MCP-dependent, C MCP-augmented degraded) — Pattern C foi desvio Regra 2 (PLAN previa só A/B). Token economy estrutural: 271 linhas removidas → 27 adicionadas, net -244 linhas no kit. Sync install dry-run smoke: 321 files synced, sem EMANIFESTMISMATCH. 3 commits atômicos --no-verify (844c0e7 COMPATIBILITY.md canonical, cbe5956 27 agents [-271/+27 lines], 21be5e4 manifest regen + tests).
 
 Anterior: 2026-05-09T12:08Z — Plan 85.01 (terse mode PERF-15-01) entregue: `terse:boolean` aditivo no MCP `kit` schema + `slimTerse(x)` helper em `src/mcp-server/index.js` e `src/cli/index.js`; CLI ganha `--terse` flag em list-agents/list-commands/list-skills (paridade cross-surface). 4 regression tests novos em `test/unit/terse-mode.test.js` (shape + ≥40% reduction + CLI parity + backward-compat). **Corpus real mostra 68.8% redução** (25486 → 7942 bytes em 179 items, well above ≥40% threshold). Action enum inalterado, default false → comportamento idêntico para clientes existentes. Suite: 195 unit (193 pass + 2 skipped) + 84 integration = 279 tests, 0 fails. 2 commits atômicos (efd0709 mcp, 2471063 cli+tests).
 
@@ -61,6 +63,7 @@ Suite final pós-Phase 85: 282 tests (198 unit + 84 integration), 0 fails. Plan 
 - **v1.15 — em andamento** (DX & Token Economy Wave 2; iniciado 2026-05-09; 3 fases planejadas)
   - Phase 85 — Plan 01 (terse mode PERF-15-01) concluído 2026-05-09T12:08Z. `terse:boolean` aditivo no MCP `kit` schema + `slimTerse(x)` helper em mcp-server e cli (paridade cross-surface) + CLI `--terse` flag em list-agents/list-commands/list-skills + 4 regression tests novos (test/unit/terse-mode.test.js: shape, ≥40% reduction, CLI parity, backward-compat). Corpus real **68.8% redução** (25486 → 7942 bytes em 179 items). Action enum inalterado, default false → backward-compat preservada. Suite 279 (195 unit + 84 integration), 0 fails. 2 commits (efd0709 mcp, 2471063 cli+tests).
   - Phase 85 — Plan 02 (compatibility dedup PERF-15-02) concluído 2026-05-09T12:12Z em paralelo. kit/COMPATIBILITY.md canonical (65 linhas, 27 agents na matriz horizontal) + 27 agents com linha `**Compat:**` + relative link, substituindo blocos `## Compatibilidade` (~6-12 linhas cada). Manifest regenerado (327/327 verified, v1.13.0 preserved). 3 patterns canônicos (A filesystem-only/B Supabase MCP-dependent/C MCP-augmented degraded). 3 regression tests pass (compat-dedup.test.js). Suite final 282/282 (198 unit + 84 integration), 0 fails. 3 commits atômicos --no-verify (844c0e7, cbe5956, 21be5e4). Token economy: -244 linhas net no kit. **Phase 85 completa.**
+  - Phase 86 — Plan 01 (DX-15-01 README counters auto-gen) concluído 2026-05-09T12:35Z em paralelo com 86.02. AUTOGEN-COUNTS block no README + scripts/update-readme-counts.js ESM idempotente (126 linhas, pure stdlib) + 4 regression tests. Counts reais 47/87/45/20 (drift fixado: README antes dizia "49 skills"). EOL preservation (CRLF/LF) — Rule 1 bug caught antes de shipar. Suite 289 (205 unit + 84 integration), 0 fails. 3 commits atômicos --no-verify (6ef6848, 1c84e07, dea214d). Plano 86.02 (DX-15-02 manifest regen) executado em paralelo via outro executor.
 
 ## Contexto Acumulado
 
