@@ -6,6 +6,110 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.12.1] - 2026-05-08
+
+Hotfix patch — corrige race condition no hook `sidecar-tool-publisher.js` que dropava `tool_invocation` events antes do TCP flush completar, causando UI sidecar não receber a maioria dos eventos quando `process.exit(0)` era chamado imediatamente após `socket.write`.
+
+### Corrigido
+
+- **Hook `sidecar-tool-publisher.js` race condition** ([kit/hooks/sidecar-tool-publisher.js](kit/hooks/sidecar-tool-publisher.js), commit 56b327f) — antes: `socket.write(payload); process.exit(0)` causava o processo terminar antes do kernel TCP buffer flusher completar (especialmente em payloads > 1 KB ou com IDEs múltiplas competindo no mesmo socket). Resultado: eventos chegavam parcialmente ou não chegavam à UI sidecar. Fix: `await new Promise(resolve => socket.end(payload, resolve))` + `socket.on('close', () => process.exit(0))` — exit só acontece após TCP graceful close. Não afeta hot path performance — `process.exit` continua imediato em modo `--no-ui`.
+
+### Sem mudanças de API
+
+Patch isolado em 1 arquivo de hook. Stable API v1.0+ preservada. CLI/MCP/sync inalterados.
+
+### Heads-up
+
+Esse fix v1.12.1 cobre APENAS `sidecar-tool-publisher.js`. 6 outros hooks (`workflow-guard.js`, `prompt-guard.js`, `context-monitor.js`, `post-apply-migration.js`, `statusline.js`, `check-update.js`) tinham o mesmo padrão `process.exit` antes de TCP flush — endereçados separadamente na v1.13 Phase 80.
+
+## [1.12.0] - 2026-05-08
+
+Milestone v1.12 — Suíte Legacy Code Mastery & AI-Era Refactoring: incorpora técnicas de *Working Effectively with Legacy Code* (Michael Feathers, Prentice Hall, 2004) ao kit-mcp, modernizadas para a era IA/Supabase (2026). 38 REQs em 31 fases (Phases 48-78), distribuídos em 5 ondas. Princípio editorial: cada artefato marca explicitamente "Feathers original (2004)" vs "extensão IA/Supabase (2026)" — leitor sempre distingue livro vs modernização.
+
+### Adicionado — 13 skills foundationais + modernizações IA (Ondas 1-2, Phases 48-60)
+
+- 7 skills clássicas Feathers: `_shared-legacy/glossary`, `legacy-characterization-tests`, `legacy-seams-and-test-harness`, `legacy-sprout-wrap-techniques`, `legacy-effect-analysis`, `legacy-monster-methods`, `pre-refactor-characterization` (auto-trigger gate skill).
+- 6 skills modernizações IA/Supabase sem precedente em 2004: `legacy-extract-class`, `legacy-programming-by-difference`, `legacy-api-only-applications` (Edge Functions wrappando Stripe/OpenAI/etc como caso paradigmático), `legacy-shotgun-surgery` (detecção via embeddings), `legacy-storytelling-naked-crc` (LLM produz primeiro draft do storytelling), `ai-prompt-characterization` (prompts como código legacy testável com `temperature=0` + seed fixo).
+
+### Adicionado — 8 agents (Onda 3, Phases 61-68)
+
+- 3 clássicos: `legacy-characterizer` (gera characterization tests com 7 grupos canônicos), `seam-finder` (decision tree por linguagem para 24 técnicas do cap 25), `refactor-safety-auditor` (gate runtime canônico — REFACTOR-SAFETY.md).
+- 5 modernizações: `payload-capture-instrumenter` (instrumenta Edge Function via `mcp__supabase__get_logs`), `storytelling-analyst` (LLM gera mental model + CRC sketch), `shotgun-surgery-detector` (detecção semântica via `text-embedding-3-small` + pgvector clustering), `ai-mutation-tester` (LLM-generated mutants comportamentais), `observability-coverage-auditor` (audita Edge Functions × 4 golden signals × SLO × characterization).
+
+### Adicionado — 10 commands (Onda 4, Phases 69-78)
+
+- 5 clássicos: `/caracterizar`, `/encontrar-seams`, `/auditar-refactor`, `/refactor-seguro`, `/legacy <subcomando>` (5ª suíte da família após `/supabase`, `/observabilidade`, `/sre`, `/sre-resilience`).
+- 5 modernizações: `/capturar-payloads`, `/caracterizar-prompt`, `/storytelling`, `/detectar-duplicacao`, `/auditar-observabilidade-cobertura` (entrega explícita do user request `/observability-audit` mencionado).
+
+### Adicionado — 3 audit gates + 7 cross-suite integration patches (Onda 5, Phases 79-87)
+
+- Gates: `legacy-refactor-safety` (auto-trigger pré-refactor de arquivo > 500 linhas OR contrato externo), `ai-prompt-stability` (consultive — prompts em produção têm characterization linkados), `observability-coverage` (opt-in threshold ≥ X% Edge Functions com golden signals + SLO + burn alert).
+- Integration patches em 4 suítes: Observabilidade (omm-auditor Cap 1 consume legacy coverage), Supabase (supabase-edge-fn-writer ganha API-only adapter pattern), SRE (prr-conductor Axe 5 consome REFACTOR-SAFETY.md), e patches em planner/executor/verifier/forense para awareness de legacy.
+- Skill nova `llm-as-dependency` cobrindo fakear OpenAI/Anthropic clients + deterministic test mode + modo offline em CI.
+
+### Sem mudanças de API runtime
+
+v1.12 é **content-only por design** — zero alterações em `src/core/`, `registry.js`, `sync.js`. Stable API v1.0+ preservada. Deps budget 6/6 mantido. Conteúdo PT-BR alinhado com v1.8/v1.9/v1.10/v1.11.
+
+### Tests
+
+Tests existentes (133 unit + 71 integration acumulados de v1.10) continuam verde. Novos gates não têm tests dedicados (são bash em markdown, executados via `runGate` no framework de gates já testado em `test/unit/gates.test.js`).
+
+### Detalhes
+
+`.planning/milestones/v1.12-ROADMAP.md`. Modernizações canônicas sem precedente em 2004 documentadas: LLMs como dependência testável, embeddings para semantic duplicate detection, IA como ferramenta de comprehension, Supabase Edge Functions como API-only application paradigmático, mutation testing com LLM-generated mutants comportamentais.
+
+## [1.11.0] - 2026-05-08
+
+Milestone v1.11 — Suíte SRE Resilience & Release Engineering: 2ª camada SRE derivada do livro Google SRE — caps **22 (Addressing Cascading Failures)** + **8 (Release Engineering)** — completando a Suíte SRE iniciada na v1.10. 24 REQs em 6 fases (Phases 42-47), distribuídos em 3 ondas: Núcleo SRE-2 (Phases 42-44), Integração com suítes existentes (Phases 45-46), Gates QA + docs (Phase 47). v1.11 é content-only por design — zero alterações em `src/core/`. Stable API v1.0+ preservada.
+
+### Adicionado — 5 skills SRE-2 foundationais + glossary patch (Phase 42)
+
+- Patch em `_shared-sre/glossary.md` — 3 blocos novos (vocabulário cap 22, vocabulário cap 8, anti-patterns explícitos sobre cascading e release).
+- `cascading-failures` — cap 22 main: 7 triggers canônicos (server overload, resource exhaustion, service unavailability, etc.), positive feedback loops, prevent vs detect vs treat, server slow start, prevention via load shedding.
+- `load-shedding-graceful-degradation` — cap 22 sub: concurrency limits, queue bounds, deadline-aware processing, rate limit por client, slow start.
+- `retry-strategies` — cap 22 sub: exponential backoff + jitter, retry budget, deadline propagation (não retry quando deadline excedido), idempotency keys.
+- `hermetic-builds` — cap 8 sub: build reproducibility via lockfiles + pinned base images, no-cache para release builds, attestations (SLSA framework).
+- `release-engineering` — cap 8 main: release pipeline policy (4 stages — build, test, canary, rollout), feature flags como controle ortogonal a release, semver discipline, release tag como contract.
+
+### Adicionado — 3 agents core SRE-2 (Phase 43)
+
+- `cascading-failures-auditor` — analisa código para 7 triggers; gera `CASCADING-AUDIT.md` priorizado P0/P1/P2 com remediation por trigger.
+- `load-shedding-instrumenter` — aplica patches de load shedding (concurrency limit, queue bound, deadline-aware processing, rate limit, slow start) em código de Edge Function ou serviço.
+- `release-pipeline-auditor` — audita CI/CD em 3 dimensões (hermeticidade, reprodutibilidade, policy enforcement); scored 30 pts; gera `RELEASE-AUDIT.md`.
+
+### Adicionado — 3 commands SRE-2 + extensão do `/sre` orchestrator (Phase 44)
+
+- `/auditar-cascading`, `/load-shedding`, `/auditar-release` — invocam respectivos agents.
+- Patch em `kit/commands/sre.md` — 3 subcomandos novos (`cascading`, `load-shedding`, `release`); 8 subcomandos totais (5 v1.10 + 3 v1.11).
+
+### Adicionado — 4 cross-suite patches (Phase 45)
+
+- `four-golden-signals/SKILL.md` ganha seção "Saturation as cascading failure trigger" com tabela threshold canônica (Saturation > 80% sustained → trigger #4 do cap 22).
+- `prr-conductor.md` — Axe 4 (Capacity Planning) ganha 3 itens (cascading prevention, load shedding, game day); Axe 5 (Change Management) ganha 3 itens (hermetic build, release pipeline policy, release via tag).
+- `supabase-edge-fn-writer.md` — bloco "v1.11 Adicional SRE Resilience" com 5 patterns built-in (timeout, retry+jitter, deadline propagation, load shedding, idempotency key) — Edge Function template ganha cascading-prevention by default.
+- `omm-auditor.md` — Capacidade 1 (Resilience) consulta `CASCADING-AUDIT.md`; mapping P0/P1 count → score; regra absoluta "score Cap 1 > 3 exige CASCADING-AUDIT.md fresco ≤ 30d".
+
+### Adicionado — patch em `/concluir-marco` (Phase 46)
+
+- Bloco `<sre_resilience_integration>` com gate `release-pipeline-policy` opt-in (paralelo ao PRR gate v1.10); thresholds ROBUST/ADEQUATE/FRAGILE/BROKEN; toggle via flag `workflow.complete_milestone_release_pipeline_gate`.
+
+### Adicionado — 1 audit gate (Phase 47)
+
+- `gates/release-pipeline-policy.md` — audit gate parsing `RELEASE-AUDIT.md` score; default opt-in; threshold configurável via `workflow.release_pipeline_policy_threshold` (default ADEQUATE).
+
+### Sem mudanças de API runtime
+
+v1.11 é content-only por design — zero alterações em `src/core/`, `registry.js`, `sync.js`, ou no MCP server. Stable API v1.0+ totalmente preservada. CI passa sem mudança em `.github/workflows/`. Deps budget mantido em 6/6 (zero deps novas — todo o conteúdo é Markdown).
+
+### Tests
+
+Tests existentes (115 unit + 67 integration acumulados de v1.7) continuam verde. Novos gates não têm tests dedicados (são bash em markdown, executados via `runGate` no framework de gates já testado em `test/unit/gates.test.js`).
+
+### Detalhes
+
+`.planning/milestones/v1.11-ROADMAP.md`. Material-fonte: *Site Reliability Engineering: How Google Runs Production Systems* — Beyer, Jones, Petoff, Murphy (Google/O'Reilly, 2016). ISBN 978-1-491-92912-4. Caps 22 + 8. Plus: SLSA framework, 12-factor app, DORA metrics.
+
 ## [1.10.0] - 2026-05-07
 
 Milestone v1.10 — Suíte SRE Engagement: incorpora técnicas do livro *Site Reliability Engineering: How Google Runs Production Systems* (Beyer, Jones, Petoff, Murphy — Google/O'Reilly, 2016) ao kit-mcp. 32 REQs em 6 fases (Phases 36-41), distribuídos em 3 ondas: Núcleo SRE (Phases 36-38), Integração com suítes existentes (Phases 39-40), Gates QA + docs (Phase 41). Complementa a Suíte Observabilidade v1.9.0 (publicada 2026-05-06) e a Suíte Supabase v1.8.0 — juntas formam o stack production engineering do kit.
