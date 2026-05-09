@@ -52,6 +52,28 @@ jobs:
           node bin/cli.js sync targets    | head -5
           node bin/cli.js gates list      | head -5
 
+      - name: Tests (unit)
+        # SEC-13-04: never publish without unit tests passing — v1.12.1 race condition escaped exactly here
+        run: npm test
+
+      - name: Tests (integration)
+        # SEC-13-04: never publish without integration tests passing
+        run: npm run test:integration
+
+      - name: Audit — npm audit (high/critical CVEs in runtime deps)
+        # SEC-13-04: never publish if runtime deps have HIGH or CRITICAL CVEs
+        shell: bash
+        run: |
+          set +e
+          npm audit --omit=dev --audit-level=high
+          STATUS=$?
+          set -e
+          if [ "$STATUS" -ne 0 ]; then
+            echo "::error::npm audit found high/critical CVEs in runtime deps. Bump dep or wait for fix advisory before publishing."
+            exit 1
+          fi
+          echo "OK: no high/critical CVEs in runtime deps"
+
       - name: Publish to npm
         run: npm publish --access public --provenance
         env:
