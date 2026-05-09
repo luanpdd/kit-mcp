@@ -14,7 +14,7 @@ import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprot
 
 import { listKit, searchKit, findItem } from '../core/kit.js';
 import { listTargets } from '../core/registry.js';
-import { syncTo, statusOf, removeFrom } from '../core/sync.js';
+import { syncTo, statusOf, removeFrom, summarize } from '../core/sync.js';
 import { detectReverse, applyReverse } from '../core/reverse-sync.js';
 import { listGates, getGate, gatesForStage } from '../core/gates.js';
 import { runGate } from '../core/gate-runner.js';
@@ -257,7 +257,9 @@ const HANDLERS = {
 function slim(x) {
   // absPath omitted by design — list-* tools are AI-consumed in tight context budgets.
   // Use action=get to fetch the absPath (and content) for a specific item.
-  return { kind: x.kind, name: x.name, description: x.description };
+  // PERF-13-01 (TOK-02): truncate description via SUMMARY_MAX_CHARS (80) cap shared
+  // with src/core/sync.js — full description lives in each item's file under kit/.
+  return { kind: x.kind, name: x.name, description: summarize(x.description) };
 }
 
 // --- server bootstrap ---
