@@ -60,18 +60,22 @@ Plans:
 
 ### Phase 87: CI Matrix Expansion (8 IDEs)
 
-**Goal:** Eliminar gap em `.github/workflows/ci.yml` onde só `claude-code` é exercitado em CI matrix — outros 7 IDEs (cursor, codex, gemini, windsurf, antigravity, copilot, trae) regridem em silêncio se sync workflow quebra para algum deles.
+**Goal:** Eliminar gap em `.github/workflows/ci.yml` onde só `claude-code` é exercitado em CI matrix — outros 7 IDEs (cursor, codex, gemini-cli, windsurf, antigravity, copilot, trae) regridem em silêncio se sync workflow quebra para algum deles.
 
 **Depends on:** Phase 85
+**Plans:** 1 plan (onda 1, autonomous)
+
+Plans:
+- [x] 87-01-ci-matrix-expansion-PLAN.md — matrix axis target [8 IDEs] + `${{ matrix.target }}` em sync round-trip + if-gate de steps target-agnostic + regression test 10 tests (DX-15-03)
 
 **Escopo:**
-- `.github/workflows/ci.yml` — adicionar matrix axis `target: [claude-code, cursor, codex, gemini, windsurf, antigravity, copilot, trae]` no smoke job; parameterizar comandos `kit sync install/remove` para usar `${{ matrix.target }}`.
+- `.github/workflows/ci.yml` — adicionar matrix axis `target: [claude-code, cursor, codex, gemini-cli, copilot, windsurf, antigravity, trae]` no smoke job; parameterizar comandos `kit sync install/remove` para usar `${{ matrix.target }}`.
 - Verificar que cada target tem path resolution válido em `src/core/registry.js`. Se algum target tiver bug específico revelado pela expansion → fix dentro desta fase.
 
 **Critérios de sucesso:**
-- CI matrix em ci.yml tem 9 targets axis × 3 OS × 3 Node = 72 runs (ou subset configurado).
+- CI matrix em ci.yml tem 8 targets axis × 3 OS × 3 Node = 72 runs.
 - Cada target consegue completar `kit sync install <target> --target <ws>` + `kit sync remove <target> <ws>` round-trip sem erro.
-- Workflow file passa YAML lint.
+- Workflow file passa YAML lint (validação em runtime CI; sem lint local disponível).
 - Suite continua passando.
 
 
