@@ -21,6 +21,7 @@ import { listTargets } from '../core/registry.js';
 import { syncTo, statusOf, removeFrom, summarize } from '../core/sync.js';
 import { detectReverse, applyReverse } from '../core/reverse-sync.js';
 import { validateProjectRoot } from '../core/path-safety.js';
+import { sanitizeMcpError } from '../core/error-redaction.js';
 import { listGates, getGate, gatesForStage } from '../core/gates.js';
 import { runGate } from '../core/gate-runner.js';
 import { collectFailures, summarizeByAgent, writeLearnings } from '../core/failures.js';
@@ -324,8 +325,12 @@ export async function createServer() {
       const result = await handler(args ?? {});
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     } catch (e) {
+      // SEC-14-06: full stack stays in stderr for operator debug; client envelope is sanitized.
+      // sanitizeMcpError redacts secrets/paths from e.message, preserves e.code (Phase 83
+      // EMANIFESTMISMATCH invariant), and emits NO stack field.
+      console.error('[mcp-server] error in handler:', e?.stack ?? e);
       return {
-        content: [{ type: 'text', text: JSON.stringify({ error: e.message, stack: e.stack }, null, 2) }],
+        content: [{ type: 'text', text: JSON.stringify(sanitizeMcpError(e), null, 2) }],
         isError: true,
       };
     }
