@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// hook-version: 1.6.0
+// hook-version: 1.6.1
 // kit-mcp · Sidecar Tool Publisher (PostToolUse)
 //
 // Publishes every Claude Code tool invocation to the kit-mcp sidecar so the
@@ -74,8 +74,7 @@ process.stdin.on('end', () => {
       payload,
     };
 
-    publish(port, event);
-    process.exit(0);
+    publish(port, event).then(() => process.exit(0));
   } catch (err) {
     process.stderr.write(`[sidecar-tool-publisher] ${err.message}\n`);
     process.exit(0);
@@ -160,23 +159,30 @@ function detectIde() {
 }
 
 function publish(port, event) {
-  const body = JSON.stringify(event);
-  const req = http.request({
-    method: 'POST',
-    host: '127.0.0.1',
-    port,
-    path: '/publish',
-    agent: false,
-    headers: {
-      host: `127.0.0.1:${port}`,
-      'content-type': 'application/json',
-      'content-length': Buffer.byteLength(body, 'utf8'),
-      origin: `http://127.0.0.1:${port}`,
-      connection: 'close',
-    },
-  }, (res) => { res.resume(); });
-  req.on('error', () => { /* fire-and-forget */ });
-  req.setTimeout(800, () => { try { req.destroy(); } catch (_) { /* noop */ } });
-  req.write(body);
-  req.end();
+  return new Promise((resolve) => {
+    const body = JSON.stringify(event);
+    const req = http.request({
+      method: 'POST',
+      host: '127.0.0.1',
+      port,
+      path: '/publish',
+      agent: false,
+      headers: {
+        host: `127.0.0.1:${port}`,
+        'content-type': 'application/json',
+        'content-length': Buffer.byteLength(body, 'utf8'),
+        origin: `http://127.0.0.1:${port}`,
+        connection: 'close',
+      },
+    }, (res) => {
+      // Drain response body to ensure server has fully processed before resolve
+      res.resume();
+      res.on('end', resolve);
+      res.on('close', resolve);
+    });
+    req.on('error', () => resolve());
+    req.setTimeout(800, () => { try { req.destroy(); } catch (_) { /* noop */ } resolve(); });
+    req.write(body);
+    req.end();
+  });
 }
