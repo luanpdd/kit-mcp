@@ -464,6 +464,29 @@ test('doctor with full .planning/ passes the .planning check', () => {
   assert.equal(planningCheck.status, 'pass');
 });
 
+// --- reverse-sync apply --dry-run ---
+
+test('reverse-sync apply --dry-run on never-synced project returns ok', () => {
+  const root = mkTmp();
+  const r = runCLI(['--json', 'reverse-sync', 'apply', 'claude-code', '--project-root', root, '--dry-run']);
+  assert.equal(r.status, 0, r.stderr);
+  const result = JSON.parse(r.stdout);
+  assert.equal(typeof result, 'object');
+  // Result has target/strategy/results shape (target, strategy, dryRun, applied, count, or array of results)
+  assert.ok('target' in result || 'strategy' in result || 'results' in result || 'dryRun' in result || 'applied' in result || Array.isArray(result),
+    'reverse-sync apply --dry-run returned: ' + JSON.stringify(result).slice(0, 100));
+});
+
+// --- forensics write-learnings ---
+
+test('forensics write-learnings on empty project returns object output', () => {
+  const root = mkTmp();
+  const r = runCLI(['--json', 'forensics', 'write-learnings', '--project-root', root]);
+  assert.equal(r.status, 0, r.stderr);
+  const result = JSON.parse(r.stdout);
+  assert.equal(typeof result, 'object');
+});
+
 // --- top-level --kit-root override (program.hook preAction path) ---
 
 test('--kit-root override is honored for kit list-agents', () => {
