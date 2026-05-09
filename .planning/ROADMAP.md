@@ -61,6 +61,10 @@ Plans:
 ### Phase 84: MCP Error Sanitization
 
 **Goal:** Fechar 1 vulnerabilidade HIGH onde error envelopes do MCP server vazam stack traces, paths absolutos, e potencialmente fragmentos do `ANTHROPIC_API_KEY` quando reflect.js falha em chamadas Anthropic.
+**Plans:** 1 plan (wave 1)
+
+Plans:
+- [x] 84-01-error-redaction-PLAN.md — redactSecrets + sanitizeMcpError helper, central catch sanitization, reflect+replays scrub, 5 regression tests SEC-14-06
 
 **Depends on:** Phase 82
 
