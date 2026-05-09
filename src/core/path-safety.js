@@ -26,6 +26,12 @@
 import path from 'node:path';
 import fs from 'node:fs/promises';
 
+// All rejection reasons embed the literal "git workspace" — MCP clients (and
+// our own regression tests) match on that single sentinel regardless of which
+// check fired. Keeping the wording uniform means callers don't have to maintain
+// six regexes; one suffices.
+const SENTINEL = 'MCP sync requires projectRoot to be a git workspace';
+
 export async function validateProjectRoot(projectRoot) {
   // Reject empty / nullish up-front. We require an explicit projectRoot from
   // MCP messages — falling back to `process.cwd()` of the MCP server would let
@@ -33,13 +39,13 @@ export async function validateProjectRoot(projectRoot) {
   if (projectRoot === undefined || projectRoot === null || projectRoot === '') {
     return {
       ok: false,
-      reason: 'projectRoot is required for MCP sync; pass an absolute path to a git workspace',
+      reason: SENTINEL + '; got <empty> (pass an absolute path to a git workspace)',
     };
   }
   if (typeof projectRoot !== 'string') {
     return {
       ok: false,
-      reason: 'projectRoot must be a string; got ' + typeof projectRoot,
+      reason: SENTINEL + '; got non-string projectRoot of type ' + typeof projectRoot,
     };
   }
 
@@ -53,7 +59,7 @@ export async function validateProjectRoot(projectRoot) {
   if (!path.isAbsolute(resolved)) {
     return {
       ok: false,
-      reason: 'projectRoot must resolve to an absolute path: ' + projectRoot,
+      reason: SENTINEL + '; projectRoot did not resolve to an absolute path: ' + projectRoot,
     };
   }
 
@@ -67,14 +73,14 @@ export async function validateProjectRoot(projectRoot) {
   } catch {
     return {
       ok: false,
-      reason: 'projectRoot does not exist or is unreachable: ' + resolved,
+      reason: SENTINEL + '; projectRoot does not exist or is unreachable: ' + resolved,
     };
   }
 
   if (!stat.isDirectory()) {
     return {
       ok: false,
-      reason: 'projectRoot must be a directory: ' + resolved,
+      reason: SENTINEL + '; projectRoot must be a directory: ' + resolved,
     };
   }
 
@@ -94,11 +100,12 @@ export async function validateProjectRoot(projectRoot) {
     cur = parent;
   }
 
-  // The literal "git workspace" string is part of the public contract — tests
+  // No .git/ found anywhere in the chain — the canonical reject. The literal
+  // "git workspace" string is part of the public contract — tests
   // (test/unit/mcp-projectroot-guard.test.js) and downstream MCP clients match
   // on it. Don't rephrase without coordinating callers.
   return {
     ok: false,
-    reason: 'MCP sync requires projectRoot to be a git workspace; got ' + projectRoot,
+    reason: SENTINEL + '; got ' + projectRoot,
   };
 }
