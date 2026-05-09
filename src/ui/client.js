@@ -8,34 +8,43 @@ import http from 'node:http';
 import { readLock } from './lockfile.js';
 import { validateEvent } from './events.js';
 
-// Cache the resolved port across calls in a single process.
-const portCache = new Map(); // projectRoot -> port (or 0 = no sidecar)
-const PORT_CACHE_TTL_MS = 5_000;
+// Cache the resolved sidecar (port + token) across calls in a single process.
+// SEC-14-02: token is needed for Authorization on every publish() — read from
+// the same lockfile read as port to avoid double I/O.
+const sidecarCache = new Map(); // projectRoot -> { port, token } | { port: 0, token: null }
+const SIDECAR_CACHE_TTL_MS = 5_000;
 const cacheTimestamps = new Map();
 
-function readCachedPort(projectRoot) {
+function readCachedSidecar(projectRoot) {
   const ts = cacheTimestamps.get(projectRoot);
-  if (!ts || Date.now() - ts > PORT_CACHE_TTL_MS) return undefined;
-  return portCache.get(projectRoot);
+  if (!ts || Date.now() - ts > SIDECAR_CACHE_TTL_MS) return undefined;
+  return sidecarCache.get(projectRoot);
 }
 
-function writeCachedPort(projectRoot, port) {
-  portCache.set(projectRoot, port);
+function writeCachedSidecar(projectRoot, sidecar) {
+  sidecarCache.set(projectRoot, sidecar);
   cacheTimestamps.set(projectRoot, Date.now());
 }
 
+// Backward-compat name; clears port + token cache. Tests + callers using
+// clearPortCache continue to work without code change.
 export function clearPortCache() {
-  portCache.clear();
+  sidecarCache.clear();
   cacheTimestamps.clear();
 }
 
-function resolvePort(projectRoot) {
-  const cached = readCachedPort(projectRoot);
+function resolveSidecar(projectRoot) {
+  const cached = readCachedSidecar(projectRoot);
   if (cached !== undefined) return cached;
   const lock = readLock(projectRoot);
-  const port = lock?.port ?? 0;
-  writeCachedPort(projectRoot, port);
-  return port;
+  const sidecar = {
+    port: lock?.port ?? 0,
+    // SEC-14-02: null if missing (lockfile from older sidecar version pre-v1.14).
+    // Triggers degraded path: no Authorization header → server 401 → soft-fail.
+    token: typeof lock?.token === 'string' ? lock.token : null,
+  };
+  writeCachedSidecar(projectRoot, sidecar);
+  return sidecar;
 }
 
 // publish(event, { projectRoot, timeoutMs }): always resolves. Returns
@@ -47,7 +56,7 @@ export async function publish(event, { projectRoot, timeoutMs = 1500 } = {}) {
   const validationErr = validateEvent(event);
   if (validationErr) return { sent: false, reason: `invalid_event: ${validationErr.message}` };
 
-  const port = resolvePort(projectRoot);
+  const { port, token } = resolveSidecar(projectRoot);
   if (!port) return { sent: false, reason: 'no_sidecar' };
 
   const body = JSON.stringify(event);
@@ -65,6 +74,10 @@ export async function publish(event, { projectRoot, timeoutMs = 1500 } = {}) {
         'content-length': Buffer.byteLength(body, 'utf8'),
         'origin': `http://127.0.0.1:${port}`,
         'connection': 'close',
+        // SEC-14-02: attach Bearer token if lockfile has one. If not (older
+        // sidecar pre-v1.14), server returns 401 → resolves as { sent: false,
+        // reason: 'http_401' } via the soft-fail flow below.
+        ...(token ? { 'authorization': `Bearer ${token}` } : {}),
       },
     }, (res) => {
       // Drain — we don't actually care about the body, just the status.
@@ -73,9 +86,11 @@ export async function publish(event, { projectRoot, timeoutMs = 1500 } = {}) {
         if (res.statusCode >= 200 && res.statusCode < 300) {
           resolve({ sent: true, status: res.statusCode });
         } else {
-          // Stale lockfile? Drop the cache so the next call re-reads.
-          if (res.statusCode === 403 || res.statusCode === 404) {
-            portCache.delete(projectRoot);
+          // Stale lockfile or rotated token? Drop cache so next call re-reads.
+          // SEC-14-02: invalidate on 401 too — token may have rotated after
+          // sidecar restart; cache TTL of 5s would otherwise prolong recovery.
+          if (res.statusCode === 401 || res.statusCode === 403 || res.statusCode === 404) {
+            sidecarCache.delete(projectRoot);
             cacheTimestamps.delete(projectRoot);
           }
           resolve({ sent: false, reason: `http_${res.statusCode}` });
@@ -86,7 +101,7 @@ export async function publish(event, { projectRoot, timeoutMs = 1500 } = {}) {
     req.on('error', (err) => {
       // Most common: ECONNREFUSED (lockfile points at a dead port).
       if (err.code === 'ECONNREFUSED' || err.code === 'ECONNRESET') {
-        portCache.delete(projectRoot);
+        sidecarCache.delete(projectRoot);
         cacheTimestamps.delete(projectRoot);
       }
       resolve({ sent: false, reason: `error: ${err.code || err.message}` });
