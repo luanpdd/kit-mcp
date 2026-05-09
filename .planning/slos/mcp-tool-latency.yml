@@ -1,0 +1,73 @@
+# OBS-18-04 — kit-mcp tool latency SLO.
+#
+# Phase 95.01 (v1.18 Eat Your Own Dog Food). Applies skill `event-based-slos`
+# to the kit-mcp server itself: every MCP tool dispatch contributes one
+# latency sample to the per-tool histogram (Phase 94.01), and the SLI is the
+# percentile-based ratio of "samples below the latency target" over 30d.
+#
+# Why p95 = 200ms (not p99, not 100ms): kit-mcp tools are mostly I/O — read
+# manifest, walk a directory, copy files. The Phase 94.01 metrics module
+# samples wall time on every dispatch including the central catch. Across
+# the existing toolkit (sync, mapeamento, gates.run, forensics, install,
+# metrics-snapshot), the bulk of operations complete well under 200ms; the
+# tail is dominated by sync of large kits and gates.run on slow CI runners.
+# 200ms p95 catches "user perceives stall" without flagging legitimately
+# expensive operations as SLO violations on every call.
+#
+# Why p95 instead of p99: with a 1000-sample FIFO histogram, p99 has only
+# 10 samples worth of resolution per tool. p95 has 50 — enough that one
+# outlier doesn't dominate the reading. Move to p99 once samples are
+# logged-to-disk (v1.19+) and we have weeks of history per tool.
+
+slo:
+  name: mcp-tool-latency
+  service: kit-mcp
+  description: "p95 of MCP tool dispatch wall-clock latency stays below 200ms."
+  owner: kit-mcp-maintainers@github.com
+
+sli:
+  type: percentile
+  source: src/core/metrics.js (histograms Map)
+  percentile: 95
+  unit: ms
+  # Per-tool histograms (FIFO cap N=1000) are sorted on snapshot; the
+  # snapshot returns p50/p95/p99 via linear interpolation. The SLI is
+  # whether p95 across all tools (or per-tool, depending on consumer) stays
+  # below target_ms.
+
+target_ms: 200  # p95 ≤ 200ms — see header comment for rationale.
+window: 30d_sliding
+
+error_budget:
+  # For percentile SLOs the "budget" is the fraction of the window during
+  # which p95 was allowed to exceed target. With 30d sliding and a
+  # threshold of "5% of measurements above target_ms" the budget is the
+  # tolerance used by burn-rate-alerting downstream.
+  ratio_above_target: 0.05  # 5% — SLO is "p95 ≤ 200ms", inverse is "5% of samples are slower"
+
+  alert_thresholds:
+    # Same multipliers as availability — canonical Google SRE recommendation
+    # adopted verbatim until measured volume justifies tuning.
+    page:
+      burn_rate_multiplier: 14.4
+      lookahead: 1h
+      baseline: 5m
+      severity: page
+      condition: "p95 sustained > 200ms with 14.4× burn rate over 1h"
+    ticket:
+      burn_rate_multiplier: 6
+      lookahead: 6h
+      baseline: 30m
+      severity: ticket
+      condition: "p95 sustained > 200ms with 6× burn rate over 6h"
+
+data_retention:
+  in_memory:
+    samples: FIFO cap N=1000 per tool (bounded — see Phase 94.01 decision 1)
+    sort: on-demand (snapshot reads), not on every dispatch
+  long_term: not yet implemented (v1.19+ roadmap)
+
+references:
+  skill: kit/skills/event-based-slos/SKILL.md
+  source_phase: .planning/phases/94-golden-signals-mcp-server/94-01-SUMMARY.md
+  consumer_command: .claude/commands/burn-rate-status.md
