@@ -154,20 +154,36 @@ function slim(x) {
   return { kind: x.kind, name: x.name, description: summarize(x.description) };
 }
 
+// PERF-15-01: terse variant — paridade com mcp-server slimTerse. CLI flag --terse
+// controla seleção. Mantém o mesmo shape {kind, name} para programmatic consumers
+// que parseiam --json output (consistência cross-surface).
+function slimTerse(x) {
+  return { kind: x.kind, name: x.name };
+}
+
 // --- kit ---
 const kit = program.command('kit').description('Browse the canonical kit.');
-kit.command('list-agents').action(async () => {
-  const k = await withSpinner('Loading kit...', () => listKit());
-  out(k.agents.map(slim), v => render.renderKitList(v, 'agent'));
-});
-kit.command('list-commands').action(async () => {
-  const k = await withSpinner('Loading kit...', () => listKit());
-  out(k.commands.map(slim), v => render.renderKitList(v, 'command'));
-});
-kit.command('list-skills').action(async () => {
-  const k = await withSpinner('Loading kit...', () => listKit());
-  out([...k.skills, ...k.skillsExtras].map(slim), v => render.renderKitList(v, 'skill'));
-});
+kit.command('list-agents')
+  .option('--terse', 'Omit description; return only {kind, name} (PERF-15-01)')
+  .action(async (opts) => {
+    const k = await withSpinner('Loading kit...', () => listKit());
+    const variant = opts.terse ? slimTerse : slim;
+    out(k.agents.map(variant), v => render.renderKitList(v, 'agent'));
+  });
+kit.command('list-commands')
+  .option('--terse', 'Omit description; return only {kind, name} (PERF-15-01)')
+  .action(async (opts) => {
+    const k = await withSpinner('Loading kit...', () => listKit());
+    const variant = opts.terse ? slimTerse : slim;
+    out(k.commands.map(variant), v => render.renderKitList(v, 'command'));
+  });
+kit.command('list-skills')
+  .option('--terse', 'Omit description; return only {kind, name} (PERF-15-01)')
+  .action(async (opts) => {
+    const k = await withSpinner('Loading kit...', () => listKit());
+    const variant = opts.terse ? slimTerse : slim;
+    out([...k.skills, ...k.skillsExtras].map(variant), v => render.renderKitList(v, 'skill'));
+  });
 kit.command('get <kind> <name>').action(async (kind, name) => {
   const k = await listKit();
   const item = findItem(k, kind, name);
