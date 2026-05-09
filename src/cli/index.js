@@ -29,11 +29,16 @@ import { listReplays, loadReplay } from '../core/replays.js';
 import { installMcp, listInstallTargets } from '../mcp-server/install.js';
 import * as render from './render.js';
 import { c, icons, spinner, progress, select, confirm } from '../core/ui.js';
-import { createServer } from '../ui/server.js';
 import { readLock, lockPathFor } from '../ui/lockfile.js';
-import { wrapProgressForUi } from '../ui/wrapper.js';
-import { openBrowser } from '../ui/browser.js';
 import { checkUpgrade, getLocalVersion } from './upgrade-check.js';
+// PERF-16-04: ui/server.js, ui/wrapper.js, ui/browser.js are loaded LAZILY
+// inside the subcommand handlers that need them. See:
+//   - maybeWrapForUi (gated on lockfile presence)
+//   - ui.start (createServer + openBrowser)
+//   - ui.open  (openBrowser)
+// This trims ~700 LOC + transitive deps off the cold-start path of non-UI
+// commands like `kit kit list-agents --terse`. lockfile.js stays eager because
+// readLock() is called by every withProgress() invocation and is dep-free.
 import http from 'node:http';
 import fs from 'node:fs';
 import os from 'node:os';
@@ -106,7 +111,7 @@ async function withProgress(label, total, fn, { tool, projectRoot } = {}) {
   }
 
   // Auto-wrap if a sidecar is running for this projectRoot.
-  const wrapper = maybeWrapForUi(onProgress, { tool, projectRoot });
+  const wrapper = await maybeWrapForUi(onProgress, { tool, projectRoot });
   try {
     const r = await fn(wrapper);
     if (p) p.finish(label);
@@ -121,7 +126,11 @@ async function withProgress(label, total, fn, { tool, projectRoot } = {}) {
 
 // maybeWrapForUi — returns the original callback unchanged when no sidecar is up
 // or the user opted out. Otherwise returns a wrapped callback with .done/.error.
-function maybeWrapForUi(onProgress, { tool, projectRoot } = {}) {
+//
+// PERF-16-04: this is async because we lazy-load ../ui/wrapper.js only when a
+// sidecar lockfile is detected. Common path (no sidecar) returns synchronously
+// via passthroughWrapper without touching wrapper.js or its transitive deps.
+async function maybeWrapForUi(onProgress, { tool, projectRoot } = {}) {
   const globalOpts = program.opts();
   // commander stores `--no-ui` as opts.ui === false
   if (globalOpts.ui === false || process.env.KIT_MCP_NO_UI === '1') {
@@ -131,6 +140,8 @@ function maybeWrapForUi(onProgress, { tool, projectRoot } = {}) {
   if (!readLock(root)) {
     return passthroughWrapper(onProgress);
   }
+  // Lazy import — only paid when a sidecar IS up for this project.
+  const { wrapProgressForUi } = await import('../ui/wrapper.js');
   return wrapProgressForUi(onProgress, { projectRoot: root, tool: tool ?? null });
 }
 
@@ -407,6 +418,8 @@ ui.command('start')
     const projectRoot = opts.projectRoot || process.cwd();
     const port = opts.port ? Number(opts.port) : undefined;
     const idleMs = opts.idleMs !== undefined ? Number(opts.idleMs) : undefined;
+    // PERF-16-04: lazy-load the sidecar HTTP server module only when starting it.
+    const { createServer } = await import('../ui/server.js');
     const srv = createServer({ projectRoot, idleMs });
     try {
       const { port: actualPort } = await srv.start({ port });
@@ -422,6 +435,8 @@ ui.command('start')
         }
       }).catch(() => { /* offline / silent */ });
       if (opts.open !== false) {
+        // PERF-16-04: lazy-load browser-opener (it lazy-loads `open` package itself).
+        const { openBrowser } = await import('../ui/browser.js');
         await openBrowser(url);
       }
       // The server's own SIGINT handler will perform shutdown + cleanup.
@@ -480,6 +495,8 @@ ui.command('open')
     const lock = readLock(projectRoot);
     if (!lock) return fail('no sidecar running — start one with `kit ui start`');
     const url = `http://127.0.0.1:${lock.port}/`;
+    // PERF-16-04: lazy-load browser-opener.
+    const { openBrowser } = await import('../ui/browser.js');
     const r = await openBrowser(url, { force: true });
     if (!r.opened) {
       process.stderr.write(`${c.yellow(icons.warn)} could not open browser (${r.reason}); copy the URL above\n`);
