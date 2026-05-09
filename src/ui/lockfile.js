@@ -6,7 +6,7 @@
 //   1. process.kill(pid, 0) — ESRCH/EPERM means the holder is gone
 //   2. optional HTTP healthz probe (injected by caller; keeps this module pure of net)
 
-import { createHash } from 'node:crypto';
+import { createHash, randomBytes } from 'node:crypto';
 import fs from 'node:fs';
 import os from 'node:os';
 import path from 'node:path';
@@ -55,6 +55,10 @@ export function acquireLock({ projectRoot, port, version, startedAt }) {
     version: version ?? null,
     startedAt: startedAt ?? Date.now(),
     lockSchema: LOCK_VERSION,
+    // SEC-14-02: per-process auth token. 32 random bytes hex-encoded = 64 chars.
+    // Required by /publish, /shutdown, /events, /state. Lifetime = process lifetime;
+    // not logged, not telemetered. See docs/sidecar-security.md.
+    token: randomBytes(32).toString('hex'),
   };
   let fd;
   try {
