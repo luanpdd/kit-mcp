@@ -1,10 +1,11 @@
-// kit-mcp server — exposes 5 tools, each with action-based dispatch.
+// kit-mcp server — exposes 7 tools, each with action-based dispatch (or none).
 //
-//   kit       action: list-agents | list-commands | list-skills | get | search
-//   sync      action: targets | status | install | remove
-//   gates     action: list | get | for-stage
-//   forensics action: collect | summarize | write-learnings | list-replays | record-replay | load-replay
-//   install   action: targets | install | dry-run                    (registers this MCP into an IDE)
+//   kit              action: list-agents | list-commands | list-skills | get | search
+//   sync             action: targets | status | install | remove
+//   gates            action: list | get | for-stage
+//   forensics        action: collect | summarize | write-learnings | list-replays | record-replay | load-replay
+//   install          action: targets | install | dry-run                    (registers this MCP into an IDE)
+//   metrics-snapshot (parameterless)                                          (OBS-18 four-golden-signals readout)
 //
 // Transport: stdio (MCP standard).
 
@@ -30,6 +31,7 @@ import { recordReplay, listReplays, loadReplay, annotateReplay } from '../core/r
 import { installMcp, listInstallTargets } from './install.js';
 import { ensureSidecar } from '../ui/auto-spawn.js';
 import { wrapProgressForUi } from '../ui/wrapper.js';
+import { incrementInvocation, recordLatency, snapshot as metricsSnapshot } from '../core/metrics.js';
 
 const TOOLS = [
   {
@@ -128,6 +130,17 @@ const TOOLS = [
         projectRoot: { type: 'string' },
       },
       required: ['action'],
+    },
+  },
+  {
+    // OBS-18 (Phase 94.01): expose four-golden-signals data for the MCP server itself.
+    // Read-only (no auth needed beyond the underlying transport): returns counters
+    // keyed `${tool}:${status}` and per-tool latency p50/p95/p99/count.
+    name: 'metrics-snapshot',
+    description: 'Read in-memory golden-signals metrics for this MCP server (counters + latency p50/p95/p99 per tool).',
+    inputSchema: {
+      type: 'object',
+      properties: {},
     },
   },
 ];
@@ -292,13 +305,21 @@ async function handleInstall(args) {
   }
 }
 
+// OBS-18 (Phase 94.01): metrics-snapshot is parameterless and read-only.
+// Returns the live snapshot synchronously — no auth, no projectRoot guard
+// (no disk reads, no shell). Wraps in an async fn for handler-API uniformity.
+async function handleMetricsSnapshot() {
+  return metricsSnapshot();
+}
+
 const HANDLERS = {
-  kit:           handleKit,
-  sync:          handleSync,
-  'reverse-sync':handleReverseSync,
-  gates:         handleGates,
-  forensics:     handleForensics,
-  install:       handleInstall,
+  kit:               handleKit,
+  sync:              handleSync,
+  'reverse-sync':    handleReverseSync,
+  gates:             handleGates,
+  forensics:         handleForensics,
+  install:           handleInstall,
+  'metrics-snapshot': handleMetricsSnapshot,
 };
 
 function slim(x) {
@@ -330,12 +351,30 @@ export async function createServer() {
     const { name, arguments: args } = req.params;
     const handler = HANDLERS[name];
     if (!handler) {
+      // OBS-18 (Phase 94.01): unknown-tool path counts as an error against
+      // the unknown name itself — useful signal if a client is mis-spelling
+      // a tool name in production. No latency observation (handler never ran).
+      incrementInvocation(name || 'unknown', 'error');
       return { content: [{ type: 'text', text: JSON.stringify({ error: `Unknown tool: ${name}` }) }], isError: true };
     }
+    // OBS-18 (Phase 94.01): timestamp the dispatch boundary. The four-golden-signals
+    // skill cares about the *user-facing* latency, which for the MCP server is the
+    // time from request receipt (we are inside the SDK callback) to the JSON envelope
+    // being ready. Date.now() is sub-millisecond-cheap and aligns with the bucket
+    // granularity we report (50/100/250/500ms thresholds in CONTEXT.md).
+    const start = Date.now();
     try {
       const result = await handler(args ?? {});
+      recordLatency(name, Date.now() - start);
+      incrementInvocation(name, 'ok');
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     } catch (e) {
+      // OBS-18: still record latency on the error path — half the value of a
+      // latency histogram is catching tail-latency-then-fail patterns. Status
+      // 'error' covers any thrown exception, including Phase 79.01 gates guard
+      // and the validateProjectRoot rejection (Phase 83.01).
+      recordLatency(name, Date.now() - start);
+      incrementInvocation(name, 'error');
       // SEC-14-06: full stack stays in stderr for operator debug; client envelope is sanitized.
       // sanitizeMcpError redacts secrets/paths from e.message, preserves e.code (Phase 83
       // EMANIFESTMISMATCH invariant), and emits NO stack field.
