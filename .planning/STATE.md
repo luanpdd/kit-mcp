@@ -3,10 +3,10 @@ state_version: 1.0
 milestone: v1.18
 milestone_name: — Eat Your Own Dog Food
 status: Phase 97 completa (1/1 plan); v1.18 milestone 4/4 fases — pronto para /concluir-marco
-last_updated: "2026-05-09T17:07:00.000Z"
+last_updated: "2026-05-09T17:00:07.379Z"
 progress:
   total_phases: 4
-  completed_phases: 4
+  completed_phases: 1
   total_plans: 1
   completed_plans: 4
 ---

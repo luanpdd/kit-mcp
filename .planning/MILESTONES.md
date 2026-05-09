@@ -1,5 +1,18 @@
 # MILESTONES.md — Histórico de releases
 
+## v1.18 Eat Your Own Dog Food (Shipped: 2026-05-09)
+
+**Phases completed:** 4 phases, 1 plans, 9 tasks
+
+**Key accomplishments:**
+
+- In-memory counter + latency histogram (p50/p95/p99) wired around the MCP central catch, exposed via a new parameterless `metrics-snapshot` tool — zero new dependencies.
+- Two event-based SLOs (availability ratio + p95 latency) wired to the Phase 94.01 in-memory metrics module via YAML files in `.planning/slos/`, with 10 regex-based schema regression tests — zero new deps.
+- Three operations docs (RUNBOOK with 5 Symptom→Diagnosis→Fix scenarios, FAILURE-MODES with 12-row impact×likelihood matrix, BENCHMARK with 5 measured baselines including 232ms cold-start and 144ms MCP p95) plus 11 regex-based shape regression tests — zero new deps.
+- Coverage line threshold raised 65→75% via 38 new tests for 4 hot files (failures.js 17→99%, install.js 19→96%, auto-spawn.js 31→57%, cli/index.js 37→55%); overall baseline 69.95→77.89%.
+
+---
+
 ## v1.17 Performance Wave 2 + Quick Wins (Shipped: 2026-05-09)
 
 **Phases completed:** 4 phases, 2 plans, 10 tasks

@@ -6,6 +6,44 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.18.0] - 2026-05-09
+
+**Eat Your Own Dog Food** — kit-mcp agora APLICA as observability/SRE skills que sempre ENSINOU. Fecha fail axe Instrumentation (PRR 2/5 → 5/5) que vinha aberto desde v1.12.1.
+
+4 fases (94-97), 4 plans, 74 testes novos (418 baseline final, +74 vs v1.17). Coverage 69.95% → 77.89%.
+
+### Golden Signals MCP Server (Phase 94)
+- **OBS-18-01/02:** `src/core/metrics.js` (NEW) com Counter API (Map-based) + Histogram API (FIFO N=1000) + percentiles (p50/p95/p99 via linear interpolation). `src/mcp-server/index.js` central catch wrappado em 3 paths (success/thrown/unknown-tool). Novo MCP tool `metrics-snapshot` (parameterless, read-only) discoverable via `tools/list`. Reset via `KIT_MCP_METRICS_RESET=1`. Zero deps novas — Map + array stdlib only. Aplica skill `four-golden-signals` ao próprio MCP server.
+
+### SLO Definitions (Phase 95)
+- **OBS-18-03/04:** `.planning/slos/mcp-tool-availability.yml` + `.planning/slos/mcp-tool-latency.yml` event-based SLOs (skill `event-based-slos` aplicada). Availability: ratio success/total target 99.5%, window 30d sliding, alert burn-rate page 14.4× / ticket 6×. Latency: p95 ≤200ms, window 30d. SLI source = `metrics-snapshot` tool da Phase 94. README explica derivation + consumer workflow + future-work pointers (multi-window burn-rate).
+
+### Operations Documentation (Phase 96)
+- **OPS-18-01:** `.planning/RUNBOOK.md` (NEW) — Emergency Response Guide com 5 cenários estruturados Symptom→Diagnosis→Fix: MCP boot fail, sidecar UI hang, manifest mismatch, npm publish fail, sync corruption. Apply skill `blameless-postmortems`.
+- **OPS-18-02:** `.planning/FAILURE-MODES.md` (NEW) — top-down catalog com 12 failure modes em matrix Impact × Likelihood × Mitigation, organizadas em 4-tier risk rollup. Apply skill `sre-risk-management`.
+- **OPS-18-03:** `.planning/BENCHMARK.md` (NEW) — 5+ baseline performance metrics medidas em v1.17.0 (cold start 232ms median, sync wall time 503ms cold/391ms steady, RSS 53MB, MCP p95/p99 144/146ms, tarball 1.1MB packed). Reference para detection de regressões futuros. Cross-references com SLOs (Phase 95) e metrics (Phase 94).
+
+### Coverage Ratchet (Phase 97)
+- **INFRA-18-01:** Threshold CI bumped 65% → 75%. Coverage real measured **77.89%** (+7.94 pp acima do threshold). 4 hot files lifted via 38 tests novos:
+  - `src/core/failures.js`: 17.65% → **99.35%** (+82pp)
+  - `src/mcp-server/install.js`: 19.46% → **95.97%** (+76pp)
+  - `src/ui/auto-spawn.js`: 30.97% → **56.64%** (+26pp)
+  - `src/cli/index.js`: 37.47% → **55.26%** (+18pp)
+- Ratchet plan v1.19+ documentado em ci.yml comments.
+
+### PRR re-projection (24/30 → 27/30)
+- Instrumentation 2/5 → **5/5** (fail axe → top)
+- Emergency Response 3/5 → 4/5 (RUNBOOK + FAILURE-MODES)
+- Capacity Planning 3/5 → 4/5 (BENCHMARK baseline)
+
+### Tech debt → v1.19+
+- Coverage threshold ratchet 75% → 80% (auto-spawn e cli/index ainda no 50s%)
+- Long-term metrics retention (log-to-disk via metrics-snapshot)
+- Multi-window burn-rate calculation alimentando `/burn-rate-status`
+- Mutation testing (stryker)
+
+[v1.18 milestone audit](./.planning/v1.18-MILESTONE-AUDIT.md) · [v1.18 ROADMAP](./.planning/milestones/v1.18-ROADMAP.md)
+
 ## [1.17.0] - 2026-05-09
 
 Primeira release **pós-zerada-meta-auditoria-original**. Origem: nova meta-auditoria (5 agents) sobre v1.16.0 que identificou 2 P0 perf hotspots novos + items P1/P2 polish. PRR score sobe 22/30 → 24/30.
