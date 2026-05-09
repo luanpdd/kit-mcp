@@ -61,7 +61,7 @@ Plans:
 Plans:
 - [ ] 01-hooks-flush-before-exit-PLAN.md — 6 hooks aplicam flush-before-exit + regression test (SEC-13-05)
 - [x] 02-slim-cap-PLAN.md — slim() em mcp-server e cli aplica summarize() compartilhado de sync.js (PERF-13-01)
-- [ ] 03-dedup-hooks-block-PLAN.md — remover bloco `# hooks:` morto de 11 agents + anti-regression test (PERF-13-02)
+- [x] 03-dedup-hooks-block-PLAN.md — remover bloco `# hooks:` morto de 11 agents + anti-regression test (PERF-13-02)
 - [ ] 04-drop-changelog-from-tarball-PLAN.md — remover CHANGELOG.md de package.json files[] + integration test (PERF-13-03)
 
 ### Phase 81: Drift Cleanup
