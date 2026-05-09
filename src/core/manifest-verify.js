@@ -19,6 +19,25 @@ import crypto from 'node:crypto';
 // for verifyManifest (single hot path, not user-facing latency budget).
 const BATCH_SIZE = 16;
 
+// PERF-17-01: in-memory cache for verifyManifest. Same pattern as kit.js
+// listKit cache (PERF-01). Watch triggers (file save → re-sync) call this
+// back-to-back; the 2nd+ call within TTL hits cache and returns <5ms.
+//
+// Caching rules:
+//   - Only cache ok=true results. mismatches/missing → recompute every call
+//     so devs see fixes immediately (don't punish them for the slow path).
+//   - Bypass via KIT_MCP_VERIFY_NO_CACHE=1 (test isolation + emergency dev escape).
+//   - Cache key is kitRoot — different roots are independent entries.
+const VERIFY_CACHE_TTL_MS = 30_000;
+const verifyManifestCache = new Map(); // kitRoot -> { value, ts }
+const NO_CACHE_ENV = 'KIT_MCP_VERIFY_NO_CACHE';
+
+/**
+ * Test/emergency helper — clears the cache. Exported for unit tests.
+ * Production code should never need this; use the env var instead.
+ */
+export function clearVerifyManifestCache() { verifyManifestCache.clear(); }
+
 const SKIP_ENV = 'KIT_MCP_SKIP_MANIFEST_CHECK';
 
 /**
@@ -34,6 +53,15 @@ export async function verifyManifest(kitRoot) {
       '[kit-mcp] WARNING: ' + SKIP_ENV + '=1 set — skipping kit/file-manifest.json verification (dev mode).\n'
     );
     return { ok: true, skipped: true };
+  }
+
+  // PERF-17-01: cache hit — repeated calls within TTL skip the I/O + hashing.
+  // Bypass via KIT_MCP_VERIFY_NO_CACHE=1 (tests + dev emergency escape).
+  if (process.env[NO_CACHE_ENV] !== '1') {
+    const cached = verifyManifestCache.get(kitRoot);
+    if (cached && Date.now() - cached.ts < VERIFY_CACHE_TTL_MS) {
+      return cached.value;
+    }
   }
 
   const manifestPath = path.join(kitRoot, 'file-manifest.json');
@@ -103,7 +131,13 @@ export async function verifyManifest(kitRoot) {
   }
 
   if (mismatches.length === 0 && missing.length === 0) {
-    return { ok: true };
+    const result = { ok: true };
+    // PERF-17-01: cache only ok=true. Mismatch/missing always recompute
+    // so dev fixing a tampered file sees the next sync recover immediately.
+    if (process.env[NO_CACHE_ENV] !== '1') {
+      verifyManifestCache.set(kitRoot, { value: result, ts: Date.now() });
+    }
+    return result;
   }
 
   // Build a concise reason — first 3 mismatches, plus counts.
