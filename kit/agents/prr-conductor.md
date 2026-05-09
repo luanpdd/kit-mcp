@@ -122,6 +122,9 @@ Para cada axe, coletar evidence via MCP tool específico (Full mode) ou filesyst
 | Auto-scaling testado | `mcp__supabase__list_edge_functions` (verifica auto-scale config) | filesystem `autoscaling-test.md` |
 | Quota/rate-limit por tenant | `mcp__supabase__execute_sql` para rate_limit_per_tenant table | grep `rate_limit\|quota` em código |
 | Headroom ≥ 30% | `mcp__supabase__get_advisors --type performance` (capacity hints) | filesystem cálculo doc |
+| **Cascading failure prevention** (v1.11) — timeout+jitter+circuit breaker em deps | filesystem `.planning/CASCADING-AUDIT.md` ≤ 30d com P0 = 0 | grep `AbortSignal\|setTimeout\|circuit` em código |
+| **Load shedding ativo** (v1.11) — handler retorna 503 + Retry-After em saturation | grep `LoadShedder\|503.*Retry-After` em handlers | idem |
+| **Game day exercise** (v1.11) — DR exercise mensal documentado | filesystem `game-day-reports/<service>-YYYY-MM.md` | idem |
 
 #### Axe 5: Change Management (5 items)
 
@@ -134,6 +137,9 @@ Para cada axe, coletar evidence via MCP tool específico (Full mode) ou filesyst
 | Deploy frequency mensurado | git log analysis (`git log --since='30 days ago' --oneline | wc -l`) | idem |
 | **Refactor safety net** (v1.12) — refactors críticos têm characterization tests | filesystem `.planning/REFACTOR-SAFETY*.md` + `tests/characterization/` presente | git log search por refactor commits + characterization linkados |
 | **Override audit trail** (v1.12) — overrides de safety gate têm ticket + reason válidos | filesystem `.planning/REFACTOR-SAFETY*.md` seção "Aprovação manual" parseada | grep "override" + "ticket: REQ-" em commits recentes |
+| **Hermetic build** (v1.11) — lockfile commitado + frozen-install em CI + image SHA pinned | filesystem `.planning/RELEASE-AUDIT.md` ≤ 30d com hermeticidade ≥ 8/10 | grep `npm ci\|--frozen-lockfile\|@sha256:` em CI files |
+| **Release pipeline policy** (v1.11) — branch protection + signed commits + required reviewers | `gh api repos/.../branches/main/protection` ✓ | filesystem `.github/CODEOWNERS` presente |
+| **Release via tag** (v1.11) — release trigger é tag, não direct main push | grep `tags:.*'v\*'\|on:.*push:.*tags` em workflows | idem |
 
 #### Axe 6: Performance (5 items)
 

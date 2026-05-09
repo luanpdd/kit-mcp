@@ -283,6 +283,23 @@ Antes de marcar instrumentação como production-ready, validar:
 6. **Black-box probe complementar** — synthetic check do happy path principal a cada 30s
 7. **Dashboard de 4 signals** existe e é o **primeiro** lugar de debug em incident
 
+## Saturation as cascading failure trigger (v1.11)
+
+**Saturation > threshold é early warning de cascading failure** (cap 22). Quando ainda há tempo para load shedding manter SLO; quando hit 100%, já está em cascade. Threshold tuning canônico:
+
+| Recurso | Warning | Critical | Ação automática |
+|---|---|---|---|
+| **CPU load** | > 70% | > 90% | Load shed; scale up |
+| **Memory used** | > 80% | > 95% | Load shed; OOM protection |
+| **Queue depth (pgmq)** | > 70% capacity | > 90% capacity | Drop oldest; scale consumers |
+| **Connection pool (DB)** | > 70% used | > 90% used | Throttle slow queries; scale pool |
+| **Concurrency limit** | > 80% inflight | > 95% inflight | Reject new (503 + Retry-After) |
+| **File descriptors** | > 70% ulimit | > 90% ulimit | Close idle conns; scale up |
+
+**Resposta canônica:** quando saturation > Critical, server-side ativa load shedding (skill `load-shedding-graceful-degradation` v1.11) — retorna 503 + Retry-After ANTES de aceitar request que vai falhar. Coopera com caller-side defesas (skill `retry-strategies` v1.11 — full jitter respeita Retry-After).
+
+Cross-ref: `cascading-failures` (v1.11) detalha 5 triggers; `cascading-failures-auditor` (v1.11) detecta gaps em código.
+
 ## Ver também
 
 - [`_shared-sre/glossary.md`](../_shared-sre/glossary.md) — termos canônicos golden signals, black-box, white-box, percentile

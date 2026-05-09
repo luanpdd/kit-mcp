@@ -206,3 +206,43 @@ Quando `workflow.complete_milestone_prr_gate = true` (default `false` — opt-in
 
 **REQ:** INT-FW-V2-02.
 </sre_integration>
+
+<sre_resilience_integration>
+**Release pipeline policy gate (v1.11 — INT-FW-V3-01):**
+
+Quando `workflow.complete_milestone_release_pipeline_gate = true` (default `false` — opt-in), o workflow inclui passo de validação de release pipeline **paralelo ao PRR gate**:
+
+1. Invocar `Task(subagent_type=release-pipeline-auditor, prompt="...")` para gerar `.planning/RELEASE-AUDIT.md` fresco
+2. Verificar score agregado:
+   - **ROBUST (≥ 25/30):** gate aprova — milestone arquivável
+   - **ADEQUATE (20-24):** warnings explícitos no archive; arquivável
+   - **FRAGILE (15-19):** BLOQUEIA — listar top 5 fixes; user resolve antes de re-tentar
+   - **BROKEN (< 15):** BLOQUEIA forte — escalation; pipeline não pode ser fonte de verdade
+3. Resultado salvo como anexo no `.planning/milestones/v<version>-MILESTONE.md` (audit trail)
+
+**Quando ligar gate (paralelo ao PRR):**
+
+- Projeto tem release frequency ≥ 1×/semana
+- Projeto tem deploys que afetam usuários externos (não só dogfooding)
+- Equipe quer disciplina release engineering (cap 8 livro Google SRE)
+- Projeto já tem PRR gate ligado (sinal de production maturity)
+
+**Quando manter desligado:**
+
+- Projeto < 6 meses (pipeline ainda imatura)
+- Solo dev sem CI/CD complexo
+- Releases mensais ou raros (overhead > valor)
+
+**Skills consultadas:** [hermetic-builds](../skills/hermetic-builds/SKILL.md), [release-engineering](../skills/release-engineering/SKILL.md) (cap 8 livro Google SRE).
+
+**Gate executável:** `gates/release-pipeline-policy.md` (criado em Phase 47 — QA-SRE2-04). Workflow `.claude/framework/workflows/complete-milestone.md` consulta esse gate quando flag `true`.
+
+**Anti-patterns prevenidos:**
+
+- "Release pipeline frágil porque historicamente funcionou" → gate força quantificação objetiva
+- "Build não-hermético com `npm install`" → gate Hermeticidade dimension catches
+- "Branch protection desligada para velocidade" → gate Policy Enforcement dimension catches
+- "Gate ligado em projeto early stage" → bloco "Quando ligar gate" exige sinais de maturity
+
+**REQ:** INT-FW-V3-01.
+</sre_resilience_integration>

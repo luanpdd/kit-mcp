@@ -81,6 +81,34 @@ done | sort | uniq -c
 
 Cross-ref: agent [`refactor-safety-auditor`](./refactor-safety-auditor.md) (v1.12), comando [`/auditar-refactor`](../commands/auditar-refactor.md), gate [`legacy-refactor-safety`](../../gates/legacy-refactor-safety.md).
 
+**Adicional v1.11 (Suíte SRE Resilience):** Capacidade 1 também consulta **`.planning/CASCADING-AUDIT.md`** para detectar gaps de cascading prevention:
+
+```bash
+# PT-BR: ler audit de cascading se fresh (≤ 30 dias)
+if [ -f ".planning/CASCADING-AUDIT.md" ]; then
+  AUDIT_DATE=$(stat -f %m .planning/CASCADING-AUDIT.md 2>/dev/null || stat -c %Y .planning/CASCADING-AUDIT.md)
+  AGE_DAYS=$(( ($(date +%s) - AUDIT_DATE) / 86400 ))
+
+  if [ "$AGE_DAYS" -le 30 ]; then
+    P0_COUNT=$(grep -c "^### #.*\[P0\]" .planning/CASCADING-AUDIT.md)
+    P1_COUNT=$(grep -c "^### #.*\[P1\]" .planning/CASCADING-AUDIT.md)
+    # mapping de findings → score
+    if [ "$P0_COUNT" -ge 1 ]; then
+      CAP1_SCORE=2  # red flag
+    elif [ "$P0_COUNT" -eq 0 ] && [ "$P1_COUNT" -le 3 ]; then
+      CAP1_SCORE=4
+    else
+      CAP1_SCORE=3
+    fi
+  else
+    # stale → delegar via Task(subagent_type=cascading-failures-auditor) ad-hoc
+    echo "CASCADING-AUDIT.md stale (${AGE_DAYS}d). Re-rodar /auditar-cascading."
+  fi
+fi
+```
+
+Regra absoluta: **score Capacidade 1 > 3 exige CASCADING-AUDIT.md fresco ≤ 30d com `P0 = 0`** — análoga à regra Cap 3 (TOIL-AUDIT.md). Cross-ref: agent [`cascading-failures-auditor`](./cascading-failures-auditor.md) (v1.11), comando [`/auditar-cascading`](../commands/auditar-cascading.md).
+
 **Capacidade 4 — Cadência:**
 ```bash
 # PT-BR: tempo médio commit → deploy (precisa instrumentação no CI)

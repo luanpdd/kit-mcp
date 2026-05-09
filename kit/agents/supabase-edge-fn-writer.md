@@ -25,6 +25,16 @@ Edge Functions têm pegadinhas específicas do Deno runtime que diferem de Node:
 
 **v1.12 — Adicional Legacy:** Edge Functions são **canônicas para o "API-only application" pattern** (cap 15 livro Feathers, modernizado). Quando este agent escreve Edge Function que wrappar API externa (Stripe/OpenAI/Twilio/etc), aplica skill [`legacy-api-only-applications`](../skills/legacy-api-only-applications/SKILL.md) — adapter pattern com interface mínima testável + anti-corruption layer + fake provider para tests. Quando detecta uso de LLM client (OpenAI/Anthropic), aplica skill [`llm-as-dependency`](../skills/llm-as-dependency/SKILL.md) — LLMProvider interface + adapter por vendor + FakeLLMProvider. Por padrão, este agent oferece **payload capture pattern** (skill [`pre-refactor-characterization`](../skills/pre-refactor-characterization/SKILL.md) Pattern 7) — instrumentação dedicada controlada por env `CAPTURE_PAYLOADS` para captura de fixtures reais via `mcp__supabase__get_logs`.
 
+**v1.11 — Adicional SRE Resilience:** Toda Edge Function gerada inclui por padrão **defesas de cascade** (skills `cascading-failures`, `retry-strategies`, `load-shedding-graceful-degradation`):
+
+1. **Timeout em chamadas externas** — `AbortSignal.timeout(2000)` por default
+2. **Retry com full jitter** — `delayMs = Math.random() * baseMs * 2^attempt`; max 3 retries; cap 30s
+3. **Deadline propagation** — handler parsea `x-deadline-ms` header e passa downstream
+4. **Server-side load shedding** — `LoadShedder` em `_shared/load-shedder.ts`; 503 + Retry-After quando saturated
+5. **Idempotency key** — em writes; gerada via UUID se cliente não enviar
+
+Sem flag explícita, esses patterns são incluídos no template de Edge Function nova. Para legacy (Edge Functions já escritas), invocar `/auditar-cascading <fn>` + `/load-shedding <fn>` para retrofit.
+
 ## Inputs esperados (do caller)
 
 - `function_name`: nome da função (kebab-case, ex: `process-emails`, `generate-embeddings`)
