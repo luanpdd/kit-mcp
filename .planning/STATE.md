@@ -3,7 +3,7 @@ state_version: 1.0
 milestone: v1.13
 milestone_name: — Security & Performance Hardening
 status: Phase 79 executando em paralelo (3 plans)
-last_updated: "2026-05-09T04:35:30.000Z"
+last_updated: "2026-05-09T04:36:00.000Z"
 progress:
   total_phases: 3
   completed_phases: 1
@@ -18,9 +18,9 @@ progress:
 ## Posição Atual
 
 Fase: 79 (Critical Security Fixes) — executada em paralelo
-Plano: 79.01 concluído (este executor); 79.02/79.03 em execução paralela
-Status: Phase 79 plan 01 (MCP gates.run guard) entregue
-Última atividade: 2026-05-09 — Plan 79.01 concluído (commits 584dc8f fix + e476c09 test, SEC-13-01)
+Plano: 79.01 + 79.02 concluídos; 79.03 em execução paralela
+Status: Phase 79 plan 01 (MCP gates.run guard) e plan 02 (replayId path traversal) entregues
+Última atividade: 2026-05-09 — Plan 79.02 concluído (commits d19d6ac fix + e905a96 test, SEC-13-02; 4 regression tests; suite verde)
 
 ## Milestone ativo
 
