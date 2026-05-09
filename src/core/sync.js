@@ -19,6 +19,18 @@ const STUB_MARKER = '<!-- kit-mcp:reference -->';
 const MANAGED_MARKER_FILE = '.kit-mcp-managed';
 const MANAGED_MARKER_BODY = '# Managed by @luanpdd/kit-mcp — this directory is overwritten on every `kit sync install`.\n# Do not edit files here directly; edit the canonical source under kit/ and re-run sync.\n# Removing this file disables `kit sync remove` cleanup of this tree.\n';
 
+// PERF-16-01: parallelize file writes in syncTo() via Promise.all batches.
+// BATCH_SIZE=16 default — safe under Linux ulimit 1024 fd default and
+// macOS/Windows equivalents. Configurable via env (e.g. on slow disks).
+// Values outside [1, 256] fall back to 16 (defensive — env vars are strings).
+function resolveBatchSize() {
+  const raw = process.env.KIT_MCP_SYNC_BATCH_SIZE;
+  if (!raw) return 16;
+  const n = Number.parseInt(raw, 10);
+  if (!Number.isFinite(n) || n < 1 || n > 256) return 16;
+  return n;
+}
+
 export async function syncTo(targetId, opts = {}) {
   const target      = getTarget(targetId);
   const projectRoot = path.resolve(opts.projectRoot ?? process.cwd());
@@ -100,16 +112,35 @@ export async function syncTo(targetId, opts = {}) {
   }
 
   if (!dryRun) {
-    let i = 0;
-    for (const op of ops) {
+    const BATCH_SIZE = resolveBatchSize();
+    let completed = 0;
+    const total = ops.length;
+
+    // Apply one op (mkdir + write or copy + onProgress).
+    // Each op is independent: ops[] is built so writes don't share parent
+    // directories that need ordering — mkdir({recursive:true}) is idempotent
+    // even when 16 ops race for the same parent dir.
+    const applyOp = async (op) => {
       await fs.mkdir(path.dirname(op.path), { recursive: true });
       if (op.treeCopy) {
         await fs.copyFile(op.srcAbs, op.path);
       } else {
         await fs.writeFile(op.path, op.content, 'utf8');
       }
-      i++;
-      onProgress({ phase: op.kind, current: i, total: ops.length, label: path.basename(op.path) });
+      // Counter increment is single-threaded by JS event loop semantics —
+      // no torn reads even with 16 ops resolving in any order.
+      completed += 1;
+      onProgress({ phase: op.kind, current: completed, total, label: path.basename(op.path) });
+    };
+
+    // Sequential batches — within a batch, Promise.all parallelizes writes;
+    // between batches, we await to bound max-in-flight at BATCH_SIZE. If any
+    // op in a batch rejects, Promise.all rejects on first failure (matches
+    // existing behavior — sync.js had no retry logic, so a single fs error
+    // already aborted the install).
+    for (let i = 0; i < ops.length; i += BATCH_SIZE) {
+      const slice = ops.slice(i, i + BATCH_SIZE);
+      await Promise.all(slice.map(applyOp));
     }
   }
 
