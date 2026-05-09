@@ -1,0 +1,12 @@
+{
+  "version": "fixture",
+  "timestamp": "2026-05-09T10:50:31.183Z",
+  "files": {
+    "agents/sample-agent.md": "25a1b84dc2afd85180c316124785dc3f744a63f25cd06c3a77b43259dfa287f8",
+    "commands/no-frontmatter-command.md": "5dcf501d441a51037445b9fcb665c07af4e54593b4f1cc068448de0b8ee73028",
+    "commands/sample-command.md": "60b120dc862bbc5d21318c2cd6a7194a8605fea8335eeac2cac18578a7a8035d",
+    "framework/workflows/sample-workflow.md": "131b67eb10f8eb43165ec7e27585281ae7f37f486eddd81667a0bf29e37ae5a4",
+    "hooks/sample-hook.js": "d08d98ae6bbc86c897833a8c77f9457e3d1e6d24ff271f9dadb0518718826bb2",
+    "skills/sample-skill/SKILL.md": "a1b7f3a8c3321e34fb310b3835957365dcd4ae38a7990aa4c6f62c074fdbc545"
+  }
+}
