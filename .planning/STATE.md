@@ -3,12 +3,12 @@ state_version: 1.0
 milestone: v1.14
 milestone_name: — Web/Core Security Hardening
 status: Phase 82 concluída — Plans 01+02 entregues; Phase 83 (Core Filesystem Hardening) próxima
-last_updated: "2026-05-09T10:34:31.666Z"
+last_updated: "2026-05-09T10:54:49.765Z"
 progress:
   total_phases: 3
   completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  total_plans: 5
+  completed_plans: 4
 ---
 
 # STATE.md — sessão atual

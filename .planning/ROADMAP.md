@@ -41,9 +41,9 @@ Plans:
 **Plans:** 3 plans (todos wave 1, paralelos — files disjoints)
 
 Plans:
-- [ ] 83-01-projectroot-validation-PLAN.md — validateProjectRoot helper + guard em handleSync/handleReverseSync; 4 regression tests SEC-14-03
+- [x] 83-01-projectroot-validation-PLAN.md — validateProjectRoot helper + guard em handleSync/handleReverseSync; 4 regression tests SEC-14-03
 - [ ] 83-02-gate-runner-mkdtemp-PLAN.md — execScript usa fs.mkdtemp + cleanup recursive; 4 regression tests SEC-14-04
-- [ ] 83-03-manifest-verify-PLAN.md — verifyManifest helper + chamada em syncTo install path + manifest regen (kit/ + fixture); 6 regression tests SEC-14-05
+- [x] 83-03-manifest-verify-PLAN.md — verifyManifest helper + chamada em syncTo install path + manifest regen (kit/ + fixture); 6 regression tests SEC-14-05
 
 **Depends on:** Phase 82
 
