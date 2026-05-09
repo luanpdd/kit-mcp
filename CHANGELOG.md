@@ -6,6 +6,36 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.14.0] - 2026-05-09
+
+Continuação direta da v1.13 — fecha as **6 vulnerabilidades HIGH** explicitamente deferidas em `.planning/milestones/v1.13-MILESTONE-AUDIT.md` "Tech Debt". Mesma origem auditiva (meta-auditoria com 12 agentes paralelos sobre v1.12.1). Content-zero por design.
+
+3 fases (82-84), 6 plans, 63 testes novos (273 baseline final, +63 vs v1.13).
+
+### Web Surface Hardening (Phase 82)
+- **SEC-14-01:** CSP estrito no UI sidecar — sha256 hash do `<script>` inline substitui `'unsafe-inline'`. 42 escape sites em `src/ui/static/index.html` adicionados como defesa-em-profundidade contra XSS via SSE payload (ex: hooks publishers que incluem comandos do user).
+- **SEC-14-02:** Auth token de 64-char hex gerado em `src/ui/lockfile.js` por `crypto.randomBytes(32)`. Middleware `requireAuth` aplicado em POST /publish, POST /shutdown, GET /events (via `?t=` query param porque EventSource não suporta custom headers), GET /state. GET /healthz mantido aberto para handshake. Token propagado transparentemente: `auto-spawn` lê lockfile → injeta `?t=<token>` no URL → browser parseia query, scrub via `history.replaceState` (token não vaza no address bar), anexa `Authorization: Bearer` em todo fetch. `kit/hooks/sidecar-tool-publisher.js` bumpado para `hook-version: 1.14.0` com Authorization header.
+
+### Core Filesystem Hardening (Phase 83)
+- **SEC-14-03:** `validateProjectRoot` helper em `src/core/path-safety.js` (NEW) com walk-up `.git/` heurístico. Aplicado em `handleSync` + `handleReverseSync` (callers MCP). CLI behavior preservado — `process.cwd()` continua trusted. Sentinel uniforme: `"MCP sync requires projectRoot to be a git workspace"`. Bloqueia `\\evil-host\share`, paths do AppData, etc.
+- **SEC-14-04:** `src/core/gate-runner.js` agora usa `fs.mkdtemp(path.join(os.tmpdir(), 'kit-gate-'))` substituindo `Date.now() + Math.random()` predictable filename. Script criado dentro do diretório único (crypto-random nome via mkdtemp). Cleanup recursivo em finally garante zero leftovers em /tmp mesmo em error path. Elimina symlink TOCTOU em multi-user `/tmp` shared.
+- **SEC-14-05:** `src/core/manifest-verify.js` (NEW) verifica SHA256 de cada arquivo listado em `kit/file-manifest.json` antes de `syncTo()` install. Throw `EMANIFESTMISMATCH` com mismatch list se corrupção detectada. `KIT_MCP_SKIP_MANIFEST_CHECK=1` permite opt-out (warn em stderr) para dev workflow. Manifest regenerado de 221 entries (v1.4.0, stale) para **327 entries (v1.13.0, fresh, 0 mismatches)**.
+
+### MCP Error Sanitization (Phase 84)
+- **SEC-14-06:** `src/core/error-redaction.js` (NEW) com `redactSecrets()` (regex global: `sk-ant-*`, `sk-*`, `x-api-key:`, `Bearer *`, paths absolutos `[A-Z]:[\\/]...` e `/{home,Users,root}/...`) + `sanitizeMcpError()` (NUNCA inclui `e.stack`). Aplicado em **exatamente 3 sites** (single source of truth, grep-verifiable):
+  1. Central catch block em `src/mcp-server/index.js` — todos os handlers (sync, reverse-sync, gates, forensics, replays, install) propagam pra cá.
+  2. `src/core/reflect.js` callClaude error rethrow — bloqueia leak de `ANTHROPIC_API_KEY` em response body 4xx.
+  3. `src/core/replays.js` recordReplay — JSON persistido em `.planning/replays/*.json` é scrubbed.
+- Stack trace COMPLETO continua em stderr (server-side log) — apenas o cliente MCP não recebe. Backward compat: envelope schema continua `{error: string, code?: string}` (drop apenas `stack` field). 6 negative fixtures contra false positives ("Compare A:B", "Modal: hello", `https://example.com/etc/passwd`, etc).
+
+### Tech debt → v1.15
+- CI matrix expansion para 8 IDEs (sync round-trip)
+- T2 (terse mode em list-*), T3 (compatibility dedup em 27 agents)
+- README counters auto-gen via prepublishOnly hook
+- Manifest auto-regen em prepublishOnly
+
+[v1.14 milestone audit](./.planning/v1.14-MILESTONE-AUDIT.md) · [v1.14 ROADMAP](./.planning/milestones/v1.14-ROADMAP.md)
+
 ## [1.13.0] - 2026-05-09
 
 Suíte de hardening interno — derivada de meta-auditoria com 12 agentes em paralelo sobre kit-mcp v1.12.1. **Content-zero** (não adiciona ao kit, repara o framework e o package npm).
