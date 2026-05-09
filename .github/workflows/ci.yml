@@ -114,7 +114,8 @@ jobs:
           node-version: ${{ matrix.node }}
 
       - name: Install
-        run: npm ci || npm install
+        # SEC-13-03: strict — fail hard on lockfile drift, no silent install fallback
+        run: npm ci
 
       - name: Tests (unit)
         run: npm test

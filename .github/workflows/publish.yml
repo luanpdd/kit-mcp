@@ -33,7 +33,8 @@ jobs:
           registry-url: 'https://registry.npmjs.org'
 
       - name: Install
-        run: npm ci || npm install
+        # SEC-13-03: strict — fail hard on lockfile drift, no silent install fallback
+        run: npm ci
 
       - name: Sanity — version in package.json matches tag
         run: |
