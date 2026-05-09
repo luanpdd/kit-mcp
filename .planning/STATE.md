@@ -2,8 +2,8 @@
 state_version: 1.0
 milestone: v1.13
 milestone_name: — Security & Performance Hardening
-status: Phase 79 executando em paralelo (3 plans)
-last_updated: "2026-05-09T04:36:00.000Z"
+status: Phase 79 plan 01 (MCP gates.run guard) e plan 02 (replayId path traversal) entregues
+last_updated: "2026-05-09T04:42:57.024Z"
 progress:
   total_phases: 3
   completed_phases: 1
