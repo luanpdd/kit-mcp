@@ -2,8 +2,8 @@
 state_version: 1.0
 milestone: v1.15
 milestone_name: — DX & Token Economy Wave 2
-status: v1.15 ativo — primeiro plan da Phase 85 concluído
-last_updated: "2026-05-09T12:13:50.411Z"
+status: v1.15 ativo — Phase 85 completa
+last_updated: "2026-05-09T12:21:03.232Z"
 progress:
   total_phases: 3
   completed_phases: 1
