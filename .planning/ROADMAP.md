@@ -29,6 +29,9 @@
 - Cache invalidation funcional em mismatch path (test).
 - Suite continua passing + 4+ regression tests novos.
 
+**Plans:** 1 plan
+- [ ] 90-01-verify-manifest-parallel-cache-PLAN.md — Promise.all batches=16 + cache TTL 30s + 5 regression tests
+
 ### Phase 91: Diff-Based Sync
 
 **Goal:** Eliminar writes desnecessárias quando `kit sync` é re-rodado com kit já-sincronizado. Stat-based diff (mtime/size + opcional hash) skip files cujo destination já bate.
