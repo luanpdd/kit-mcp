@@ -1,5 +1,20 @@
 # MILESTONES.md — Histórico de releases
 
+## v1.14 Web/Core Security Hardening (Shipped: 2026-05-09)
+
+**Phases completed:** 3 phases, 6 plans, 14 tasks
+
+**Key accomplishments:**
+
+- Strict CSP via SHA-256 hash of inline script, 64-char hex auth token in lockfile, and requireAuth middleware on /publish /shutdown /events /state — closing 2 HIGH XSS+CSRF vulnerabilities deferred from v1.13.
+- Transparent auth-token handshake from sidecar to browser via `?t=<token>` URL handshake (then scrubbed via history.replaceState), plus Authorization Bearer in both in-process publisher (`src/ui/client.js`) and out-of-process hook (`kit/hooks/sidecar-tool-publisher.js` v1.14.0), closing SEC-14-02 end-to-end with zero user-visible token interaction.
+- MCP handlers handleSync e handleReverseSync agora bloqueiam projectRoot fora de git workspace (UNC fake host, AppData arbitrário) via helper puro com walk-up `.git/` heurístico — fechando vetor SEC-14-03 de write-anywhere.
+- SEC-14-04 closed: gate-runner.execScript replaces predictable Date.now+Math.random tmp filename with fs.mkdtemp + per-run unique dir, eliminating symlink TOCTOU vector in shared multi-user /tmp.
+- SHA256 manifest verification at sync install boundary, regenerated kit/file-manifest.json (221 to 327 entries), opt-out env var for dev — closes SEC-14-05 against tampered-kit projection.
+- Single shared redactSecrets + sanitizeMcpError helper applied at MCP central catch + Anthropic API 401 rethrow + replay JSON persistence — closes SEC-14-06 with three call sites, six regex patterns, and 35 new regression tests covering positive matches, no-false-positive fixtures, and runtime stdio guarantees.
+
+---
+
 ## v1.13 Security & Performance Hardening (Shipped: 2026-05-09)
 
 **Phases completed:** 3 phases, 10 plans, 13 tasks

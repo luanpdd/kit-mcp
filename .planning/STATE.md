@@ -3,7 +3,7 @@ state_version: 1.0
 milestone: v1.14
 milestone_name: — Web/Core Security Hardening
 status: Milestone v1.14 completo — todas 3 fases (82, 83, 84) concluídas
-last_updated: "2026-05-09T11:25:29.119Z"
+last_updated: "2026-05-09T11:28:17.732Z"
 progress:
   total_phases: 3
   completed_phases: 3
