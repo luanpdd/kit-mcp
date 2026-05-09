@@ -1175,9 +1175,11 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
 
 <script>
 /* ──────────────────────────────────────────────────────────
-   kit-mcp sidecar — prototype
-   This is a faithful mock of what the production HTML will do.
-   In production, replace the MockSource with a real EventSource('/events').
+   kit-mcp sidecar — production client
+   SEC-14-01 (Phase 82): All event-derived content rendered via escapeHtml()
+   before insertion into innerHTML. CSP without 'unsafe-inline' in script-src
+   is primary defense; escapeHtml() is defense-in-depth.
+   When adding new innerHTML sites, always escape dynamic fields.
    ────────────────────────────────────────────────────────── */
 
 /* ---------- humanize helpers (preserved API) ---------- */
@@ -1433,16 +1435,21 @@ function historyRowHtml(h) {
       return `<div class="hist-detail-row"><span class="pct">${escapeHtml(pct)}</span><span class="lbl">${escapeHtml(lbl)}</span>${tk ? `<span class="tok">${tk}t</span>` : ""}</div>`;
     })
     .join("");
+  // SEC-14-01: every dynamic field escaped before injection into the
+  // history-row template. status/statusGlyph/dur/when/tokens are computed
+  // locally (string enum or pre-built HTML literal) so are safe by construction;
+  // h.runId and h.eventsCount cross the publisher boundary and MUST be escaped
+  // even though they should normally be benign — defense in depth.
   return `
-    <div class="hist-row" data-status="${status}" data-runid="${h.runId}">
+    <div class="hist-row" data-status="${escapeHtml(status)}" data-runid="${escapeHtml(h.runId)}">
       <div class="hist-status">${statusGlyph}</div>
       <div class="hist-title">${escapeHtml(title)}</div>
       <div class="hist-when">${when}</div>
       <div class="hist-meta-row">
         <span><span class="num">${dur}</span> dur</span>
         <span>${tokens}</span>
-        <span><span class="num">${h.eventsCount || 0}</span> eventos</span>
-        <span class="num">id ${h.runId.slice(0,8)}</span>
+        <span><span class="num">${escapeHtml(String(h.eventsCount || 0))}</span> eventos</span>
+        <span class="num">id ${escapeHtml(String(h.runId).slice(0,8))}</span>
       </div>
       <div class="hist-detail">${detailRows || '<div class="hist-detail-row"><span class="lbl">(sem progresso registrado)</span></div>'}</div>
     </div>
@@ -1534,10 +1541,14 @@ function activeCardHtml(run) {
   const longRunning = elapsed > 30_000;
   const stepCount = run.total ? `${run.current}/${run.total}` : "";
   const showTokens = run.tokens > 0;
+  // SEC-14-01: family/iconHref/title/stepLabel/stepCount/percent are computed
+  // locally; runId crosses the publisher boundary and is escaped before any
+  // injection (data-attribute or text). Defense in depth: even string enums
+  // (family) get escaped to ensure regression resistance.
   return `
-    <article class="run-card" data-runid="${run.runId}">
+    <article class="run-card" data-runid="${escapeHtml(run.runId)}">
       <div class="rc-head">
-        <div class="rc-icon" data-tool="${family}"><svg><use href="${iconHref}"/></svg></div>
+        <div class="rc-icon" data-tool="${escapeHtml(family)}"><svg><use href="${escapeHtml(iconHref)}"/></svg></div>
         <div class="rc-title-block">
           <div class="rc-tool">${escapeHtml(safeStr(run.tool) || "processo")}</div>
           <div class="rc-title">${escapeHtml(title)}</div>
@@ -1556,7 +1567,7 @@ function activeCardHtml(run) {
       <div class="rc-step">
         <span class="glyph"><svg><use href="#i-spin"/></svg></span>
         <span class="rc-step-text">${escapeHtml(stepLabel)}</span>
-        ${stepCount ? `<span class="rc-step-count">${stepCount}</span>` : ""}
+        ${stepCount ? `<span class="rc-step-count">${escapeHtml(stepCount)}</span>` : ""}
       </div>
 
       <div class="rc-tokens" ${showTokens ? "" : "style=\"display:none\""}>
@@ -1565,7 +1576,7 @@ function activeCardHtml(run) {
       </div>
 
       <div class="rc-foot">
-        <span class="rc-runid">id ${run.runId.slice(0, 8)}</span>
+        <span class="rc-runid">id ${escapeHtml(String(run.runId).slice(0, 8))}</span>
         <span class="sep">·</span>
         <span>${escapeHtml(safeStr(run.tool) || "")}</span>
       </div>
@@ -1708,8 +1719,11 @@ function rowHtml(evt, idx, prev) {
       msg = `<span class="ident">${escapeHtml(badge.toLowerCase())}</span>`;
   }
   const sourcePill = renderSourcePill(evt.payload?.source);
+  // SEC-14-01: evt.type and evt.runId cross publisher boundary → escape.
+  // msg/tokenChip/sourcePill are pre-built HTML literals where each interpolation
+  // already used escapeHtml() — safe by construction.
   return `
-    <div class="tl-row" data-type="${evt.type}" data-ok="${ok}" data-grouped="${grouped}">
+    <div class="tl-row" data-type="${escapeHtml(evt.type)}" data-ok="${ok}" data-grouped="${grouped}">
       <div class="tl-time" title="${time}">${rel}</div>
       <div class="tl-rail"><div class="tl-node"></div></div>
       <div class="tl-content">
@@ -1717,7 +1731,7 @@ function rowHtml(evt, idx, prev) {
         <span class="tl-msg">${msg}</span>
         ${tokenChip}
         ${sourcePill}
-        ${evt.runId ? `<span class="tl-runid">${evt.runId.slice(0,6)}</span>` : ""}
+        ${evt.runId ? `<span class="tl-runid">${escapeHtml(String(evt.runId).slice(0,6))}</span>` : ""}
       </div>
     </div>
   `;
