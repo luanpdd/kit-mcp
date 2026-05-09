@@ -1,39 +1,38 @@
 ---
 state_version: 1.0
-milestone: v1.17
-milestone_name: — Performance Wave 2 + Quick Wins
-status: completed
-last_updated: "2026-05-09T15:57:17.129Z"
+milestone: v1.18
+milestone_name: — Eat Your Own Dog Food
+status: in_progress
+last_updated: "2026-05-09T16:16:47Z"
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 2
-  completed_plans: 4
+  completed_phases: 1
+  total_plans: 4
+  completed_plans: 1
 ---
 
 # STATE.md — sessão atual
 
 ## Posição Atual
 
-Fase: 93 — CI Deps Gate + Coverage Tooling (INFRA-17-01/02) — **CONCLUÍDA**
-Status: Phase 93 completa (1/1 plan); v1.17 milestone feature-complete (4/4 fases)
-Última atividade: 2026-05-09T15:48Z — Phase 93.01 executado (plan+execute combinado); 342 tests pass (248 unit + 94 integration + 2 skip); +9 novos tests; ci.yml deps gate fechou loophole de optionalDependencies + novo coverage gate threshold 65 (baseline 69.00)
+Fase: 94 — Golden Signals MCP Server (OBS-18-01/02) — **CONCLUÍDA**
+Status: Phase 94 completa (1/1 plan); v1.18 milestone 1/4 fases
+Última atividade: 2026-05-09T16:16Z — Phase 94.01 executado (plan+execute combinado); 359 tests pass (259 unit + 98 integration + 2 skip); +15 novos tests; metrics module + metrics-snapshot tool aplicado four-golden-signals skill ao próprio MCP server; zero deps novas
 
 ## Milestone ativo
 
-**v1.17 Performance Wave 2 + Quick Wins** — endereça 2 P0 perf hotspots novos identificados pela meta-auditoria pós-v1.16 + polish items P1/P2.
+**v1.18 Eat Your Own Dog Food** — primeira release pós v1.17 que dogfooda as próprias skills SRE/Observabilidade no kit-mcp.
 
-**4 fases (90-93) — TODAS CONCLUÍDAS:**
+**4 fases (94-97):**
 
-- Phase 90 ✅ — verifyManifest paralelo + cache (P0)
-- Phase 91 ✅ — Diff-based sync (P0)
-- Phase 92 ✅ — Quick wins polish (open optional, regen parallel, getLocalVersion remove, JSDoc)
-- Phase 93 ✅ — CI deps gate + coverage tooling (INFRA-17-01/02)
+- Phase 94 ✅ — Golden Signals MCP Server (OBS-18-01/02)
+- Phase 95 ⏭ — TBD
+- Phase 96 ⏭ — TBD
+- Phase 97 ⏭ — TBD
 
 ## Próximo passo
 
-1. `/auditar-marco v1.17` — auditar conclusão do milestone vs intenção original
-2. `/publicar` — publicar v1.17.0 (release notes, GitHub release, npm publish via tag-trigger)
+1. Avançar para Phase 95 (próxima do milestone v1.18)
 
 ## Bloqueadores
 
@@ -58,6 +57,7 @@ Stable API v1.0+ preservada. Budget total 6 deps mantido (Phase 92 reorganiza: 3
 | 91 | 01 | ~6min | 3 | 2 | 4 |
 | 92 | 01 | ~7min | 4 | 8 | 7 (new) |
 | 93 | 01 | ~7.5min | 3 | 3 | 9 (new) |
+| 94 | 01 | ~6.8min | 3 | 5 | 15 (new) |
 
 ## Decisions
 
@@ -74,3 +74,9 @@ Stable API v1.0+ preservada. Budget total 6 deps mantido (Phase 92 reorganiza: 3
 - **Phase 93.01:** Coverage threshold = 65 (não 75) — baseline medido foi 69.00%, set 4 pontos abaixo para absorver noise (CONTEXT.md linha 60 explicitamente autorizou). Ratchet plan: 70 → 75 → 80 conforme low-coverage files (cli/index.js 37%, mcp-server/install.js 19%, ui/auto-spawn.js 31%, core/failures.js 17%) ganharem testes em v1.18+.
 - **Phase 93.01:** Coverage step gated a 1 célula da matrix (Linux+Node22+claude-code) — coverage % é target-agnostic; rodar 72× seria desperdício.
 - **Phase 93.01:** Tests de CI gate via text-regex sobre ci.yml — adicionar `yaml` package quebraria o budget de 6 deps que o próprio gate enforce; mesmo pattern de gates/budget-description.md.
+- **Phase 94.01:** FIFO cap N=1000 em latency histogram — bound memory em sessões MCP de longa duração com percentiles meaningful (matches Prometheus client semantics: "what is latency *now*", não unbounded history).
+- **Phase 94.01:** Linear-interpolation percentile (matches Prometheus/Datadog) — sort-on-snapshot acceptable porque snapshots são on-demand (lidos pelo metrics-snapshot tool), não em todo dispatch.
+- **Phase 94.01:** Latency observada em ambos sucesso E erro paths — metade do valor de um latency histogram é capturar tail-latency-then-fail patterns; observar só sucesso esconderia esse signal.
+- **Phase 94.01:** Unknown-tool path conta como `error` contra o nome digitado — quando cliente erra typo de tool name, operador quer ver `unknown-tool-name:error` no snapshot para triagem; bucket genérico perderia o signal.
+- **Phase 94.01:** `metrics-snapshot` skip path-safety guard — sem disk reads, sem shell, sem projectRoot dep; retorno read-only síncrono de in-memory state não tem attack surface que o guard mitiga.
+- **Phase 94.01:** `KIT_MCP_METRICS_RESET=1` boot-time reset hook — operadores ganham clean window para A/B comparisons sem reiniciar o IDE/MCP host.

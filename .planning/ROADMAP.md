@@ -14,22 +14,21 @@
 **Origem:** 4 P1 carry-over do PRR v1.12.1 (Instrumentation fail axe 2/5) + coverage ratchet 65%→75% identificado em Phase 93. Story narrativa: framework que ENSINA observability/SRE deve PRATICAR.
 [Detalhes](./milestones/v1.18-ROADMAP.md)
 
-### Phase 94: Golden Signals MCP Server
+### Phase 94: Golden Signals MCP Server ✅ CONCLUÍDA (2026-05-09)
 
-**Goal:** Aplicar skill `four-golden-signals` ao próprio MCP server. Counter `tool_invocations_total` + Latency histogram (4 fixed buckets) para cada tool exposed. Implementação minimalista (Map + array, zero deps novas — fala via OpenTelemetry conceptualmente sem instalar SDK pesado).
+**Goal:** Aplicar skill `four-golden-signals` ao próprio MCP server. Counter `tool_invocations_total` + Latency histogram para cada tool exposed. Implementação minimalista (Map + array, zero deps novas).
 
-**Escopo:**
-- `src/core/metrics.js` (NOVO) — `Counter` + `Histogram` API simples (Map-based, in-memory).
-- `src/mcp-server/index.js` — wrap handler central com `metrics.incrementInvocation(toolName, status)` + `metrics.recordLatency(toolName, ms)`.
-- Export via novo MCP tool `metrics-snapshot` retornando counter + histogram percentiles (p50/p95/p99 via fixed buckets).
-- Reset via env `KIT_MCP_METRICS_RESET=1`.
+**Entregue:**
+- ✅ `src/core/metrics.js` (NOVO, 135 linhas) — `incrementInvocation` + `recordLatency` + `snapshot` + `reset`. Map-based counters, FIFO-capped histograms (N=1000), p50/p95/p99 via linear interpolation.
+- ✅ `src/mcp-server/index.js` — central catch wrappado com counter + latency observation em 3 paths (success/thrown/unknown-tool). SEC-14-06 + Phase 79.01 + Phase 84.01 invariantes preservadas.
+- ✅ Novo MCP tool `metrics-snapshot` (parameterless, read-only) — discoverable via tools/list, retorna `{counters, latency}` JSON.
+- ✅ Reset via env `KIT_MCP_METRICS_RESET=1` (boot-time hook).
 
-**Critérios de sucesso:**
-- Cada chamada MCP incrementa counter (tool, status=ok/error).
-- Latency p95 calculável via histogram buckets.
-- `metrics-snapshot` tool funcional (test integration).
-- Zero deps novas (Map + array stdlib).
-- Suite continua passing + 4+ regression tests.
+**Métricas:**
+- 359 tests pass (+15 novos: 11 unit + 4 integration), 0 fail, 2 skip preexistentes.
+- Zero deps novas (3 deps + 3 optional inalterados).
+- Duration ~6.8min, 3 commits atomic + 1 SUMMARY commit.
+- SUMMARY: [`94-01-SUMMARY.md`](./phases/94-golden-signals-mcp-server/94-01-SUMMARY.md)
 
 ### Phase 95: SLO Definitions
 
