@@ -59,7 +59,7 @@ Plans:
 
 Plans:
 - [x] 89-01-cli-lazy-imports-PLAN.md — CLI lazy imports de UI sidecar (PERF-16-04)
-- [ ] 89-02-optional-dependencies-PLAN.md — @inquirer/prompts + chokidar como optionalDependencies (PERF-16-05 + PERF-16-06)
+- [x] 89-02-optional-dependencies-PLAN.md — @inquirer/prompts + chokidar como optionalDependencies (PERF-16-05 + PERF-16-06)
 
 <details>
 <summary>✅ Concluídos</summary>
