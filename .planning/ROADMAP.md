@@ -9,25 +9,27 @@
 **Milestone:** v1.19 — Maturidade Operacional (fecha tech debt remanescente do v1.18)
 **Numeração de fases:** continua de v1.18 (último concluído: Fase 97) → v1.19 começa em **Fase 98**
 **Total de fases:** 2 (Fases 98-99)
-**Status:** Em andamento
+**Status:** Em andamento — 1/2 fases completas (Phase 98 ✅)
 **Criado:** 2026-05-09
 **Origem:** tech debt em [.planning/milestones/v1.18-MILESTONE-AUDIT.md](.planning/milestones/v1.18-MILESTONE-AUDIT.md). Continuação direta da v1.18 — opera com observability infra criada.
 
-### Phase 98: Coverage Ratchet 75% → 80%
+### Phase 98: Coverage Ratchet 75% → 80% ✅
+
+**Status:** CONCLUÍDA 2026-05-09 ([SUMMARY](./phases/98-coverage-ratchet-80/98-01-SUMMARY.md))
 
 **Goal:** Subir threshold 75% → 80%. Endereçar 2 hot files restantes: `src/ui/auto-spawn.js` (56.64%) e `src/cli/index.js` (55.26%).
 
-**Escopo:**
-- `test/unit/auto-spawn-paths.test.js` (NOVO) — spawn fallback paths, lockfile race, port allocation.
-- `test/unit/cli-subcommands.test.js` (NOVO) — subcommands raros (kit doctor, kit ui open sem sidecar, kit gates error paths).
-- `.github/workflows/ci.yml` — bump threshold 75 → 80.
+**Resultado:**
+- auto-spawn.js: 56.64% → **87.61%** (+31 pp) — 7 tests
+- cli/index.js: 54.85% → **75.07%** (+20 pp) — 26 tests
+- Overall: 77.89% → **81.51%** (+3.62 pp)
+- Threshold ci.yml: 75 → **80** (REQ INFRA-19-01)
+- Suite: +33 tests (target era ≥10), 340 unit + 109 integration green
 
-**Critérios de sucesso:**
-- auto-spawn.js coverage ≥75% (de 56.64%).
-- cli/index.js coverage ≥70% (de 55.26%).
-- Threshold global ≥80% no gate.
-- Suite cresce ≥10 testes novos.
-- Suite continua passing.
+**Escopo entregue:**
+- `test/unit/auto-spawn-paths.test.js` (NOVO, 203 LOC) — race-style stale lockfile + healthzOk timeout/error edge.
+- `test/unit/cli-subcommands.test.js` (NOVO, 501 LOC) — subcommands raros + runCLIAsync helper para mock HTTP + subprocess concurrency.
+- `.github/workflows/ci.yml` — THRESHOLD=80, REQ tag estendido.
 
 ### Phase 99: Metrics Retention + Burn-rate Calculator
 

@@ -1,39 +1,37 @@
 ---
 state_version: 1.0
-milestone: v1.18
-milestone_name: — Eat Your Own Dog Food
-status: Phase 97 completa (1/1 plan); v1.18 milestone 4/4 fases — pronto para /concluir-marco
-last_updated: "2026-05-09T17:00:07.379Z"
+milestone: v1.19
+milestone_name: — Maturidade Operacional
+status: Phase 98 completa (1/1 plan); v1.19 milestone 1/2 fases — Phase 99 pendente (Metrics Retention + Burn-rate Calculator)
+last_updated: "2026-05-09T17:31:30.000Z"
 progress:
-  total_phases: 4
+  total_phases: 2
   completed_phases: 1
   total_plans: 1
-  completed_plans: 4
+  completed_plans: 1
 ---
 
 # STATE.md — sessão atual
 
 ## Posição Atual
 
-Fase: 97 — Coverage Ratchet 65→75% (INFRA-18-01) — **CONCLUÍDA**
-Status: Phase 97 completa (1/1 plan); v1.18 milestone 4/4 fases — pronto para /concluir-marco
-Última atividade: 2026-05-09T17:07Z — Phase 97.01 executado (plan+execute combinado); 418 tests pass (307 unit + 109 integration + 2 skip); +38 novos tests unit em 4 test files (failures-coverage / install-coverage / auto-spawn-coverage / cli-index-coverage); coverage 69.95% → 77.89% (+7.94 pp); ci.yml threshold 65 → 75 (REQ INFRA-18-01); zero deps novas
+Fase: 98 — Coverage Ratchet 75→80% (INFRA-19-01) — **CONCLUÍDA**
+Status: Phase 98 completa (1/1 plan); v1.19 milestone 1/2 fases
+Última atividade: 2026-05-09T17:31Z — Phase 98.01 executado (plan+execute combinado); 451 tests pass (340 unit + 109 integration + 2 skip); +33 novos tests unit em 2 test files (auto-spawn-paths / cli-subcommands); auto-spawn 57→88%, cli/index 55→75%, overall 77.89% → 81.51% (+3.62 pp); ci.yml threshold 75 → 80 (REQ INFRA-19-01); zero deps novas
 
 ## Milestone ativo
 
-**v1.18 Eat Your Own Dog Food** — primeira release pós v1.17 que dogfooda as próprias skills SRE/Observabilidade no kit-mcp. **MILESTONE COMPLETO 4/4 fases.**
+**v1.19 Maturidade Operacional** — fecha tech debt remanescente do v1.18, opera com observability infra criada. Continuação direta v1.18 → v1.19 (numeração de fases: 97 → 98 → 99).
 
-**4 fases (94-97):**
+**2 fases (98-99):**
 
-- Phase 94 ✅ — Golden Signals MCP Server (OBS-18-01/02)
-- Phase 95 ✅ — SLO Definitions (OBS-18-03/04)
-- Phase 96 ✅ — RUNBOOK + FAILURE-MODES + BENCHMARK (OPS-18-01/02/03)
-- Phase 97 ✅ — Coverage Ratchet 65→75% (INFRA-18-01)
+- Phase 98 ✅ — Coverage Ratchet 75→80% (INFRA-19-01)
+- Phase 99 ⏳ — Metrics Retention + Burn-rate Calculator (depends on Phase 98)
 
 ## Próximo passo
 
-1. Rodar `/concluir-marco` para audit do v1.18 (4 fases) e arquivar milestone roadmap → preparar release v1.18.0.
-2. Após audit, `/publicar` para publish na npm + GitHub release (pipeline simples: push tag → GitHub Action publica).
+1. Executar Phase 99 (Metrics Retention + Burn-rate Calculator) — adiciona persistSnapshot/loadSnapshots em src/core/metrics.js, materializa burn-rate UI consumindo SLOs reais.
+2. Após Phase 99, rodar `/concluir-marco` para audit do v1.19 (2 fases) e preparar release v1.19.0.
 
 ## Bloqueadores
 
@@ -62,6 +60,7 @@ Stable API v1.0+ preservada. Budget total 6 deps mantido (Phase 92 reorganiza: 3
 | 95 | 01 | ~3.8min | 2 | 4 | 10 (new) |
 | 96 | 01 | ~9.4min | 4 | 4 | 11 (new) |
 | 97 | 01 | ~22min | 5 | 5 | 38 (new) |
+| 98 | 01 | ~22min | 4 | 3 | 33 (new) |
 
 ## Decisions
 
@@ -102,3 +101,7 @@ Stable API v1.0+ preservada. Budget total 6 deps mantido (Phase 92 reorganiza: 3
 - **Phase 97.01:** healthz_timeout path (5s polling) skipped — adicionar push unit suite past 12s for one edge case; integration coverage suficiente; regression surfaceria em PRR check antes de v1.19.
 - **Phase 97.01:** Mock HTTP server pattern para sidecar tests — vs launching real bin/ui.js (would orphan detached child em os.tmpdir() se test crashasse). Loopback HTTP server responds 200 a /healthz, hand-crafted lockfile points at it, exercises existing-running-sidecar branch sem process-tree teardown.
 - **Phase 97.01:** Codex toml userPath testado via HOME override — codex tem no project-level mcpConfig path; função fall-through to `~/.codex/config.toml`. Test sets process.env.HOME (e USERPROFILE on Windows) to tmp dir, restored em finally block.
+- **Phase 98.01:** Threshold = 80 (1.5 pp below baseline 81.51%) — variance entre runs estabilizou em <1 pp em Node 22.x; margem 1.5 mantém o salto round-number 65→70→75→80 visível em PR diffs sem flakear. Phase 93 usou 4 pp; Phase 97 usou 3 pp; Phase 98 reduz para 1.5 pp porque máquina + Node settled.
+- **Phase 98.01:** runCLIAsync helper introduzido — spawnSync bloqueia event loop do parent, impedindo in-process http.createServer mock de servir requests do subprocess (`kit ui status/stop/doctor`). Solução: child_process.spawn + Promise wrapper. Pattern reutilizável para qualquer test que precise mock HTTP + subprocess simultâneos.
+- **Phase 98.01:** auto-spawn race-style test pattern — hand-craft stale lockfile (port=99, pid=alive) + setTimeout 200ms re-write apontando para mock sidecar + ensureSidecar concurrently. Poll loop (100ms cadence) pega rewrite, healthzOk responde 200, ensureSidecar retorna ready=true, spawned=true. Cobre lines 44-56 sem esperar 5s POLL_TIMEOUT_MS. Side effect aceito: real bin/ui.js child spawn during test (idle out via watchdog).
+- **Phase 98.01:** gates run --yes test descartado — runGate invoca subroutine que bash-execs gate inline check; awk extraction de ci.yml não é o path do runGate (path diferente). 10s timeout. Cobertura de gates run handler (lines 290-292) deferida para v1.20 quando extrair runGate para sibling module callable in-process.
