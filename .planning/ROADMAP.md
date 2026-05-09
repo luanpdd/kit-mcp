@@ -31,6 +31,13 @@
 - Publish workflow só publica se `npm test` + `npm audit` passarem.
 - Suite de testes existente continua passando (zero regressão funcional).
 
+**Plans:** 3 plans (todos onda 1, paralelos)
+
+Plans:
+- [x] 01-mcp-gates-guard-PLAN.md — guard em handleGates contra exec arbitrário via MCP (SEC-13-01)
+- [x] 02-replay-id-validation-PLAN.md — validar replayId em loadReplay/annotateReplay/recordReplay contra path traversal (SEC-13-02)
+- [x] 03-ci-publish-hardening-PLAN.md — npm ci strict + tests/audit gates antes de publish (SEC-13-03, SEC-13-04)
+
 ### Phase 80: Hooks Race Pattern + Token Economy Quick Wins
 
 **Goal:** Aplicar o pattern do fix v1.12.1 (await on('end'+'close') antes de `process.exit`) aos 6 hooks restantes que ainda têm o mesmo bug latente, e capturar quick wins de economia de tokens (dedup de markup repetido em 11+ agents, cap em descrições, dropar CHANGELOG do tarball npm).
