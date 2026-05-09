@@ -2,13 +2,13 @@
 state_version: 1.0
 milestone: v1.14
 milestone_name: — Web/Core Security Hardening
-status: Roadmap criado — pronto para iniciar Phase 82
-last_updated: "2026-05-09T09:30:00.000Z"
+status: Phase 82 em andamento — Plan 01 concluído, Plan 02 (token-propagation) próximo
+last_updated: "2026-05-09T10:17:14.037Z"
 progress:
   total_phases: 3
   completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  total_plans: 2
+  completed_plans: 1
 ---
 
 # STATE.md — sessão atual
@@ -17,9 +17,9 @@ progress:
 
 ## Posição Atual
 
-Fase: Não iniciada (roadmap criado, aguardando início da Phase 82)
-Status: Roadmap criado — pronto para iniciar Phase 82
-Última atividade: 2026-05-09 — v1.13.0 publicado em npm 09:24Z; ROADMAP atualizado com v1.14 (3 fases 82-84 — itens HIGH deferred de v1.13)
+Fase: Phase 82 — Web Surface Hardening (Plan 01 concluído; Plan 02 próximo)
+Status: Phase 82 em andamento — Plan 01 concluído, Plan 02 (token-propagation) próximo
+Última atividade: 2026-05-09T10:15Z — Plan 82.01 (UI server hardening) entregue: SEC-14-01 (CSP sha256, no unsafe-inline) + SEC-14-02 (lockfile token + requireAuth). 6 commits, 9 regression tests, 3 skipped pending Plan 02. Suite 216 passing.
 
 ## Milestone ativo
 
@@ -35,7 +35,8 @@ Status: Roadmap criado — pronto para iniciar Phase 82
 
 ## Próximo passo
 
-1. `/autonomo` — executar todas as 3 fases sequencialmente
+1. Executar Plan 82.02 (token-propagation) — `src/ui/client.js publish()` lê lock.token + Authorization Bearer; `auto-spawn.js` injeta `?t=<token>` no URL; `index.html` parseia query e usa em fetch + EventSource. Reativa 3 testes skip-marcados.
+2. Continuar fases 83 e 84 do milestone v1.14 (`/autonomo` ou execução individual).
 
 ## Bloqueadores
 
@@ -48,6 +49,7 @@ Status: Roadmap criado — pronto para iniciar Phase 82
 - v1.12.x — entregue out-of-band 2026-05-08/09
 - **v1.13.0** — publicado em npm 2026-05-09T09:24Z (Security & Performance Hardening — 11 REQs, 33 testes novos, 210 baseline final)
 - **v1.14 — em andamento** (Web/Core Security Hardening; iniciado 2026-05-09; 3 fases)
+  - Phase 82 — Plan 01 (UI server hardening) concluído 2026-05-09T10:15Z. Plan 02 (token propagation) próximo.
 
 ## Contexto Acumulado
 

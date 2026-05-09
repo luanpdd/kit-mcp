@@ -17,6 +17,12 @@
 ### Phase 82: Web Surface Hardening
 
 **Goal:** Fechar 2 vulnerabilidades HIGH na surface web do UI sidecar — CSP `'unsafe-inline'` + payloads SSE sem escape (XSS reflexivo) e `/shutdown` + `/publish` sem autenticação (CSRF same-origin via coworker em máquina compartilhada).
+**Plans:** 2 plans (wave 1 + wave 2)
+
+Plans:
+- [x] 82-01-ui-server-hardening-PLAN.md — CSP estrito (sha256 hash), requireAuth middleware, token no lockfile, regression tests
+- [ ] 82-02-token-propagation-PLAN.md — auto-spawn → browser via ?t=, client.js + sidecar-tool-publisher.js anexam Bearer token
+
 
 **Escopo:**
 - `src/ui/server.js` — remover `'unsafe-inline'` do `script-src`, mover JS embutido no index.html para arquivo self-hosted, escape HTML obrigatório em todo conteúdo SSE renderizado (`textContent` em vez de `innerHTML`).
