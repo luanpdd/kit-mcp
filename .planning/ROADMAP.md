@@ -4,81 +4,49 @@
 
 ## Em andamento
 
-## v1.15 — DX & Token Economy Wave 2 (Fases 85-87)
+## v1.16 — Performance Runtime Wave (Fases 88-89)
 
-**Milestone:** v1.15 — DX & Token Economy Wave 2 (fecha os 5 tech debt items deferred de v1.13/v1.14)
-**Numeração de fases:** continua de v1.14 (último concluído: Fase 84) → v1.15 começa em **Fase 85**
-**Total de fases:** 3 (Fases 85-87)
+**Milestone:** v1.16 — Performance Runtime Wave (fecha P1-P6 da meta-auditoria — last batch de tech debt da v1.12.1)
+**Numeração de fases:** continua de v1.15 (último concluído: Fase 87) → v1.16 começa em **Fase 88**
+**Total de fases:** 2 (Fases 88-89)
 **Status:** Em andamento
 **Criado:** 2026-05-09
-**Origem:** tech debt explicitamente listado em `.planning/milestones/v1.13-MILESTONE-AUDIT.md` + `v1.14-MILESTONE-AUDIT.md`. Itens não-segurança (DX + token economy + CI ergonomics) que ficaram fora do escopo das ondas anteriores de hardening.
-[Detalhes](./milestones/v1.15-ROADMAP.md)
+**Origem:** P1-P6 listados no audit performance da meta-auditoria de v1.12.1 (não tocados nas waves de segurança/tokens/drift v1.13-v1.15).
+[Detalhes](./milestones/v1.16-ROADMAP.md)
 
-### Phase 85: Token Economy Wave 2
+### Phase 88: Concurrent I/O
 
-**Goal:** Capturar os 2 últimos token wins identificados pela meta-auditoria que foram explicitamente deferred em v1.13 — terse mode para listings (T2) e dedup da tabela `## Compatibilidade` repetida em 27 agents (T3).
-**Plans:** 2 plans (ambos onda 1, paralelos — files disjoints)
-
-Plans:
-- [x] 85-01-terse-mode-PLAN.md — terse:true em handleKit + --terse flag CLI + 4 regression tests (PERF-15-01)
-- [x] 85-02-compatibility-dedup-PLAN.md — kit/COMPATIBILITY.md canonical + edita 27 agents + regen file-manifest.json + 3 regression tests (PERF-15-02)
+**Goal:** Eliminar 3 bottlenecks de I/O sequencial — sync.js writes sequenciais, watch.js cache invalidation sem debounce, reverse-sync walks duplos sequenciais.
 
 **Escopo:**
-- `src/mcp-server/index.js` + `src/cli/index.js` — adicionar suporte a `?terse=true` (ou tool variant `list-*-terse`) em `list-agents`/`list-commands`/`list-skills` que retorna apenas `name + slug` (sem description), permitindo MCP clients listar nomes sem inflar contexto.
-- `kit/COMPATIBILITY.md` (novo) — extrair tabela canônica de compatibilidade IDE×capability.
-- 27 agents em `kit/agents/*.md` — substituir tabela inline por referência única "Compat: ver `kit/COMPATIBILITY.md`".
+- `src/core/sync.js` — `syncTo()` paraleliza file writes via `Promise.all` em batches de 16 (preservando `onProgress` callback semantics) (P1).
+- `src/core/watch.js` — debounce de 500ms na invalidação de cache via chokidar (P3).
+- `src/core/reverse-sync.js` — paralelizar walks (kit/ + target/) via `Promise.all` em vez de sequential (P4).
 
 **Critérios de sucesso:**
-- `list-agents?terse=true` retorna payload ≥40% menor que default (medido em corpus real).
-- `kit/COMPATIBILITY.md` existe e contém tabela canônica.
-- `grep -l "## Compatibilidade" kit/agents/*.md | wc -l` retorna 0 (substituído pela referência).
-- Suite continua passando + 4+ regression tests.
+- Benchmark `kit sync install claude-code` antes/depois mostra ≥30% redução wall time em workspace típico.
+- `kit sync watch` em modo edit-burst (10 saves rápidos) chama `clearKitCache` no máximo 1× por 500ms.
+- reverse-sync detect time reduzido em ≥10% (medido).
+- Suite continua passing + 6+ regression tests novos.
+- Nenhuma race condition introduzida (test simulando edits concorrentes).
 
-### Phase 86: Drift Auto-Prevention
+### Phase 89: Lazy Imports & Optional Deps
 
-**Goal:** Eliminar 2 fontes de drift recorrente que v1.13 mitigou estaticamente — README counters drift e manifest staleness — automatizando a regeneração via `prepublishOnly` hook.
+**Goal:** Reduzir cold start do CLI e lighten tarball ao deferrir imports só-quando-necessários — `@inquirer/prompts` e `chokidar` viram `optionalDependencies`, UI stack é dynamic-imported.
 
-**Depends on:** Phase 85
-**Plans:** 2 plans (ambos onda 1, paralelos — files disjoints)
-
-Plans:
-- [x] 86-01-readme-counts-PLAN.md — scripts/update-readme-counts.js + bloco AUTOGEN-COUNTS no README + 4 regression tests (DX-15-01)
-- [x] 86-02-manifest-regen-PLAN.md — scripts/regen-manifest.js + prepublishOnly + CI drift gate + 3 regression tests (DX-15-02)
+**Depends on:** Phase 88
 
 **Escopo:**
-- `scripts/update-readme-counts.js` (novo) — lê `kit/agents/*.md`, `kit/commands/*.md`, `kit/skills/**/SKILL.md`, `gates/*.md`; conta; substitui bloco `<!-- AUTOGEN-COUNTS-START -->...<!-- AUTOGEN-COUNTS-END -->` no README.md.
-- `scripts/regen-manifest.js` (novo) — regenera `kit/file-manifest.json` com SHA256 de cada arquivo em kit/; salva com schema atual.
-- `package.json:prepublishOnly` — chamar ambos scripts antes do test suite; commit drift se houver (em CI: fail se diff != empty para forçar manual review).
-- README.md — adicionar bloco `<!-- AUTOGEN-COUNTS-... -->` substituindo contadores estáticos da v1.13.
+- `src/cli/index.js` — substituir top-level imports de `src/ui/*`, `chokidar`, `@inquirer/prompts` por dynamic `await import()` dentro dos subcommands que usam (P2).
+- `package.json` — mover `@inquirer/prompts` e `chokidar` de `dependencies` para `optionalDependencies` (P5+P6); ainda instalados por default mas falha graceful se ausentes.
+- Graceful fallback messages se optional dep ausente (ex: "kit ui requer chokidar; rode `npm i chokidar`").
 
 **Critérios de sucesso:**
-- `scripts/update-readme-counts.js` standalone roda sem erro e produz output esperado (counts reais).
-- `scripts/regen-manifest.js` standalone produz manifest idêntico a `kit/file-manifest.json` atual (zero mudanças quando rodado em estado limpo).
-- `package.json prepublishOnly` chama ambos scripts antes dos tests.
-- README.md tem bloco AUTOGEN delimitado (testável via grep).
-- Suite continua passando + 4+ regression tests.
-
-### Phase 87: CI Matrix Expansion (8 IDEs)
-
-**Goal:** Eliminar gap em `.github/workflows/ci.yml` onde só `claude-code` é exercitado em CI matrix — outros 7 IDEs (cursor, codex, gemini-cli, windsurf, antigravity, copilot, trae) regridem em silêncio se sync workflow quebra para algum deles.
-
-**Depends on:** Phase 85
-**Plans:** 1 plan (onda 1, autonomous)
-
-Plans:
-- [x] 87-01-ci-matrix-expansion-PLAN.md — matrix axis target [8 IDEs] + `${{ matrix.target }}` em sync round-trip + if-gate de steps target-agnostic + regression test 10 tests (DX-15-03)
-
-**Escopo:**
-- `.github/workflows/ci.yml` — adicionar matrix axis `target: [claude-code, cursor, codex, gemini-cli, copilot, windsurf, antigravity, trae]` no smoke job; parameterizar comandos `kit sync install/remove` para usar `${{ matrix.target }}`.
-- Verificar que cada target tem path resolution válido em `src/core/registry.js`. Se algum target tiver bug específico revelado pela expansion → fix dentro desta fase.
-
-**Critérios de sucesso:**
-- CI matrix em ci.yml tem 8 targets axis × 3 OS × 3 Node = 72 runs.
-- Cada target consegue completar `kit sync install <target> --target <ws>` + `kit sync remove <target> <ws>` round-trip sem erro.
-- Workflow file passa YAML lint (validação em runtime CI; sem lint local disponível).
-- Suite continua passando.
-
-
+- `kit kit list-agents --terse` cold start ≥30% mais rápido (medido benchmark).
+- `npm install --omit=optional` resulta em CLI core funcional (apenas commands que precisam de ui/inquirer/chokidar falham com mensagem descritiva).
+- `package.json` move 2 deps para `optionalDependencies`.
+- Tarball npm reduz ≥5% (medido `npm pack --dry-run`).
+- Suite continua passing + 4+ regression tests.
 
 <details>
 <summary>✅ Concluídos</summary>
@@ -95,7 +63,8 @@ Plans:
 - v1.10.0 — SRE Engagement (Phases 36-41)
 - v1.11.0 — SRE Resilience & Release Engineering (Phases 42-47)
 - v1.12 — Legacy Code Mastery & AI-Era Refactoring (Phases 48-78) — entregue out-of-band
-- **v1.13.0 — Security & Performance Hardening (Phases 79-81)** — entregue 2026-05-09 09:24Z. 11 REQs (SEC-13-01..05, PERF-13-01..03, DRIFT-13-01..03), 33 testes novos, 210 baseline. Origem: meta-auditoria com 12 agentes paralelos sobre v1.12.1. [Detalhes](./milestones/v1.13-ROADMAP.md) · [Audit](./milestones/v1.13-MILESTONE-AUDIT.md)
-- **v1.14.0 — Web/Core Security Hardening (Phases 82-84)** — entregue 2026-05-09. 6 REQs (SEC-14-01..06), 63 testes novos, 273 baseline final. Continuação direta da v1.13 — fechou as 6 issues HIGH deferidas. [Detalhes](./milestones/v1.14-ROADMAP.md) · [Audit](./milestones/v1.14-MILESTONE-AUDIT.md)
+- **v1.13.0 — Security & Performance Hardening (Phases 79-81)** — entregue 2026-05-09 09:24Z. 11 REQs, 33 testes, 210 baseline. [Audit](./milestones/v1.13-MILESTONE-AUDIT.md)
+- **v1.14.0 — Web/Core Security Hardening (Phases 82-84)** — entregue 2026-05-09 11:46Z. 6 REQs HIGH, 63 testes, 273 baseline. [Audit](./milestones/v1.14-MILESTONE-AUDIT.md)
+- **v1.15.0 — DX & Token Economy Wave 2 (Phases 85-87)** — entregue 2026-05-09 13:11Z. 5 REQs (PERF-15-01..02, DX-15-01..03), 26 testes, 299 baseline. [Audit](./milestones/v1.15-MILESTONE-AUDIT.md)
 
 </details>
