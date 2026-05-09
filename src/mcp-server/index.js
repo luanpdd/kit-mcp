@@ -12,6 +12,10 @@ import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
 import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
+import { readFileSync } from 'node:fs';
+import { fileURLToPath } from 'node:url';
+import path from 'node:path';
+
 import { listKit, searchKit, findItem } from '../core/kit.js';
 import { listTargets } from '../core/registry.js';
 import { syncTo, statusOf, removeFrom, summarize } from '../core/sync.js';
@@ -124,6 +128,23 @@ const TOOLS = [
     },
   },
 ];
+
+// DRIFT-13-03: read version from package.json at module load (NOT inside
+// createServer — re-reading on every call adds zero value). Same pattern as
+// bin/cli.js:43-51. Both files are 2 levels deep from repo root, so the
+// '..', '..' resolution works identically. Falls back to 'unknown' if the
+// package.json lookup fails (unusual install layout).
+function readPkgVersion() {
+  try {
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const pkgPath = path.resolve(here, '..', '..', 'package.json');
+    return JSON.parse(readFileSync(pkgPath, 'utf8')).version;
+  } catch {
+    return 'unknown';
+  }
+}
+
+export const PKG_VERSION = readPkgVersion();
 
 // --- handlers ---
 
@@ -266,7 +287,7 @@ function slim(x) {
 
 export async function createServer() {
   const server = new Server(
-    { name: 'kit-mcp', version: '0.1.0' },
+    { name: 'kit-mcp', version: PKG_VERSION },
     { capabilities: { tools: {} } }
   );
 
