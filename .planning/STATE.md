@@ -2,13 +2,13 @@
 state_version: 1.0
 milestone: v1.15
 milestone_name: — DX & Token Economy Wave 2
-status: Milestone v1.14 completo — todas 3 fases (82, 83, 84) concluídas
-last_updated: "2026-05-09T12:09:35.824Z"
+status: v1.15 ativo — primeiro plan da Phase 85 concluído
+last_updated: "2026-05-09T12:13:50.411Z"
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # STATE.md — sessão atual
@@ -17,9 +17,13 @@ progress:
 
 ## Posição Atual
 
-Fase: Phase 85 — Token Economy Wave 2 **EM ANDAMENTO** (Plan 85.01 entregue; Plan 85.02 em paralelo)
-Status: v1.15 ativo — primeiro plan da Phase 85 concluído
-Última atividade: 2026-05-09T12:08Z — Plan 85.01 (terse mode PERF-15-01) entregue: `terse:boolean` aditivo no MCP `kit` schema + `slimTerse(x)` helper em `src/mcp-server/index.js` e `src/cli/index.js`; CLI ganha `--terse` flag em list-agents/list-commands/list-skills (paridade cross-surface). 4 regression tests novos em `test/unit/terse-mode.test.js` (shape + ≥40% reduction + CLI parity + backward-compat). **Corpus real mostra 68.8% redução** (25486 → 7942 bytes em 179 items, well above ≥40% threshold). Action enum inalterado, default false → comportamento idêntico para clientes existentes. Suite: 195 unit (193 pass + 2 skipped) + 84 integration = 279 tests, 0 fails. 2 commits atômicos (efd0709 mcp, 2471063 cli+tests).
+Fase: Phase 85 — Token Economy Wave 2 **CONCLUÍDA** (Plans 85.01 + 85.02 entregues em paralelo)
+Status: v1.15 ativo — Phase 85 completa
+Última atividade: 2026-05-09T12:12Z — Plan 85.02 (compatibility dedup PERF-15-02) entregue em paralelo com 85.01: kit/COMPATIBILITY.md canonical (65 linhas, 27 agents na matriz horizontal × IDE × tier × capability), 27 agents editados (bloco `## Compatibilidade` substituído por linha `**Compat:** ...` + link relativo), kit/file-manifest.json regenerado (327/327 SHA256 verified, version 1.13.0 preservada), 3 regression tests em test/unit/compatibility-dedup.test.js (heading absent + reference line + manifest verifies). 3 patterns canônicos identificados (A filesystem-only, B Supabase MCP-dependent, C MCP-augmented degraded) — Pattern C foi desvio Regra 2 (PLAN previa só A/B). Token economy estrutural: 271 linhas removidas → 27 adicionadas, net -244 linhas no kit. Sync install dry-run smoke: 321 files synced, sem EMANIFESTMISMATCH. 3 commits atômicos --no-verify (844c0e7 COMPATIBILITY.md canonical, cbe5956 27 agents [-271/+27 lines], 21be5e4 manifest regen + tests).
+
+Anterior: 2026-05-09T12:08Z — Plan 85.01 (terse mode PERF-15-01) entregue: `terse:boolean` aditivo no MCP `kit` schema + `slimTerse(x)` helper em `src/mcp-server/index.js` e `src/cli/index.js`; CLI ganha `--terse` flag em list-agents/list-commands/list-skills (paridade cross-surface). 4 regression tests novos em `test/unit/terse-mode.test.js` (shape + ≥40% reduction + CLI parity + backward-compat). **Corpus real mostra 68.8% redução** (25486 → 7942 bytes em 179 items, well above ≥40% threshold). Action enum inalterado, default false → comportamento idêntico para clientes existentes. Suite: 195 unit (193 pass + 2 skipped) + 84 integration = 279 tests, 0 fails. 2 commits atômicos (efd0709 mcp, 2471063 cli+tests).
+
+Suite final pós-Phase 85: 282 tests (198 unit + 84 integration), 0 fails. Plan 85.02 adicionou 3 testes; Plan 85.01 adicionou 4 (já refletido no 279 acima — mais 3 do 02 = 282 total).
 
 ## Milestone ativo
 
@@ -56,6 +60,7 @@ Status: v1.15 ativo — primeiro plan da Phase 85 concluído
   - Phase 84 — Plan 01 (error-redaction SEC-14-06) concluído 2026-05-09T11:17Z. Helper puro + 3 call sites (MCP central catch + reflect rethrow + replays JSON) + 35 regression tests (23 helper + 5 envelope + 3 reflect + 3 replays + 1 spawn). Stack permanece em stderr; clientes nunca recebem stack/path absoluto/sk-ant/Bearer. Single choke point grep-verifiable. **Phase 84 completa — milestone v1.14 fechado.**
 - **v1.15 — em andamento** (DX & Token Economy Wave 2; iniciado 2026-05-09; 3 fases planejadas)
   - Phase 85 — Plan 01 (terse mode PERF-15-01) concluído 2026-05-09T12:08Z. `terse:boolean` aditivo no MCP `kit` schema + `slimTerse(x)` helper em mcp-server e cli (paridade cross-surface) + CLI `--terse` flag em list-agents/list-commands/list-skills + 4 regression tests novos (test/unit/terse-mode.test.js: shape, ≥40% reduction, CLI parity, backward-compat). Corpus real **68.8% redução** (25486 → 7942 bytes em 179 items). Action enum inalterado, default false → backward-compat preservada. Suite 279 (195 unit + 84 integration), 0 fails. 2 commits (efd0709 mcp, 2471063 cli+tests).
+  - Phase 85 — Plan 02 (compatibility dedup PERF-15-02) concluído 2026-05-09T12:12Z em paralelo. kit/COMPATIBILITY.md canonical (65 linhas, 27 agents na matriz horizontal) + 27 agents com linha `**Compat:**` + relative link, substituindo blocos `## Compatibilidade` (~6-12 linhas cada). Manifest regenerado (327/327 verified, v1.13.0 preserved). 3 patterns canônicos (A filesystem-only/B Supabase MCP-dependent/C MCP-augmented degraded). 3 regression tests pass (compat-dedup.test.js). Suite final 282/282 (198 unit + 84 integration), 0 fails. 3 commits atômicos --no-verify (844c0e7, cbe5956, 21be5e4). Token economy: -244 linhas net no kit. **Phase 85 completa.**
 
 ## Contexto Acumulado
 
