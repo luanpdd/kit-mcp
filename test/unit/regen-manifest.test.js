@@ -106,3 +106,50 @@ test('regenManifest: detects content change → updates hash + timestamp', async
     await rm(root, { recursive: true, force: true });
   }
 });
+
+test('POL-17-02: parallel hashing with >BATCH_SIZE files preserves deterministic order', async () => {
+  // Fixture with 50 files spanning multiple BATCH_SIZE=16 windows. Ensures the
+  // Promise.all batches don't reorder keys based on completion order — the
+  // assignment must follow the sorted `targets` array regardless of parallelism.
+  const root = await mkdtemp(path.join(tmpdir(), 'kit-regen-manifest-parallel-'));
+  try {
+    await mkdir(path.join(root, 'kit', 'a'), { recursive: true });
+    await mkdir(path.join(root, 'kit', 'b'), { recursive: true });
+    // Generate names with mixed sort order so any "by completion" leak shows up.
+    const names = [];
+    for (let i = 0; i < 50; i++) {
+      // Vary sizes so hashing latencies differ — encourages out-of-order completion.
+      const dir = i % 2 === 0 ? 'a' : 'b';
+      const sz = (i * 137) % 4096;
+      const rel = `${dir}/file-${String(i).padStart(2, '0')}.txt`;
+      names.push(rel);
+      await writeFile(path.join(root, 'kit', rel), 'x'.repeat(100 + sz));
+    }
+    await writeFile(
+      path.join(root, 'package.json'),
+      JSON.stringify({ name: 't', version: '1.2.3' }) + '\n'
+    );
+
+    const r = await regenManifest(root);
+    assert.equal(r.changed, true);
+    assert.equal(r.count, 50, 'all 50 files hashed across multiple batches');
+
+    const m = JSON.parse(await readFile(path.join(root, 'kit', 'file-manifest.json'), 'utf8'));
+    const keys = Object.keys(m.files);
+    assert.equal(keys.length, 50, 'all 50 keys present');
+    assert.deepEqual(keys, [...keys].sort(), 'keys sorted lexicographically (deterministic order despite parallel hashing)');
+
+    // Run again — must be byte-identical (idempotent) even with parallel batches.
+    const after1 = await readFile(path.join(root, 'kit', 'file-manifest.json'), 'utf8');
+    const r2 = await regenManifest(root);
+    assert.equal(r2.changed, false, 'second regen detects no change');
+    const after2 = await readFile(path.join(root, 'kit', 'file-manifest.json'), 'utf8');
+    assert.equal(after1, after2, 'parallel regen produces byte-identical output across runs');
+
+    // verifyManifest accepts it (proves hashes match real file contents).
+    const v = await verifyManifest(path.join(root, 'kit'));
+    assert.equal(v.ok, true, 'verifyManifest accepts parallel-regenerated manifest');
+  } finally {
+    await rm(root, { recursive: true, force: true });
+  }
+});

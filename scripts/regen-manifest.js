@@ -35,6 +35,12 @@ async function walkRel(rootAbs, prefix = '') {
   return out;
 }
 
+// POL-17-02: BATCH_SIZE=16 matches manifest-verify.js (Phase 90.01) and sync.js
+// (Phase 88.01) sweet spot — bounded max-in-flight defends fd ulimit on large
+// kits while saturating typical SSDs for SHA256 throughput. Hardcoded — no env
+// override needed for prepublish hot path (single invocation, not user latency).
+const BATCH_SIZE = 16;
+
 async function sha256(absPath) {
   const buf = await readFile(absPath);
   // Normalize CRLF→LF before hashing so manifest is platform-stable.
@@ -57,11 +63,23 @@ export async function regenManifest(repoRoot = REPO_ROOT_DEFAULT) {
   const targets = allRel.filter((r) => r !== MANIFEST_BASENAME);
   targets.sort();
 
+  // POL-17-02: parallelize hashing in BATCH_SIZE batches via Promise.all. Same
+  // pattern as manifest-verify.js (Phase 90.01) — sequential batches preserve
+  // fd-ceiling discipline; within each batch SHA256 saturates the disk. Output
+  // is byte-identical to the prior sequential version: targets[] is sorted up-
+  // front (line 58), and we assign into `files[key]` indexed by `key`, so JSON
+  // insertion order is determined by the sorted iteration of targets — not by
+  // Promise.all completion order. The manifest stays deterministic.
   const files = {};
-  for (const rel of targets) {
-    // Use forward slashes in keys (matches existing manifest, x-platform stable)
-    const key = rel.split(path.sep).join('/');
-    files[key] = await sha256(path.join(kitRoot, rel));
+  for (let i = 0; i < targets.length; i += BATCH_SIZE) {
+    const slice = targets.slice(i, i + BATCH_SIZE);
+    const hashes = await Promise.all(slice.map((rel) => sha256(path.join(kitRoot, rel))));
+    for (let j = 0; j < slice.length; j++) {
+      const rel = slice[j];
+      // Use forward slashes in keys (matches existing manifest, x-platform stable)
+      const key = rel.split(path.sep).join('/');
+      files[key] = hashes[j];
+    }
   }
 
   // Read existing manifest (if any) to decide if anything changed
