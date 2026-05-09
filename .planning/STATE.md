@@ -2,38 +2,38 @@
 state_version: 1.0
 milestone: v1.17
 milestone_name: — Performance Wave 2 + Quick Wins
-status: Phase 92 completa (1/1 plan), aguardando Phase 93
-last_updated: "2026-05-09T15:39:28.728Z"
+status: Phase 93 completa (1/1 plan); v1.17 milestone feature-complete (4/4 fases)
+last_updated: "2026-05-09T15:48:30.000Z"
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 2
-  completed_plans: 3
+  completed_phases: 4
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # STATE.md — sessão atual
 
 ## Posição Atual
 
-Fase: 92 — Quick Wins Polish (POL-17-01..04) — **CONCLUÍDA**
-Status: Phase 92 completa (1/1 plan), aguardando Phase 93
-Última atividade: 2026-05-09T15:36Z — Phase 92.01 executado (plan+execute combinado); 333 tests pass (248 unit + 85 integration); +9 novos tests vs Phase 91 baseline; tarball -68KB + prepublishOnly -32ms speedup
+Fase: 93 — CI Deps Gate + Coverage Tooling (INFRA-17-01/02) — **CONCLUÍDA**
+Status: Phase 93 completa (1/1 plan); v1.17 milestone feature-complete (4/4 fases)
+Última atividade: 2026-05-09T15:48Z — Phase 93.01 executado (plan+execute combinado); 342 tests pass (248 unit + 94 integration + 2 skip); +9 novos tests; ci.yml deps gate fechou loophole de optionalDependencies + novo coverage gate threshold 65 (baseline 69.00)
 
 ## Milestone ativo
 
 **v1.17 Performance Wave 2 + Quick Wins** — endereça 2 P0 perf hotspots novos identificados pela meta-auditoria pós-v1.16 + polish items P1/P2.
 
-**4 fases (90-93):**
+**4 fases (90-93) — TODAS CONCLUÍDAS:**
 
-- Phase 90 — verifyManifest paralelo + cache (P0)
-- Phase 91 — Diff-based sync (P0)
-- Phase 92 — Quick wins polish (open optional, regen parallel, getLocalVersion remove, JSDoc)
-- Phase 93 — CI deps gate + coverage tooling
+- Phase 90 ✅ — verifyManifest paralelo + cache (P0)
+- Phase 91 ✅ — Diff-based sync (P0)
+- Phase 92 ✅ — Quick wins polish (open optional, regen parallel, getLocalVersion remove, JSDoc)
+- Phase 93 ✅ — CI deps gate + coverage tooling (INFRA-17-01/02)
 
 ## Próximo passo
 
-1. Phase 93 — CI deps gate + coverage tooling
-2. `/autonomo` — continuar execução autônoma da fase final do v1.17
+1. `/auditar-marco v1.17` — auditar conclusão do milestone vs intenção original
+2. `/publicar` — publicar v1.17.0 (release notes, GitHub release, npm publish via tag-trigger)
 
 ## Bloqueadores
 
@@ -57,6 +57,7 @@ Stable API v1.0+ preservada. Budget total 6 deps mantido (Phase 92 reorganiza: 3
 | 90 | 01 | ~3.5min | 3 | 2 | 5 |
 | 91 | 01 | ~6min | 3 | 2 | 4 |
 | 92 | 01 | ~7min | 4 | 8 | 7 (new) |
+| 93 | 01 | ~7.5min | 3 | 3 | 9 (new) |
 
 ## Decisions
 
@@ -70,3 +71,6 @@ Stable API v1.0+ preservada. Budget total 6 deps mantido (Phase 92 reorganiza: 3
 - **Phase 92.01:** BATCH_SIZE=16 hardcoded em regen-manifest.js (mesma rationale Phase 90.01) — prepublish hot path, single-shot, fora de qualquer budget de latência de usuário.
 - **Phase 92.01:** `getLocalVersion` removido só do import em src/cli/index.js — função permanece exportada (used por checkUpgrade + upgrade-check.test.js); apenas o import era dead code.
 - **Phase 92.01:** Static text-regex tests over eslint plugin — kit-mcp zero-build/zero-config policy preservado; CI catches regressions equivalentemente (dead-imports.test.js + jsdoc-coverage.test.js).
+- **Phase 93.01:** Coverage threshold = 65 (não 75) — baseline medido foi 69.00%, set 4 pontos abaixo para absorver noise (CONTEXT.md linha 60 explicitamente autorizou). Ratchet plan: 70 → 75 → 80 conforme low-coverage files (cli/index.js 37%, mcp-server/install.js 19%, ui/auto-spawn.js 31%, core/failures.js 17%) ganharem testes em v1.18+.
+- **Phase 93.01:** Coverage step gated a 1 célula da matrix (Linux+Node22+claude-code) — coverage % é target-agnostic; rodar 72× seria desperdício.
+- **Phase 93.01:** Tests de CI gate via text-regex sobre ci.yml — adicionar `yaml` package quebraria o budget de 6 deps que o próprio gate enforce; mesmo pattern de gates/budget-description.md.
