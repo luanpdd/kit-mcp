@@ -2,8 +2,8 @@
 state_version: 1.0
 milestone: v1.13
 milestone_name: — Security & Performance Hardening
-status: Phase 79 plan 01+02 entregues; Phase 80 plans 02 + 03 entregues em paralelo
-last_updated: "2026-05-09T05:00:48Z"
+status: Phase 79 plan 01+02 entregues; Phase 80 plans 02 + 03 + 04 entregues em paralelo (plan 01 hooks-flush em execução paralela)
+last_updated: "2026-05-09T05:05:00.000Z"
 progress:
   total_phases: 3
   completed_phases: 1
@@ -18,9 +18,9 @@ progress:
 ## Posição Atual
 
 Fase: 79 + 80 (paralelo)
-Plano: 79.01 + 79.02 + 80.02 + 80.03 concluídos; 79.03 + 80.01 + 80.04 em execução paralela
-Status: Phase 79 plan 01+02 entregues; Phase 80 plans 02 + 03 entregues em paralelo
-Última atividade: 2026-05-09 — Plan 80.03 concluído (commits 6c0c3eb + 0847a49, PERF-13-02; bloco `# hooks:` morto removido de 11 agents = 66 linhas, ~880 tokens recuperados/sessão; 3 regression tests; suite unit 133/133 + integration 71/71)
+Plano: 79.01 + 79.02 + 80.02 + 80.03 + 80.04 concluídos; 79.03 + 80.01 em execução paralela
+Status: Phase 79 plan 01+02 entregues; Phase 80 plans 02 + 03 + 04 entregues em paralelo (80.01 hooks-flush em execução)
+Última atividade: 2026-05-09 — Plan 80.04 concluído (commits 6dc1af1 + d240aeb, PERF-13-03; CHANGELOG.md removido de package.json files[] = ~79KB unpacked saving por install; 4 integration tests anti-regression; suite unit 133/133 + integration 71/71)
 
 ## Milestone ativo
 
