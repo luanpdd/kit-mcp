@@ -42,6 +42,7 @@ const TOOLS = [
         kind:   { type: 'string', enum: ['agent', 'command', 'skill'], description: 'For action=get' },
         name:   { type: 'string', description: 'For action=get' },
         query:  { type: 'string', description: 'For action=search' },
+        terse:  { type: 'boolean', description: 'For action=list-*: omit description, return only {kind, name}. Default false (PERF-15-01).' },
       },
       required: ['action'],
     },
@@ -152,10 +153,13 @@ export const PKG_VERSION = readPkgVersion();
 
 async function handleKit(args) {
   const kit = await listKit();
+  // PERF-15-01: terse mode skips description payload entirely. Backward-compat:
+  // args.terse undefined/false preserves slim()+summarize() cap-80 behavior.
+  const variant = args.terse === true ? slimTerse : slim;
   switch (args.action) {
-    case 'list-agents':   return kit.agents.map(slim);
-    case 'list-commands': return kit.commands.map(slim);
-    case 'list-skills':   return [...kit.skills, ...kit.skillsExtras].map(slim);
+    case 'list-agents':   return kit.agents.map(variant);
+    case 'list-commands': return kit.commands.map(variant);
+    case 'list-skills':   return [...kit.skills, ...kit.skillsExtras].map(variant);
     case 'get': {
       const item = findItem(kit, args.kind, args.name);
       if (!item) return { error: `Not found: ${args.kind}/${args.name}` };
@@ -303,6 +307,13 @@ function slim(x) {
   // PERF-13-01 (TOK-02): truncate description via SUMMARY_MAX_CHARS (80) cap shared
   // with src/core/sync.js — full description lives in each item's file under kit/.
   return { kind: x.kind, name: x.name, description: summarize(x.description) };
+}
+
+// PERF-15-01: terse variant — omits description entirely. Used when MCP client
+// only needs name discovery (e.g. populating UI lists, validating slug references).
+// Default action=list-* still returns description capped via slim()/summarize().
+function slimTerse(x) {
+  return { kind: x.kind, name: x.name };
 }
 
 // --- server bootstrap ---
