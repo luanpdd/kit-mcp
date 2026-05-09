@@ -9,7 +9,7 @@
 **Milestone:** v1.19 — Maturidade Operacional (fecha tech debt remanescente do v1.18)
 **Numeração de fases:** continua de v1.18 (último concluído: Fase 97) → v1.19 começa em **Fase 98**
 **Total de fases:** 2 (Fases 98-99)
-**Status:** Em andamento — 1/2 fases completas (Phase 98 ✅)
+**Status:** ✅ COMPLETO — 2/2 fases concluídas. Pronto para `/concluir-marco v1.19`.
 **Criado:** 2026-05-09
 **Origem:** tech debt em [.planning/milestones/v1.18-MILESTONE-AUDIT.md](.planning/milestones/v1.18-MILESTONE-AUDIT.md). Continuação direta da v1.18 — opera com observability infra criada.
 
@@ -31,25 +31,28 @@
 - `test/unit/cli-subcommands.test.js` (NOVO, 501 LOC) — subcommands raros + runCLIAsync helper para mock HTTP + subprocess concurrency.
 - `.github/workflows/ci.yml` — THRESHOLD=80, REQ tag estendido.
 
-### Phase 99: Metrics Retention + Burn-rate Calculator
+### Phase 99: Metrics Retention + Burn-rate Calculator ✅
+
+**Status:** CONCLUÍDA 2026-05-09 ([SUMMARY](./phases/99-metrics-retention-burn-rate/99-01-SUMMARY.md))
 
 **Goal:** Wire skill `burn-rate-alerting` ao `/burn-rate-status` consumindo SLOs reais. Persistir metrics em `.planning/metrics/snapshots/` rolling.
 
-**Depends on:** Phase 98
+**Resultado:**
+- `src/core/metrics.js`: 2 novos exports async (`persistSnapshot`, `loadSnapshots`) + cleanup helper privado. Zero new deps (fs/promises stdlib).
+- Rolling 30d retention com cleanup implícito em cada persist.
+- On-disk shape: `{ ts: <epoch_ms>, counters, latency }` em `.planning/metrics/snapshots/<iso-safe>.json`.
+- `.gitignore` adiciona `.planning/metrics/snapshots/`.
+- `kit/commands/burn-rate-status.md` reescrito (FIX bug `.md`→`.yml` glob): consome SLOs+snapshots, calcula SLI por tipo (event-based ratio para availability, percentile para latency), burn rate `error_rate / (1 - target)`, status enum PAGE/TICKET/WARN/OK/no_data, ETA exhaustão.
+- 31 novos tests (12 retention + 19 burn-rate-calc) — 7.75× sobre o floor 4+.
+- Suite: 373 unit (371 pass / 2 skip / 0 fail; +31) + 109 integration green.
+- 4 commits atomic: 7a48b12 / 6139f93 / 85e8a6c / ac67d20.
+- Duration: ~8min.
 
-**Escopo:**
-- `src/core/metrics.js` — adicionar `persistSnapshot(rootDir)` + `loadSnapshots(rootDir, windowMs)`.
-- `.planning/metrics/snapshots/` — diretório JSON timestamped (gitignored, dev-only).
-- `kit/commands/burn-rate-status.md` — consume snapshots + SLOs YAML; tabela ETA exhaustão.
-- Cleanup snapshots > 30d.
-- Test fixtures sintéticos.
-
-**Critérios de sucesso:**
-- `persistSnapshot()` cria JSON em `.planning/metrics/snapshots/<timestamp>.json`.
-- `loadSnapshots(window)` filtra por timestamp.
-- `/burn-rate-status` exibe SLI atual vs target.
-- Cleanup automático.
-- Suite passing + 4+ regression tests.
+**Escopo entregue (REQs):**
+- OBS-19-01: persistSnapshot + retention dir
+- OBS-19-02: loadSnapshots com window filter
+- OBS-19-03: cleanup snapshots > 30d
+- OBS-19-04: burn-rate-status command pipeline
 
 <details>
 <summary>✅ Concluídos</summary>

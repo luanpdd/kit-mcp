@@ -2,36 +2,36 @@
 state_version: 1.0
 milestone: v1.19
 milestone_name: — Maturidade Operacional
-status: Phase 98 completa (1/1 plan); v1.19 milestone 1/2 fases — Phase 99 pendente (Metrics Retention + Burn-rate Calculator)
-last_updated: "2026-05-09T17:31:30.000Z"
+status: v1.19 milestone COMPLETO (2/2 fases) — pronto para /concluir-marco
+last_updated: "2026-05-09T17:45:51Z"
 progress:
   total_phases: 2
-  completed_phases: 1
-  total_plans: 1
-  completed_plans: 1
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
 ---
 
 # STATE.md — sessão atual
 
 ## Posição Atual
 
-Fase: 98 — Coverage Ratchet 75→80% (INFRA-19-01) — **CONCLUÍDA**
-Status: Phase 98 completa (1/1 plan); v1.19 milestone 1/2 fases
-Última atividade: 2026-05-09T17:31Z — Phase 98.01 executado (plan+execute combinado); 451 tests pass (340 unit + 109 integration + 2 skip); +33 novos tests unit em 2 test files (auto-spawn-paths / cli-subcommands); auto-spawn 57→88%, cli/index 55→75%, overall 77.89% → 81.51% (+3.62 pp); ci.yml threshold 75 → 80 (REQ INFRA-19-01); zero deps novas
+Fase: 99 — Metrics Retention + Burn-rate Calculator (OBS-19-01..04) — **CONCLUÍDA**
+Status: v1.19 milestone COMPLETO (2/2 fases) — pronto para /concluir-marco
+Última atividade: 2026-05-09T17:45Z — Phase 99.01 executado (plan+execute combinado); 482 tests pass (371 unit + 109 integration + 2 skip); +31 novos tests unit em 2 test files (metrics-retention 12 / burn-rate-calc 19); persistSnapshot+loadSnapshots adicionados em src/core/metrics.js (zero new deps, fs/promises stdlib); .planning/metrics/snapshots/ gitignored; kit/commands/burn-rate-status.md reescrito para consumir SLOs+snapshots (FIX bug `.md`→`.yml` glob); 4 commits atomic (7a48b12 / 6139f93 / 85e8a6c / ac67d20); ~8min duration
 
 ## Milestone ativo
 
 **v1.19 Maturidade Operacional** — fecha tech debt remanescente do v1.18, opera com observability infra criada. Continuação direta v1.18 → v1.19 (numeração de fases: 97 → 98 → 99).
 
-**2 fases (98-99):**
+**2 fases (98-99) — TODAS CONCLUÍDAS:**
 
 - Phase 98 ✅ — Coverage Ratchet 75→80% (INFRA-19-01)
-- Phase 99 ⏳ — Metrics Retention + Burn-rate Calculator (depends on Phase 98)
+- Phase 99 ✅ — Metrics Retention + Burn-rate Calculator (OBS-19-01..04)
 
 ## Próximo passo
 
-1. Executar Phase 99 (Metrics Retention + Burn-rate Calculator) — adiciona persistSnapshot/loadSnapshots em src/core/metrics.js, materializa burn-rate UI consumindo SLOs reais.
-2. Após Phase 99, rodar `/concluir-marco` para audit do v1.19 (2 fases) e preparar release v1.19.0.
+1. `/concluir-marco v1.19` — audit do milestone (98 + 99) contra a intenção original e arquivar.
+2. `/publicar` — criar Notion + PR + release v1.19.0.
 
 ## Bloqueadores
 
@@ -61,6 +61,7 @@ Stable API v1.0+ preservada. Budget total 6 deps mantido (Phase 92 reorganiza: 3
 | 96 | 01 | ~9.4min | 4 | 4 | 11 (new) |
 | 97 | 01 | ~22min | 5 | 5 | 38 (new) |
 | 98 | 01 | ~22min | 4 | 3 | 33 (new) |
+| 99 | 01 | ~8min | 4 | 6 | 31 (new) |
 
 ## Decisions
 
@@ -105,3 +106,11 @@ Stable API v1.0+ preservada. Budget total 6 deps mantido (Phase 92 reorganiza: 3
 - **Phase 98.01:** runCLIAsync helper introduzido — spawnSync bloqueia event loop do parent, impedindo in-process http.createServer mock de servir requests do subprocess (`kit ui status/stop/doctor`). Solução: child_process.spawn + Promise wrapper. Pattern reutilizável para qualquer test que precise mock HTTP + subprocess simultâneos.
 - **Phase 98.01:** auto-spawn race-style test pattern — hand-craft stale lockfile (port=99, pid=alive) + setTimeout 200ms re-write apontando para mock sidecar + ensureSidecar concurrently. Poll loop (100ms cadence) pega rewrite, healthzOk responde 200, ensureSidecar retorna ready=true, spawned=true. Cobre lines 44-56 sem esperar 5s POLL_TIMEOUT_MS. Side effect aceito: real bin/ui.js child spawn during test (idle out via watchdog).
 - **Phase 98.01:** gates run --yes test descartado — runGate invoca subroutine que bash-execs gate inline check; awk extraction de ci.yml não é o path do runGate (path diferente). 10s timeout. Cobertura de gates run handler (lines 290-292) deferida para v1.20 quando extrair runGate para sibling module callable in-process.
+- **Phase 99.01:** In-file `ts` (não filename, não mtime) é authoritative para windowing. CONTEXT.md draft propunha decode via `replace(/-/g, ':')` — gera ISO inválido (`2026:05:09T...` rejeitado por Date.parse). Filesystem-safe encoding é one-way; mtime drifta em copy/touch. Storing ts dentro do JSON elimina o parse-bug e é robusto a operações de filesystem.
+- **Phase 99.01:** Implicit retention cleanup em todo persistSnapshot (sem timer separado) — kit-mcp é dev tool invocado on-demand pela IDE; background retention worker seria over-engineering. Custo é um readdir+stat extra por persist (~ms para 30 files).
+- **Phase 99.01:** Defensive load skip corrupt JSON + entries sem ts — half-written file de kill -9 mid-persist não pode brickar `/burn-rate-status`. Degraded mode = fewer data points, never crash.
+- **Phase 99.01:** No js-yaml em burn-rate-status command — preserva 6-deps budget (Phase 92.01). Mesmo regex-on-text trade-off da Phase 95.01 slo-schema test. Cross-file invariant tests em burn-rate-calc.test.js asseguram que YAML keys que command grep'd against ainda existem.
+- **Phase 99.01:** [Rule 1 - Bug fix] Burn-rate-status.md globbed `.md` files (sentinel error desde Phase 95.01 quando SLOs viraram `.yml`). FIX em Task 3 — sem isso, comando nunca encontraria SLOs.
+- **Phase 99.01:** p95-above-target ≈ 5%-slow approximation para latency SLI — exact-fraction precisaria do raw histogram, mas snapshot só persiste percentiles. 5% approximation é canonical (por definição, 5% das samples estão acima de p95).
+- **Phase 99.01:** Comfortable boundary margins em tests (errorRate=0.075 para PAGE, 0.040 para TICKET) — IEEE-754 fez 0.030/0.005 = 5.999... not exactly 6.0. Production thresholds (14.4 / 6.0 / 1.0) inalterados — só inputs de teste afastados das boundaries.
+- **Phase 99.01:** no_data graceful path quando <2 snapshots na baseline window — inventar números de single sample misleadaria operador sobre real burn. Comando emite `no_data` e sugere invocar `metrics-snapshot` MCP tool.
