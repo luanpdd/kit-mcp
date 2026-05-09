@@ -1,15 +1,15 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-08 — v1.12 Legacy Code Mastery & AI-Era Refactoring em planejamento.
+> Última atualização: 2026-05-09 — v1.13 Security & Performance Hardening **entregue**.
 
 ## Estado Atual
 
-**v1.10.0 — SRE Engagement** publicado em npm + GitHub release 2026-05-07. Stack acumulado v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) forma suíte coesa de production engineering. Stable API v1.0+ preservada (zero alterações em `src/core/`).
+**v1.13.0 — Security & Performance Hardening** **entregue** 2026-05-09 (Phases 79-81, 11 REQs, 33 testes novos, 210 baseline final). Suíte de hardening interno derivada de meta-auditoria com 12 agentes em paralelo sobre v1.12.1 — content-zero por design (não adiciona ao kit, repara o framework). Fechou 4 vulnerabilidades CRITICAL/HIGH (gates.run via MCP exec, replayId path traversal, npm ci strict, publish gates), aplicou pattern v1.12.1 a 6 hooks restantes (categorizados A/B/C/E), capturou ~30k tokens em quick wins (slim cap 44.4% redução real, hooks block dedup, CHANGELOG fora do tarball), eliminou 3 fontes de drift (CHANGELOG/README/MCP version). Stable API v1.0+ preservada.
 
-**v1.11 — SRE Resilience & Release Engineering** **entregue** (Phases 42-47, 24 REQs). Cobre os 2 caps deferidos da v1.10 — Cap 22 (*Addressing Cascading Failures*) + Cap 8 (*Release Engineering*) — completando a série SRE iniciada na v1.10. 5 skills + 3 agents + 3 commands + 4 cross-suite patches + audit gate `release-pipeline-policy`.
+**Tech debt documentado para v1.14:** 4 CVEs ativas em transitivas do `@modelcontextprotocol/sdk@1.29.0`, 7 issues HIGH não tocadas (reverse-sync trust, CSP unsafe-inline, /shutdown auth, gate-runner tmpdir, file-manifest verification, reflect.js leak, sync 8-IDE matrix), README counters auto-gen, T2/T3 token wins. Auditoria-base permanece em `.planning/codebase/concerns.md` + `.planning/PRR-REPORT.md` + `.planning/TOIL-AUDIT.md`.
 
-**v1.12 — Legacy Code Mastery & AI-Era Refactoring** em planejamento (Phases 48-78). 5ª suíte do kit (Legacy) derivada do livro **Working Effectively with Legacy Code — Michael Feathers (2004)** + modernizações para era 2026 (IA generativa, LLMs como dependência, Supabase Edge Functions como API-only applications, embeddings para detecção semântica). Endereça o problema clássico que toda equipe enfrenta: refatorar código crítico sem testes prévios.
+**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13 (Hardening). 6 suítes ativas no kit + framework hardened.
 
 ## Milestone Atual: v1.12 Legacy Code Mastery & AI-Era Refactoring
 

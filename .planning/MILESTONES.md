@@ -1,5 +1,24 @@
 # MILESTONES.md — Histórico de releases
 
+## v1.13 Security & Performance Hardening (Shipped: 2026-05-09)
+
+**Phases completed:** 3 phases, 10 plans, 13 tasks
+
+**Key accomplishments:**
+
+- Closed CRITICAL `gates.run` arbitrary-shell-exec primitive over MCP transport — handler now returns stable refusal sentinel instead of spawning bash from gate body content; CLI `kit gates run` unaffected.
+- Defense-in-depth path traversal guard for `.planning/replays/` — allowlist regex `/^[A-Za-z0-9_.-]+$/` + post-resolve assertion applied to all 3 MCP-exposed callers (loadReplay, annotateReplay, recordReplay)
+- Strict `npm ci` enforcement in publish + CI workflows, with mandatory unit/integration tests and high-CVE audit gate before any `npm publish` — closes the v1.12.1 race condition escape vector at the publish boundary.
+- Aplicação do pattern v1.12.1 sidecar (callback antes de process.exit) a 4 hooks com bug latente de drop de payload em pipes lentos, plus taxonomia inline em 6 hooks e regression test de 3 cases.
+- 1. [Rule 3 - Blocker] Corrected `listKit` import path in test file
+- Removed 66 lines of dead `# hooks:` example block from 11 agent frontmatters and added a 3-test anti-regression guard, recovering ~880 tokens per multi-agent session.
+- 1. [Rule 2 - Critical] Mitigated DEP0190 deprecation in test runner
+- Backfill de 3 entries de release ausentes (v1.11.0, v1.12.0, v1.12.1) em CHANGELOG.md + transformação do awk-extract gate de warn em hard-fail para final tags, fechando DRIFT-13-01.
+- Substituição estática de 10 contadores hardcoded em README.md (drift +147% / +45% / +4800% / +300%) pelos valores reais do filesystem (47 agents, 87 commands, 49 skills, 20 gates) — DRIFT-13-02 fechado.
+- MCP server reads `serverInfo.version` from package.json at boot via `readPkgVersion()` mirroring bin/cli.js:43-51, plus 4-case regression test guarding against drift recurrence
+
+---
+
 ## v1.10 SRE Engagement (Shipped: 2026-05-07)
 
 **Phases completed:** 6 phases, 30 plans, 0 tasks
