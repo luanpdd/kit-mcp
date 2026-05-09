@@ -46,24 +46,21 @@
 - Duration ~3.8min, 2 commits atomic + 1 SUMMARY commit.
 - SUMMARY: [`95-01-SUMMARY.md`](./phases/95-slo-definitions/95-01-SUMMARY.md)
 
-### Phase 96: RUNBOOK + FAILURE-MODES + BENCHMARK
+### Phase 96: RUNBOOK + FAILURE-MODES + BENCHMARK ✅ CONCLUÍDA (2026-05-09)
 
 **Goal:** Aplicar skills `blameless-postmortems` e `production-readiness-review` produzindo 3 docs de operations: RUNBOOK (emergency response), FAILURE-MODES (top-down failure list), BENCHMARK (capacity envelope baseline).
 
-**Depends on:** Phase 94
+**Entregue:**
+- ✅ `.planning/RUNBOOK.md` (NOVO, 329 linhas) — 5 cenários estruturados em Symptom → Diagnosis → Fix (MCP boot fail, sidecar UI hang, manifest mismatch, npm publish fail, sync corruption); quick-triage table; SLO-check section routes "is the service degraded?" pelas Phase 95 SLOs; escalation paths.
+- ✅ `.planning/FAILURE-MODES.md` (NOVO, 65 linhas) — 12-row matrix Impact × Likelihood × Current mitigation × Follow-up × Runbook (não 8-10 do CONTEXT — cataloging fewer leaves mitigated cases implicit); risk-tier rollup compresses to 4 bands per `sre-risk-management` skill; "deliberately not on this list" section carves out hosted-service modes.
+- ✅ `.planning/BENCHMARK.md` (NOVO, 184 linhas) — 5 métricas measured em v1.17.0 (2026-05-09): M1 cold-start 232.4 ms median 5 runs / M2 sync 503ms cold → 391ms steady-state / M3 RSS 53MB heap 8.5MB / M4 MCP p95 144.55ms p99 146.42ms n=30 / M5 tarball 1.1MB packed 384 files. Cada metric com reproduction command + regression budget ("2× current").
+- ✅ `test/integration/ops-docs-shape.test.js` (NOVO, 11 tests) — regex-on-text shape regression (3 docs exist + RUNBOOK 5 scenarios + FAILURE-MODES 8+ matrix rows + BENCHMARK 5+ metrics + cross-doc invariant). Mesmo trade-off Phase 95.01 (sem markdown AST dep).
 
-**Escopo:**
-- `.planning/RUNBOOK.md` (NOVO) — emergency response steps para 5 cenários (MCP boot fail, sidecar hang, manifest mismatch, npm publish fail, sync corruption).
-- `.planning/FAILURE-MODES.md` (NOVO) — top-down list de 8-10 failure scenarios com impact/likelihood/mitigation matrix.
-- `.planning/BENCHMARK.md` (NOVO) — baseline measurements (cold start, sync wall time, memory footprint, p50/p95 latency) — provê reference para detecting regressions futuros.
-
-**Critérios de sucesso:**
-- 3 docs presentes em `.planning/`.
-- RUNBOOK tem ≥5 cenários estruturados (Symptom → Diagnosis → Fix).
-- FAILURE-MODES tem ≥8 entries com matrix.
-- BENCHMARK tem ≥5 métricas baseline com timestamp.
-- Cross-references com SLOs da Phase 95 e metrics da Phase 94.
-- Test que valida estrutura básica dos 3 files.
+**Métricas:**
+- 380 tests pass (+11 novos: 11 integration), 0 fail, 2 skip preexistentes.
+- Zero deps novas (3 deps + 3 optional inalterados).
+- Duration ~9.4min, 4 commits atomic + 1 SUMMARY commit.
+- SUMMARY: [`96-01-SUMMARY.md`](./phases/96-runbook-failure-modes-benchmark/96-01-SUMMARY.md)
 
 ### Phase 97: Coverage Ratchet
 

@@ -2,22 +2,22 @@
 state_version: 1.0
 milestone: v1.18
 milestone_name: — Eat Your Own Dog Food
-status: Phase 95 completa (2/2 plans); v1.18 milestone 2/4 fases
-last_updated: "2026-05-09T16:26:15.000Z"
+status: Phase 96 completa (1/1 plan); v1.18 milestone 3/4 fases
+last_updated: "2026-05-09T16:40:33.000Z"
 progress:
   total_phases: 4
-  completed_phases: 2
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 3
+  total_plans: 1
+  completed_plans: 3
 ---
 
 # STATE.md — sessão atual
 
 ## Posição Atual
 
-Fase: 95 — SLO Definitions (OBS-18-03/04) — **CONCLUÍDA**
-Status: Phase 95 completa (1/1 plan); v1.18 milestone 2/4 fases
-Última atividade: 2026-05-09T16:26Z — Phase 95.01 executado (plan+execute combinado); 369 tests pass (269 unit + 98 integration + 2 skip); +10 novos tests; 2 SLO YAMLs (availability ratio + p95 latency) + README + 10 schema regression tests em .planning/slos/; aplicado skill event-based-slos; zero deps novas
+Fase: 96 — RUNBOOK + FAILURE-MODES + BENCHMARK (OPS-18-01/02/03) — **CONCLUÍDA**
+Status: Phase 96 completa (1/1 plan); v1.18 milestone 3/4 fases
+Última atividade: 2026-05-09T16:40Z — Phase 96.01 executado (plan+execute combinado); 380 tests pass (269 unit + 109 integration + 2 skip); +11 novos tests integration; 3 docs ops em .planning/ (RUNBOOK 329 linhas / FAILURE-MODES 65 linhas matrix 12 modes / BENCHMARK 184 linhas 5 metrics measured) + 11 shape regression tests em test/integration/ops-docs-shape.test.js; aplicadas skills production-readiness-review + blameless-postmortems; zero deps novas
 
 ## Milestone ativo
 
@@ -27,12 +27,12 @@ Status: Phase 95 completa (1/1 plan); v1.18 milestone 2/4 fases
 
 - Phase 94 ✅ — Golden Signals MCP Server (OBS-18-01/02)
 - Phase 95 ✅ — SLO Definitions (OBS-18-03/04)
-- Phase 96 ⏭ — RUNBOOK + FAILURE-MODES + BENCHMARK
+- Phase 96 ✅ — RUNBOOK + FAILURE-MODES + BENCHMARK (OPS-18-01/02/03)
 - Phase 97 ⏭ — Coverage Ratchet 65→75%
 
 ## Próximo passo
 
-1. Avançar para Phase 96 (próxima do milestone v1.18)
+1. Avançar para Phase 97 (próxima do milestone v1.18) — Coverage Ratchet 65→75% endereçando 4 hot files identificados em Phase 93 (cli/index.js 37%, mcp-server/install.js 19%, ui/auto-spawn.js 31%, core/failures.js 17%)
 
 ## Bloqueadores
 
@@ -59,6 +59,7 @@ Stable API v1.0+ preservada. Budget total 6 deps mantido (Phase 92 reorganiza: 3
 | 93 | 01 | ~7.5min | 3 | 3 | 9 (new) |
 | 94 | 01 | ~6.8min | 3 | 5 | 15 (new) |
 | 95 | 01 | ~3.8min | 2 | 4 | 10 (new) |
+| 96 | 01 | ~9.4min | 4 | 4 | 11 (new) |
 
 ## Decisions
 
@@ -87,3 +88,10 @@ Stable API v1.0+ preservada. Budget total 6 deps mantido (Phase 92 reorganiza: 3
 - **Phase 95.01:** Schema test via regex-on-text (não js-yaml AST) — adicionar js-yaml queimaria o 3-deps budget que Phase 92.01 lutou pra preservar; regex captura os keys que tooling depende, mesmo trade-off de dead-imports + jsdoc-coverage gates.
 - **Phase 95.01:** SLO único cobrindo todas as tools (não per-tool) — toolkit pequeno (6 tools); per-tool budgets seriam thin demais pra ter valor; split quando uma única tool dominar volume.
 - **Phase 95.01:** Owner = `kit-mcp-maintainers@github.com` — skill mandata explícito; single-repo single-human hoje, mas contrato visível e substituível.
+- **Phase 96.01:** Single-point benchmark, não aggregated cross-runner — millis no developer-laptop scale são noisy demais pra average; signal é o trend na mesma máquina; refresh per milestone com versioning inline.
+- **Phase 96.01:** 12 failure modes (não 8-10 do CONTEXT) — cataloging fewer would have left obvious-but-mitigated cases implicit (Phase 79 RCE guard, antivirus quarantine, disk-full); risk-tier rollup compresses to 4 visible bands.
+- **Phase 96.01:** Regression budget em todo metric BENCHMARK (não só SLO-backed) — M2/M3/M5 sem SLO ainda, mas cada um carrega "2× current" tripwire; sem isso, regression não tem trigger quantitativo antes de reclamação user.
+- **Phase 96.01:** Quick-triage table topo do RUNBOOK — maintainers under stress não leem top-to-bottom; symptom→scenario# mapping shaves a step. Mesmo shape Google SRE cap 13.
+- **Phase 96.01:** FAILURE-MODES tem seção "deliberately not on this list" — sem isso, catalog implies completeness; carve-out makes scope explícito (out-of-scope hosted-service modes, SLO-budgeted single-error modes).
+- **Phase 96.01:** Test integration via regex-on-text (não markdown AST) — mesmo trade-off Phase 95.01 slo-schema; adicionar `remark`/`marked` queimaria 3-deps + 3-optional budget Phase 92.01.
+- **Phase 96.01:** Cross-doc invariant test asserts cada ops doc cross-refs ≥1 sibling — sem isso, future edits could silently strip navigation entre RUNBOOK ↔ FAILURE-MODES ↔ BENCHMARK; assertion makes contract enforceable.
