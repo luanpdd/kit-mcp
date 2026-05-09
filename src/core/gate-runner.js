@@ -132,9 +132,17 @@ function extractCodeBlocks(text) {
 // --- exec ---
 
 async function execScript(script, cwd) {
-  // Write to a temp file and run with bash. We don't try to inline -c because
-  // the scripts can be multiline and contain quoting we'd have to escape.
-  const tmp = path.join(os.tmpdir(), `kit-gate-${Date.now()}-${Math.random().toString(36).slice(2)}.sh`);
+  // SEC-14-04: use mkdtemp for crypto-safe random directory naming, write the
+  // script INSIDE it, then cleanup recursive. Predictable timestamp+rand-suffix
+  // filenames are unsafe in multi-user /tmp — attacker can pre-create a symlink
+  // at the predicted path before fs.writeFile, and `spawn(bash, [tmp])` would
+  // execute the symlink target. mkdtemp uses the OS-level mkdtemp(3) syscall
+  // (POSIX) / equivalent (Windows) which atomically creates a directory with
+  // a random suffix and returns the actual path. The new dir gets 0700 from
+  // process umask on POSIX (umask 022 → 0700; default Node runtime). Even if
+  // umask is permissive, the script file inside is written with mode 0o700.
+  const dir = await fs.mkdtemp(path.join(os.tmpdir(), 'kit-gate-'));
+  const tmp = path.join(dir, 'gate.sh');
   await fs.writeFile(tmp, script, { encoding: 'utf8', mode: 0o700 });
   try {
     const child = spawn('bash', [tmp], { cwd, env: process.env });
@@ -151,7 +159,11 @@ async function execScript(script, cwd) {
       stderr: Buffer.concat(stderrOut).toString('utf8'),
     };
   } finally {
-    await fs.unlink(tmp).catch(() => {});
+    // Recursive cleanup — even if spawn errored above, the dir gets removed.
+    // force:true swallows ENOENT (e.g. if script self-deleted). recursive:true
+    // walks the dir; even if the gate body wrote temp files inside cwd, cwd is
+    // separate from `dir` so we won't blast user files.
+    await fs.rm(dir, { recursive: true, force: true }).catch(() => {});
   }
 }
 
