@@ -14,13 +14,15 @@ import fs from 'node:fs/promises';
 import chokidar from 'chokidar';
 import { syncTo } from './sync.js';
 import { listTargets } from './registry.js';
-import { resolveKitRoot } from './kit.js';
+import { resolveKitRoot, clearKitCache } from './kit.js';
 
 export async function watchKit(targets, opts = {}) {
   const projectRoot = path.resolve(opts.projectRoot ?? process.cwd());
   const kitRoot     = resolveKitRoot(opts.kitRoot);
   const mode        = opts.mode ?? 'reference';
-  const debounceMs  = Number.isFinite(opts.debounceMs) ? opts.debounceMs : 300;
+  // PERF-16-02: bump default 300 → 500ms to coalesce IDE save-bursts (typical
+  // IDE auto-save fires 5-10 events in < 500ms during a single user save).
+  const debounceMs  = Number.isFinite(opts.debounceMs) ? opts.debounceMs : 500;
   const onLog       = opts.onLog ?? (() => {});
 
   if (!Array.isArray(targets) || targets.length === 0) {
@@ -46,6 +48,12 @@ export async function watchKit(targets, opts = {}) {
     if (pending) clearTimeout(pending);
     pending = setTimeout(async () => {
       pending = null;
+      // PERF-16-02: invalidate kitCache (TTL 30s in kit.js PERF-01) BEFORE
+      // re-sync — otherwise listKit() inside syncTo can return the pre-edit
+      // cached value if the burst happened within the TTL window. Coalescing
+      // the edit-burst via debounce means clearKitCache fires AT MOST ONCE
+      // per 500ms window, regardless of how many save events came in.
+      clearKitCache();
       for (const t of targets) {
         try {
           const r = await syncTo(t, { projectRoot, kitRoot, mode });
