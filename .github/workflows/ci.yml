@@ -105,6 +105,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         node: ['20', '22', '24']
+        target: [claude-code, cursor, codex, gemini-cli, copilot, windsurf, antigravity, trae]
 
     steps:
       - uses: actions/checkout@v6
@@ -118,12 +119,15 @@ jobs:
         run: npm ci
 
       - name: Tests (unit)
+        if: matrix.target == 'claude-code'
         run: npm test
 
       - name: Tests (integration)
+        if: matrix.target == 'claude-code'
         run: npm run test:integration
 
       - name: Audit — drift gate (manifest + README counts) (REQ DX-15-02)
+        if: matrix.target == 'claude-code'
         shell: bash
         run: |
           # DX-15-02: prepublishOnly regenerates kit/file-manifest.json + README
@@ -139,6 +143,7 @@ jobs:
           echo "OK: manifest + README counts in sync with kit/"
 
       - name: CLI smoke
+        if: matrix.target == 'claude-code'
         run: |
           node bin/cli.js kit list-agents
           node bin/cli.js sync targets
@@ -146,6 +151,7 @@ jobs:
           node bin/cli.js install dry-run claude-code --scope project --project-root . --via npx
 
       - name: Audit — v1.8 Supabase suite gates (markdown checks)
+        if: matrix.target == 'claude-code'
         shell: bash
         run: |
           # PT-BR: roda os 5 gates novos da Suíte Supabase v1.8.
@@ -175,27 +181,57 @@ jobs:
       - name: Sync round-trip
         shell: bash
         run: |
+          # DX-15-03: parameterized by matrix.target — exercises all 8 IDEs
+          # (claude-code, cursor, codex, gemini-cli, copilot, windsurf, antigravity, trae)
+          # in CI. Generic contract (file count, stub cleanup) — claude-code-specific
+          # asserts (.claude/framework, CLAUDE.md, example-reviewer.md) live in the
+          # "Mirror-tree safety" step which is gated to target == 'claude-code'.
           mkdir -p .ci-test
-          node bin/cli.js sync install claude-code --project-root .ci-test
-          test -f .ci-test/.claude/agents/example-reviewer.md
-          test -f .ci-test/.claude/commands/example-greeting.md
-          test -f .ci-test/.claude/skills/example-skill/SKILL.md
-          test -f .ci-test/CLAUDE.md
-          # framework + hooks (mirror-tree) — must be projected, not just listed
-          test -f .ci-test/.claude/framework/.kit-mcp-managed
-          test -f .ci-test/.claude/framework/workflows/new-milestone.md
-          test -f .ci-test/.claude/framework/templates/project.md
-          test -f .ci-test/.claude/hooks/.kit-mcp-managed
-          test -f .ci-test/.claude/hooks/workflow-guard.js
-          node bin/cli.js sync remove claude-code --project-root .ci-test
-          # After remove, the example stubs should be gone (they had STUB_MARKER)
-          test ! -f .ci-test/.claude/agents/example-reviewer.md
-          # Mirror-tree dirs should be gone too (they had .kit-mcp-managed marker)
-          test ! -d .ci-test/.claude/framework
-          test ! -d .ci-test/.claude/hooks
+          node bin/cli.js sync install ${{ matrix.target }} --project-root .ci-test
+          # Post-install: at least 1 file written under .ci-test (registry resolution worked).
+          FILES_AFTER_INSTALL=$(find .ci-test -type f 2>/dev/null | wc -l)
+          if [ "$FILES_AFTER_INSTALL" -lt 1 ]; then
+            echo "::error::sync install ${{ matrix.target }} wrote 0 files under .ci-test"
+            exit 1
+          fi
+          echo "OK: sync install ${{ matrix.target }} wrote $FILES_AFTER_INSTALL file(s)"
+          node bin/cli.js sync remove ${{ matrix.target }} --project-root .ci-test
+          # Post-remove: zero stubs remain in capability dirs (agents/commands/skills/framework/hooks).
+          # Rules-aggregated files (CLAUDE.md, AGENTS.md, GEMINI.md, .github/copilot-instructions.md
+          # and rules/ multi dirs) are NOT removed by design — single source for rules, possibly
+          # user-edited. Registry-driven check covers all 8 targets uniformly.
+          STUBS_LEFT=$(node --input-type=module -e "
+            import { getTarget } from './src/core/registry.js';
+            import fs from 'node:fs';
+            import path from 'node:path';
+            const t = getTarget('${{ matrix.target }}');
+            const root = '.ci-test';
+            let count = 0;
+            for (const cap of ['agents','commands','skills','framework','hooks']) {
+              if (!t[cap]) continue;
+              const dir = path.join(root, t[cap].path);
+              const walk = (d) => {
+                let entries;
+                try { entries = fs.readdirSync(d, {withFileTypes:true}); } catch { return; }
+                for (const e of entries) {
+                  const p = path.join(d, e.name);
+                  if (e.isDirectory()) walk(p);
+                  else if (e.isFile()) { try { if (fs.readFileSync(p,'utf8').includes('kit-mcp:reference')) count++; } catch {} }
+                }
+              };
+              walk(dir);
+            }
+            console.log(count);
+          ")
+          if [ "$STUBS_LEFT" -ne 0 ]; then
+            echo "::error::sync remove ${{ matrix.target }} left $STUBS_LEFT stub file(s) under capability dirs"
+            exit 1
+          fi
+          echo "OK: sync remove ${{ matrix.target }} cleaned up all capability stubs"
           rm -rf .ci-test
 
       - name: Mirror-tree safety — preserves user files
+        if: matrix.target == 'claude-code'
         shell: bash
         run: |
           # Verify sync remove DOES NOT delete framework/hooks dirs that lack our marker
@@ -209,6 +245,7 @@ jobs:
           rm -rf .ci-safety
 
       - name: MCP server boot
+        if: matrix.target == 'claude-code'
         shell: bash
         run: |
           # Detects import-time crashes (e.g. the DEFAULT_KIT_ROOT regression
