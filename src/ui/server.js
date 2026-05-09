@@ -75,6 +75,38 @@ function logErr(...args) {
   process.stderr.write(args.map((a) => (typeof a === 'string' ? a : JSON.stringify(a))).join(' ') + '\n');
 }
 
+// SEC-14-02: per-process auth token. Set during start() from acquireLock result.
+// Cleared on shutdown(). Never logged in full.
+let authToken = null;
+
+// requireAuth: returns true if request has a valid token via either:
+//   - Authorization: Bearer <token>      (preferred for fetch from same-origin browser)
+//   - ?t=<token> query param             (required for EventSource — browser API can't set headers)
+// Caller is responsible for sending 401 when this returns false.
+function requireAuth(req, url) {
+  if (!authToken) return false; // server didn't init token — fail closed
+  const auth = req.headers.authorization;
+  if (typeof auth === 'string' && auth.startsWith('Bearer ')) {
+    const provided = auth.slice('Bearer '.length).trim();
+    if (timingSafeEqual(provided, authToken)) return true;
+  }
+  const qp = url?.searchParams?.get('t');
+  if (typeof qp === 'string' && timingSafeEqual(qp, authToken)) return true;
+  return false;
+}
+
+// Constant-time string comparison to prevent timing-leak side channel.
+// Walks the longer of the two strings even when lengths differ to keep timing flat.
+function timingSafeEqual(a, b) {
+  if (typeof a !== 'string' || typeof b !== 'string') return false;
+  const max = Math.max(a.length, b.length);
+  let diff = a.length ^ b.length;
+  for (let i = 0; i < max; i++) {
+    diff |= (a.charCodeAt(i) || 0) ^ (b.charCodeAt(i) || 0);
+  }
+  return diff === 0;
+}
+
 // Validate Host header against allowed hostnames (REQ SEC-01).
 // Allow 127.0.0.1 and localhost on whatever port we're on.
 function isHostAllowed(req, port) {
@@ -251,9 +283,14 @@ export function createServer({
       try { releaseLock(projectRoot); } catch { /* noop */ }
       lockMeta = null;
     }
+    authToken = null; // SEC-14-02: clear so a re-start gets a fresh one
   }
 
-  function handleEvents(req, res) {
+  function handleEvents(req, res, url) {
+    if (!requireAuth(req, url)) {
+      sendJson(res, 401, { error: 'auth_required' });
+      return;
+    }
     if (subscribers.size >= maxSubscribers) {
       sendJson(res, 503, { error: 'too_many_subscribers', max: maxSubscribers });
       return;
@@ -296,7 +333,11 @@ export function createServer({
     res.on('error', cleanup);
   }
 
-  async function handlePublish(req, res) {
+  async function handlePublish(req, res, url) {
+    if (!requireAuth(req, url)) {
+      sendJson(res, 401, { error: 'auth_required' });
+      return;
+    }
     if (!isOriginAllowed(req, listeningPort)) {
       sendJson(res, 403, { error: 'origin_not_allowed' });
       return;
@@ -340,7 +381,11 @@ export function createServer({
 
   // PERF-05: optional pagination via ?offset=N&limit=M. No query → ring inteiro
   // (back-compat preservada). Out-of-range values clamp to bounds rather than 4xx.
-  function handleState(res, url) {
+  function handleState(req, res, url) {
+    if (!requireAuth(req, url)) {
+      sendJson(res, 401, { error: 'auth_required' });
+      return;
+    }
     let events = ring;
     const offsetRaw = url?.searchParams?.get('offset');
     const limitRaw  = url?.searchParams?.get('limit');
@@ -365,7 +410,11 @@ export function createServer({
     });
   }
 
-  async function handleShutdownRequest(req, res) {
+  async function handleShutdownRequest(req, res, url) {
+    if (!requireAuth(req, url)) {
+      sendJson(res, 401, { error: 'auth_required' });
+      return;
+    }
     if (!isOriginAllowed(req, listeningPort)) {
       sendJson(res, 403, { error: 'origin_not_allowed' });
       return;
@@ -407,15 +456,15 @@ export function createServer({
         case 'GET /index.html':
           return handleIndex(res);
         case 'GET /events':
-          return handleEvents(req, res);
+          return handleEvents(req, res, url);
         case 'GET /healthz':
           return handleHealthz(res);
         case 'GET /state':
-          return handleState(res, url);
+          return handleState(req, res, url);
         case 'POST /publish':
-          return handlePublish(req, res);
+          return handlePublish(req, res, url);
         case 'POST /shutdown':
-          return handleShutdownRequest(req, res);
+          return handleShutdownRequest(req, res, url);
         default:
           return sendJson(res, 404, { error: 'not_found', route });
       }
@@ -433,6 +482,11 @@ export function createServer({
       version,
       startedAt,
     });
+    // SEC-14-02: copy per-process token from lockfile into closure for requireAuth.
+    authToken = lockMeta.token;
+    if (typeof authToken !== 'string' || authToken.length !== 64) {
+      throw new Error('SEC-14-02: lockMeta.token missing or malformed; refusing to start');
+    }
     server = http.createServer(handleRequest);
     server.on('connection', (sock) => {
       activeSockets.add(sock);
@@ -487,4 +541,7 @@ export const __test = {
   buildCsp,
   computeScriptHashFromHtml,
   EVENT_TYPES,
+  // SEC-14-02: timingSafeEqual exposed for unit tests; requireAuth depends on
+  // closure state (authToken) so end-to-end HTTP tests verify behavior.
+  timingSafeEqual,
 };
