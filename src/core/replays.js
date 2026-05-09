@@ -17,15 +17,55 @@ import fs from 'node:fs/promises';
 
 const REPLAY_DIR_REL = path.join('.planning', 'replays');
 
+// SEC-13-02: replayId path traversal guard. The MCP forensics tool exposes
+// load-replay/annotate-replay/record-replay actions; without sanitization,
+// a malicious replayId like '../../../etc/passwd' would read/write files
+// outside .planning/replays/.
+//
+// Strategy: allowlist regex (no slashes, no '..', no NUL) + post-resolve assertion
+// that the final path stays inside REPLAY_DIR_REL.
+const REPLAY_ID_RE = /^[A-Za-z0-9_.-]+$/;
+
+function validateReplayId(id) {
+  if (typeof id !== 'string' || !id) {
+    throw new Error('invalid replay id: must be a non-empty string');
+  }
+  if (id === '.' || id === '..' || id.includes('..')) {
+    throw new Error('invalid replay id: traversal sequences not allowed');
+  }
+  if (!REPLAY_ID_RE.test(id)) {
+    throw new Error(`invalid replay id: only [A-Za-z0-9_.-] allowed, got ${JSON.stringify(id)}`);
+  }
+  return id;
+}
+
+function assertPathInside(filePath, baseDir) {
+  const resolved = path.resolve(filePath);
+  const base = path.resolve(baseDir);
+  // Ensure resolved is base or a child of base (handle trailing-sep edge case).
+  if (resolved !== base && !resolved.startsWith(base + path.sep)) {
+    throw new Error('invalid replay id: resolved path escapes replay directory');
+  }
+  return resolved;
+}
+
 export async function recordReplay(payload, opts = {}) {
   const projectRoot = path.resolve(opts.projectRoot ?? process.cwd());
   const dir = path.join(projectRoot, REPLAY_DIR_REL);
   await fs.mkdir(dir, { recursive: true });
 
   const ts   = new Date().toISOString().replace(/[:.]/g, '-');
-  const slug = [payload.phase, payload.plan, payload.agent].filter(Boolean).join('-') || 'unknown';
+  // SEC-13-02: validate each slug component independently before concat
+  const slugParts = [payload.phase, payload.plan, payload.agent].filter(Boolean);
+  for (const part of slugParts) {
+    validateReplayId(String(part));
+  }
+  const slug = slugParts.join('-') || 'unknown';
   const id   = `${ts}-${slug}`;
+  // Re-validate the full id (defense in depth — ts is well-formed but cheap to check)
+  validateReplayId(id);
   const file = path.join(dir, `${id}.json`);
+  assertPathInside(file, dir);
 
   const record = { id, recorded_at: new Date().toISOString(), ...payload };
   await fs.writeFile(file, JSON.stringify(record, null, 2), 'utf8');
@@ -49,15 +89,21 @@ export async function listReplays(opts = {}) {
 }
 
 export async function loadReplay(id, opts = {}) {
+  validateReplayId(id);
   const projectRoot = path.resolve(opts.projectRoot ?? process.cwd());
-  const file = path.join(projectRoot, REPLAY_DIR_REL, `${id}.json`);
+  const dir = path.join(projectRoot, REPLAY_DIR_REL);
+  const file = path.join(dir, `${id}.json`);
+  assertPathInside(file, dir);
   const raw  = await fs.readFile(file, 'utf8');
   return JSON.parse(raw);
 }
 
 export async function annotateReplay(id, outcome, opts = {}) {
+  validateReplayId(id);
   const projectRoot = path.resolve(opts.projectRoot ?? process.cwd());
-  const file = path.join(projectRoot, REPLAY_DIR_REL, `${id}.json`);
+  const dir = path.join(projectRoot, REPLAY_DIR_REL);
+  const file = path.join(dir, `${id}.json`);
+  assertPathInside(file, dir);
   const r = JSON.parse(await fs.readFile(file, 'utf8'));
   r.outcome = { ...(r.outcome ?? {}), ...outcome, annotated_at: new Date().toISOString() };
   await fs.writeFile(file, JSON.stringify(r, null, 2), 'utf8');
