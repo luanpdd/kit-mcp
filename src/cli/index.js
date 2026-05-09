@@ -429,7 +429,7 @@ ui.command('stop')
     const lock = readLock(projectRoot);
     if (!lock) return out({ ok: false, reason: 'no_sidecar' }, () => `${icons.warn} no sidecar running for this project\n`);
     try {
-      await postShutdown(lock.port);
+      await postShutdown(lock.port, lock.token);
       out({ ok: true, port: lock.port }, () => `${icons.check} sidecar at port ${lock.port} stopped\n`);
     } catch (err) {
       fail(`could not stop sidecar at port ${lock.port}: ${err.message}`);
@@ -640,15 +640,24 @@ async function runDoctorChecks(projectRoot) {
 }
 
 // Helpers for kit ui (live in cli/ — stdout/console allowed here)
-async function postShutdown(port) {
+// SEC-14-02: /shutdown now requires Authorization Bearer <token>. Caller must
+// pass the per-process token read from the lockfile (lock.token from readLock).
+async function postShutdown(port, token) {
   return new Promise((resolve, reject) => {
+    const headers = {
+      host: `127.0.0.1:${port}`,
+      origin: `http://127.0.0.1:${port}`,
+      'content-length': 0,
+      connection: 'close',
+    };
+    if (token) headers.authorization = `Bearer ${token}`;
     const req = http.request({
       method: 'POST',
       host: '127.0.0.1',
       port,
       path: '/shutdown',
       agent: false,
-      headers: { host: `127.0.0.1:${port}`, origin: `http://127.0.0.1:${port}`, 'content-length': 0, connection: 'close' },
+      headers,
     }, (res) => {
       res.resume();
       res.on('end', () => res.statusCode < 400 ? resolve() : reject(new Error(`http_${res.statusCode}`)));

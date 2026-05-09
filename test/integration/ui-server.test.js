@@ -6,13 +6,13 @@ import os from 'node:os';
 import path from 'node:path';
 
 import { createServer, __test as serverConst } from '../../src/ui/server.js';
-import { releaseLock } from '../../src/ui/lockfile.js';
+import { releaseLock, readLock } from '../../src/ui/lockfile.js';
 
 function mkProjectRoot() {
   return fs.mkdtempSync(path.join(os.tmpdir(), 'kit-mcp-srv-test-'));
 }
 
-function fetch(method, port, pathname, { body, headers = {} } = {}) {
+function fetch(method, port, pathname, { body, headers = {}, token } = {}) {
   return new Promise((resolve, reject) => {
     const opts = {
       method,
@@ -25,6 +25,9 @@ function fetch(method, port, pathname, { body, headers = {} } = {}) {
       headers: {
         host: `127.0.0.1:${port}`,
         connection: 'close',
+        // SEC-14-02: attach Bearer token when provided; protected endpoints
+        // require this. Tests opt into auth by passing { token }.
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
         ...headers,
       },
     };
@@ -47,8 +50,11 @@ async function withServer(opts, fn) {
   releaseLock(root);
   const srv = createServer({ projectRoot: root, idleMs: 0, ...opts });
   await srv.start();
+  // SEC-14-02: protected endpoints require token; capture from lockfile.
+  const lock = readLock(root);
+  const token = lock?.token;
   try {
-    await fn(srv, root);
+    await fn(srv, root, token);
   } finally {
     await srv.shutdown('test_cleanup');
     releaseLock(root);
@@ -99,11 +105,11 @@ test('Host header validation: accepts localhost as alias for 127.0.0.1', async (
 });
 
 test('POST /publish: round-trip — published event is in /state', async () => {
-  await withServer({}, async (srv) => {
+  await withServer({}, async (srv, _root, token) => {
     const evt = { type: 'progress', ts: Date.now(), runId: null, payload: { percent: 42 } };
-    const pub = await fetch('POST', srv.port, '/publish', { body: evt });
+    const pub = await fetch('POST', srv.port, '/publish', { body: evt, token });
     assert.equal(pub.status, 202);
-    const state = await fetch('GET', srv.port, '/state');
+    const state = await fetch('GET', srv.port, '/state', { token });
     assert.equal(state.status, 200);
     const j = JSON.parse(state.body);
     assert.ok(Array.isArray(j.events));
@@ -115,36 +121,37 @@ test('POST /publish: round-trip — published event is in /state', async () => {
 
 // PERF-05: pagination via offset/limit, with full-ring back-compat.
 test('GET /state?offset=N&limit=M paginates ring buffer', async () => {
-  await withServer({}, async (srv) => {
+  await withServer({}, async (srv, _root, token) => {
     // Publish a known sequence so we can index it deterministically.
     for (let i = 0; i < 5; i++) {
       await fetch('POST', srv.port, '/publish', {
         body: { type: 'progress', ts: Date.now(), runId: null, payload: { percent: i * 10 } },
+        token,
       });
     }
 
     // Default: full ring (back-compat).
-    const full = JSON.parse((await fetch('GET', srv.port, '/state')).body);
+    const full = JSON.parse((await fetch('GET', srv.port, '/state', { token })).body);
     assert.ok(full.events.length >= 6, 'should include run.start + 5 progresses');
     assert.equal(typeof full.ringSize, 'number');
 
     // Pagination.
-    const paged = JSON.parse((await fetch('GET', srv.port, '/state?offset=2&limit=2')).body);
+    const paged = JSON.parse((await fetch('GET', srv.port, '/state?offset=2&limit=2', { token })).body);
     assert.equal(paged.events.length, 2);
 
     // Limit only.
-    const limited = JSON.parse((await fetch('GET', srv.port, '/state?limit=1')).body);
+    const limited = JSON.parse((await fetch('GET', srv.port, '/state?limit=1', { token })).body);
     assert.equal(limited.events.length, 1);
 
     // Out-of-range clamps to empty without erroring.
-    const oor = JSON.parse((await fetch('GET', srv.port, '/state?offset=9999&limit=1')).body);
+    const oor = JSON.parse((await fetch('GET', srv.port, '/state?offset=9999&limit=1', { token })).body);
     assert.equal(oor.events.length, 0);
   });
 });
 
 test('POST /publish: rejects malformed JSON', async () => {
-  await withServer({}, async (srv) => {
-    const r = await fetch('POST', srv.port, '/publish', { body: '{ bad json' });
+  await withServer({}, async (srv, _root, token) => {
+    const r = await fetch('POST', srv.port, '/publish', { body: '{ bad json', token });
     assert.equal(r.status, 400);
     const j = JSON.parse(r.body);
     assert.match(j.error, /invalid_json/);
@@ -152,27 +159,29 @@ test('POST /publish: rejects malformed JSON', async () => {
 });
 
 test('POST /publish: rejects unknown event type', async () => {
-  await withServer({}, async (srv) => {
+  await withServer({}, async (srv, _root, token) => {
     const r = await fetch('POST', srv.port, '/publish', {
       body: { type: 'wat', ts: Date.now() },
+      token,
     });
     assert.equal(r.status, 400);
   });
 });
 
 test('POST /publish: rejects oversized body with 413', async () => {
-  await withServer({}, async (srv) => {
+  await withServer({}, async (srv, _root, token) => {
     const big = 'x'.repeat(70 * 1024);
-    const r = await fetch('POST', srv.port, '/publish', { body: { type: 'progress', ts: Date.now(), runId: null, payload: big } });
+    const r = await fetch('POST', srv.port, '/publish', { body: { type: 'progress', ts: Date.now(), runId: null, payload: big }, token });
     assert.equal(r.status, 413);
   });
 });
 
 test('Origin validation: rejects cross-origin POST', async () => {
-  await withServer({}, async (srv) => {
+  await withServer({}, async (srv, _root, token) => {
     const r = await fetch('POST', srv.port, '/publish', {
       body: { type: 'progress', ts: Date.now() },
       headers: { origin: 'https://evil.example.com' },
+      token,
     });
     assert.equal(r.status, 403);
     const j = JSON.parse(r.body);
@@ -181,10 +190,11 @@ test('Origin validation: rejects cross-origin POST', async () => {
 });
 
 test('Origin validation: rejects cross-origin POST /shutdown', async () => {
-  await withServer({}, async (srv) => {
+  await withServer({}, async (srv, _root, token) => {
     const r = await fetch('POST', srv.port, '/shutdown', {
       body: '',
       headers: { origin: 'https://evil.example.com' },
+      token,
     });
     assert.equal(r.status, 403);
     const j = JSON.parse(r.body);
@@ -193,13 +203,13 @@ test('Origin validation: rejects cross-origin POST /shutdown', async () => {
 });
 
 test('SSE: receives published events live on /events', async () => {
-  await withServer({}, async (srv) => {
+  await withServer({}, async (srv, _root, token) => {
     // open an SSE connection, then publish, then look for the published event in the stream
     const data = await new Promise((resolve, reject) => {
       const req = http.request({
         host: '127.0.0.1',
         port: srv.port,
-        path: '/events',
+        path: `/events?t=${token}`,
         method: 'GET',
         agent: false,
         headers: { host: `127.0.0.1:${srv.port}`, accept: 'text/event-stream' },
@@ -239,12 +249,12 @@ test('SSE: receives published events live on /events', async () => {
 });
 
 test('SSE: subscriber count grows then shrinks on disconnect', async () => {
-  await withServer({}, async (srv) => {
+  await withServer({}, async (srv, _root, token) => {
     assert.equal(srv.subscriberCount, 0);
     const req = http.request({
       host: '127.0.0.1',
       port: srv.port,
-      path: '/events',
+      path: `/events?t=${token}`,
       method: 'GET',
       agent: false,
       headers: { host: `127.0.0.1:${srv.port}` },
@@ -260,14 +270,14 @@ test('SSE: subscriber count grows then shrinks on disconnect', async () => {
 });
 
 test('SSE: cap rejects subscriber 33+ with 503', async () => {
-  await withServer({ maxSubscribers: 2 }, async (srv) => {
+  await withServer({ maxSubscribers: 2 }, async (srv, _root, token) => {
     const conns = [];
     function open() {
       return new Promise((resolve, reject) => {
         const req = http.request({
           host: '127.0.0.1',
           port: srv.port,
-          path: '/events',
+          path: `/events?t=${token}`,
           method: 'GET',
           agent: false,
           headers: { host: `127.0.0.1:${srv.port}` },
@@ -287,14 +297,14 @@ test('SSE: cap rejects subscriber 33+ with 503', async () => {
 });
 
 test('Connection cleanup: 50 connect/disconnect cycles leave subscribers.size === 0', async () => {
-  await withServer({}, async (srv) => {
+  await withServer({}, async (srv, _root, token) => {
     for (let i = 0; i < 50; i += 1) {
       // eslint-disable-next-line no-await-in-loop
       await new Promise((resolve, reject) => {
         const req = http.request({
           host: '127.0.0.1',
           port: srv.port,
-          path: '/events',
+          path: `/events?t=${token}`,
           method: 'GET',
           agent: false,
           headers: { host: `127.0.0.1:${srv.port}` },
@@ -327,7 +337,10 @@ test('Constants exposed: ring=200, maxSubs=32, idle=0 (never), heartbeat=15s', (
 });
 
 test('CSP includes self for connect-src, script-src, style-src', () => {
-  const csp = serverConst.CSP;
+  // SEC-14-01: CSP is now built dynamically with sha256 hash. Inspect via buildCsp(...)
+  // — the constant CSP no longer exists. End-to-end header check lives in
+  // ui-hardening.test.js (asserts unsafe-inline is absent from script-src).
+  const csp = serverConst.buildCsp("'sha256-test='");
   assert.match(csp, /default-src 'self'/);
   assert.match(csp, /connect-src 'self'/);
   assert.match(csp, /script-src 'self'/);
