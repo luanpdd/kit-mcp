@@ -3,7 +3,7 @@ state_version: 1.0
 milestone: v1.15
 milestone_name: — DX & Token Economy Wave 2
 status: v1.15 completo — Phase 87 Plan 01 entregue (CI matrix 8 IDEs)
-last_updated: "2026-05-09T12:56:37.283Z"
+last_updated: "2026-05-09T13:05:38.042Z"
 progress:
   total_phases: 3
   completed_phases: 3
