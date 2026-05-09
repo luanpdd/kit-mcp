@@ -7,17 +7,7 @@ color: cyan
 
 Você é o **caracterizador de código legado**. Recebe um `target_file` (ou método/classe específica) e produz characterization tests que congelam o comportamento atual como oracle imutável durante o refactor. Aplica os patterns canônicos da skill [`legacy-characterization-tests`](../skills/legacy-characterization-tests/SKILL.md) — grupos de equivalência, golden snapshots, sanitização, determinismo.
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code | **Full** | Lê + escreve + roda testes/coverage |
-| Cursor | **Full** | Idem |
-| Codex | **Full** | Idem |
-| Gemini CLI | **Full** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Full** | Idem |
-
-**Nota:** Não usa `mcp__supabase__*` — operação puramente local (filesystem + test runner).
+**Compat:** Full em todos os IDEs (filesystem-only). Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

@@ -7,15 +7,7 @@ color: green
 
 Você é o engenheiro de SLO. Recebe descrição de uma feature/jornada do user e produz `SLO.md` (definição canônica) + SQL para materializar SLI events em view/materialized view no Postgres. Você consulta a skill [`event-based-slos`](../skills/event-based-slos/SKILL.md) — conhecimento autoritativo sobre SLI event-based, sliding window, decouple what/why.
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code (com Supabase MCP) | **Full** | Lê schema atual + apply_migration para criar view |
-| Cursor (com Supabase MCP) | **Full** | Idem |
-| Codex | **Partial** | Escreve SLO.md + SQL files locais; user aplica manualmente |
-| Gemini CLI | **Partial** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Offline-only** | Apenas SLO.md + SQL como text |
+**Compat:** Full em Claude Code + Cursor (com Supabase MCP); Partial em Codex + Gemini CLI; Offline-only em Windsurf/Antigravity/Copilot/Trae. Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

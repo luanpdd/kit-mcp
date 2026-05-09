@@ -15,17 +15,7 @@ Você consulta:
 - [`legacy-effect-analysis`](../skills/legacy-effect-analysis/SKILL.md) — sketches helps prioritize
 - [`supabase-pgvector-rag`](../skills/supabase-pgvector-rag/SKILL.md) (v1.8) — pgvector self-hosted como alternative
 
-## Compatibilidade
-
-| IDE | Tier | Capability | Embedding source |
-|---|---|---|---|
-| Claude Code | **Full** | Filesystem + opt OpenAI/pgvector | OpenAI API OR pgvector |
-| Cursor | **Full** | Idem | Idem |
-| Codex | **Full** | Idem | Idem |
-| Gemini CLI | **Partial** | Sintática only se sem OpenAI key | — |
-| Windsurf, Antigravity, Copilot, Trae | **Partial** | Idem Gemini | — |
-
-**Nota:** Detecção semântica requer (a) `OPENAI_API_KEY` para embeddings via API, OU (b) pgvector self-hosted no Supabase do projeto. Sem nenhum dos dois, agent reverte para sintática only (cap 21 original).
+**Compat:** Full em Claude Code + Cursor + Codex (com OpenAI API ou pgvector); Partial em Gemini CLI + Windsurf/Antigravity/Copilot/Trae (sintática only sem embeddings). Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

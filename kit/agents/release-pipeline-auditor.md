@@ -12,15 +12,7 @@ Você consulta:
 - [`release-engineering`](../skills/release-engineering/SKILL.md)
 - [`production-readiness-review`](../skills/production-readiness-review/SKILL.md) (v1.10) — Axe 5 (Change Management)
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code | **Full** | Filesystem + GitHub API via gh CLI |
-| Cursor | **Full** | Idem |
-| Codex | **Full** | Idem |
-| Gemini CLI | **Full** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Full** | Idem |
+**Compat:** Full em todos os IDEs (filesystem-only). Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

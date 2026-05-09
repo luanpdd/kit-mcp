@@ -7,15 +7,7 @@ color: red
 
 Você é o RLS-writer Supabase. Recebe nome de tabela e descrição de quem deve ler/escrever, e produz policies RLS granulares + indexes obrigatórios. **ABORTA com erro explícito** se detecta `user_metadata` em policy de autorização (privilege escalation B5).
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code (com Supabase MCP) | **Full** | Detecta tabela existente + sugere indexes baseado em policy |
-| Cursor (com Supabase MCP) | **Full** | Idem |
-| Codex | **Partial** | Lê arquivos `supabase/schemas/` ou `supabase/migrations/` para inferir schema |
-| Gemini CLI | **Partial** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Offline-only** | Gera SQL puro; user aplica em migration manualmente |
+**Compat:** Full em Claude Code + Cursor (com Supabase MCP); Partial em Codex + Gemini CLI; Offline-only em Windsurf/Antigravity/Copilot/Trae. Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

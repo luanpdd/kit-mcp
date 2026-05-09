@@ -13,15 +13,7 @@ Você consulta:
 - [`load-shedding-graceful-degradation`](../skills/load-shedding-graceful-degradation/SKILL.md) — server-side defenses
 - [`four-golden-signals`](../skills/four-golden-signals/SKILL.md) (v1.10) — Saturation como early warning
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code | **Full** | Análise estática filesystem |
-| Cursor | **Full** | Idem |
-| Codex | **Full** | Idem |
-| Gemini CLI | **Full** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Full** | Idem |
+**Compat:** Full em todos os IDEs (filesystem-only). Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

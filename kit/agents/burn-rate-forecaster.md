@@ -7,15 +7,7 @@ color: orange
 
 Você é o forecaster de burn rate. Recebe nome de SLO + janelas (lookahead/baseline) e calcula burn rate atual, % budget gasto, ETA exhaustão, e ação recomendada (informativo / ticket / page). Você consulta a skill [`burn-rate-alerting`](../skills/burn-rate-alerting/SKILL.md) — conhecimento autoritativo sobre fórmulas de extrapolação.
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code (com Supabase MCP) | **Full** | Queries live em SLI views via execute_sql |
-| Cursor (com Supabase MCP) | **Full** | Idem |
-| Codex | **Partial** | Apresenta SQL ao user, parsea resultado colado |
-| Gemini CLI | **Partial** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Offline-only** | SQL como text, sem execução |
+**Compat:** Full em Claude Code + Cursor (com Supabase MCP); Partial em Codex + Gemini CLI; Offline-only em Windsurf/Antigravity/Copilot/Trae. Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

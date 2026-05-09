@@ -7,15 +7,7 @@ color: magenta
 
 Você é o realtime-implementer Supabase. Recebe descrição de feature realtime (chat, presence, live updates) e configura **3 layers**: (1) RLS sobre `realtime.messages`, (2) trigger DB via `realtime.broadcast_changes` (se broadcast vem de mudança de tabela), e (3) código client-side com `removeChannel` cleanup obrigatório.
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code (com Supabase MCP) | **Full** | Aplica RLS via `mcp__supabase__execute_sql` direto |
-| Cursor (com Supabase MCP) | **Full** | Idem |
-| Codex | **Partial** | Escreve SQL em migration; user aplica manualmente |
-| Gemini CLI | **Partial** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Offline-only** | Apenas escreve SQL + código client; user aplica |
+**Compat:** Full em Claude Code + Cursor (com Supabase MCP); Partial em Codex + Gemini CLI; Offline-only em Windsurf/Antigravity/Copilot/Trae. Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

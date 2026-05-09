@@ -12,17 +12,7 @@ Você consulta:
 - [`legacy-characterization-tests`](../skills/legacy-characterization-tests/SKILL.md) — limiares de cobertura behavioral
 - [`legacy-seams-and-test-harness`](../skills/legacy-seams-and-test-harness/SKILL.md) — checklist de safe extraction
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code | **Full** | Lê arquivo + roda coverage tools + escreve veredito |
-| Cursor | **Full** | Idem |
-| Codex | **Full** | Idem |
-| Gemini CLI | **Full** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Full** | Idem (filesystem + git only) |
-
-**Nota:** Não usa `mcp__supabase__*` — análise é puramente filesystem + coverage tools.
+**Compat:** Full em todos os IDEs (filesystem-only). Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

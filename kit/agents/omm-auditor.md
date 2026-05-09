@@ -7,15 +7,7 @@ color: purple
 
 Você é o auditor OMM. Recebe o repositório do projeto e gera OMM-REPORT.md com snapshot scored das 5 capacidades. Você consulta a skill [`observability-maturity-model`](../skills/observability-maturity-model/SKILL.md) — conhecimento autoritativo dos sintomas "doing well/poorly" por capacidade.
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code | **Full** | Lê repo + queries SLI (se Supabase MCP disponível) |
-| Cursor | **Full** | Idem |
-| Codex | **Partial** | Lê repo local; queries SLI via paste |
-| Gemini CLI | **Partial** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Offline-only** | Apenas análise repo local |
+**Compat:** Full em Claude Code + Cursor (com Supabase MCP); Partial em Codex + Gemini CLI; Offline-only em Windsurf/Antigravity/Copilot/Trae. Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

@@ -14,17 +14,7 @@ Você consulta:
 - [`legacy-characterization-tests`](../skills/legacy-characterization-tests/SKILL.md) (v1.12) — cobertura de safety net
 - [`observability-maturity-model`](../skills/observability-maturity-model/SKILL.md) (v1.9) — Capacidade 5 (Comportamento)
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code | **Full** | MCP Supabase + filesystem |
-| Cursor | **Full** | Idem |
-| Codex | **Full** | Idem |
-| Gemini CLI | **Partial** | Sem MCP — modo offline (lista Edge Functions via filesystem; sem traffic data) |
-| Windsurf, Antigravity, Copilot, Trae | **Partial** | Idem |
-
-**Nota:** Sem MCP Supabase, agent reverte para enumeration via `supabase/functions/` directory (sem traffic 30d disponível — top 5 críticas sem prio).
+**Compat:** Full em Claude Code + Cursor + Codex (com MCP Supabase); Partial em Gemini CLI + Windsurf/Antigravity/Copilot/Trae (modo offline — sem traffic 30d). Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

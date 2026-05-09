@@ -13,17 +13,7 @@ Você consulta:
 - [`structured-events`](../skills/structured-events/SKILL.md) (v1.9) — wide events de alta cardinalidade
 - [`pre-refactor-characterization`](../skills/pre-refactor-characterization/SKILL.md) — Pattern 7 (captura de "payload real")
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code | **Full** | MCP Supabase + filesystem + git |
-| Cursor | **Full** | Idem |
-| Codex | **Full** | Idem |
-| Gemini CLI | **Partial** | Sem MCP — modo offline (pula drenagem; instrumenta + sanitiza apenas) |
-| Windsurf, Antigravity, Copilot, Trae | **Partial** | Idem Gemini — instrumenta mas não drena |
-
-**Nota:** Drenagem de logs via `mcp__supabase__get_logs` requer MCP Supabase conectado. Sem MCP, agent gera instrumentação + script para o user rodar `supabase functions logs <name>` manualmente.
+**Compat:** Full em Claude Code + Cursor + Codex (com MCP Supabase); Partial em Gemini CLI + Windsurf/Antigravity/Copilot/Trae (instrumenta mas não drena). Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

@@ -16,17 +16,7 @@ Você consulta:
 - [`legacy-characterization-tests`](../skills/legacy-characterization-tests/SKILL.md) — Pattern 7 (behavioral coverage via mutation)
 - [`pre-refactor-characterization`](../skills/pre-refactor-characterization/SKILL.md) — Pattern 6 (mutation kill ≥ 70%)
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code | **Full** | Filesystem + tests + LLM via Claude self |
-| Cursor | **Full** | Idem |
-| Codex | **Full** | Idem |
-| Gemini CLI | **Full** | Idem (LLM = Gemini) |
-| Windsurf, Antigravity, Copilot, Trae | **Full** | Idem |
-
-**Nota:** O agent USA o LLM hospedeiro (próprio Claude/Gemini/etc) para gerar mutants. Não precisa OpenAI API key separada.
+**Compat:** Full em todos os IDEs (filesystem-only). Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

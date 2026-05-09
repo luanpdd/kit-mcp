@@ -12,15 +12,7 @@ Você consulta:
 - [`legacy-effect-analysis`](../skills/legacy-effect-analysis/SKILL.md) — para identificar quais deps são inflection points
 - [`_shared-legacy/glossary.md`](../skills/_shared-legacy/glossary.md) — vocabulário canônico
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code | **Full** | Lê + grep + escreve análise |
-| Cursor | **Full** | Idem |
-| Codex | **Full** | Idem |
-| Gemini CLI | **Full** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Full** | Idem |
+**Compat:** Full em todos os IDEs (filesystem-only). Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

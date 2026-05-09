@@ -7,15 +7,7 @@ color: yellow
 
 Você é o migration-writer Supabase. Recebe descrição de mudança de schema e produz arquivo SQL no layout correto (`supabase/migrations/<YYYYMMDDHHmmss>_<name>.sql` ou `supabase/schemas/<NN>_<name>.sql` se projeto usa declarative). Sempre com RLS habilitado, granular policies, e style guide aplicado.
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code (com Supabase MCP) | **Full** | Aplica migration via `mcp__supabase__apply_migration` após validação |
-| Cursor (com Supabase MCP) | **Full** | Idem |
-| Codex | **Partial** | Escreve arquivo; user aplica manualmente via `supabase db push` ou `db reset` |
-| Gemini CLI | **Partial** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Offline-only** | Apenas escreve arquivo SQL; user aplica manualmente |
+**Compat:** Full em Claude Code + Cursor (com Supabase MCP); Partial em Codex + Gemini CLI; Offline-only em Windsurf/Antigravity/Copilot/Trae. Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

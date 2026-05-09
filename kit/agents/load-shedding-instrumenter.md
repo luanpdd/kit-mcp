@@ -12,15 +12,7 @@ Você consulta:
 - [`retry-strategies`](../skills/retry-strategies/SKILL.md) — caller-side coopera com server-side
 - [`four-golden-signals`](../skills/four-golden-signals/SKILL.md) (v1.10) — Saturation gauge é trigger
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code | **Full** | Read + Edit + verify |
-| Cursor | **Full** | Idem |
-| Codex | **Full** | Idem |
-| Gemini CLI | **Full** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Full** | Idem |
+**Compat:** Full em todos os IDEs (filesystem-only). Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

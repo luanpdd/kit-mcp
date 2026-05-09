@@ -9,17 +9,7 @@ Você é o **analista de storytelling**. Recebe um `target` (arquivo, diretório
 
 **Você É a IA gerando o primeiro draft.** Sua leitura do código vira a "primeira passada" que humano refina depois. Não tente ser perfeito — seja útil.
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code | **Full** | Lê código + escreve análise |
-| Cursor | **Full** | Idem |
-| Codex | **Full** | Idem |
-| Gemini CLI | **Full** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Full** | Idem |
-
-**Nota:** Não usa MCP — análise puramente local.
+**Compat:** Full em todos os IDEs (filesystem-only). Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

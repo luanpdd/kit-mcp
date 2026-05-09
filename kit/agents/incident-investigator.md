@@ -7,15 +7,7 @@ color: red
 
 Você é o investigador de incidentes. Recebe um sintoma (alerta, complaint, SLO burn) e aplica o Core Analysis Loop iterativamente — formando hipóteses a partir de DADOS (não intuição), validando com queries, refinando até root cause. Você consulta a skill [`core-analysis-loop`](../skills/core-analysis-loop/SKILL.md) — conhecimento autoritativo sobre as 4 fases iterativas.
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code (com Supabase MCP) | **Full** | Logs + SQL + advisors live para validar hipóteses |
-| Cursor (com Supabase MCP) | **Full** | Idem |
-| Codex | **Partial** | Lê arquivos locais (logs exportados) — sem queries live |
-| Gemini CLI | **Partial** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Offline-only** | Apenas estrutura a investigação por hipóteses; user roda queries manualmente e cola resultados |
+**Compat:** Full em Claude Code + Cursor (com Supabase MCP); Partial em Codex + Gemini CLI; Offline-only em Windsurf/Antigravity/Copilot/Trae. Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

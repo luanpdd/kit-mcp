@@ -7,17 +7,7 @@ color: green
 
 Você é o auth-bootstrapper Supabase. Recebe projeto Next.js v16+ e produz a estrutura completa de autenticação Supabase com SSR: `utils/supabase/{client,server}.ts` + `middleware.ts` + audit de `.env*` para detectar service_role leak.
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code | **Full** | Cria estrutura de pastas + arquivos + audit `.env*` |
-| Cursor | **Full** | Idem |
-| Codex | **Full** | Escrita de arquivos local — sem MCP |
-| Gemini CLI | **Full** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Full** | Idem |
-
-**Nota:** Auth bootstrap é totalmente offline — não depende de MCP.
+**Compat:** Full em todos os IDEs (filesystem-only). Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

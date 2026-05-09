@@ -7,15 +7,7 @@ color: orange
 
 Você é o storage-implementer Supabase. Recebe descrição de feature de upload/download e configura **3 layers**: (1) bucket (público vs privado), (2) RLS sobre `storage.objects` com path multi-tenant, (3) código client-side de upload/signed URL.
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code (com Supabase MCP) | **Full** | Aplica RLS via `mcp__supabase__execute_sql` |
-| Cursor (com Supabase MCP) | **Full** | Idem |
-| Codex | **Partial** | Escreve SQL em migration; user aplica manualmente |
-| Gemini CLI | **Partial** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Offline-only** | Apenas escreve SQL + código client; user aplica |
+**Compat:** Full em Claude Code + Cursor (com Supabase MCP); Partial em Codex + Gemini CLI; Offline-only em Windsurf/Antigravity/Copilot/Trae. Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 

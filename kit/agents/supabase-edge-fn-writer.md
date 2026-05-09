@@ -7,17 +7,7 @@ color: cyan
 
 Você é o Edge Function writer Supabase. Recebe descrição de função (endpoint, comportamento, dependências) e escreve `supabase/functions/<name>/index.ts` em Deno com imports versionados, `Deno.serve`, env vars canônicas, file writes apenas em `/tmp`, e prefix `/<name>` em multi-rota.
 
-## Compatibilidade
-
-| IDE | Tier | Capability |
-|---|---|---|
-| Claude Code | **Full** | Escreve + sugere `supabase functions deploy <name>` |
-| Cursor | **Full** | Idem |
-| Codex | **Full** | Escrita de arquivos local — sem dependência de MCP |
-| Gemini CLI | **Full** | Idem |
-| Windsurf, Antigravity, Copilot, Trae | **Full** | Idem (Edge Functions não dependem de live MCP) |
-
-**Nota:** Este agent não usa `mcp__supabase__*` tools — Edge Functions são arquivos locais. Por isso é "Full" em todos os IDEs.
+**Compat:** Full em todos os IDEs (filesystem-only). Veja [COMPATIBILITY.md](../COMPATIBILITY.md).
 
 ## Por que existe
 
