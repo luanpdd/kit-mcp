@@ -17,6 +17,18 @@
 
 ## Em andamento
 
+### v1.12 — Legacy Code Mastery & AI-Era Refactoring (Phases 48-78)
+
+**Milestone:** v1.12 — Legacy Code Mastery & AI-Era Refactoring (5ª suíte do kit, derivada do livro Feathers 2004 + modernizações IA/Supabase 2026)
+**Numeração de fases:** continua de v1.11 (terminará em fase 47) → v1.12 começa em **Fase 48**
+**Total de REQs cobertos:** 38 (GLOS-LGC-01..02, SKFD-LGC-01..12, AGCORE-LGC-01..08, CMD-LGC-01..10, INT-LGC-01..04, INT-FW-LGC-01..02, GATE-LGC-01..03)
+**Total de fases:** 31 (Fases 48-78)
+**Estrutura:** 5 ondas (skills foundationais, skills+modernizações IA, agentes, comandos, gates+integrações)
+**Status:** **17 fases concluídas (entregues out-of-band) · 14 pending**
+**Criado:** 2026-05-08
+**Material-fonte:** *Working Effectively with Legacy Code* — Michael Feathers (Prentice Hall, 2004). ISBN 978-0-13-117705-5.
+[Detalhes](./milestones/v1.12-ROADMAP.md)
+
 ### v1.11 — SRE Resilience & Release Engineering (Phases 42-47)
 
 **Milestone:** v1.11 — SRE Resilience & Release Engineering

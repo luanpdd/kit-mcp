@@ -1,15 +1,93 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-08 — v1.11 SRE Resilience & Release Engineering iniciado.
+> Última atualização: 2026-05-08 — v1.12 Legacy Code Mastery & AI-Era Refactoring em planejamento.
 
 ## Estado Atual
 
 **v1.10.0 — SRE Engagement** publicado em npm + GitHub release 2026-05-07. Stack acumulado v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) forma suíte coesa de production engineering. Stable API v1.0+ preservada (zero alterações em `src/core/`).
 
-**v1.11 — SRE Resilience & Release Engineering** em planejamento. Cobre os 2 caps deferidos da v1.10 — Cap 22 (*Addressing Cascading Failures*) + Cap 8 (*Release Engineering*) — completando a série SRE iniciada na v1.10. Mesmo material-fonte: livro Google SRE 2016 (Beyer/Jones/Petoff/Murphy).
+**v1.11 — SRE Resilience & Release Engineering** em planejamento (Phases 42-47). Cobre os 2 caps deferidos da v1.10 — Cap 22 (*Addressing Cascading Failures*) + Cap 8 (*Release Engineering*) — completando a série SRE iniciada na v1.10.
 
-## Milestone Atual: v1.11 SRE Resilience & Release Engineering
+**v1.12 — Legacy Code Mastery & AI-Era Refactoring** em planejamento (Phases 48-78). 5ª suíte do kit (Legacy) derivada do livro **Working Effectively with Legacy Code — Michael Feathers (2004)** + modernizações para era 2026 (IA generativa, LLMs como dependência, Supabase Edge Functions como API-only applications, embeddings para detecção semântica). Endereça o problema clássico que toda equipe enfrenta: refatorar código crítico sem testes prévios.
+
+## Milestone Atual: v1.12 Legacy Code Mastery & AI-Era Refactoring
+
+**Objetivo:** Adicionar 5ª suíte ao kit (Legacy) derivada do livro Feathers (2004) — *characterization tests*, *seams*, *sprout/wrap*, *effect analysis*, *monster methods*, *extract class*, *programming by difference*, *API-only applications*, *shotgun surgery*, *storytelling/naked CRC* — todos modernizados para o contexto atual onde Supabase Edge Functions são as principais "API-only applications", LLMs são dependências legítimas que precisam ser fakeadas/instrumentadas, prompts são código legado que precisa de characterization, e embeddings + IA podem substituir trabalho mecânico de detecção.
+
+**Funcionalidades alvo (todas aditivas, zero superfície de API quebrada):**
+
+- **Skills (12+1 glossário)** — expertise consultável que viaja com o kit:
+  - `_shared-legacy/glossary.md` — vocabulário canônico bilíngue (PT-BR↔EN) sobre legacy code, seams, characterization
+  - `legacy-characterization-tests` — golden snapshots, 7 grupos de equivalência, sanitização (cap 13+23)
+  - `legacy-seams-and-test-harness` — 3 tipos de seam, ~24 técnicas de break-deps (cap 3-4, 9-10, 25)
+  - `legacy-sprout-wrap-techniques` — sprout method/class + wrap method/class (cap 6)
+  - `legacy-effect-analysis` — effect sketches, inflection points, narrowing (cap 11-12, 16)
+  - `legacy-monster-methods` — bulleted vs snarled, scratch refactoring, single-goal editing (cap 22)
+  - `legacy-extract-class` — too-big classes, responsibility hot spots, single-responsibility refactoring (cap 20)
+  - `legacy-programming-by-difference` — TDD em legacy, herança/composição como atalho temporário (cap 8)
+  - `legacy-api-only-applications` — adapter/anti-corruption layer; aplicado a Supabase Edge Functions wrappando Stripe/OpenAI/etc (cap 15 + modernização)
+  - `legacy-shotgun-surgery` — duplicate detection + extract; modernizado com semantic search via embeddings (cap 21 + modernização)
+  - `legacy-storytelling-naked-crc` — gerar mental model de codebase desconhecido; modernizado com IA produzindo storytelling (cap 16-17 + modernização)
+  - `ai-prompt-characterization` — prompts e tools são legacy code também; characterization de generations LLM com sampling deterministic (modernização sem precedente em 2004)
+  - `llm-as-dependency` — fakear OpenAI/Anthropic clients; deterministic test mode com fixtures (modernização)
+  - `pre-refactor-characterization` — auto-trigger gate ANTES de refactor de risco
+
+- **Agentes (8)** — workers especializados:
+  - `legacy-characterizer` — gera characterization tests cobrindo 7 grupos canônicos
+  - `seam-finder` — analisa seams + recomenda técnica do cap 25 com menor custo
+  - `refactor-safety-auditor` — gate canônico runtime; veredito GO/BLOCK/WARN/GO-OVERRIDE
+  - `payload-capture-instrumenter` — instrumenta Edge Function para captura de payloads via mcp__supabase__get_logs (modernização)
+  - `storytelling-analyst` — IA gera mental model + telling-the-story de codebase desconhecido (modernização)
+  - `shotgun-surgery-detector` — detecta duplicação semântica via embeddings (pgvector se disponível) (modernização)
+  - `ai-mutation-tester` — LLM gera mutants comportamentais (mais ricos que sintáticos) (modernização)
+  - `observability-coverage-auditor` — audit de cobertura de 4 golden signals/SLO/burn-alert por Edge Function (modernização)
+
+- **Comandos (10):**
+  - `/caracterizar` — invoca legacy-characterizer
+  - `/encontrar-seams` — invoca seam-finder
+  - `/auditar-refactor` — invoca refactor-safety-auditor
+  - `/refactor-seguro` — chain canônico (seams → caracterizar → audit → executar)
+  - `/legacy [subcomando]` — orquestrador da Suíte Legacy (5ª da família após /supabase, /observabilidade, /sre)
+  - `/capturar-payloads` — instrumenta Edge Function pra captura via Supabase logs (modernização)
+  - `/caracterizar-prompt` — characterization de prompts/tools LLM (modernização)
+  - `/storytelling` — IA gera mental model de codebase (modernização)
+  - `/detectar-duplicacao` — shotgun surgery via embeddings (modernização)
+  - `/auditar-observabilidade-cobertura` — audit X/N Edge Functions com 4 golden signals + SLO + burn alert (modernização)
+
+- **Audit gates (3):**
+  - `legacy-refactor-safety` — bloqueia plano com refactor sem characterization
+  - `ai-prompt-stability` — prompts em prod precisam de characterization (modernização)
+  - `observability-coverage` — % Edge Functions com golden signals + SLO + burn alert ≥ threshold (modernização)
+
+- **Integração com Suítes existentes (4 patches):**
+  - `four-golden-signals` (v1.10): patch para sugerir characterization de payloads ao instrumentar
+  - `prr-conductor` (v1.10): Axe 5 (Change Management) consume REFACTOR-SAFETY.md
+  - `omm-auditor` (v1.9): Capacidade 1 (Resilience) consulta % refactors com safety net
+  - `supabase-edge-fn-writer` (v1.8): aplica adapter pattern + payload capture pattern built-in
+
+- **Integração com fluxo framework (3 patches):**
+  - `planner` + `executor` + `verifier` — gate runtime + verificação reversa pós-refactor
+  - `/discutir-fase` — pergunta canônica + injeção de seção `<refactor_safety>` em CONTEXT.md
+  - `/auditar-marco` + `/forense` — opt-in audit retroativo + lessons learned canônicas
+
+**Decisões de stack:**
+- Zero deps novas. Apenas conteúdo de kit (markdown). Stable API v1.0+ preservada — só adições.
+- Material-fonte: *Working Effectively with Legacy Code* — Michael Feathers (Prentice Hall / Robert C. Martin Series, 2004). ISBN 978-0-13-117705-5.
+- Modernizações documentadas explicitamente — cada skill nova marca o que é "Feathers original" vs "extensão IA/Supabase 2026".
+- Conteúdo PT-BR (alinhado v1.8/v1.9/v1.10/v1.11). Code blocks EN com comentários PT-BR.
+- Roadmap começa em **Phase 48** (continua v1.11 que termina em Phase 47).
+- Integra naturalmente com as outras 4 suítes — Supabase, Observabilidade, SRE, e a futura SRE Resilience.
+
+**Beneficiários principais:**
+- Suíte Supabase v1.8 — `supabase-edge-fn-writer` ganha `legacy-api-only-applications` pattern + payload capture
+- Suíte Observabilidade v1.9 — `omm-auditor` Capacidade 1 (Resilience) consulta legacy-refactor coverage; `/auditar-observabilidade-cobertura` complementa OMM
+- Suíte SRE v1.10 — `prr-conductor` Axe 5 consume REFACTOR-SAFETY; `/postmortem` consulta REFACTOR-SAFETY em regression incidents
+- Fluxo framework — todos os comandos principais ganham awareness de legacy code
+
+**Contrato preservado:** Quem usa kit-mcp em produção não percebe nada além de novos artefatos disponíveis ao sincronizar. CI permanece verde.
+
+## ~~Milestone Anterior: v1.11 SRE Resilience & Release Engineering~~
 
 **Objetivo:** Adicionar a 2ª camada de expertise SRE ao kit, derivada dos caps 22 e 8 do livro Google SRE — resiliência operacional (cascading failures, retries com jitter, load shedding, graceful degradation) e disciplina de release (hermetic builds, deployment philosophy, policy enforcement). Completa a v1.10 e estabelece base para projetos production-bound com tier-1 maturity.
 
