@@ -233,7 +233,8 @@ test('static UI: declares all 7 event types (TYPE_LABELS keys)', async () => {
 test('static UI: connects to real /events SSE in production boot', async () => {
   await withServer(async (srv) => {
     const r = await fetchHtml(srv.port);
-    assert.match(r.body, /new EventSource\("\/events"\)/);
+    // SEC-14-02: /events is now wrapped via authedEventSourceUrl (token via ?t=).
+    assert.match(r.body, /new EventSource\(authedEventSourceUrl\("\/events"\)\)/);
     assert.match(r.body, /function connectRealSource/);
     // Must register a listener for each typed event (otherwise typed SSE messages won't fire)
     for (const t of ['run.start', 'run.end', 'tool_invocation', 'progress', 'milestone', 'error', 'shutdown']) {
@@ -246,7 +247,8 @@ test('static UI: hydrates from /state on page load (1.2.1+)', async () => {
   await withServer(async (srv) => {
     const r = await fetchHtml(srv.port);
     assert.match(r.body, /async function hydrateFromState/);
-    assert.match(r.body, /fetch\("\/state"/);
+    // SEC-14-02: /state hydrate now uses authedFetch (Bearer token in header).
+    assert.match(r.body, /authedFetch\("\/state"/);
     assert.match(r.body, /for \(const evt of j\.events\) ingest/);
   });
 });

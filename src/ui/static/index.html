@@ -1182,6 +1182,44 @@ button { font: inherit; color: inherit; background: none; border: 0; cursor: poi
    When adding new innerHTML sites, always escape dynamic fields.
    ────────────────────────────────────────────────────────── */
 
+/* ──────────────────────────────────────────────────────────
+   SEC-14-02 (Phase 82 / Plan 02): auth token from URL query param.
+   Server (Plan 01) requires Bearer token on /publish, /shutdown, /state
+   and ?t= on /events. This block extracts ?t= once at boot, scrubs it
+   from the address bar (so it doesn't leak via screen-share / browser
+   history copy-paste), and exposes helpers for fetch + EventSource.
+   Variable scoped to closure (not sessionStorage) — reload re-handshakes.
+   ────────────────────────────────────────────────────────── */
+const __sidecarToken = (() => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("t");
+    if (t && /^[0-9a-f]{64}$/.test(t)) {
+      // Scrub from URL so re-share / screenshot doesn't leak it.
+      params.delete("t");
+      const newSearch = params.toString();
+      const newUrl = window.location.pathname + (newSearch ? "?" + newSearch : "") + window.location.hash;
+      window.history.replaceState(null, "", newUrl);
+      return t;
+    }
+  } catch (_) { /* fall through */ }
+  return null;
+})();
+
+function authedFetch(input, init = {}) {
+  const opts = { ...init, headers: { ...(init.headers || {}) } };
+  if (__sidecarToken) {
+    opts.headers["Authorization"] = "Bearer " + __sidecarToken;
+  }
+  return fetch(input, opts);
+}
+
+function authedEventSourceUrl(path) {
+  if (!__sidecarToken) return path;
+  const sep = path.includes("?") ? "&" : "?";
+  return path + sep + "t=" + encodeURIComponent(__sidecarToken);
+}
+
 /* ---------- humanize helpers (preserved API) ---------- */
 const TYPE_LABELS = {
   "run.start":      "INICIADO",
@@ -1931,7 +1969,7 @@ function applyConnState(s) {
 
 async function hydrateFromState() {
   try {
-    const res = await fetch("/state", { credentials: "omit" });
+    const res = await authedFetch("/state", { credentials: "omit" });
     if (!res.ok) return;
     const j = await res.json();
     if (j.port && document.querySelector(".brand-sub")) {
@@ -1952,7 +1990,7 @@ function connectRealSource() {
   applyConnState("connecting");
   if (evtSource) try { evtSource.close(); } catch (_) {}
 
-  evtSource = new EventSource("/events");
+  evtSource = new EventSource(authedEventSourceUrl("/events"));
 
   evtSource.addEventListener("open", () => {
     lastConnectedAt = Date.now();

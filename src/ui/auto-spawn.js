@@ -97,7 +97,12 @@ export async function ensureSidecar({ projectRoot, openBrowserOnSpawn = true } =
 
   let opened = false;
   if (openBrowserOnSpawn) {
-    const url = `http://127.0.0.1:${lock.port}/`;
+    // SEC-14-02: propagate auth token via query param so browser can self-authenticate
+    // without user interaction. EventSource cannot send custom headers; ?t= is the
+    // canonical pattern. The browser scrubs ?t= from the address bar via
+    // history.replaceState immediately on boot to avoid leak via screenshare.
+    const tokenSuffix = lock.token ? `?t=${encodeURIComponent(lock.token)}` : '';
+    const url = `http://127.0.0.1:${lock.port}/${tokenSuffix}`;
     const r = await openBrowser(url);
     opened = r.opened === true;
   }
