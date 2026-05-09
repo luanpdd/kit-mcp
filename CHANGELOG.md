@@ -6,6 +6,37 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.13.0] - 2026-05-09
+
+Suíte de hardening interno — derivada de meta-auditoria com 12 agentes em paralelo sobre kit-mcp v1.12.1. **Content-zero** (não adiciona ao kit, repara o framework e o package npm).
+
+3 fases (79-81), 10 plans, 33 testes novos (210 testes total no baseline final).
+
+### Security (CRITICAL/HIGH fechados)
+- **SEC-13-01:** `gates.run` via MCP transport agora bloqueia exec arbitrário com erro estável. Surface MCP fechada; `kit gates run` CLI preservado.
+- **SEC-13-02:** `replayId` validation com regex allowlist + `path.resolve` assertion em `loadReplay`/`annotateReplay`/`recordReplay` (3 callers em `src/core/replays.js`). Bloqueia path traversal contra `.planning/replays/`.
+- **SEC-13-03:** `npm ci` strict (sem fallback `|| npm install`) em `.github/workflows/publish.yml` e `.github/workflows/ci.yml` — lockfile reproducibility no path de release.
+- **SEC-13-04:** Publish workflow obriga `npm test` + `npm run test:integration` + `npm audit --omit=dev --audit-level=high` antes de `npm publish`. Race conditions e CVEs travam release.
+- **SEC-13-05:** 6 hooks restantes (`workflow-guard`, `prompt-guard`, `context-monitor`, `post-apply-migration`, `statusline`, `check-update`) categorizados (A/B/C/E) e — onde aplicável — corrigidos com pattern `process.stdout.write(payload, () => process.exit(0))` (mesma classe de bug do fix v1.12.1, padrão diferente para hooks síncronos vs TCP).
+
+### Performance / Token economy
+- **PERF-13-01:** `summarize()` + `SUMMARY_MAX_CHARS` exportados de `src/core/sync.js`; aplicados em `slim()` de `src/mcp-server/index.js` e `src/cli/index.js`. **Redução real de 44.4%** em payload de listing (medida em corpus real do kit, 26057 → 14498 bytes).
+- **PERF-13-02:** Bloco `# hooks:` comentado-morto removido de 11 agents (`planner`, `debugger`, `verifier`, etc.). −66 linhas, ~880 tokens economizados por sessão multi-agent. Anti-regression test guarda contra reintrodução.
+- **PERF-13-03:** `CHANGELOG.md` removido de `package.json#files[]` — −79 KB (unpacked) por install npm. Mantido em GitHub releases.
+
+### Drift cleanup (manutenção recorrente)
+- **DRIFT-13-01:** CHANGELOG entries para v1.11.0, v1.12.0, v1.12.1 backfilled (eram ausentes — publish workflow caía em fallback awk silencioso). Hard-fail gate adicionado: tag final (`vX.Y.Z`) sem entry no CHANGELOG agora aborta release com `::error::CHANGELOG entry missing`. Pre-release tags (`-rcN`/`-betaN`) preservam fallback graceful.
+- **DRIFT-13-02:** README counters hardcoded substituídos pelos valores reais — `47 agents`, `87 commands`, `49 skills`, `20 gates` (drift original era +147%/+45%/+4800%/+300%). Auto-gen via prepublishOnly hook escopado para v1.14.
+- **DRIFT-13-03:** `src/mcp-server/index.js` agora exporta `PKG_VERSION` lido de `package.json` (mesmo pattern de `bin/cli.js`). Removeu hardcoded `version: '0.1.0'` que vinha desde antes do GA. MCP `initialize` response agora retorna versão real.
+
+### Tech debt documentado para v1.14
+- 4 CVEs ativas em transitivas do `@modelcontextprotocol/sdk@1.29.0` (1 high `fast-uri` + 3 moderate `hono`/`ip-address`/`express-rate-limit`)
+- 7 issues HIGH não tocadas: reverse-sync trust de projectRoot via MCP, CSP unsafe-inline + XSS via SSE no UI sidecar, /shutdown sem auth (CSRF same-origin), gate-runner tmpdir predictable, file-manifest.json não verificado em sync, reflect.js leak de ANTHROPIC_API_KEY em error, sync expansion para 8 IDEs em CI matrix
+- T2 (terse mode em list-*), T3 (compatibility dedup em 27 agents), README counters auto-gen
+- Total: ~14 items auditados, ranqueados, escopo pronto para v1.14
+
+[Detalhes da auditoria que originou este milestone](./.planning/codebase/concerns.md) · [PRR-REPORT.md](./.planning/PRR-REPORT.md) · [TOIL-AUDIT.md](./.planning/TOIL-AUDIT.md) · [.planning/v1.13-MILESTONE-AUDIT.md](./.planning/v1.13-MILESTONE-AUDIT.md) · [v1.13-ROADMAP](./.planning/milestones/v1.13-ROADMAP.md)
+
 ## [1.12.1] - 2026-05-08
 
 Hotfix patch — corrige race condition no hook `sidecar-tool-publisher.js` que dropava `tool_invocation` events antes do TCP flush completar, causando UI sidecar não receber a maioria dos eventos quando `process.exit(0)` era chamado imediatamente após `socket.write`.
