@@ -112,6 +112,21 @@
 | `/definir-perfil` | Altera o perfil de modelo para os agentes framework (quality/balanced/budget/inherit) |
 | `/configuracoes` | Configura os toggles de workflow framework e perfil de modelo |
 
+## Suíte Legacy Code (Feathers + modernizações IA/Supabase 2026)
+
+| Comando | O que faz |
+|---------|-----------|
+| `/legacy <subcomando>` | Orquestrador único — dispatch para agents da suíte (10 subcomandos com sinônimos PT/EN) |
+| `/caracterizar` | Gera characterization tests (cap 13) — golden snapshots cobrindo 7 grupos de equivalência |
+| `/encontrar-seams` | Identifica seams (cap 25) e recomenda técnica de dependency-breaking |
+| `/auditar-refactor` | Gate canônico — coleta evidências e retorna veredito GO/BLOCK/WARN/GO-OVERRIDE |
+| `/refactor-seguro` | Chain canônico — seams → caracterizar → auditar → executar; modos full/sprout/safe-extract/override |
+| `/capturar-payloads` | Instrumenta Edge Function Supabase para captura de payloads reais via mcp__supabase__get_logs (modernização) |
+| `/caracterizar-prompt` | Characterization de prompts/tools LLM com temperature=0 + seed fixo (modernização IA) |
+| `/storytelling` | IA gera mental model + naked CRC + extract candidates (cap 16-17 + modernização IA) |
+| `/detectar-duplicacao` | Shotgun surgery cross-codebase via embeddings + jscpd (cap 21 + modernização IA) |
+| `/auditar-observabilidade-cobertura` | Audit X/N Edge Functions com signals + SLO + burn alert + char (cross-suite) |
+
 ## Utilitários
 
 | Comando | O que faz |
