@@ -3,7 +3,7 @@ state_version: 1.0
 milestone: v1.14
 milestone_name: — Web/Core Security Hardening
 status: Phase 83 em andamento — Plan 83.01 (projectRoot validation SEC-14-03) entregue
-last_updated: "2026-05-09T10:55:45.410Z"
+last_updated: "2026-05-09T11:02:42.481Z"
 progress:
   total_phases: 3
   completed_phases: 2
