@@ -2,37 +2,38 @@
 state_version: 1.0
 milestone: v1.18
 milestone_name: — Eat Your Own Dog Food
-status: Phase 96 completa (1/1 plan); v1.18 milestone 3/4 fases
-last_updated: "2026-05-09T16:40:33.000Z"
+status: Phase 97 completa (1/1 plan); v1.18 milestone 4/4 fases — pronto para /concluir-marco
+last_updated: "2026-05-09T17:07:00.000Z"
 progress:
   total_phases: 4
-  completed_phases: 3
+  completed_phases: 4
   total_plans: 1
-  completed_plans: 3
+  completed_plans: 4
 ---
 
 # STATE.md — sessão atual
 
 ## Posição Atual
 
-Fase: 96 — RUNBOOK + FAILURE-MODES + BENCHMARK (OPS-18-01/02/03) — **CONCLUÍDA**
-Status: Phase 96 completa (1/1 plan); v1.18 milestone 3/4 fases
-Última atividade: 2026-05-09T16:40Z — Phase 96.01 executado (plan+execute combinado); 380 tests pass (269 unit + 109 integration + 2 skip); +11 novos tests integration; 3 docs ops em .planning/ (RUNBOOK 329 linhas / FAILURE-MODES 65 linhas matrix 12 modes / BENCHMARK 184 linhas 5 metrics measured) + 11 shape regression tests em test/integration/ops-docs-shape.test.js; aplicadas skills production-readiness-review + blameless-postmortems; zero deps novas
+Fase: 97 — Coverage Ratchet 65→75% (INFRA-18-01) — **CONCLUÍDA**
+Status: Phase 97 completa (1/1 plan); v1.18 milestone 4/4 fases — pronto para /concluir-marco
+Última atividade: 2026-05-09T17:07Z — Phase 97.01 executado (plan+execute combinado); 418 tests pass (307 unit + 109 integration + 2 skip); +38 novos tests unit em 4 test files (failures-coverage / install-coverage / auto-spawn-coverage / cli-index-coverage); coverage 69.95% → 77.89% (+7.94 pp); ci.yml threshold 65 → 75 (REQ INFRA-18-01); zero deps novas
 
 ## Milestone ativo
 
-**v1.18 Eat Your Own Dog Food** — primeira release pós v1.17 que dogfooda as próprias skills SRE/Observabilidade no kit-mcp.
+**v1.18 Eat Your Own Dog Food** — primeira release pós v1.17 que dogfooda as próprias skills SRE/Observabilidade no kit-mcp. **MILESTONE COMPLETO 4/4 fases.**
 
 **4 fases (94-97):**
 
 - Phase 94 ✅ — Golden Signals MCP Server (OBS-18-01/02)
 - Phase 95 ✅ — SLO Definitions (OBS-18-03/04)
 - Phase 96 ✅ — RUNBOOK + FAILURE-MODES + BENCHMARK (OPS-18-01/02/03)
-- Phase 97 ⏭ — Coverage Ratchet 65→75%
+- Phase 97 ✅ — Coverage Ratchet 65→75% (INFRA-18-01)
 
 ## Próximo passo
 
-1. Avançar para Phase 97 (próxima do milestone v1.18) — Coverage Ratchet 65→75% endereçando 4 hot files identificados em Phase 93 (cli/index.js 37%, mcp-server/install.js 19%, ui/auto-spawn.js 31%, core/failures.js 17%)
+1. Rodar `/concluir-marco` para audit do v1.18 (4 fases) e arquivar milestone roadmap → preparar release v1.18.0.
+2. Após audit, `/publicar` para publish na npm + GitHub release (pipeline simples: push tag → GitHub Action publica).
 
 ## Bloqueadores
 
@@ -60,6 +61,7 @@ Stable API v1.0+ preservada. Budget total 6 deps mantido (Phase 92 reorganiza: 3
 | 94 | 01 | ~6.8min | 3 | 5 | 15 (new) |
 | 95 | 01 | ~3.8min | 2 | 4 | 10 (new) |
 | 96 | 01 | ~9.4min | 4 | 4 | 11 (new) |
+| 97 | 01 | ~22min | 5 | 5 | 38 (new) |
 
 ## Decisions
 
@@ -95,3 +97,8 @@ Stable API v1.0+ preservada. Budget total 6 deps mantido (Phase 92 reorganiza: 3
 - **Phase 96.01:** FAILURE-MODES tem seção "deliberately not on this list" — sem isso, catalog implies completeness; carve-out makes scope explícito (out-of-scope hosted-service modes, SLO-budgeted single-error modes).
 - **Phase 96.01:** Test integration via regex-on-text (não markdown AST) — mesmo trade-off Phase 95.01 slo-schema; adicionar `remark`/`marked` queimaria 3-deps + 3-optional budget Phase 92.01.
 - **Phase 96.01:** Cross-doc invariant test asserts cada ops doc cross-refs ≥1 sibling — sem isso, future edits could silently strip navigation entre RUNBOOK ↔ FAILURE-MODES ↔ BENCHMARK; assertion makes contract enforceable.
+- **Phase 97.01:** Threshold 75 (3 abaixo do baseline 77.89%) — matches Phase 93.01 noise-margin pattern; round-number ratchet step (65→70→75→80) makes schedule legible. Setting at-baseline flakearia em minor reporter changes Node 22.x → 22.y.
+- **Phase 97.01:** cli/index.js testado via spawnSync (não in-process import) — file ends with `program.parseAsync(process.argv)` at top-level que consumiria argv do test runner. Preserving rule "no source changes" (CONTEXT.md `<decisions>`) ruled out exporting helpers; spawnSync gives behavioral coverage and Node's v8 coverage merger lifts the metric anyway (37 → 55%).
+- **Phase 97.01:** healthz_timeout path (5s polling) skipped — adicionar push unit suite past 12s for one edge case; integration coverage suficiente; regression surfaceria em PRR check antes de v1.19.
+- **Phase 97.01:** Mock HTTP server pattern para sidecar tests — vs launching real bin/ui.js (would orphan detached child em os.tmpdir() se test crashasse). Loopback HTTP server responds 200 a /healthz, hand-crafted lockfile points at it, exercises existing-running-sidecar branch sem process-tree teardown.
+- **Phase 97.01:** Codex toml userPath testado via HOME override — codex tem no project-level mcpConfig path; função fall-through to `~/.codex/config.toml`. Test sets process.env.HOME (e USERPROFILE on Windows) to tmp dir, restored em finally block.
