@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-// hook-version: 1.30.0
+// hook-version: 1.30.1
+// SEC-13-05: flush-before-exit category = A (stdout.write + immediate exit)
+// Fix applied: process.stdout.write(payload, () => process.exit(0)) on warning path.
 // framework Workflow Guard — PreToolUse hook
 // Detects when Claude attempts file edits outside a framework workflow context
 // (no active / command or Task subagent) and injects an advisory warning.

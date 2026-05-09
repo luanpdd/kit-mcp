@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-// hook-version: 1.30.0
+// hook-version: 1.30.1
+// SEC-13-05: flush-before-exit category = A (stdout.write + immediate exit)
+// Fix applied: process.stdout.write(payload, () => process.exit(0)) on warning path.
 // framework Prompt Injection Guard — PreToolUse hook
 // Scans file content being written to .planning/ for prompt injection patterns.
 // Defense-in-depth: catches injected instructions before they enter agent context.

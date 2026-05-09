@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // hook-version: 1.30.0
+// SEC-13-05: flush-before-exit category = E (parent returns after spawn unref; child uses sync fs writes) — no fix needed
 // Check for framework updates in background, write result to cache
 // Called by SessionStart hook - runs once per session
 

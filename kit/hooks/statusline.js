@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 // hook-version: 1.30.0
+// SEC-13-05: flush-before-exit category = C (no process.exit, natural termination flushes) — no fix needed
 // Claude Code Statusline - Edition
 // Shows: model | current task | directory | context usage
 

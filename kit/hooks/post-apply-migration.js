@@ -1,5 +1,7 @@
 #!/usr/bin/env node
-// hook-version: 1.4.0
+// hook-version: 1.4.1
+// SEC-13-05: flush-before-exit category = A (stderr.write + immediate exit)
+// Fix applied: process.stderr.write(summary, () => process.exit(0)) on success path.
 // kit-mcp · Post-apply Migration Hook (PostToolUse)
 //
 // Triggers automatically AFTER a successful Supabase MCP apply_migration call.
