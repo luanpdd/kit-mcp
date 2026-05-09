@@ -82,6 +82,13 @@ Plans:
 - `grep -c "19 agents\|60 commands"` no README.md retorna 0.
 - MCP `initialize` response mostra `serverInfo.version` = leitura de package.json.
 
+**Plans:** 3 plans (todos onda 1, paralelos)
+
+Plans:
+- [ ] 01-changelog-backfill-PLAN.md — backfill 3 entries CHANGELOG (v1.11/v1.12/v1.12.1) + hard-fail awk gate (DRIFT-13-01)
+- [ ] 02-readme-counts-PLAN.md — substituir contadores hardcoded (19→47/60→87/1→49/5→20) (DRIFT-13-02)
+- [ ] 03-mcp-version-sync-PLAN.md — ler version de package.json + regression test (DRIFT-13-03)
+
 <details>
 
 ## Concluídos
