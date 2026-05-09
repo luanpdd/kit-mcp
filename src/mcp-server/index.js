@@ -20,6 +20,7 @@ import { listKit, searchKit, findItem } from '../core/kit.js';
 import { listTargets } from '../core/registry.js';
 import { syncTo, statusOf, removeFrom, summarize } from '../core/sync.js';
 import { detectReverse, applyReverse } from '../core/reverse-sync.js';
+import { validateProjectRoot } from '../core/path-safety.js';
 import { listGates, getGate, gatesForStage } from '../core/gates.js';
 import { runGate } from '../core/gate-runner.js';
 import { collectFailures, summarizeByAgent, writeLearnings } from '../core/failures.js';
@@ -192,25 +193,45 @@ async function withAutoSpawn(args, tool, run) {
 async function handleSync(args) {
   switch (args.action) {
     case 'targets': return listTargets();
-    case 'status':  return statusOf(args.target, { projectRoot: args.projectRoot });
+    case 'status':
     case 'install':
-      return withAutoSpawn(args, 'sync.install', (onProgress) =>
-        syncTo(args.target, { projectRoot: args.projectRoot, mode: args.mode, dryRun: args.dryRun, onProgress }));
-    case 'remove':  return removeFrom(args.target, { projectRoot: args.projectRoot });
+    case 'remove': {
+      // SEC-14-03: MCP message must specify a path inside a git workspace.
+      // CLI bypasses this — bin/cli.js trusts whoever invoked it (same trust
+      // model as Phase 79.01's gates.run guard). status is read-only but
+      // included for defense-in-depth and a single uniform error surface.
+      const guard = await validateProjectRoot(args.projectRoot);
+      if (!guard.ok) return { error: guard.reason };
+      const projectRoot = guard.resolvedPath;
+      if (args.action === 'status') return statusOf(args.target, { projectRoot });
+      if (args.action === 'install')
+        return withAutoSpawn({ ...args, projectRoot }, 'sync.install', (onProgress) =>
+          syncTo(args.target, { projectRoot, mode: args.mode, dryRun: args.dryRun, onProgress }));
+      // action === 'remove'
+      return removeFrom(args.target, { projectRoot });
+    }
     default: return { error: `Unknown action: ${args.action}` };
   }
 }
 
 async function handleReverseSync(args) {
   switch (args.action) {
-    case 'detect': return detectReverse(args.target, { projectRoot: args.projectRoot });
-    case 'apply':
-      return withAutoSpawn(args, 'reverse-sync.apply', (onProgress) =>
+    case 'detect':
+    case 'apply': {
+      // SEC-14-03: same guard as handleSync — reverse-sync apply also writes
+      // to disk (kit/<file>) so it must be on the same allowlist as sync.
+      const guard = await validateProjectRoot(args.projectRoot);
+      if (!guard.ok) return { error: guard.reason };
+      const projectRoot = guard.resolvedPath;
+      if (args.action === 'detect') return detectReverse(args.target, { projectRoot });
+      // action === 'apply'
+      return withAutoSpawn({ ...args, projectRoot }, 'reverse-sync.apply', (onProgress) =>
         applyReverse(args.target, {
-          projectRoot: args.projectRoot,
+          projectRoot,
           strategy: args.strategy, only: args.only, dryRun: args.dryRun,
           onProgress,
         }));
+    }
     default: return { error: `Unknown action: ${args.action}` };
   }
 }
