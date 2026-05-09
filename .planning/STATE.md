@@ -1,14 +1,14 @@
 ---
 state_version: 1.0
-milestone: v1.14
-milestone_name: — Web/Core Security Hardening
+milestone: v1.15
+milestone_name: — DX & Token Economy Wave 2
 status: Milestone v1.14 completo — todas 3 fases (82, 83, 84) concluídas
-last_updated: "2026-05-09T11:28:17.732Z"
+last_updated: "2026-05-09T12:09:35.824Z"
 progress:
   total_phases: 3
-  completed_phases: 3
-  total_plans: 6
-  completed_plans: 6
+  completed_phases: 0
+  total_plans: 2
+  completed_plans: 1
 ---
 
 # STATE.md — sessão atual
@@ -17,9 +17,9 @@ progress:
 
 ## Posição Atual
 
-Fase: Phase 84 — MCP Error Sanitization **CONCLUÍDA** (Plan 84.01 entregue)
-Status: Milestone v1.14 completo — todas 3 fases (82, 83, 84) concluídas
-Última atividade: 2026-05-09T11:17Z — Plan 84.01 (error-redaction SEC-14-06) entregue: helper puro `redactSecrets` + `sanitizeMcpError` em `src/core/error-redaction.js` (6 regex patterns + non-false-positive contract + idempotente), aplicado em 3 call sites (mcp-server central catch, reflect.js Anthropic 401 rethrow, replays.js recordReplay JSON persistence). Stack só vai para stderr; envelope MCP nunca leva path absoluto / stack / sk-ant / Bearer. 35 testes novos (23 helper unit + 5 envelope integration + 3 reflect-redact + 3 replays-redact + 1 spawn smoke). Suite total 275 tests (191 unit + 84 integration), 0 fails. 4 commits atômicos (34a99e0 helper, a488616 central-catch, f6eabd4 reflect+replays, 74574c5 spawn-smoke).
+Fase: Phase 85 — Token Economy Wave 2 **EM ANDAMENTO** (Plan 85.01 entregue; Plan 85.02 em paralelo)
+Status: v1.15 ativo — primeiro plan da Phase 85 concluído
+Última atividade: 2026-05-09T12:08Z — Plan 85.01 (terse mode PERF-15-01) entregue: `terse:boolean` aditivo no MCP `kit` schema + `slimTerse(x)` helper em `src/mcp-server/index.js` e `src/cli/index.js`; CLI ganha `--terse` flag em list-agents/list-commands/list-skills (paridade cross-surface). 4 regression tests novos em `test/unit/terse-mode.test.js` (shape + ≥40% reduction + CLI parity + backward-compat). **Corpus real mostra 68.8% redução** (25486 → 7942 bytes em 179 items, well above ≥40% threshold). Action enum inalterado, default false → comportamento idêntico para clientes existentes. Suite: 195 unit (193 pass + 2 skipped) + 84 integration = 279 tests, 0 fails. 2 commits atômicos (efd0709 mcp, 2471063 cli+tests).
 
 ## Milestone ativo
 
@@ -54,6 +54,8 @@ Status: Milestone v1.14 completo — todas 3 fases (82, 83, 84) concluídas
   - Phase 83 — Plan 01 (projectRoot validation SEC-14-03) concluído 2026-05-09T10:53Z. Helper puro + guard MCP transport (handleSync + handleReverseSync) + 6 regression tests + sentinel uniforme. CLI inalterado (Phase 79.01 contract).
   - Phase 83 — Plan 02 (gate-runner mkdtemp SEC-14-04) concluído 2026-05-09T~11:00Z. execScript usa fs.mkdtemp + per-run unique dir (kernel-atomic random suffix) + recursive cleanup em finally — symlink TOCTOU vector fechado. Phase 79.01 MCP gates.run guard preservado (mcp-server/index.js untouched). 4 regression tests (lifecycle pass/fail + source-grep + concurrent-runs). 2 commits (6a6a276 fix, 99d4d6b test).
   - Phase 84 — Plan 01 (error-redaction SEC-14-06) concluído 2026-05-09T11:17Z. Helper puro + 3 call sites (MCP central catch + reflect rethrow + replays JSON) + 35 regression tests (23 helper + 5 envelope + 3 reflect + 3 replays + 1 spawn). Stack permanece em stderr; clientes nunca recebem stack/path absoluto/sk-ant/Bearer. Single choke point grep-verifiable. **Phase 84 completa — milestone v1.14 fechado.**
+- **v1.15 — em andamento** (DX & Token Economy Wave 2; iniciado 2026-05-09; 3 fases planejadas)
+  - Phase 85 — Plan 01 (terse mode PERF-15-01) concluído 2026-05-09T12:08Z. `terse:boolean` aditivo no MCP `kit` schema + `slimTerse(x)` helper em mcp-server e cli (paridade cross-surface) + CLI `--terse` flag em list-agents/list-commands/list-skills + 4 regression tests novos (test/unit/terse-mode.test.js: shape, ≥40% reduction, CLI parity, backward-compat). Corpus real **68.8% redução** (25486 → 7942 bytes em 179 items). Action enum inalterado, default false → backward-compat preservada. Suite 279 (195 unit + 84 integration), 0 fails. 2 commits (efd0709 mcp, 2471063 cli+tests).
 
 ## Contexto Acumulado
 

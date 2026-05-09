@@ -20,7 +20,7 @@
 **Plans:** 2 plans (ambos onda 1, paralelos — files disjoints)
 
 Plans:
-- [ ] 85-01-terse-mode-PLAN.md — terse:true em handleKit + --terse flag CLI + 4 regression tests (PERF-15-01)
+- [x] 85-01-terse-mode-PLAN.md — terse:true em handleKit + --terse flag CLI + 4 regression tests (PERF-15-01)
 - [ ] 85-02-compatibility-dedup-PLAN.md — kit/COMPATIBILITY.md canonical + edita 27 agents + regen file-manifest.json + 3 regression tests (PERF-15-02)
 
 **Escopo:**
