@@ -21,7 +21,7 @@
 
 Plans:
 - [x] 82-01-ui-server-hardening-PLAN.md — CSP estrito (sha256 hash), requireAuth middleware, token no lockfile, regression tests
-- [ ] 82-02-token-propagation-PLAN.md — auto-spawn → browser via ?t=, client.js + sidecar-tool-publisher.js anexam Bearer token
+- [x] 82-02-token-propagation-PLAN.md — auto-spawn → browser via ?t=, client.js + sidecar-tool-publisher.js anexam Bearer token
 
 
 **Escopo:**

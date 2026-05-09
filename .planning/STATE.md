@@ -2,13 +2,13 @@
 state_version: 1.0
 milestone: v1.14
 milestone_name: — Web/Core Security Hardening
-status: Phase 82 em andamento — Plan 01 concluído, Plan 02 (token-propagation) próximo
-last_updated: "2026-05-09T10:17:14.037Z"
+status: Phase 82 concluída — Plans 01+02 entregues; Phase 83 próxima
+last_updated: "2026-05-09T10:25:43Z"
 progress:
   total_phases: 3
-  completed_phases: 0
+  completed_phases: 1
   total_plans: 2
-  completed_plans: 1
+  completed_plans: 2
 ---
 
 # STATE.md — sessão atual
@@ -17,9 +17,9 @@ progress:
 
 ## Posição Atual
 
-Fase: Phase 82 — Web Surface Hardening (Plan 01 concluído; Plan 02 próximo)
-Status: Phase 82 em andamento — Plan 01 concluído, Plan 02 (token-propagation) próximo
-Última atividade: 2026-05-09T10:15Z — Plan 82.01 (UI server hardening) entregue: SEC-14-01 (CSP sha256, no unsafe-inline) + SEC-14-02 (lockfile token + requireAuth). 6 commits, 9 regression tests, 3 skipped pending Plan 02. Suite 216 passing.
+Fase: Phase 82 — Web Surface Hardening **concluída** (Plans 01 + 02)
+Status: Phase 82 concluída — Plans 01+02 entregues; Phase 83 (Core Filesystem Hardening) próxima
+Última atividade: 2026-05-09T10:25Z — Plan 82.02 (token-propagation) entregue: auto-spawn `?t=` handshake + index.html scrub via replaceState + authedFetch/authedEventSourceUrl + client.js Authorization Bearer + hook v1.14.0. 4 commits, 3 testes reativados + 3 testes novos. Suite 222 passing (139 unit + 83 integration), 0 skipped da fase 82.
 
 ## Milestone ativo
 
@@ -27,7 +27,7 @@ Status: Phase 82 em andamento — Plan 01 concluído, Plan 02 (token-propagation
 
 **3 fases (82-84):**
 
-- Phase 82 — Web Surface Hardening: CSP/XSS no UI sidecar + auth nos endpoints /shutdown e /publish
+- Phase 82 — Web Surface Hardening: CSP/XSS no UI sidecar + auth nos endpoints /shutdown e /publish ✅ **CONCLUÍDA**
 - Phase 83 — Core Filesystem Hardening: reverse-sync projectRoot validation + gate-runner tmpdir mkdtemp + file-manifest verification
 - Phase 84 — MCP Error Sanitization: error envelope scrubbing + reflect.js leak prevention
 
@@ -35,7 +35,7 @@ Status: Phase 82 em andamento — Plan 01 concluído, Plan 02 (token-propagation
 
 ## Próximo passo
 
-1. Executar Plan 82.02 (token-propagation) — `src/ui/client.js publish()` lê lock.token + Authorization Bearer; `auto-spawn.js` injeta `?t=<token>` no URL; `index.html` parseia query e usa em fetch + EventSource. Reativa 3 testes skip-marcados.
+1. Iniciar Phase 83 — Core Filesystem Hardening (planejar via `/discutir-fase` + `/planejar-fase`, ou se já planejado, `/executar-fase 83`).
 2. Continuar fases 83 e 84 do milestone v1.14 (`/autonomo` ou execução individual).
 
 ## Bloqueadores
@@ -49,11 +49,20 @@ Status: Phase 82 em andamento — Plan 01 concluído, Plan 02 (token-propagation
 - v1.12.x — entregue out-of-band 2026-05-08/09
 - **v1.13.0** — publicado em npm 2026-05-09T09:24Z (Security & Performance Hardening — 11 REQs, 33 testes novos, 210 baseline final)
 - **v1.14 — em andamento** (Web/Core Security Hardening; iniciado 2026-05-09; 3 fases)
-  - Phase 82 — Plan 01 (UI server hardening) concluído 2026-05-09T10:15Z. Plan 02 (token propagation) próximo.
+  - Phase 82 — Plan 01 (UI server hardening) concluído 2026-05-09T10:15Z.
+  - Phase 82 — Plan 02 (token propagation) concluído 2026-05-09T10:25Z. **Phase 82 completa.**
 
 ## Contexto Acumulado
 
 v1.14 é continuação tática da v1.13 — mesmo ciclo de auditoria (12-agent parallel sweep), só com escopo diferente. v1.13 foi os 4 CRITICAL + 4 quick wins; v1.14 são os 6 HIGH deferidos.
+
+**Phase 82 acumulado (Plans 01 + 02):**
+- Lockfile estendido com `token: randomBytes(32).toString('hex')` (additive, sem LOCK_VERSION bump).
+- CSP estrito sem `'unsafe-inline'` em script-src, via SHA-256 hash do `<script>` inline (computado uma vez no boot).
+- `requireAuth` middleware em `/publish`, `/shutdown`, `/events`, `/state`. `/healthz` continua aberto (boot handshake).
+- Token propagation transparente: auto-spawn → URL `?t=<token>` → browser scrub via `history.replaceState` → `authedFetch` + `authedEventSourceUrl` → server valida via `Authorization: Bearer` ou `?t=`.
+- Hook `kit/hooks/sidecar-tool-publisher.js` v1.14.0 — anexa Bearer; backward-compat com sidecars v1.13.
+- Suite v1.14 baseline: 222 tests verde (139 unit + 83 integration), 0 skipped.
 
 Stable API v1.0+ continua preservada. Budget 6/6 deps mantido. Zero conteúdo do kit alterado (content-zero hardening).
 
