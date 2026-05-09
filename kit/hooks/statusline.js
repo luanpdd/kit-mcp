@@ -108,6 +108,11 @@ process.stdin.on('end', () => {
     }
 
     // Output
+    // SEC-13-05: statusline termina naturalmente após este write — Node
+    // garante o flush antes do process exit quando não há process.exit
+    // explícito. NÃO converter para process.stdout.write(x, callback) +
+    // process.exit() — isso introduziria um early-exit que poderia
+    // truncar saída em casos onde o write é maior que o buffer do pipe.
     const dirname = path.basename(dir);
     if (task) {
       process.stdout.write(`${updateNotice}\x1b[2m${model}\x1b[0m │ \x1b[1m${task}\x1b[0m │ \x1b[2m${dirname}\x1b[0m${ctx}`);

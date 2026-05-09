@@ -106,12 +106,18 @@ process.stdin.on('end', () => {
     }
 
     // The final advisory printed back to Claude (and to the user via stderr)
+    // SEC-13-05: aguardar flush do stderr antes do exit. Sem callback, o
+    // resumo final pode ser dropado em pipes lentos (CI/Windows). Os outros
+    // process.stderr.write intermediários (linhas ~71/87/93/100) NÃO precisam
+    // do callback porque o process continua executando após eles — o event
+    // loop drena o buffer naturalmente antes do próximo write.
     if (mirroredPath || stubPath) {
       const lines = ['[post-apply-migration] resumo:'];
       if (mirroredPath) lines.push(`  • SQL: ${path.relative(projectRoot, mirroredPath)}`);
       if (stubPath)     lines.push(`  • Stub: ${path.relative(vault, stubPath)}`);
       lines.push('  → cofre Obsidian: edite o stub e commite quando puder.');
-      process.stderr.write(lines.join('\n') + '\n');
+      process.stderr.write(lines.join('\n') + '\n', () => process.exit(0));
+      return;
     }
 
     process.exit(0);

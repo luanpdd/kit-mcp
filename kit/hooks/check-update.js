@@ -43,6 +43,9 @@ if (!fs.existsSync(cacheDir)) {
 }
 
 // Run check in background (spawn background process, windowsHide prevents console flash)
+// SEC-13-05: parent process retorna imediatamente após child.unref() — não
+// há buffered I/O no parent. Child usa fs.writeFileSync (sync), sem race.
+// Categoria E na taxonomia da Phase 80.
 const child = spawn(process.execPath, ['-e', `
   const fs = require('fs');
   const path = require('path');
