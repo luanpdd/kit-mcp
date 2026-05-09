@@ -22,6 +22,7 @@ import { readFileSync } from 'node:fs';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import process from 'node:process';
+import { createHash } from 'node:crypto';
 
 import { findFreePortOrThrow } from './port.js';
 import { acquireLockOrReclaim, releaseLock } from './lockfile.js';
@@ -42,13 +43,32 @@ const SSE_HEADERS = {
   'X-Accel-Buffering': 'no',
 };
 
-const CSP =
-  "default-src 'self'; " +
-  "connect-src 'self'; " +
-  "script-src 'self' 'unsafe-inline'; " +
-  "style-src 'self' 'unsafe-inline'; " +
-  "img-src 'self' data:; " +
-  "frame-ancestors 'none'";
+// SEC-14-01: CSP without 'unsafe-inline' in script-src. The single inline
+// <script> block in index.html is allowed via SHA-256 hash injected at boot.
+// 'unsafe-inline' kept ONLY for style-src (the entire <style> block is intentional;
+// CSS injection has no script execution vector with connect-src 'self').
+function buildCsp(scriptHash) {
+  const scriptSrc = scriptHash ? `'self' ${scriptHash}` : "'self'";
+  return (
+    "default-src 'self'; " +
+    "connect-src 'self'; " +
+    `script-src ${scriptSrc}; ` +
+    "style-src 'self' 'unsafe-inline'; " +
+    "img-src 'self' data:; " +
+    "frame-ancestors 'none'"
+  );
+}
+
+// Computes the SHA-256 hash of the inline <script> block in the static HTML.
+// Returns the CSP-formatted source expression: "'sha256-<base64>='".
+// Returns empty string if no <script> block found (graceful — caller falls back to "'self'" alone).
+function computeScriptHashFromHtml(html) {
+  if (typeof html !== 'string') return '';
+  const m = html.match(/<script>([\s\S]*?)<\/script>/);
+  if (!m) return '';
+  const hash = createHash('sha256').update(m[1], 'utf8').digest('base64');
+  return `'sha256-${hash}'`;
+}
 
 function logErr(...args) {
   // Strict stderr discipline — never stdout (collides with MCP JSON-RPC if running in same process).
@@ -122,15 +142,22 @@ function readBody(req, maxBytes = 64 * 1024) {
   });
 }
 
+let _cachedIndex = null; // { html, scriptHash }
 function loadStaticIndex() {
   // src/ui/static/index.html — written in Phase 14. We tolerate it missing in
   // unit tests by serving a placeholder so the server module is testable in isolation.
+  if (_cachedIndex) return _cachedIndex;
+  let html;
   try {
-    return readFileSync(path.join(STATIC_DIR, 'index.html'), 'utf8');
+    html = readFileSync(path.join(STATIC_DIR, 'index.html'), 'utf8');
   } catch {
-    return `<!doctype html><meta charset="utf-8"><title>kit-mcp sidecar</title>
+    html = `<!doctype html><meta charset="utf-8"><title>kit-mcp sidecar</title>
 <body><pre>UI not yet packaged. Run \`kit ui\` after Phase 14 is shipped.</pre></body>`;
   }
+  // SEC-14-01: hash inline <script> for CSP whitelist. Cache per-process.
+  const scriptHash = computeScriptHashFromHtml(html);
+  _cachedIndex = { html, scriptHash };
+  return _cachedIndex;
 }
 
 export function createServer({
@@ -350,10 +377,16 @@ export function createServer({
   }
 
   function handleIndex(res) {
-    const html = staticHtml ?? loadStaticIndex();
+    let html, scriptHash;
+    if (typeof staticHtml === 'string') {
+      html = staticHtml;
+      scriptHash = computeScriptHashFromHtml(staticHtml);
+    } else {
+      ({ html, scriptHash } = loadStaticIndex());
+    }
     res.writeHead(200, {
       'Content-Type': 'text/html; charset=utf-8',
-      'Content-Security-Policy': CSP,
+      'Content-Security-Policy': buildCsp(scriptHash),
       'X-Content-Type-Options': 'nosniff',
       'Referrer-Policy': 'no-referrer',
     });
@@ -449,6 +482,9 @@ export const __test = {
   MAX_SSE_SUBSCRIBERS,
   DEFAULT_IDLE_MS,
   HEARTBEAT_INTERVAL_MS,
-  CSP,
+  // SEC-14-01: CSP is now built dynamically with sha256 hash of inline <script>.
+  // The constant CSP no longer exists; tests should use buildCsp(scriptHash).
+  buildCsp,
+  computeScriptHashFromHtml,
   EVENT_TYPES,
 };
