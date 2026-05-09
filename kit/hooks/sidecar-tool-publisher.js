@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// hook-version: 1.6.1
+// hook-version: 1.14.0
 // kit-mcp · Sidecar Tool Publisher (PostToolUse)
 //
 // Publishes every Claude Code tool invocation to the kit-mcp sidecar so the
@@ -52,12 +52,13 @@ process.stdin.on('end', () => {
     // kit-mcp-ui-*.lock files in tmpdir and pick one that healthz-responds.
     // This makes the hook resilient to projectRoot mismatch (case, separators,
     // trailing slash, parent-of-project edits, etc).
-    let port = readSidecarPort(projectRoot);
-    if (!port) port = scanAnyRunningSidecar();
-    if (!port) {
+    let sidecar = readSidecarLock(projectRoot);
+    if (!sidecar) sidecar = scanAnyRunningSidecar();
+    if (!sidecar) {
       debugLog({ phase: 'no_sidecar', projectRoot });
       process.exit(0);
     }
+    const { port, token } = sidecar;
 
     const payload = {
       tool: toolName,
@@ -74,29 +75,34 @@ process.stdin.on('end', () => {
       payload,
     };
 
-    publish(port, event).then(() => process.exit(0));
+    publish(port, token, event).then(() => process.exit(0));
   } catch (err) {
     process.stderr.write(`[sidecar-tool-publisher] ${err.message}\n`);
     process.exit(0);
   }
 });
 
-function readSidecarPort(projectRoot) {
+function readSidecarLock(projectRoot) {
   // Mirror src/ui/lockfile.js#lockPathFor (sha1(projectRoot).slice(0,16))
   try {
     const hash = crypto.createHash('sha1').update(projectRoot).digest('hex').slice(0, 16);
     const lockPath = path.join(os.tmpdir(), `kit-mcp-ui-${hash}.lock`);
     const raw = fs.readFileSync(lockPath, 'utf8');
     const lock = JSON.parse(raw);
-    return typeof lock.port === 'number' ? lock.port : null;
+    if (typeof lock.port !== 'number') return null;
+    return {
+      port: lock.port,
+      // SEC-14-02 (kit-mcp v1.14+): null for sidecars from v1.13 and earlier.
+      token: typeof lock.token === 'string' && /^[0-9a-f]{64}$/.test(lock.token) ? lock.token : null,
+    };
   } catch {
     return null;
   }
 }
 
-// Scan os.tmpdir() for any kit-mcp-ui-*.lock and return the first valid port.
-// Used as a fallback when projectRoot doesn't match any known lockfile (case
-// variants, separator differences, parent-dir edits, etc).
+// Scan os.tmpdir() for any kit-mcp-ui-*.lock and return the first { port, token }
+// of a live sidecar. Used as a fallback when projectRoot doesn't match any
+// known lockfile (case variants, separator differences, parent-dir edits, etc).
 function scanAnyRunningSidecar() {
   try {
     const dir = os.tmpdir();
@@ -107,8 +113,16 @@ function scanAnyRunningSidecar() {
         const raw = fs.readFileSync(path.join(dir, name), 'utf8');
         const lock = JSON.parse(raw);
         if (typeof lock.port === 'number' && typeof lock.pid === 'number') {
-          // Best-effort liveness check.
-          try { process.kill(lock.pid, 0); return lock.port; } catch { /* dead */ }
+          try {
+            process.kill(lock.pid, 0);
+            // SEC-14-02: return token from same lockfile so cross-project
+            // publishing can authenticate. If token missing (older sidecar),
+            // returns null → publish degrades to 401 silent-fail.
+            return {
+              port: lock.port,
+              token: typeof lock.token === 'string' && /^[0-9a-f]{64}$/.test(lock.token) ? lock.token : null,
+            };
+          } catch { /* dead */ }
         }
       } catch { /* skip unreadable */ }
     }
@@ -158,7 +172,7 @@ function detectIde() {
   return 'unknown';
 }
 
-function publish(port, event) {
+function publish(port, token, event) {
   return new Promise((resolve) => {
     const body = JSON.stringify(event);
     const req = http.request({
@@ -173,9 +187,17 @@ function publish(port, event) {
         'content-length': Buffer.byteLength(body, 'utf8'),
         origin: `http://127.0.0.1:${port}`,
         connection: 'close',
+        // SEC-14-02: token is null for sidecars from v1.13 and earlier; in that
+        // case we omit the header and the server returns 401, which the hook
+        // silent-fails on (matching pre-existing soft-fail discipline). A
+        // shipped hook v1.14 talking to a still-running sidecar v1.13 just
+        // loses the event — acceptable trade-off.
+        ...(token ? { authorization: `Bearer ${token}` } : {}),
       },
     }, (res) => {
-      // Drain response body to ensure server has fully processed before resolve
+      // Drain response body to ensure server has fully processed before resolve.
+      // v1.12.1 fix: await BOTH 'end' and 'close' to avoid premature exit before
+      // sidecar publishes via SSE. Preserve that pattern here.
       res.resume();
       res.on('end', resolve);
       res.on('close', resolve);
