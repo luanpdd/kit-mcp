@@ -3,11 +3,11 @@ state_version: 1.0
 milestone: v1.17
 milestone_name: — Performance Wave 2 + Quick Wins
 status: Phase 92 completa (1/1 plan), aguardando Phase 93
-last_updated: "2026-05-09T15:36:24.264Z"
+last_updated: "2026-05-09T15:39:28.728Z"
 progress:
   total_phases: 4
-  completed_phases: 3
-  total_plans: 3
+  completed_phases: 2
+  total_plans: 2
   completed_plans: 3
 ---
 
