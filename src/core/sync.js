@@ -257,8 +257,10 @@ See: [\`${rel}\`](${rel})
 // own file under kit/ — duplicating them here costs tokens in every Claude
 // Code session. Cap each line at ~80 chars; users can `kit get <name>` for the
 // full description.
-const SUMMARY_MAX_CHARS = 80;
-function summarize(desc) {
+// PERF-13-01: exported so slim() in src/mcp-server/index.js and src/cli/index.js
+// can reuse the same cap (single source of truth — no duplicated constants).
+export const SUMMARY_MAX_CHARS = 80;
+export function summarize(desc) {
   if (!desc) return '';
   const flat = desc.replace(/\s+/g, ' ').trim();
   if (flat.length <= SUMMARY_MAX_CHARS) return flat;
