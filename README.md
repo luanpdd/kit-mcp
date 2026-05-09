@@ -28,9 +28,9 @@ Inspired by [vinilana/dotcontext](https://github.com/vinilana/dotcontext) — se
 ```
 kit-mcp/
 ├── kit/                        ← bundled brownfield workflow (PT-BR)
-│   ├── agents/                 19 agents (planner, executor, verifier, debugger,
+│   ├── agents/                 47 agents (planner, executor, verifier, debugger,
 │   │                                      ui-auditor, codebase-mapper, …)
-│   ├── commands/               60 slash-commands (/novo-marco, /planejar-fase,
+│   ├── commands/               87 slash-commands (/novo-marco, /planejar-fase,
 │   │                                              /executar-fase, /publicar, …)
 │   ├── framework/              workflows + templates + bin libs the agents use
 │   ├── hooks/                  workflow guards, prompt guards, statusline
@@ -59,7 +59,7 @@ kit-mcp/
 
 ### About the bundled workflow
 
-The bundled `kit/` is an opinionated **brownfield planning workflow** in Portuguese — milestones, phases, requirements, planning, execution with atomic commits and checkpoints, retrospective auditing. Installing `@luanpdd/kit-mcp` and syncing into your IDE gives you all 60+ slash-commands, 24+ agents, plus the framework templates that they delegate into.
+The bundled `kit/` is an opinionated **brownfield planning workflow** in Portuguese — milestones, phases, requirements, planning, execution with atomic commits and checkpoints, retrospective auditing. Installing `@luanpdd/kit-mcp` and syncing into your IDE gives you all 87+ slash-commands, 47+ agents, plus the framework templates that they delegate into.
 
 If that's not what you want, point `--kit-root` at your own folder and ignore everything under `kit/` — the infrastructure (registry, sync, gates, forensics, MCP server) works the same regardless of what kit you load.
 
@@ -175,8 +175,8 @@ A production engineering layer derived from *Site Reliability Engineering: How G
 
 ```bash
 # Browse what's bundled
-npx -y @luanpdd/kit-mcp kit list-agents     # 19 agents
-npx -y @luanpdd/kit-mcp kit list-commands   # 60 commands
+npx -y @luanpdd/kit-mcp kit list-agents     # 47 agents
+npx -y @luanpdd/kit-mcp kit list-commands   # 87 commands
 npx -y @luanpdd/kit-mcp sync targets        # supported IDEs
 
 # Install into your project for Claude Code
@@ -239,9 +239,9 @@ In non-TTY mode (pipes, CI), animations degrade to linear status lines automatic
 ### `kit kit ...` — browse the kit
 
 ```bash
-kit kit list-agents               # 19 agents (bundled workflow)
-kit kit list-commands             # 60 commands (bundled workflow)
-kit kit list-skills               # 1 skill (example only — bring your own)
+kit kit list-agents               # 47 agents (bundled workflow)
+kit kit list-commands             # 87 commands (bundled workflow)
+kit kit list-skills               # 49 skills (bundled workflow)
 kit kit get agent planner
 kit kit search "milestone"        # fuzzy match across all kinds
 ```
@@ -627,9 +627,9 @@ npm run test:all          # both
 Plus the original quick smokes:
 
 ```bash
-node bin/cli.js kit list-agents | head -5         # 19 bundled agents
+node bin/cli.js kit list-agents | head -5         # 47 bundled agents
 node bin/cli.js sync targets                      # 8 IDEs
-node bin/cli.js gates list                        # 5 gates
+node bin/cli.js gates list                        # 20 gates
 node bin/cli.js install dry-run claude-code --via npx
 ```
 
