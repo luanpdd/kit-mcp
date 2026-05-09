@@ -133,26 +133,33 @@ jobs:
         if: matrix.target == 'claude-code'
         run: npm run test:integration
 
-      - name: Audit — line coverage threshold (REQ INFRA-17-02)
+      - name: Audit — line coverage threshold (REQ INFRA-17-02 / INFRA-18-01)
         # INFRA-17-02: surface untested branches via Node 20+ built-in coverage
         # (`node --experimental-test-coverage`). Single-shot on Linux Node 22 to
         # avoid duplicating the run across the 3×3×8 = 72-cell smoke matrix —
         # coverage % is target-agnostic.
         #
-        # Threshold: 65% line coverage. v1.17 measured baseline = 69.00% (from
-        # the entire test/unit suite). Initial gate set 4 points below baseline
-        # to absorb noise from new files / Node minor version differences in the
-        # coverage reporter. TODO (v1.18+): ratchet up to 70%, then 75%, then 80%
-        # as we add tests for src/cli/index.js (37%), src/core/failures.js (17%),
-        # src/mcp-server/install.js (19%), and src/ui/auto-spawn.js (31%).
+        # Threshold history:
+        #   v1.17 (Phase 93.01): 65% (baseline 69.00%, 4 below for noise margin)
+        #   v1.18 (Phase 97.01): 75% (baseline 77.89%, 3 below for noise margin)
+        # Phase 97.01 added 4 test files lifting the four hot files identified
+        # in Phase 93:
+        #   src/core/failures.js          17% → 99%  (failures-coverage.test.js)
+        #   src/mcp-server/install.js     19% → 96%  (install-coverage.test.js)
+        #   src/ui/auto-spawn.js          31% → 57%  (auto-spawn-coverage.test.js)
+        #   src/cli/index.js              37% → 55%  (cli-index-coverage.test.js)
+        # Future ratchet (v1.19+): 80% by either (a) extracting cli/index.js
+        # helpers (postShutdown, runDoctorChecks, renderUiStatusFallback) to
+        # sibling modules for in-process testing, (b) lifting render.js (33%)
+        # and reflect.js (56%), or (c) merging branch coverage as a 2nd gate.
         #
         # Output format (Node 22 node:test reporter):
-        #   ℹ all files                 |  69.00 |    78.88 |   58.82 |
+        #   ℹ all files                 |  77.89 |    78.30 |   71.07 |
         # Parse: grep "all files", awk split on '|', field 2 = line %.
         if: matrix.os == 'ubuntu-latest' && matrix.node == '22' && matrix.target == 'claude-code'
         shell: bash
         run: |
-          THRESHOLD=65
+          THRESHOLD=75
           # `--experimental-test-coverage` writes the coverage report to stdout
           # via the reporter; tests' own console output goes to the report too.
           # Capture all output; tests must still pass (handled by Tests step above).
