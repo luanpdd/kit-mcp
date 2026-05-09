@@ -19,6 +19,7 @@ import fs from 'node:fs/promises';
 import { createInterface } from 'node:readline/promises';
 import { stdin as input, stdout as output, stderr } from 'node:process';
 import { resolveKitRoot } from './kit.js';
+import { redactSecrets } from './error-redaction.js';
 
 const DEFAULT_MODEL      = process.env.KIT_REFLECT_MODEL ?? 'claude-sonnet-4-5-20250929';
 const DEFAULT_MAX_TOKENS = parseInt(process.env.KIT_REFLECT_MAX_TOKENS ?? '8000', 10);
@@ -169,7 +170,11 @@ async function callClaude(prompt) {
   });
   if (!res.ok) {
     const errBody = await res.text();
-    throw new Error(`Anthropic API ${res.status}: ${errBody}`);
+    // SEC-14-06: Anthropic error responses can echo the supplied API key
+    // (rare but observed in 401s). Strip secrets/paths before propagating
+    // to caller — the central MCP catch will sanitize again, but doing it
+    // here means CLI callers (which bypass the MCP catch) are also protected.
+    throw new Error(`Anthropic API ${res.status}: ${redactSecrets(errBody)}`);
   }
   const j = await res.json();
   return {

@@ -14,6 +14,7 @@
 
 import path from 'node:path';
 import fs from 'node:fs/promises';
+import { redactSecrets } from './error-redaction.js';
 
 const REPLAY_DIR_REL = path.join('.planning', 'replays');
 
@@ -68,7 +69,15 @@ export async function recordReplay(payload, opts = {}) {
   assertPathInside(file, dir);
 
   const record = { id, recorded_at: new Date().toISOString(), ...payload };
-  await fs.writeFile(file, JSON.stringify(record, null, 2), 'utf8');
+  // SEC-14-06: scrub the serialized form before writing. We redact AFTER
+  // JSON.stringify (rather than deep-mapping the payload tree) so the regex
+  // walks the entire structure including nested args/headers/env, and so
+  // the in-memory `record` returned to the caller stays unmutated. Only the
+  // on-disk artifact is scrubbed; readers of the file via loadReplay see
+  // the redacted form, which is the desired outcome — secrets must not be
+  // re-loaded into memory either.
+  const json = redactSecrets(JSON.stringify(record, null, 2));
+  await fs.writeFile(file, json, 'utf8');
   return { id, file, record };
 }
 
