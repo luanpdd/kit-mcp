@@ -2,8 +2,8 @@
 state_version: 1.0
 milestone: v1.17
 milestone_name: — Performance Wave 2 + Quick Wins
-status: Roadmap criado
-last_updated: "2026-05-09T15:11:51.105Z"
+status: Phase 90 completa (1/1 plan), aguardando Phase 91
+last_updated: "2026-05-09T15:13:04.636Z"
 progress:
   total_phases: 4
   completed_phases: 1
