@@ -94,7 +94,15 @@ jobs:
             found { print }
           ' CHANGELOG.md > "$NOTES_FILE"
           if [ ! -s "$NOTES_FILE" ]; then
-            echo "::warning::No CHANGELOG entry found for ## [$TAG_VERSION] — falling back to tag-derived notes"
+            # DRIFT-13-01: hard fail for final tags (vX.Y.Z) — silent fallback caused 3
+            # consecutive releases (v1.11.0/v1.12.0/v1.12.1) to ship with placeholder notes.
+            # Pre-release tags (-rcN/-betaN/-alphaN) keep the graceful fallback since
+            # those are by definition transient and may not warrant a CHANGELOG entry.
+            if [[ "$TAG_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::CHANGELOG entry missing for ## [$TAG_VERSION]. Add entry to CHANGELOG.md before tagging final release. Pre-release tags (vX.Y.Z-rcN) bypass this check."
+              exit 1
+            fi
+            echo "::warning::No CHANGELOG entry found for ## [$TAG_VERSION] (pre-release) — falling back to tag-derived notes"
             echo "Release v${TAG_VERSION}." > "$NOTES_FILE"
           fi
           echo "notes_file=$NOTES_FILE" >> "$GITHUB_OUTPUT"
