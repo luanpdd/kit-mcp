@@ -49,6 +49,9 @@
 - Edit em 1 file → next sync escreve apenas o file mudado (regression test).
 - Suite passing + 4+ regression tests novos.
 
+**Plans:** 1 plan
+- [ ] 91-01-diff-based-sync-PLAN.md — stat-based diff filter (treeCopy ops) + KIT_MCP_FORCE_FULL_SYNC env opt-out + onProgress skipped flag + 4 regression tests
+
 ### Phase 92: Quick Wins Polish
 
 **Goal:** Capturar 4 polish items identificados pela meta-auditoria — `open` para optionalDependencies, paralelizar regen-manifest.js, remover import morto, adicionar JSDoc.
