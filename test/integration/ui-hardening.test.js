@@ -9,7 +9,7 @@ import os from 'node:os';
 import path from 'node:path';
 import http from 'node:http';
 
-import { createServer } from '../../src/ui/server.js';
+import { createServer, __test as serverConst } from '../../src/ui/server.js';
 import { releaseLock, lockPathFor, acquireLock, readLock } from '../../src/ui/lockfile.js';
 import { publish, clearPortCache } from '../../src/ui/client.js';
 import { acquireLockOrReclaim } from '../../src/ui/lockfile.js';
@@ -130,4 +130,184 @@ test('OPS-05: bin/ui.js running does not write to stdout (does not poison MCP fr
     setTimeout(() => { try { child.kill('SIGKILL'); } catch {} resolve(); }, 1500);
   });
   releaseLock(root);
+});
+
+// ────────────────────────────────────────────────────────────────────
+// SEC-14-01 (CSP without unsafe-inline) + SEC-14-02 (token-based auth)
+// regression tests. Added in Phase 82 / v1.14.
+// ────────────────────────────────────────────────────────────────────
+
+function rawHttpRequest({ method, port, pathname, headers = {}, body }) {
+  return new Promise((resolve, reject) => {
+    const opts = {
+      method, host: '127.0.0.1', port, path: pathname,
+      agent: false,
+      headers: {
+        host: `127.0.0.1:${port}`, connection: 'close',
+        ...headers,
+        ...(body ? { 'content-type': 'application/json', 'content-length': Buffer.byteLength(body) } : {}),
+      },
+    };
+    const req = http.request(opts, (r) => {
+      const chunks = [];
+      r.on('data', (c) => chunks.push(c));
+      r.on('end', () => resolve({ status: r.statusCode, headers: r.headers, body: Buffer.concat(chunks).toString('utf8') }));
+    });
+    req.on('error', reject);
+    req.setTimeout(2000, () => { try { req.destroy(); } catch {} resolve({ status: 0, headers: {}, body: '' }); });
+    if (body) req.write(body);
+    req.end();
+  });
+}
+
+test('SEC-14-01: GET / has CSP without unsafe-inline in script-src and includes sha256 hash', async () => {
+  const root = mkProjectRoot();
+  releaseLock(root);
+  const srv = createServer({ projectRoot: root, idleMs: 0 });
+  await srv.start();
+  try {
+    const res = await rawHttpRequest({ method: 'GET', port: srv.port, pathname: '/' });
+    assert.equal(res.status, 200);
+    const csp = res.headers['content-security-policy'];
+    assert.ok(csp, 'CSP header missing');
+    const scriptSrcMatch = csp.match(/script-src\s+([^;]+)/);
+    assert.ok(scriptSrcMatch, 'script-src directive missing');
+    assert.doesNotMatch(scriptSrcMatch[1], /unsafe-inline/, 'script-src must NOT include unsafe-inline');
+    assert.match(scriptSrcMatch[1], /'sha256-[A-Za-z0-9+/]{43}='/, 'script-src must include sha256 hash');
+  } finally {
+    await srv.shutdown('test_cleanup');
+    releaseLock(root);
+  }
+});
+
+test('SEC-14-01: index.html contains exactly one <script> block (hash invariant)', async () => {
+  const indexPath = path.join(process.cwd(), 'src', 'ui', 'static', 'index.html');
+  const html = fs.readFileSync(indexPath, 'utf8');
+  const matches = html.match(/<script>/g) || [];
+  assert.equal(matches.length, 1, `expected exactly 1 <script> block, found ${matches.length}; CSP hash logic in server.js needs updating if this changes`);
+});
+
+test('SEC-14-02: lockfile contains token field with 64 hex chars', async () => {
+  const root = mkProjectRoot();
+  releaseLock(root);
+  const srv = createServer({ projectRoot: root, idleMs: 0 });
+  await srv.start();
+  try {
+    const lock = readLock(root);
+    assert.ok(lock, 'lockfile missing');
+    assert.equal(typeof lock.token, 'string', 'token field missing');
+    assert.equal(lock.token.length, 64, 'token must be 64 chars');
+    assert.match(lock.token, /^[0-9a-f]{64}$/, 'token must be 64-char hex');
+  } finally {
+    await srv.shutdown('test_cleanup');
+    releaseLock(root);
+  }
+});
+
+test('SEC-14-02: POST /shutdown without token returns 401', async () => {
+  const root = mkProjectRoot();
+  releaseLock(root);
+  const srv = createServer({ projectRoot: root, idleMs: 0 });
+  await srv.start();
+  try {
+    const res = await rawHttpRequest({
+      method: 'POST', port: srv.port, pathname: '/shutdown',
+      headers: { origin: `http://127.0.0.1:${srv.port}` },
+      body: '',
+    });
+    assert.equal(res.status, 401);
+    assert.match(res.body, /auth_required/);
+  } finally {
+    await srv.shutdown('test_cleanup');
+    releaseLock(root);
+  }
+});
+
+test('SEC-14-02: POST /publish without token returns 401', async () => {
+  const root = mkProjectRoot();
+  releaseLock(root);
+  const srv = createServer({ projectRoot: root, idleMs: 0 });
+  await srv.start();
+  try {
+    const evt = JSON.stringify({ type: 'progress', ts: Date.now(), runId: null, payload: {} });
+    const res = await rawHttpRequest({
+      method: 'POST', port: srv.port, pathname: '/publish',
+      headers: { origin: `http://127.0.0.1:${srv.port}` },
+      body: evt,
+    });
+    assert.equal(res.status, 401);
+    assert.match(res.body, /auth_required/);
+  } finally {
+    await srv.shutdown('test_cleanup');
+    releaseLock(root);
+  }
+});
+
+test('SEC-14-02: GET /events without token returns 401', async () => {
+  const root = mkProjectRoot();
+  releaseLock(root);
+  const srv = createServer({ projectRoot: root, idleMs: 0 });
+  await srv.start();
+  try {
+    const res = await rawHttpRequest({ method: 'GET', port: srv.port, pathname: '/events' });
+    assert.equal(res.status, 401);
+  } finally {
+    await srv.shutdown('test_cleanup');
+    releaseLock(root);
+  }
+});
+
+test('SEC-14-02: GET /state without token returns 401', async () => {
+  const root = mkProjectRoot();
+  releaseLock(root);
+  const srv = createServer({ projectRoot: root, idleMs: 0 });
+  await srv.start();
+  try {
+    const res = await rawHttpRequest({ method: 'GET', port: srv.port, pathname: '/state' });
+    assert.equal(res.status, 401);
+  } finally {
+    await srv.shutdown('test_cleanup');
+    releaseLock(root);
+  }
+});
+
+test('SEC-14-02: GET /events?t=<valid> accepts; ?t=<invalid> rejects', async () => {
+  const root = mkProjectRoot();
+  releaseLock(root);
+  const srv = createServer({ projectRoot: root, idleMs: 0 });
+  await srv.start();
+  try {
+    const lock = readLock(root);
+    const goodToken = lock.token;
+    // Valid: should connect (200 + SSE headers). Don't wait for body — SSE never closes naturally.
+    const goodStatus = await new Promise((resolve) => {
+      const req = http.request({
+        method: 'GET', host: '127.0.0.1', port: srv.port, path: `/events?t=${goodToken}`,
+        agent: false, headers: { host: `127.0.0.1:${srv.port}`, connection: 'close' },
+      }, (r) => {
+        resolve(r.statusCode);
+        try { req.destroy(); } catch {}
+      });
+      req.on('error', () => resolve(0));
+      req.setTimeout(2000, () => { try { req.destroy(); } catch {} resolve(0); });
+      req.end();
+    });
+    assert.equal(goodStatus, 200, 'valid token should accept SSE connection');
+
+    // Invalid: should 401
+    const badRes = await rawHttpRequest({ method: 'GET', port: srv.port, pathname: '/events?t=' + 'x'.repeat(64) });
+    assert.equal(badRes.status, 401);
+  } finally {
+    await srv.shutdown('test_cleanup');
+    releaseLock(root);
+  }
+});
+
+test('SEC-14-02: timingSafeEqual unit — same/diff-length/diff-char/empty', async () => {
+  assert.equal(serverConst.timingSafeEqual('abc', 'abc'), true);
+  assert.equal(serverConst.timingSafeEqual('abc', 'abcd'), false);
+  assert.equal(serverConst.timingSafeEqual('abc', 'abd'), false);
+  assert.equal(serverConst.timingSafeEqual('', ''), true);
+  assert.equal(serverConst.timingSafeEqual('a', 'b'), false);
+  assert.equal(serverConst.timingSafeEqual('a', null), false);
 });
