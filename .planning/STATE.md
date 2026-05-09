@@ -2,22 +2,22 @@
 state_version: 1.0
 milestone: v1.18
 milestone_name: — Eat Your Own Dog Food
-status: in_progress
-last_updated: "2026-05-09T16:16:47Z"
+status: Phase 95 completa (2/2 plans); v1.18 milestone 2/4 fases
+last_updated: "2026-05-09T16:26:15.000Z"
 progress:
   total_phases: 4
-  completed_phases: 1
-  total_plans: 4
-  completed_plans: 1
+  completed_phases: 2
+  total_plans: 2
+  completed_plans: 2
 ---
 
 # STATE.md — sessão atual
 
 ## Posição Atual
 
-Fase: 94 — Golden Signals MCP Server (OBS-18-01/02) — **CONCLUÍDA**
-Status: Phase 94 completa (1/1 plan); v1.18 milestone 1/4 fases
-Última atividade: 2026-05-09T16:16Z — Phase 94.01 executado (plan+execute combinado); 359 tests pass (259 unit + 98 integration + 2 skip); +15 novos tests; metrics module + metrics-snapshot tool aplicado four-golden-signals skill ao próprio MCP server; zero deps novas
+Fase: 95 — SLO Definitions (OBS-18-03/04) — **CONCLUÍDA**
+Status: Phase 95 completa (1/1 plan); v1.18 milestone 2/4 fases
+Última atividade: 2026-05-09T16:26Z — Phase 95.01 executado (plan+execute combinado); 369 tests pass (269 unit + 98 integration + 2 skip); +10 novos tests; 2 SLO YAMLs (availability ratio + p95 latency) + README + 10 schema regression tests em .planning/slos/; aplicado skill event-based-slos; zero deps novas
 
 ## Milestone ativo
 
@@ -26,13 +26,13 @@ Status: Phase 94 completa (1/1 plan); v1.18 milestone 1/4 fases
 **4 fases (94-97):**
 
 - Phase 94 ✅ — Golden Signals MCP Server (OBS-18-01/02)
-- Phase 95 ⏭ — TBD
-- Phase 96 ⏭ — TBD
-- Phase 97 ⏭ — TBD
+- Phase 95 ✅ — SLO Definitions (OBS-18-03/04)
+- Phase 96 ⏭ — RUNBOOK + FAILURE-MODES + BENCHMARK
+- Phase 97 ⏭ — Coverage Ratchet 65→75%
 
 ## Próximo passo
 
-1. Avançar para Phase 95 (próxima do milestone v1.18)
+1. Avançar para Phase 96 (próxima do milestone v1.18)
 
 ## Bloqueadores
 
@@ -58,6 +58,7 @@ Stable API v1.0+ preservada. Budget total 6 deps mantido (Phase 92 reorganiza: 3
 | 92 | 01 | ~7min | 4 | 8 | 7 (new) |
 | 93 | 01 | ~7.5min | 3 | 3 | 9 (new) |
 | 94 | 01 | ~6.8min | 3 | 5 | 15 (new) |
+| 95 | 01 | ~3.8min | 2 | 4 | 10 (new) |
 
 ## Decisions
 
@@ -80,3 +81,9 @@ Stable API v1.0+ preservada. Budget total 6 deps mantido (Phase 92 reorganiza: 3
 - **Phase 94.01:** Unknown-tool path conta como `error` contra o nome digitado — quando cliente erra typo de tool name, operador quer ver `unknown-tool-name:error` no snapshot para triagem; bucket genérico perderia o signal.
 - **Phase 94.01:** `metrics-snapshot` skip path-safety guard — sem disk reads, sem shell, sem projectRoot dep; retorno read-only síncrono de in-memory state não tem attack surface que o guard mitiga.
 - **Phase 94.01:** `KIT_MCP_METRICS_RESET=1` boot-time reset hook — operadores ganham clean window para A/B comparisons sem reiniciar o IDE/MCP host.
+- **Phase 95.01:** p95 (não p99) na latency SLO — com FIFO cap N=1000 da Phase 94.01, p99 tem só 10 samples de resolução por tool; p95 tem 50 (menos dominado por outliers). Move-se para p99 em v1.19+ com log-to-disk.
+- **Phase 95.01:** Target 99.5% availability (não 99.9%) — kit-mcp se posiciona em "free-tier production" no risk continuum (skill sre-risk-management); 99.5% deixa 3.6h de budget mensal pra absorver typos counted como `unknown-tool-name:error` sem paginar maintainer.
+- **Phase 95.01:** Burn-rate multipliers 14.4×/6× verbatim do Google SRE — sem volume medido pra tunar; adopta canonical até `metrics-snapshot` em produção mostrar uso real.
+- **Phase 95.01:** Schema test via regex-on-text (não js-yaml AST) — adicionar js-yaml queimaria o 3-deps budget que Phase 92.01 lutou pra preservar; regex captura os keys que tooling depende, mesmo trade-off de dead-imports + jsdoc-coverage gates.
+- **Phase 95.01:** SLO único cobrindo todas as tools (não per-tool) — toolkit pequeno (6 tools); per-tool budgets seriam thin demais pra ter valor; split quando uma única tool dominar volume.
+- **Phase 95.01:** Owner = `kit-mcp-maintainers@github.com` — skill mandata explícito; single-repo single-human hoje, mas contrato visível e substituível.

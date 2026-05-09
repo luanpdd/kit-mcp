@@ -30,24 +30,21 @@
 - Duration ~6.8min, 3 commits atomic + 1 SUMMARY commit.
 - SUMMARY: [`94-01-SUMMARY.md`](./phases/94-golden-signals-mcp-server/94-01-SUMMARY.md)
 
-### Phase 95: SLO Definitions
+### Phase 95: SLO Definitions ✅ CONCLUÍDA (2026-05-09)
 
 **Goal:** Aplicar skill `event-based-slos` ao MCP server. Definir 2 SLOs canônicos em `.planning/slos/` — availability + latency — usando event-based pattern do livro Google SRE.
 
-**Depends on:** Phase 94 (counter alimenta SLI calculation)
+**Entregue:**
+- ✅ `.planning/slos/mcp-tool-availability.yml` (NOVO) — SLI ratio counters[*:ok]/(ok+error), target 99.5%, 30d sliding window, burn-rate alert thresholds (page 14.4× / ticket 6×).
+- ✅ `.planning/slos/mcp-tool-latency.yml` (NOVO) — SLI percentile sobre histograms, p95 target ≤200ms, 30d sliding window, mesmas alert tiers canônicas.
+- ✅ `.planning/slos/README.md` (NOVO) — derivation do snapshot da Phase 94, workflow do consumer, sample envelope, future-work table (log-to-disk, multi-window, OTel).
+- ✅ `test/unit/slo-schema.test.js` (NOVO, 10 tests) — regex-based regression sobre keys que tooling downstream depende, sem dep js-yaml.
 
-**Escopo:**
-- `.planning/slos/mcp-tool-availability.yml` (NOVO) — SLI: ratio de invocations success/total. Target: 99.5%. Window: 30d sliding.
-- `.planning/slos/mcp-tool-latency.yml` (NOVO) — SLI: p95 latency. Target: ≤200ms. Window: 30d.
-- `.planning/slos/README.md` (NOVO) — explica como SLIs são calculados a partir do counter da Phase 94.
-- Schema validation test (YAML parsing + frontmatter shape).
-
-**Critérios de sucesso:**
-- 2 SLO files YAML válidos.
-- README explica derivation.
-- Schema test passing.
-- Workflows downstream (burn-rate-status command) podem consumir esses SLOs.
-- Suite continua passing + 2+ regression tests.
+**Métricas:**
+- 369 tests pass (+10 novos: 10 unit), 0 fail, 2 skip preexistentes.
+- Zero deps novas (3 deps + 3 optional inalterados).
+- Duration ~3.8min, 2 commits atomic + 1 SUMMARY commit.
+- SUMMARY: [`95-01-SUMMARY.md`](./phases/95-slo-definitions/95-01-SUMMARY.md)
 
 ### Phase 96: RUNBOOK + FAILURE-MODES + BENCHMARK
 
