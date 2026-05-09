@@ -51,6 +51,9 @@ Agents disponíveis (Phase 37):
 | `postmortem` | `pm`, `post-mortem` | `postmortem-writer` | 15 |
 | `prr` | `production-readiness`, `readiness-review` | `prr-conductor` | 32 |
 | `risk-budget` | `budget`, `risk`, `continuum` | (comando direto — `/risk-budget`) | 3 |
+| `cascading` | `cascade`, `cascading-failures`, `auditar-cascading` | `cascading-failures-auditor` | 22 (v1.11) |
+| `load-shedding` | `shed`, `load-shed`, `loadshedding` | `load-shedding-instrumenter` | 22 (v1.11) |
+| `release` | `auditar-release`, `release-audit`, `pipeline` | `release-pipeline-auditor` | 8 (v1.11) |
 | `help` | `ajuda`, `?` | exibe esta tabela inline | — |
 
 **Roteamento de flags por subcomando:**
