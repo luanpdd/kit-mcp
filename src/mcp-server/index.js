@@ -200,12 +200,14 @@ async function handleGates(args) {
     case 'get':       return getGate(args.id);
     case 'for-stage': return gatesForStage(args.stage);
     case 'run':
-      return withAutoSpawn(args, 'gates.run', () =>
-        runGate(args.id, {
-          projectRoot: args.projectRoot,
-          yes: true,            // MCP context: never prompt
-          interactive: false,   // MCP never prompts
-        }));
+      // SEC-13-01: MCP transport must never execute shell — runGate spawns bash with
+      // arbitrary content from gates/*.md (which reverse-sync can rewrite). Even with
+      // {yes: true}, this skips the interactive "y/N before exec" promise. The CLI
+      // entry point (`kit gates run <id>` via bin/cli.js) preserves the prompt and
+      // remains the only path to executing gates.
+      return {
+        error: 'MCP gates.run requires interactive TTY confirmation; use `kit gates run` from CLI instead.',
+      };
     default: return { error: `Unknown action: ${args.action}` };
   }
 }
