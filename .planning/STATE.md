@@ -2,13 +2,13 @@
 state_version: 1.0
 milestone: v1.14
 milestone_name: — Web/Core Security Hardening
-status: Phase 82 concluída — Plans 01+02 entregues; Phase 83 (Core Filesystem Hardening) próxima
-last_updated: "2026-05-09T10:54:49.765Z"
+status: Phase 83 em andamento — Plan 83.01 (projectRoot validation SEC-14-03) entregue
+last_updated: "2026-05-09T10:55:45.410Z"
 progress:
   total_phases: 3
-  completed_phases: 1
+  completed_phases: 2
   total_plans: 5
-  completed_plans: 4
+  completed_plans: 5
 ---
 
 # STATE.md — sessão atual
@@ -17,9 +17,9 @@ progress:
 
 ## Posição Atual
 
-Fase: Phase 82 — Web Surface Hardening **concluída** (Plans 01 + 02)
-Status: Phase 82 concluída — Plans 01+02 entregues; Phase 83 (Core Filesystem Hardening) próxima
-Última atividade: 2026-05-09T10:25Z — Plan 82.02 (token-propagation) entregue: auto-spawn `?t=` handshake + index.html scrub via replaceState + authedFetch/authedEventSourceUrl + client.js Authorization Bearer + hook v1.14.0. 4 commits, 3 testes reativados + 3 testes novos. Suite 222 passing (139 unit + 83 integration), 0 skipped da fase 82.
+Fase: Phase 83 — Core Filesystem Hardening **em andamento** (3 plans paralelos via /executar-fase)
+Status: Phase 83 em andamento — Plan 83.01 (projectRoot validation SEC-14-03) entregue
+Última atividade: 2026-05-09T10:53Z — Plan 83.01 (projectroot-validation) entregue: helper puro `validateProjectRoot` em src/core/path-safety.js com walk-up `.git/` heurístico, guard SEC-14-03 ativo em handleSync + handleReverseSync (Phase 79.01 gates.run preservada), 6 regression tests passing, sentinel uniforme em todas reject branches. 3 commits (1f9a09d feat-helper, 5ebc150 feat-guard, 5f74477 test+sentinel-fix). Plans 83.02 + 83.03 executando em paralelo.
 
 ## Milestone ativo
 
@@ -51,6 +51,7 @@ Status: Phase 82 concluída — Plans 01+02 entregues; Phase 83 (Core Filesystem
 - **v1.14 — em andamento** (Web/Core Security Hardening; iniciado 2026-05-09; 3 fases)
   - Phase 82 — Plan 01 (UI server hardening) concluído 2026-05-09T10:15Z.
   - Phase 82 — Plan 02 (token propagation) concluído 2026-05-09T10:25Z. **Phase 82 completa.**
+  - Phase 83 — Plan 01 (projectRoot validation SEC-14-03) concluído 2026-05-09T10:53Z. Helper puro + guard MCP transport (handleSync + handleReverseSync) + 6 regression tests + sentinel uniforme. CLI inalterado (Phase 79.01 contract).
 
 ## Contexto Acumulado
 
