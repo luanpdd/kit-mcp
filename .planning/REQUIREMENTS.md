@@ -124,10 +124,39 @@
 
 ## Rastreabilidade
 
-| Phase | REQ-IDs cobertos |
-|-------|------------------|
-| 117 | (definido pelo roadmapper) |
-| 118 | (definido pelo roadmapper) |
-| ... | ... |
+> Preenchido pelo roadmapper em 2026-05-10 ao gerar `.planning/ROADMAP.md`.
+> Cobertura validada: **60/60 REQs (100%)**. Cada REQ-ID está em exatamente uma phase.
 
-(Preenchido pelo roadmapper ao gerar ROADMAP.md)
+| Phase | Nome | REQ-IDs cobertos | Total |
+|-------|------|------------------|-------|
+| 117 | Glossário + Evolução Schema (Ch 4) | SUITE-03, EVOLUCAO-01, EVOLUCAO-02, EVOLUCAO-03, EVOLUCAO-04 | 5 |
+| 118 | Consistência Leitura Réplica (Ch 5) | LEITURA-01, LEITURA-02, LEITURA-03, LEITURA-04 | 4 |
+| 119 | Tenant Quente Mitigação (Ch 6) | TENANT-01, TENANT-02, TENANT-03, TENANT-04, TENANT-05 | 5 |
+| 120 | Isolamento + Armadilhas (Ch 7+8) | ISOLAMENTO-01, ISOLAMENTO-02, ISOLAMENTO-03, ISOLAMENTO-04, ISOLAMENTO-05, ARMADILHAS-01, ARMADILHAS-02, ARMADILHAS-03, ARMADILHAS-04, ARMADILHAS-05 | 10 |
+| 121 | Modelo Consistência + Streams (Ch 9+11) | MODELO-01, MODELO-02, MODELO-03, MODELO-04, MODELO-05, STREAMS-01, STREAMS-02, STREAMS-03, STREAMS-04, STREAMS-05, STREAMS-06 | 11 |
+| 122 | Agents + Command `/dados-distribuidos` | SUITE-01, SUITE-02, AGENTE-01, AGENTE-02, AGENTE-03, AGENTE-04, AGENTE-05, AGENTE-06 | 8 |
+| 123 | Cross-Suite Integration + Release | CROSS-01, CROSS-02, CROSS-03, CROSS-04, CROSS-05, CROSS-06, CROSS-07, CROSS-08, CROSS-09, CROSS-10, CROSS-11, CROSS-12, DOC-01, DOC-02, DOC-03, DOC-04, DOC-05 | 17 |
+| **Total** | **7 phases** | **60 REQs únicos** | **60** |
+
+### Validação cruzada por categoria
+
+| Categoria | REQs em REQUIREMENTS.md | REQs mapeados em phases | Cobertura |
+|-----------|------------------------|------------------------|-----------|
+| SUITE | 3 (01, 02, 03) | SUITE-01 (Ph 122), SUITE-02 (Ph 122), SUITE-03 (Ph 117) | 3/3 ✅ |
+| EVOLUCAO | 4 (01..04) | Phase 117 | 4/4 ✅ |
+| LEITURA | 4 (01..04) | Phase 118 | 4/4 ✅ |
+| TENANT | 5 (01..05) | Phase 119 | 5/5 ✅ |
+| ISOLAMENTO | 5 (01..05) | Phase 120 | 5/5 ✅ |
+| ARMADILHAS | 5 (01..05) | Phase 120 | 5/5 ✅ |
+| MODELO | 5 (01..05) | Phase 121 | 5/5 ✅ |
+| STREAMS | 6 (01..06) | Phase 121 | 6/6 ✅ |
+| AGENTE | 6 (01..06) | Phase 122 | 6/6 ✅ |
+| CROSS | 12 (01..12) | Phase 123 | 12/12 ✅ |
+| DOC | 5 (01..05) | Phase 123 | 5/5 ✅ |
+| **TOTAL** | **60** | **60** | **100%** |
+
+### Notas
+
+- A instrução do `/novo-marco` mencionou "46 REQs em 11 categorias", mas a contagem real do checklist `[ ]` neste documento é **60 REQs** distribuídos nas mesmas 11 categorias. O roadmap cobre os 60 REQ-IDs reais. Discrepância documentada para auditoria — não é falha de cobertura nem omissão pelo roadmapper.
+- Cada REQ aparece em exatamente uma phase (zero duplicação, zero gap).
+- A coluna "Tipo" do ROADMAP.md classifica Phases 117-122 como **content-only** (apenas markdown novo em `kit/skills/`, `kit/agents/`, `kit/commands/`) e Phase 123 como **integration** (modifica arquivos existentes em kit/ via patches editoriais).
