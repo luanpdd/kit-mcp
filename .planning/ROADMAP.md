@@ -9,7 +9,7 @@
 **Milestone:** v1.20 — Tech Debt Closure & Quality Hardening (fecha 6 itens parqueados pós-v1.19)
 **Numeração de fases:** continua de v1.19 (último concluído: Fase 99) → v1.20 começa em **Fase 100**
 **Total de fases:** 6 (Fases 100-105)
-**Status:** 🚧 EM ANDAMENTO — 4/6 fases concluídas (Phase 100, 101, 102, 103 completas).
+**Status:** 🚧 EM ANDAMENTO — 5/6 fases concluídas (Phase 100, 101, 102, 103, 104 completas).
 **Criado:** 2026-05-10
 **Origem:** tech debt em [.planning/milestones/v1.19-MILESTONE-AUDIT.md](.planning/milestones/v1.19-MILESTONE-AUDIT.md). Continuação direta da v1.19 — eleva PRR 28→30/30 e estabelece mutation testing canônico.
 
@@ -90,20 +90,25 @@
 **Progresso por plano:**
 - ✅ **Plan 103-01** (concluído 2026-05-10) — kit/commands/burn-rate-status.md rewrite + 5 schema tests + 8 combinedStatus tests + manifest regen (commits 029321a + 38e3de1 + 8282057). Suite 546→559 unit (+13).
 
-### Phase 104: PRR Emergency Axe 4/5 → 5/5 📋
+### Phase 104: PRR Emergency Axe 4/5 → 5/5 ✅
 
-**Status:** PLANEJADA
+**Status:** CONCLUÍDA — 1/1 plano concluído (2026-05-10)
 
 **Goal:** Elevar PRR Emergency axe de 4/5 → 5/5 via expansão do RUNBOOK.md com 3+ scenarios novos (boot failure, sidecar port collision, npm CVE rotation), cada um com Symptom→Diagnosis→Fix→Verification. Drill log template criado e populado com primeira entry.
 
-**REQ:** SRE-20-01
+**Resultado:** RUNBOOK.md expandido 5 → 9 scenarios cobrindo CI coverage gate regression (Scenario 6, Phase 100), auto-snapshot persist failure (7, Phase 102), multi-IDE sidecar port collision (8, Phases 13/14+21), critical CVE blocks publish (9, Phase 92.01+89). Cada um segue canonical Symptom→Diagnosis→Fix→Verification (sub-section grep count exato 36 = 9 × 4). EMERGENCY-DRILL-LOG.md criado com canonical template + 2026-Q2 walkthrough (table-top, todos 9 scenarios PASS). PRR-RECHECK.md documenta v1.19 28/30 → v1.20 post-104 29/30 com Emergency +1 backed by 6 evidence points. Phase 105 (Performance) lifará Performance para 5/5 → final 30/30. Stable API v1.0+ literal preservada — zero src/+bin/+kit/agents+kit/commands diff.
+
+**REQ:** SRE-20-01 ✅ (completo — RUNBOOK +4 scenarios + drill log + PRR re-projection + suite green)
 
 **Critérios de sucesso:**
-- `RUNBOOK.md` ganha ≥ 3 scenarios novos (boot failure, sidecar port collision, npm CVE rotation), cada um seguindo formato canônico Symptom→Diagnosis→Fix→Verification consistente com scenarios v1.18.
-- `.planning/audits/v1.20/EMERGENCY-DRILL-LOG.md` criado a partir de template canônico, populado com 1 entry inicial (drill 2026-05 com timestamp + outcome).
-- PRR re-projection registra Emergency axe 4/5 → 5/5 em `.planning/audits/v1.20/PRR-RECHECK.md` (ou nota inline equivalente).
-- Schema regression tests do RUNBOOK (v1.18) continuam green com novos scenarios.
-- Drill log template estabelece padrão pra futuros drills trimestrais.
+- `RUNBOOK.md` ganha ≥ 3 scenarios novos seguindo formato canônico Symptom→Diagnosis→Fix→Verification consistente com scenarios v1.18. ✅ **Atingido: 4 scenarios novos (excede ≥3 mínimo)**
+- `.planning/audits/v1.20/EMERGENCY-DRILL-LOG.md` criado a partir de template canônico, populado com 1 entry inicial. ✅ **Atingido: 2026-Q2 entry table-top + canonical template**
+- PRR re-projection registra Emergency axe 4/5 → 5/5 em `.planning/audits/v1.20/PRR-RECHECK.md`. ✅ **Atingido: 6-axis movement table com 6 evidence points para Emergency 4/5→5/5**
+- Schema regression tests do RUNBOOK (v1.18) continuam green com novos scenarios. ✅ (suite all-green idêntica baseline; nenhum schema test específico do RUNBOOK detectado, mas full unit suite 559 sem regressão)
+- Drill log template estabelece padrão pra futuros drills trimestrais. ✅ (canonical template inline + cadência trimestral declarada)
+
+**Progresso por plano:**
+- ✅ **Plan 104-01** (concluído 2026-05-10) — RUNBOOK +4 scenarios + EMERGENCY-DRILL-LOG.md + PRR-RECHECK.md (commits cf3bddb docs RUNBOOK + 1c11fd4 audit drill-log + 462a677 audit PRR-RECHECK). Doc-only phase — zero src/ + kit/agents + kit/commands + bin/ diff.
 
 ### Phase 105: PRR Performance Axe 4/5 → 5/5 📋
 

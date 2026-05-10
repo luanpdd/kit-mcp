@@ -2,23 +2,23 @@
 state_version: 1.0
 milestone: v1.20
 milestone_name: — Tech Debt Closure & Quality Hardening
-status: Phase 103 entregou multi-window burn-rate (OBS-20-02). /burn-rate-status agora calcula fast (1h) + slow (6h) independentes com combinedStatus enum (PAGE/TICKET/WARN/OK/no_data) per skill burn-rate-alerting fator 4× canonical. 13 testes novos (suite 546→559 unit). Stable API v1.0+ literal preservada — zero src/+bin/ changes; mudança exclusivamente kit/ + test/.
-last_updated: "2026-05-10T08:00:00.000Z"
+status: Phase 104 entregou PRR Emergency 4/5 → 5/5 (SRE-20-01). RUNBOOK.md expandido 5 → 9 scenarios cobrindo coverage gate, auto-snapshot, multi-IDE, CVE; EMERGENCY-DRILL-LOG.md criado com 2026-Q2 walkthrough table-top (todos 9 scenarios PASS); PRR-RECHECK.md documenta 6-axis movement com Emergency 4/5→5/5 (29/30 post-104; Performance pendente Phase 105 → 30/30 final). Stable API v1.0+ literal preservada — zero src/+bin/+kit/agents+kit/commands diff; mudança exclusivamente .planning/.
+last_updated: "2026-05-10T20:05:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 4
-  total_plans: 5
-  completed_plans: 5
+  completed_phases: 5
+  total_plans: 6
+  completed_plans: 6
 ---
 
 # STATE.md
 
 ## Posição Atual
 
-Fase: 103 (Multi-window Burn-rate) ✅ concluída
-Plano: 103-01 ✅ concluído
-Status: Phase 103 entregou OBS-20-02 — /burn-rate-status calcula dual-window (fastBurn 1h baseline + slowBurn 6h baseline) via 2 loadSnapshots calls; combinedStatus enum PAGE (ambos críticos) / TICKET (slow only) / WARN (fast spike OR mild >=1×) / OK / no_data (conservative — qualquer janela null wins). 13 testes novos (5 schema + 8 combinedStatus). Suite 546→559 unit, 0 fail. Skill burn-rate-alerting cross-referenced 9× no command, fator 4× canonical 5×. Stable API v1.0+ literal preservada.
-Última atividade: 2026-05-10 — Plan 103-01 concluído (commits 029321a feat + 38e3de1 test + 8282057 test), Phase 103 fechada
+Fase: 104 (PRR Emergency 4/5 → 5/5) ✅ concluída
+Plano: 104-01 ✅ concluído
+Status: Phase 104 entregou SRE-20-01 — RUNBOOK.md expandido 5 → 9 scenarios (Symptom→Diagnosis→Fix→Verification canonical) cobrindo CI coverage gate (Phase 100), auto-snapshot persist failure (Phase 102), multi-IDE sidecar port collision (Phases 13/14+21), critical CVE blocks publish (Phase 92.01+89). EMERGENCY-DRILL-LOG.md criado com canonical template + 2026-Q2 walkthrough entry (table-top single-human, todos 9 scenarios PASS). PRR-RECHECK.md axis-by-axis table v1.19 (28/30) → v1.20 post-104 (29/30); Emergency 4/5 → 5/5 com 6 evidence points; Performance pendente Phase 105 (target final 30/30). Stable API v1.0+ literal preservada — zero src/+bin/+kit/agents+kit/commands diff. Suite 559 unit, 0 fail.
+Última atividade: 2026-05-10 — Plan 104-01 concluído (commits cf3bddb docs RUNBOOK + 1c11fd4 audit drill-log + 462a677 audit PRR-RECHECK), Phase 104 fechada
 
 ## Milestone ativo
 
@@ -32,7 +32,7 @@ Status: Phase 103 entregou OBS-20-02 — /burn-rate-status calcula dual-window (
 | 101 | INFRA-20-02 | Mutation testing baseline 57.40% (10/15 files) | ✅ 1/1 plano |
 | 102 | OBS-20-01 | Auto-snapshot em metrics-snapshot tool | ✅ 1/1 plano |
 | 103 | OBS-20-02 | Multi-window burn-rate (1h fast + 6h slow) | ✅ 1/1 plano |
-| 104 | SRE-20-01 | PRR Emergency 4/5 → 5/5 (RUNBOOK + drill log) | 📋 |
+| 104 | SRE-20-01 | PRR Emergency 4/5 → 5/5 (RUNBOOK + drill log) | ✅ 1/1 plano |
 | 105 | SRE-20-02 | PRR Performance 4/5 → 5/5 (lazy-load + p95 sub-100ms) | 📋 |
 
 ## Decisões do Plan 100-01 (2026-05-10)
@@ -92,12 +92,30 @@ Status: Phase 103 entregou OBS-20-02 — /burn-rate-status calcula dual-window (
 7. **extractAlertBlock via line-scan + indent tracking** — alternativa a `js-yaml` dep (violaria dep budget Phase 92.01). Robusto para shape canonical do projeto.
 8. **Manifest regen via scripts/regen-manifest.js após kit/ edit** — kit/ é tamper-evident SHA-256 manifest. optional-deps.test.js falha CI se manifest stale. Workflow padrão.
 
+## Decisões do Plan 104-01 (2026-05-10)
+
+1. **4 novos scenarios (vs mínimo 3)** — escolhidos coverage gate (Scenario 6, Phase 100), auto-snapshot persist failure (7, Phase 102), multi-IDE sidecar (8, Phases 13/14+21), critical CVE (9, Phase 92.01+89). Stryker hang e SLO PAGE deferidos v1.21+ — surface menos direta em v1.20.
+2. **Drill 2026-Q2 é table-top single-human** — Wheel of Misfortune live deferido para v1.21+ quando team crescer. Canonical role-play da skill `blameless-postmortems` exige 2+ humans.
+3. **PRR-RECHECK lands em 29/30** — Emergency axe 5/5 lockado; Performance fica TBD para Phase 105. Não backfilling Performance evidence cedo — invalida axe-by-axe trail.
+4. **Cross-reference web denso por design** — RUNBOOK ↔ drill log ↔ PRR-RECHECK ↔ 4 skills (PRR + blameless + core-analysis-loop + hermetic-builds) ↔ FAILURE-MODES + previous PRR baselines. Operator chega a structural mitigation em ≤2 hops.
+5. **Cada novo scenario cita phase fonte** — Scenario 6 → Phase 100, 7 → Phase 102+99, 8 → Phases 13/14+21, 9 → Phase 92.01+89+hermetic-builds skill. Cross-ref bidirecional doc → phase → doc preserva provenance.
+6. **Stable API v1.0+ literal preservada** — `git diff --stat HEAD~3 HEAD -- src/ kit/agents/ kit/commands/ bin/` retorna empty. Phase 104 doc-only por design.
+
+## Métricas pós-Phase 104
+
+- **Suite total:** 559 unit (557 pass / 2 skip / 0 fail) — idêntica ao baseline pre-104, confirmando phase doc-only
+- **RUNBOOK.md:** 5 → 9 scenarios (4 novos seguindo canonical Symptom→Diagnosis→Fix→Verification); Quick triage 6 → 10 data rows; sub-section grep count = 36 (= 9 × 4)
+- **Audit docs novos:** 2 (.planning/audits/v1.20/EMERGENCY-DRILL-LOG.md + PRR-RECHECK.md), totalizando 308 lines new content
+- **PRR projection:** v1.19 28/30 → v1.20 post-104 29/30 (Emergency +1; Performance TBD Phase 105)
+- **Stable API delta:** 0 lines em src/ + bin/ + kit/agents/ + kit/commands/
+
 ## Próximo passo
 
-Phase 103 concluída. Executar **Phase 104** — PRR Emergency Axe 4/5 → 5/5 via expansão do RUNBOOK.md com 3+ scenarios novos (boot failure, sidecar port collision, npm CVE rotation), drill log template criado e populado com primeira entry.
+Phase 104 concluída. Executar **Phase 105** — PRR Performance Axe 4/5 → 5/5 via lazy-load chokidar e MCP roundtrip p95 sub-100ms verification em BENCHMARK.md. Final phase de v1.20 — fechará milestone em PRR 30/30.
 
 Pré-requisitos atendidos:
 
-- Phase 100 + 101 + 102 + 103 complete ✅
+- Phase 100 + 101 + 102 + 103 + 104 complete ✅
 - Suite green (559 unit / 109 integration) ✅
-- Stable API v1.0+ preservada cross-4-phases ✅
+- Stable API v1.0+ preservada cross-5-phases ✅
+- PRR projection 29/30 (apenas Performance pendente) ✅
