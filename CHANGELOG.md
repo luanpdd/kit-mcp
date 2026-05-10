@@ -6,6 +6,27 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.22.0] — 2026-05-10 — Suíte DDIA Foundations
+
+8ª suíte do kit, derivada de *Designing Data-Intensive Applications* (Kleppmann, 2017). Fecha gaps de consistência, partitioning, isolation, distributed systems traps e event streams nas suítes Supabase v1.8 + Multi-Tenant v1.21.
+
+### Adicionado
+- **Skills (7):** evolucao-schema-compativel, consistencia-leitura-replica, tenant-quente-mitigacao, postgres-isolamento-concorrencia, armadilhas-sistemas-distribuidos, escolha-modelo-consistencia, streams-eventos-cdc
+- **Agents (3):** auditor-consistencia-isolamento, detector-tenant-quente, validador-evolucao-schema
+- **Comando:** /dados-distribuidos (sinônimos: ddia, dados, consistencia, replicacao, streams)
+- **Glossário compartilhado:** _shared-dados-distribuidos/glossary.md (60+ termos PT-BR↔EN)
+- **Convenção nova:** PT-BR para naming de skills/agents/commands a partir de v1.22
+
+### Cross-suite integration (12 patches)
+- multi-tenant-performance-scaling, multi-tenant-rls-hierarchy, crm-lead-pipeline-patterns, super-admin-platform-pattern, cascading-failures, audit-log-multi-tenant, supabase-cron-queues, supabase-migrations (skills)
+- supabase-architect, supabase-migration-writer, multi-tenant-isolation-auditor, crm-pipeline-implementer (agents)
+
+### Métricas
+- AUTOGEN-COUNTS: 57→60 agents, 88→89 commands, 60→67 skills, 23 gates (mantido)
+- file-manifest: 355→~395 files
+- Stable API v1.0+ preservada (zero alteração em src/core/)
+- PRR 30/30 mantido (content-only milestone)
+
 ## [1.21.0] - 2026-05-10
 
 **Suíte Multi-Tenant SaaS B2B** — 6ª suíte do kit-mcp adicionada. Especialização sobre `/supabase` v1.8 para apps B2B com hierarquia firm→department→leader→collaborator e RBAC granular.
