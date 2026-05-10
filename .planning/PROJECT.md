@@ -1,28 +1,77 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-10 — milestone v1.21 (Suíte Multi-Tenant SaaS B2B) entregue.
+> Última atualização: 2026-05-10 — milestone v1.22 (Suíte DDIA Foundations) iniciado.
 
 ## Estado Atual
 
-**v1.21.0 — Suíte Multi-Tenant SaaS B2B** **entregue** 2026-05-10 (Phases 106-116, 11 phases, 59 REQs, content-only milestone). 6ª suíte adicionada ao kit-mcp — `/multi-tenant` + 10 agents + 15 skills + glossário compartilhado, especializando `/supabase` v1.8 para apps B2B com hierarquia firm→department→leader→collaborator e RBAC granular via cross-suite Task() handoff (zero duplicação de lógica). AUTOGEN-COUNTS: 47→57 agents, 87→88 commands, 45→60 skills, 20→23 gates; file-manifest 327→355 files. Stable API v1.0+ preservada (zero alterações em `src/core/`). PRR 30/30 mantido (content-only).
+**v1.21.0 — Suíte Multi-Tenant SaaS B2B** **entregue** 2026-05-10 (Phases 106-116, 11 phases, 59 REQs, content-only milestone). 6ª suíte adicionada ao kit-mcp.
 
-**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30) + **v1.21 (Multi-Tenant SaaS B2B)**. **7 suítes ativas no kit** + framework eat-your-own-dog-food maduro (golden signals + dual-window SLOs + RUNBOOK 9 cenários + mutation testing baseline). Cross-suite invocation pattern formalizado em v1.21.
+**v1.22.0 — Suíte DDIA Foundations** **em definição** 2026-05-10 (Phases 117+). 8ª suíte do kit derivada de *Designing Data-Intensive Applications* (Kleppmann, 2017) — fecha gaps de consistência, partitioning, isolation, distributed systems traps e event streams identificados nas suítes Supabase v1.8 + Multi-Tenant v1.21. Padrão content-only (sem alterações em `src/core/`).
 
-## Próximo milestone: v1.22 (a definir)
+**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30) + v1.21 (Multi-Tenant SaaS B2B) + **v1.22 (DDIA Foundations — em construção)**. **7 suítes ativas no kit** + framework eat-your-own-dog-food maduro (golden signals + dual-window SLOs + RUNBOOK 9 cenários + mutation testing baseline). Cross-suite invocation pattern formalizado em v1.21.
 
-**Tech debt parqueado para v1.22+** (carry-over de v1.20 + v1.21):
+## Milestone Atual: v1.22 Suíte DDIA Foundations
+
+**Objetivo:** Adicionar 8ª suíte ao kit derivada de *Designing Data-Intensive Applications* (Martin Kleppmann, O'Reilly 2017) — fechar gaps de consistency, replication, partitioning hot spots, isolation levels, distributed systems traps (clock skew, fencing tokens) e event streams (CDC, event sourcing) nas suítes /supabase v1.8 + /multi-tenant v1.21 existentes.
+
+**Funcionalidades alvo (todas aditivas, zero superfície de API quebrada):**
+
+- **Skills novos (7)** — 1 skill por capítulo chave do DDIA, mapeando para Postgres/Supabase:
+  - `schema-evolution-rolling-upgrades` (Ch 4 Encoding & Evolution) — backward/forward compat para migrations + Edge Function API contracts; padrão 3-step migration (add nullable → backfill → enforce NOT NULL); avro/protobuf schema evolution analogues para Postgres
+  - `replication-lag-consistency` (Ch 5 Replication) — read-after-write, monotonic reads, consistent prefix em context Supabase (read replicas via Supavisor, realtime broadcast vs DB read, Edge Functions reading after writes)
+  - `tenant-hot-spot-mitigation` (Ch 6 Partitioning) — detect+mitigate "Justin Bieber tenant" (1 tenant >>> outros); estratégias: per-tenant rate limit, isolated connection pool, dedicated read replica, denormalization, request shaping; range vs hash partitioning para tenant_id
+  - `postgres-isolation-and-write-skew` (Ch 7 Transactions) — quando READ COMMITTED (default) vs REPEATABLE READ vs SERIALIZABLE; SELECT FOR UPDATE patterns; lost update prevention via row-level lock OU atomic UPDATE; write skew detection + materialização do conflict via FOR UPDATE/advisory lock; phantom reads
+  - `distributed-systems-traps` (Ch 8 Trouble with Distributed Systems) — clock skew dangers (`now()` vs `clock_timestamp()` vs `transaction_timestamp()` semantics); fencing tokens para distributed locks (advisory locks, super-admin actions); GC pauses; partial failures; falsy timeout-based failure detection
+  - `consistency-model-selection` (Ch 9 Consistency & Consensus) — quando precisa linearizability (uniqueness constraint cross-tenant) vs causal consistency vs eventual; distributed uniqueness via Postgres single-leader; total order broadcast analogues
+  - `event-streams-cdc-sourcing` (Ch 11 Stream Processing) — CDC patterns via wal2json/pglogical; event sourcing em Postgres (audit_log como source of truth + projeções); exactly-once semantics em pgmq via dedup table; log-based vs JMS-style brokers; transactional outbox
+
+- **Agents novos (3)** — workers especializados consumindo skills DDIA:
+  - `consistency-isolation-auditor` — scaneia migrations/RPCs/Edge Functions por race condition vulns: SELECT-then-UPDATE sem FOR UPDATE (lost update vulnerable), trigger + check constraint que não materializa o predicate (write skew vulnerable), `now()`/`clock_timestamp()` em expiration logic (clock skew vulnerable), reliance em app-level UNIQUE check vs DB constraint, cross-tenant write sem proper FOR UPDATE LOCKING
+  - `hot-tenant-detector` — analisa logs Supabase via `mcp__supabase__execute_sql`/get_logs (last 30d) → detecta tenants com queries/storage/connections >>> outros; sugere mitigation strategy específica baseada no perfil de uso
+  - `schema-evolution-checker` — pré-check de migration ANTES de apply: flagra quebras de backward/forward compat (NOT NULL adicionado em coluna existente, column dropped, type narrowed, default changed em coluna em uso); sugere padrão 3-step migration
+
+- **Command novo (1):**
+  - `/ddia [subcomando]` — orquestrador da Suíte DDIA (sinônimos PT/EN: `ddia`, `consistency`, `consistencia`, `partitioning`, `streams`); subcomandos: `consistency-audit`, `hot-tenant-audit`, `schema-evolution-check`, `cdc-implement`
+
+- **Updates cross-suite (12 patches em skills/agents existentes):**
+  - `multi-tenant-performance-scaling` ← hot-spot detection + range vs hash p/ tenant_id
+  - `multi-tenant-rls-hierarchy` ← linearizability cross-tenant invariants
+  - `crm-lead-pipeline-patterns` ← SELECT FOR UPDATE em stage transition trigger
+  - `super-admin-platform-pattern` ← fencing token p/ impersonation TTL
+  - `cascading-failures` ← clock skew como failure mode adicional
+  - `audit-log-multi-tenant` ← event sourcing semantics + log compaction
+  - `supabase-cron-queues` ← exactly-once patterns + idempotency keys + transactional outbox
+  - `supabase-migrations` ← rolling-upgrade pattern (3-step NOT NULL) reference
+  - Agents: `supabase-architect` (consistency requirements upfront), `supabase-migration-writer` (auto-detect schema evolution risks), `multi-tenant-isolation-auditor` (hot-tenant gap detection), `crm-pipeline-implementer` (FOR UPDATE locks built-in)
+
+**Decisões de stack:**
+- Zero deps novas. Apenas conteúdo de kit (markdown). Stable API v1.0+ preservada — só adições.
+- Material-fonte: *Designing Data-Intensive Applications* — Martin Kleppmann (O'Reilly Media, 2017). ISBN 978-1-449-37332-0.
+- Capítulos cobertos: 4 (Encoding/Evolution), 5 (Replication), 6 (Partitioning), 7 (Transactions), 8 (Trouble Distributed Systems), 9 (Consistency/Consensus), 11 (Stream Processing). Capítulos 1-3 já cobertos por suítes existentes (SRE Reliability, Storage already covered by `supabase-postgres-style`).
+- Conteúdo PT-BR (alinhado com v1.8/v1.9/v1.10/v1.11/v1.12/v1.21). Code blocks EN com comentários PT-BR.
+- Roadmap começa em **Phase 117** (continuação de v1.21 que terminou em 116).
+- Padrão v1.21 cross-suite invocation Task() handoff aplicado (agents v1.22 invocam agents v1.8/v1.21 quando precisam tocar SQL/RLS).
+
+**Beneficiários principais:**
+- Suíte Supabase v1.8 — `supabase-architect` ganha pergunta de consistency model upfront; `supabase-migration-writer` ganha schema-evolution gate
+- Suíte Multi-Tenant v1.21 — `multi-tenant-isolation-auditor` ganha hot-tenant detection; `multi-tenant-performance-scaling` ganha hot-spot mitigation
+- Suíte CRM v1.21 — `crm-pipeline-implementer` aplica FOR UPDATE em stage transitions
+- Suíte SRE v1.10/v1.11 — `cascading-failures` ganha clock skew como mode; `prr-conductor` ganha consistency check em Axe 1
+- Fluxo framework — `/discutir-fase` para apps com concorrência alta passa a perguntar isolation level
+
+**Contrato preservado:** Quem usa kit-mcp em produção não percebe nada além de novos artefatos disponíveis ao sincronizar (`kit sync install <target>`). CI permanece verde. Stable API v1.0+ inalterada.
+
+**Tech debt deferido (carry-over de v1.20 + v1.21, mantido para v1.23+):**
 - Phase 100 carry-over: cli/index.js extract helpers para 86→90 coverage ratchet
-- Phase 101 carry-over: completar mutation baseline 5 files restantes (sync, ui, watch, reverse-sync, gate-runner) + CI mutation gate threshold ~55%
-- Phase 105 carry-over: p99 latency monitoring com disk-persistent snapshots + M1 cold-start CLI sub-200ms
+- Phase 101 carry-over: completar mutation baseline 5 files restantes
+- Phase 105 carry-over: p99 latency monitoring + M1 cold-start CLI sub-200ms
 - v1.21 deferred: TanStack Start, Expo, SolidStart/SvelteKit/Nuxt integrations
 - v1.21 deferred: Hono/Express/Fastify backend integrations
-- v1.21 deferred: WhatsApp template management + media handling (Supabase Storage)
-- v1.21 deferred: CRM advanced — AI scoring, conversion analytics
-- v1.21 deferred: Multi-region deployment patterns (Vercel + Supabase replicas)
-- v1.21 deferred: Advanced audit log analytics dashboards
+- v1.21 deferred: WhatsApp template management + media handling
+- v1.21 deferred: Multi-region deployment patterns
 
-**Próximo passo:** `/novo-marco` para iniciar v1.22 com questionamento → pesquisa → requisitos → roadmap.
+**Próximo passo:** `/discutir-fase 117` ou `/planejar-fase 117` (após roadmap aprovado).
 
 ## ~~Milestone Anterior: v1.21 Suíte Multi-Tenant SaaS B2B~~ (entregue 2026-05-10)
 
