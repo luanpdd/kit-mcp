@@ -10,9 +10,8 @@
 
 | Field | Value |
 |---|---|
-| M1/M2/M3/M5 measured | 2026-05-09 (kit-mcp 1.17.0) |
-| M4 v1.17.0 baseline | 2026-05-09 (kit-mcp 1.17.0) |
-| M4 v1.20.0 re-measure | 2026-05-10 (kit-mcp 1.20.0-pre, Phase 105 pre-warm enabled) |
+| Date | 2026-05-09 (M1, M2, M3, M5; M4 v1.17.0 baseline) · 2026-05-10 (M4 v1.20.0 re-measure) |
+| kit-mcp version | 1.17.0 (M1/M2/M3/M5 + M4 v1.17.0 baseline; `package.json`) · 1.20.0-pre (M4 v1.20.0 row) |
 | OS | Windows 11 Pro 10.0.26200 (POSIX shim under WSL/Git Bash) |
 | Node | as installed in working repo (engines: `20 || 22`) |
 | Kit size | 47 agents · 87 commands · 45 skills · 134 framework files · 7 hooks · **321 sync ops total** |
