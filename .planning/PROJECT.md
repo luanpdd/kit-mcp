@@ -1,17 +1,30 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-10 — milestone v1.22 (Suíte DDIA Foundations) iniciado.
+> Última atualização: 2026-05-10 — milestone v1.22 (Suíte DDIA Foundations) entregue.
 
 ## Estado Atual
 
-**v1.21.0 — Suíte Multi-Tenant SaaS B2B** **entregue** 2026-05-10 (Phases 106-116, 11 phases, 59 REQs, content-only milestone). 6ª suíte adicionada ao kit-mcp.
+**v1.22.0 — Suíte DDIA Foundations** **entregue** 2026-05-10 (Phases 117-123, 7 phases, 60 REQs, content-only milestone). 8ª suíte adicionada ao kit-mcp — `/dados-distribuidos` + 3 agents + 7 skills + glossário compartilhado, derivada de *Designing Data-Intensive Applications* (Kleppmann 2017). Cobre capítulos 4 (Encoding/Evolution), 5 (Replication), 6 (Partitioning), 7 (Transactions), 8 (Distributed Systems Traps), 9 (Consistency/Consensus), 11 (Stream Processing). 12 cross-suite patches em skills/agents v1.8 + v1.11 + v1.21. **Convenção nova:** PT-BR para naming de skills/agents/commands a partir de v1.22. AUTOGEN-COUNTS: 57→60 agents, 88→89 commands, 60→67 skills, 23 gates (mantido); file-manifest 355→367 files. Stable API v1.0+ preservada. PRR 30/30 mantido (content-only).
 
-**v1.22.0 — Suíte DDIA Foundations** **em definição** 2026-05-10 (Phases 117+). 8ª suíte do kit derivada de *Designing Data-Intensive Applications* (Kleppmann, 2017) — fecha gaps de consistência, partitioning, isolation, distributed systems traps e event streams identificados nas suítes Supabase v1.8 + Multi-Tenant v1.21. Padrão content-only (sem alterações em `src/core/`).
+**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30) + v1.21 (Multi-Tenant SaaS B2B) + **v1.22 (DDIA Foundations)**. **8 suítes ativas no kit** + framework eat-your-own-dog-food maduro (golden signals + dual-window SLOs + RUNBOOK 9 cenários + mutation testing baseline). Cross-suite invocation pattern formalizado em v1.21 + convenção PT-BR a partir de v1.22.
 
-**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30) + v1.21 (Multi-Tenant SaaS B2B) + **v1.22 (DDIA Foundations — em construção)**. **7 suítes ativas no kit** + framework eat-your-own-dog-food maduro (golden signals + dual-window SLOs + RUNBOOK 9 cenários + mutation testing baseline). Cross-suite invocation pattern formalizado em v1.21.
+## Próximo milestone: v1.23 (a definir)
 
-## Milestone Atual: v1.22 Suíte DDIA Foundations
+**Tech debt parqueado para v1.23+** (carry-over de v1.20 + v1.21 + v1.22):
+- Phase 100 carry-over: cli/index.js extract helpers para 86→90 coverage ratchet
+- Phase 101 carry-over: completar mutation baseline 5 files restantes + CI mutation gate threshold ~55%
+- Phase 105 carry-over: p99 latency monitoring + M1 cold-start CLI sub-200ms
+- v1.21 deferred: TanStack Start/Expo/SolidStart/SvelteKit/Nuxt + Hono/Express/Fastify integrations
+- v1.21 deferred: WhatsApp template management, CRM AI scoring, multi-region deployment
+- v1.22 deferred: CRDTs (mergeable counters, OR-Sets) para colaborativo realtime
+- v1.22 deferred: batch processing patterns (DDIA Ch 10 — pgmq cobre maioria dos casos)
+- v1.22 deferred: multi-region active-active deployment Supabase
+- v1.22 deferred: tooling para visualização event flow (CDC pipeline diagram)
+
+**Próximo passo:** `/novo-marco` para iniciar v1.23.
+
+## ~~Milestone Anterior: v1.22 Suíte DDIA Foundations~~ (entregue 2026-05-10)
 
 **Objetivo:** Adicionar 8ª suíte ao kit derivada de *Designing Data-Intensive Applications* (Martin Kleppmann, O'Reilly 2017) — fechar gaps de consistency, replication, partitioning hot spots, isolation levels, distributed systems traps (clock skew, fencing tokens) e event streams (CDC, event sourcing) nas suítes /supabase v1.8 + /multi-tenant v1.21 existentes.
 

@@ -1,11 +1,11 @@
 ---
 state_version: 1.0
-milestone: v1.22
-milestone_name: "Suíte DDIA Foundations"
-status: "Roadmap criado — pronto para planejamento de fase"
-last_updated: "2026-05-10T16:00:00.000Z"
+milestone: none
+milestone_name: "—"
+status: "v1.22 entregue, aguardando próximo milestone"
+last_updated: "2026-05-10T17:30:00.000Z"
 progress:
-  total_phases: 7
+  total_phases: 0
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -15,56 +15,36 @@ progress:
 
 ## Posição Atual
 
-Fase: 117 (próxima — não iniciada)
+Fase: — (nenhum milestone ativo)
 Plano: —
-Status: Roadmap criado — pronto para planejamento de fase
-Última atividade: 2026-05-10 — `/novo-marco` produziu ROADMAP.md (7 phases, 60 REQs, 100% cobertura) + REQUIREMENTS.md rastreabilidade preenchida
+Status: v1.22.0 entregue — working tree limpo após `/concluir-marco v1.22`. Pronto para `/novo-marco` v1.23.
+Última atividade: 2026-05-10 — `/concluir-marco v1.22` (7 phases archived → milestones/v1.22-phases/, package.json 1.21.0→1.22.0, tag v1.22.0)
 
 ## Milestone ativo
 
-**v1.22 — Suíte DDIA Foundations** (em planejamento). 8ª suíte do kit derivada de *Designing Data-Intensive Applications* (Kleppmann, 2017). Cobre capítulos 4, 5, 6, 7, 8, 9, 11.
+_Nenhum_ — v1.22 entregue. Use `/novo-marco` para iniciar v1.23.
 
-## Roadmap aprovado
+## Contexto Acumulado (do milestone v1.22 entregue)
 
-7 fases (Phase 117 → Phase 123):
-- **Phase 117** (Onda 1): Glossário compartilhado + skill `evolucao-schema-compativel` (Ch 4) — 5 REQs
-- **Phase 118** (Onda 2): Skill `consistencia-leitura-replica` (Ch 5) — 4 REQs
-- **Phase 119** (Onda 1): Skill `tenant-quente-mitigacao` (Ch 6) — 5 REQs
-- **Phase 120** (Onda 2): Skills `postgres-isolamento-concorrencia` + `armadilhas-sistemas-distribuidos` (Ch 7+8) — 10 REQs
-- **Phase 121** (Onda 2): Skills `escolha-modelo-consistencia` + `streams-eventos-cdc` (Ch 9+11) — 11 REQs
-- **Phase 122** (Onda 3): 3 agents + comando `/dados-distribuidos` — 8 REQs
-- **Phase 123** (Onda 4): 12 cross-suite patches + release artifacts — 17 REQs
-
-**Total artefatos:** 7 skills + 1 glossário + 3 agents + 1 command + 12 cross-suite patches.
-
-## Contexto Acumulado (do milestone v1.21 entregue)
-
-- **Suite kit:** 7 suítes ativas (Supabase v1.8, Observabilidade v1.9, SRE v1.10, SRE Resilience v1.11, Legacy v1.12, Hardening v1.13-v1.20, Multi-Tenant SaaS B2B v1.21)
-- **Counts:** 57 agents, 88 commands, 60 skills, 23 audit gates (post-v1.21)
-- **file-manifest:** 355 files hashed (327→355 em v1.21)
+- **Suite kit:** 8 suítes ativas (Supabase v1.8, Observabilidade v1.9, SRE v1.10, SRE Resilience v1.11, Legacy v1.12, Hardening v1.13-v1.20, Multi-Tenant SaaS B2B v1.21, **DDIA Foundations v1.22**)
+- **Counts:** 60 agents, 89 commands, 67 skills, 23 audit gates (post-v1.22)
+- **file-manifest:** 367 files hashed (355→367 em v1.22)
 - **Coverage:** 86.84% line (mantida; content-only milestone)
 - **PRR:** **30/30** (mantido cross-content-only milestone)
 - **Mutation baseline:** 57.40% (mantido)
 - **MCP p95 latency:** 0ms (mantido)
-- **Stable API v1.0+:** preservada cross-9-releases (v1.13→v1.21)
-- **Cross-suite invocation pattern:** formalizado em v1.21 (agents v1.21 → agents v1.8 via Task() handoff) — herdado em v1.22
-- **Working tree:** clean (post-archive v1.21)
-
-## Counts esperados pós-v1.22
-
-- agents: 57 → **60** (+3: auditor-consistencia-isolamento, detector-tenant-quente, validador-evolucao-schema)
-- commands: 88 → **89** (+1: dados-distribuidos)
-- skills: 60 → **67** (+7 + 1 glossário em `_shared-dados-distribuidos`)
-- gates: 23 (mantido — esta suíte não introduz audit gates novos por design)
-- file-manifest: 355 → **~395**
+- **Stable API v1.0+:** preservada cross-10-releases (v1.13→v1.22)
+- **Cross-suite invocation pattern:** formalizado em v1.21, herdado em v1.22 (3 agents v1.22 → agents v1.8/v1.21 via Task() handoff)
+- **Convenção PT-BR naming:** estabelecida em v1.22 (artefatos novos PT-BR; pré-v1.22 preservados)
+- **Working tree:** clean (post-archive)
 
 ## Próximo passo
 
 ```
-/planejar-fase 117
+/novo-marco
 ```
 
-Onda 1 (paralelo): Phase 117 + Phase 119 podem ser planejadas em paralelo.
+`/clear` primeiro → janela de contexto fresca para questionamento → pesquisa → requisitos → roadmap.
 
 ## Tech debt parqueado (deferido para v1.23+)
 
@@ -81,7 +61,7 @@ Onda 1 (paralelo): Phase 117 + Phase 119 podem ser planejadas em paralelo.
 - Multi-region deployment patterns (Vercel multi-region + Supabase replicas)
 - Advanced audit log analytics dashboards
 
-**Deferido em v1.22 (definido em REQUIREMENTS.md):**
+**Deferido em v1.22:**
 - Skills específicas para CRDTs (mergeable counters, OR-Sets) — relevante para colaborativo realtime
 - Skills para batch processing (DDIA Ch 10) — pgmq + scheduled jobs já satisfazem
 - Skill para multi-region active-active deployment Supabase
@@ -93,6 +73,7 @@ Onda 1 (paralelo): Phase 117 + Phase 119 podem ser planejadas em paralelo.
 
 ## Histórico
 
+- v1.22.0 — Suíte DDIA Foundations — entregue 2026-05-10 (7 phases, 60 REQs, 28+ commits atomic, content-only)
 - v1.21.0 — Suíte Multi-Tenant SaaS B2B — entregue 2026-05-10 (11 phases, 59 REQs, 18 commits atomic, content-only)
 - v1.20.0 — Tech Debt Closure & Quality Hardening — entregue 2026-05-10 (6 fases, PRR 30/30, +89 tests)
 - v1.13 → v1.19 — 7 releases em 2026-05-09 (~9h sessão; 21 fases; PRR 22→28)
