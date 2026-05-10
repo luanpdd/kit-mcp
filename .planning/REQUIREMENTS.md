@@ -21,11 +21,11 @@ Este milestone fecha todos eles. Zero superfície de API nova; 1 dev dep nova (s
 ### Infra & Quality
 
 - [x] **INFRA-20-01**: CI line coverage threshold é elevado de 80% → 86% (ratchet honesto entregue 2026-05-10; 86 → 90 deferido para v1.21+ porque cli/index.js capped at 82.61% por limite estrutural — live spawn / interactive TTY paths exigiriam `__test` exports que violam Stable API v1.0+). Wave 1 entregou 169 testes (482→651, +35.1%) elevando 7/8 hot files a ≥90%. Suite all-green. 3 avenues canônicas para 86→90 documentadas inline em ci.yml: (a) stryker mutation gate via Phase 101, (b) Phase 105 cli/index.js helper extraction, (c) branch coverage como 2º gate.
-- [ ] **INFRA-20-02**: Mutation testing via stryker rodando localmente, baseline mutation score documentado em `.planning/audits/v1.20/MUTATION-BASELINE.md`. Stryker config em `stryker.config.json`. NPM script `test:mutation`. Não bloqueia CI nesta versão (gate v1.21+).
+- [x] **INFRA-20-02**: Mutation testing via stryker rodando localmente, baseline mutation score documentado em `.planning/audits/v1.20/MUTATION-BASELINE.md`. Stryker config em `stryker.config.json`. NPM script `test:mutation`. Não bloqueia CI nesta versão (gate v1.21+). (Entregue 2026-05-10 via Phase 101: 57.40% baseline em 10/15 src/core files, 1310 mutants. 5 files restantes documentados em Avenue A do MUTATION-BASELINE.md.)
 
 ### Observabilidade
 
-- [ ] **OBS-20-01**: Tool MCP `metrics-snapshot` automaticamente persiste o snapshot via `metrics.persistSnapshot()` em vez de exigir trigger manual. Comportamento idempotente — chamadas repetidas dentro de 1s não duplicam.
+- [x] **OBS-20-01**: Tool MCP `metrics-snapshot` automaticamente persiste o snapshot via `metrics.persistSnapshot()` em vez de exigir trigger manual. Comportamento idempotente — chamadas repetidas dentro de 1s não duplicam. (Entregue 2026-05-10 via Phase 102: handleMetricsSnapshot modificado com throttle 1s in-memory + graceful fs error. 4 regression tests novos cobrindo first-persist/within-1s-reuse/after-1s-persist/fs-graceful. Stable API v1.0+ literal preservada.)
 - [ ] **OBS-20-02**: SLOs YAML aceitam campo `windows: { fast: <duration>, slow: <duration> }` com defaults `1h`/`6h`. `/burn-rate-status` calcula e exibe burn rate para ambas as janelas, status enum considera dual-window (fast em PAGE, slow em TICKET).
 
 ### SRE PRR
@@ -51,8 +51,8 @@ Este milestone fecha todos eles. Zero superfície de API nova; 1 dev dep nova (s
 | REQ-ID | Phase | Status |
 |---|---|---|
 | INFRA-20-01 | 100 | Complete |
-| INFRA-20-02 | 101 | pending |
-| OBS-20-01 | 102 | pending |
+| INFRA-20-02 | 101 | Complete |
+| OBS-20-01 | 102 | Complete |
 | OBS-20-02 | 103 | pending |
 | SRE-20-01 | 104 | pending |
 | SRE-20-02 | 105 | pending |

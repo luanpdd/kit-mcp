@@ -2,23 +2,23 @@
 state_version: 1.0
 milestone: v1.20
 milestone_name: — Tech Debt Closure & Quality Hardening
-status: Phase 101 entregou Stryker baseline (mutation score 57.40% em 10/15 src/core files, 1310 mutants). Tooling instalado (devDeps), config canônica, audit doc com 3 avenues v1.21+ documentadas. Suite 651 unit/integration green, budget 6 preservado.
-last_updated: "2026-05-10T07:00:00.000Z"
+status: Phase 102 entregou auto-snapshot em metrics-snapshot MCP tool (OBS-20-01). handleMetricsSnapshot agora invoca persistSnapshot() com throttle 1s + graceful fs error. 4 regression tests novos (suite 542→546 unit). Stable API v1.0+ literal preservada — zero changes em signature/return shape. Side effect verificável live em integration tests.
+last_updated: "2026-05-10T07:30:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 2
-  total_plans: 3
-  completed_plans: 3
+  completed_phases: 3
+  total_plans: 4
+  completed_plans: 4
 ---
 
 # STATE.md
 
 ## Posição Atual
 
-Fase: 100 (Coverage Ratchet 80% → 86%) ✅ concluída
-Plano: 100-01 ✅ concluído / 100-02 ✅ concluído
-Status: Phase 100 entregou 169 testes (482→651, +35.1%), 7/8 hot files ≥90% coverage, all-files 81.51%→86.84%, CI threshold 80→86. cli/index.js capped at 82.61% por limite estrutural (live spawn + TTY); 86→90 ratchet diferido para v1.21+ com 3 avenues canônicas documentadas inline em ci.yml.
-Última atividade: 2026-05-10 — Plan 100-02 concluído (commit ae8e807), Phase 100 fechada
+Fase: 102 (Auto-snapshot em metrics-snapshot Tool) ✅ concluída
+Plano: 102-01 ✅ concluído
+Status: Phase 102 entregou OBS-20-01 — handleMetricsSnapshot auto-persiste via persistSnapshot() com throttle 1s in-memory + graceful fs error. 4 regression tests novos. Suite 542→546 unit, 0 fail. Stable API v1.0+ literal preservada (signature parameterless, return shape inalterado).
+Última atividade: 2026-05-10 — Plan 102-01 concluído (commits cf0c492 + af4a2a7), Phase 102 fechada
 
 ## Milestone ativo
 
@@ -30,7 +30,7 @@ Status: Phase 100 entregou 169 testes (482→651, +35.1%), 7/8 hot files ≥90% 
 |---|---|---|---|
 | 100 | INFRA-20-01 | Coverage ratchet 80→86% (90 deferido v1.21+) | ✅ 2/2 planos |
 | 101 | INFRA-20-02 | Mutation testing baseline 57.40% (10/15 files) | ✅ 1/1 plano |
-| 102 | OBS-20-01 | Auto-snapshot em metrics-snapshot tool | 📋 |
+| 102 | OBS-20-01 | Auto-snapshot em metrics-snapshot tool | ✅ 1/1 plano |
 | 103 | OBS-20-02 | Multi-window burn-rate (1h fast + 6h slow) | 📋 |
 | 104 | SRE-20-01 | PRR Emergency 4/5 → 5/5 (RUNBOOK + drill log) | 📋 |
 | 105 | SRE-20-02 | PRR Performance 4/5 → 5/5 (lazy-load + p95 sub-100ms) | 📋 |
@@ -72,20 +72,21 @@ Status: Phase 100 entregou 169 testes (482→651, +35.1%), 7/8 hot files ≥90% 
 
 `gh auth switch --user luanpdd` é necessário ANTES de cada `git push` — wincred cache reverte para `in100tiva` (que não tem acesso ao luanpdd/kit-mcp).
 
-## Decisões do Plan 101-01 (2026-05-10)
+## Decisões do Plan 102-01 (2026-05-10)
 
-1. **Per-file Stryker run via wrapper** — naive all-files levaria ~100min wall-clock. `scripts/run-mutation-baseline.mjs` roda 1 file por vez com test files focused (~10-100s cada). Total ~9min para 10 files vs ~100min naive.
-2. **Scope src/core/ apenas** — coração do MCP server (registry, kit, sync, gates, watch, metrics). cli/ui/mcp-server adiados pra v1.21+ baseado em ROI.
-3. **commandRunner: node test/run.mjs test/unit** — exact parity com `npm test`. node:test runner do Stryker exige perTest hooks que node:test não fornece.
-4. **10/15 files baseline esta sessão** — sessão API timeout interrompeu reverse-sync.js. 5 files restantes (sync, ui, watch, reverse-sync, gate-runner) documentados em Avenue A do MUTATION-BASELINE.md ToDo. Não bloqueia milestone.
-5. **Mutation gate em CI deferido para v1.21+** — proposta strawman de threshold 55% (margin vs 57.40% baseline) documentada em Avenue C, condicional a baseline 100% complete primeiro.
+1. **Throttle 1s in-memory (não persistido)** — janela conservadora vs polling típico ≥30s; reset on server restart aceitável vs adicionar fs read on every call. Documentado inline em src/mcp-server/index.js.
+2. **Graceful fs error path** — try/catch ao redor de persistSnapshot(), stderr write para visibilidade do operator, handler retorna payload normalmente. Preserva contrato MCP em fs read-only / disk-full / permission errors.
+3. **Stable API v1.0+ literal** — signature parameterless + return shape `{counters, latency}` inalterados. Mudança é side effect interno puro, transparente para clientes.
+4. **Test access via SDK internals** (`server._requestHandlers.get('tools/call')`) — pattern de mcp-error-envelope.test.js (Phase 84.01) e mcp-server-paths.test.js (Phase 100.01). Zero exports novos.
+5. **Cache-bust query string em dynamic import** para reset do `_lastAutoPersistTs` entre testes — ESM idiomatic; transitivamente reset os Maps de metrics.js também.
+6. **Test 4 (fs error) via blocker file** — pre-criar `.planning` como arquivo regular força `fs.mkdir(.../snapshots)` a lançar ENOTDIR. Cross-platform (Windows + Linux + macOS), zero monkey-patch de ESM bindings.
 
 ## Próximo passo
 
-Phase 101 concluída. Executar **Phase 102** — Auto-snapshot em metrics-snapshot Tool MCP. Tool MCP `metrics-snapshot` automaticamente persiste snapshot via `metrics.persistSnapshot()` em vez de exigir trigger manual externo. Comportamento idempotente — chamadas repetidas dentro de 1s não duplicam.
+Phase 102 concluída. Executar **Phase 103** — Multi-window Burn-rate (1h fast + 6h slow). SLOs YAML aceitam campo `windows: { fast, slow }` com defaults 1h/6h; `/burn-rate-status` calcula e exibe burn rate dual-window aplicando skill `burn-rate-alerting` (lookahead/baseline fator 4×). Phase 102 garante snapshots auto-populados — pré-requisito atendido.
 
 Pré-requisitos atendidos:
 
-- Phase 100 + 101 complete ✅
-- Suite green ✅
-- Stable API v1.0+ preservada ✅
+- Phase 100 + 101 + 102 complete ✅
+- Suite green (546 unit / 109 integration) ✅
+- Stable API v1.0+ preservada cross-3-phases ✅

@@ -9,7 +9,7 @@
 **Milestone:** v1.20 — Tech Debt Closure & Quality Hardening (fecha 6 itens parqueados pós-v1.19)
 **Numeração de fases:** continua de v1.19 (último concluído: Fase 99) → v1.20 começa em **Fase 100**
 **Total de fases:** 6 (Fases 100-105)
-**Status:** 🚧 EM ANDAMENTO — 1/6 fases concluídas (Phase 100 completa, 2/2 planos).
+**Status:** 🚧 EM ANDAMENTO — 3/6 fases concluídas (Phase 100, 101, 102 completas).
 **Criado:** 2026-05-10
 **Origem:** tech debt em [.planning/milestones/v1.19-MILESTONE-AUDIT.md](.planning/milestones/v1.19-MILESTONE-AUDIT.md). Continuação direta da v1.19 — eleva PRR 28→30/30 e estabelece mutation testing canônico.
 
@@ -49,20 +49,25 @@
 - `.planning/audits/v1.20/MUTATION-BASELINE.md` documenta baseline mutation score com breakdown por arquivo top 5 + ToDo list pra v1.21+ gate.
 - Não modifica CI workflow — execução opt-in local apenas.
 
-### Phase 102: Auto-snapshot em metrics-snapshot Tool 📋
+### Phase 102: Auto-snapshot em metrics-snapshot Tool ✅
 
-**Status:** PLANEJADA
+**Status:** CONCLUÍDA — 1/1 plano concluído (2026-05-10)
 
 **Goal:** Tool MCP `metrics-snapshot` automaticamente persiste snapshot via `metrics.persistSnapshot()` em vez de exigir trigger manual externo. Comportamento idempotente — chamadas repetidas dentro de 1s não duplicam.
 
-**REQ:** OBS-20-01
+**Resultado:** handleMetricsSnapshot agora invoca persistSnapshot() automaticamente antes de retornar o payload in-memory, com throttle 1s in-memory (`_lastAutoPersistTs` guard) e graceful fs error handling (stderr log + handler returns payload). Stable API v1.0+ literal preservada — signature parameterless e return shape `{counters, latency}` inalterados. Side effect verificado live em integration tests (4 arquivos auto-criados em `.planning/metrics/snapshots/` durante test run).
+
+**REQ:** OBS-20-01 ✅ (completo — handler modificado + 4 regression tests + suite cresceu 542→546 unit + Stable API preservada)
 
 **Critérios de sucesso:**
-- Handler MCP de `metrics-snapshot` invoca `persistSnapshot()` antes de retornar payload, dentro do mesmo handler.
-- Idempotência garantida — segunda chamada dentro de 1s reusa o snapshot anterior (in-memory ts guard) sem escrever novo arquivo no disco.
-- Regression tests cobrem: (a) primeira chamada persiste, (b) chamada < 1s reusa, (c) chamada > 1s persiste novo, (d) erro de fs não crasha o handler (graceful).
-- `.planning/metrics/snapshots/` populado automaticamente em produção sem trigger manual.
-- Stable API v1.0+ preservada — payload de retorno do tool mantém shape.
+- Handler MCP de `metrics-snapshot` invoca `persistSnapshot()` antes de retornar payload, dentro do mesmo handler. ✅
+- Idempotência garantida — segunda chamada dentro de 1s reusa o snapshot anterior (in-memory ts guard) sem escrever novo arquivo no disco. ✅
+- Regression tests cobrem: (a) primeira chamada persiste, (b) chamada < 1s reusa, (c) chamada > 1s persiste novo, (d) erro de fs não crasha o handler (graceful). ✅ (4/4 tests passing)
+- `.planning/metrics/snapshots/` populado automaticamente em produção sem trigger manual. ✅ (verificado em integration tests)
+- Stable API v1.0+ preservada — payload de retorno do tool mantém shape. ✅
+
+**Progresso por plano:**
+- ✅ **Plan 102-01** (concluído 2026-05-10) — handler modificado em src/mcp-server/index.js com throttle + graceful fs + 4 regression tests novos em test/unit/mcp-metrics-snapshot-auto-persist.test.js (commits cf0c492 + af4a2a7)
 
 ### Phase 103: Multi-window Burn-rate (1h fast + 6h slow) 📋
 
