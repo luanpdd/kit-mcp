@@ -17,7 +17,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 
-import { listKit, searchKit, findItem } from '../core/kit.js';
+import { listKit, searchKit, findItem, BUNDLED_KIT_ROOT } from '../core/kit.js';
 import { listTargets } from '../core/registry.js';
 import { syncTo, statusOf, removeFrom, summarize } from '../core/sync.js';
 import { detectReverse, applyReverse } from '../core/reverse-sync.js';
@@ -414,4 +414,14 @@ export async function startStdio() {
   const server = await createServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
+
+  // SRE-20-02 (Phase 105): pre-warm the kit cache to push MCP dispatch p95
+  // below 100ms. Without this, the very first tools/call against `kit` pays
+  // the full disk read (~144ms baseline on the v1.17 reference machine; ~96ms
+  // on faster hardware). Fire-and-forget: failure here is non-fatal — the
+  // next dispatch will lazily populate via the same listKit code path.
+  // This shifts the cold-path work from the first user-visible request to
+  // the boot path, where it's invisible behind IDE startup. See skill
+  // production-readiness-review (Performance axe) for the rationale.
+  listKit(BUNDLED_KIT_ROOT).catch(() => {});
 }
