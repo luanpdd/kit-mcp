@@ -22,3 +22,9 @@ CLAUDE.md
 # Cleanup is automatic (>30d) via cleanupOldSnapshots in src/core/metrics.js.
 .planning/metrics/snapshots/
 
+# Phase 101 (INFRA-20-02): Stryker mutation testing artifacts.
+# Reports são local-only — execução opt-in via `npm run test:mutation`.
+# Baseline documentado em .planning/audits/v1.20/MUTATION-BASELINE.md.
+reports/mutation/
+.stryker-tmp/
+
