@@ -2,10 +2,10 @@
 state_version: 1.0
 milestone: v1.21
 milestone_name: "Suíte Multi-Tenant SaaS B2B"
-status: Definindo requisitos
-last_updated: "2026-05-10T11:00:00.000Z"
+status: Roadmap definido
+last_updated: "2026-05-10T12:00:00.000Z"
 progress:
-  total_phases: 0
+  total_phases: 11
   completed_phases: 0
   total_plans: 0
   completed_plans: 0
@@ -15,16 +15,18 @@ progress:
 
 ## Posição Atual
 
-Fase: Não iniciada (definindo requisitos)
+Fase: Phase 106 — Schema Core + Helper Functions PG (próxima)
 Plano: —
-Status: Definindo requisitos
-Última atividade: 2026-05-10 — Milestone v1.21 iniciado (Suíte Multi-Tenant SaaS B2B)
+Status: Roadmap definido — pronto para iniciar Phase 106
+Última atividade: 2026-05-10 — ROADMAP.md v1.21 gerado (11 phases, 59 REQs mapeados, rastreabilidade preenchida)
 
 ## Milestone ativo
 
-**v1.21 Suíte Multi-Tenant SaaS B2B** — iniciada 2026-05-10. Definindo requisitos.
+**v1.21 Suíte Multi-Tenant SaaS B2B** — iniciada 2026-05-10. Roadmap definido.
 
 6ª suíte do kit, especializa `/supabase` v1.8 para apps B2B com hierarquia firm→department→leader→collaborator, RBAC granular, invite flow, super-admin platform, audit logs, compliance LGPD, integração Evolution Go/WhatsApp, CRM lead pipeline, e React patterns multi-tenant.
+
+**11 phases | Onda 1: 106+116 | Onda 2: 107+108+109 | Onda 3: 110+111+112+113+114 | Onda 4: 115**
 
 ## Contexto Acumulado (do milestone anterior)
 
@@ -37,6 +39,23 @@ Status: Definindo requisitos
 - **Stable API v1.0+:** preservada cross-8-releases (v1.13→v1.20)
 - **Working tree:** clean (post-archive)
 
+## Próximo passo
+
+```
+/planejar-fase 106
+```
+
+Phase 106 pode ser iniciada imediatamente — sem dependências. Pode ser executada em paralelo com Phase 116 (kit artifacts cross-cutting).
+
+## Ondas do milestone
+
+| Onda | Phases | Precondições |
+|---|---|---|
+| Onda 1 | 106, 116 | Nenhuma |
+| Onda 2 | 107, 108, 109 | Phase 106 concluída |
+| Onda 3 | 110, 111, 112, 113, 114 | Onda 2 concluída (111 requer 109 especificamente — BLOCKER ADMIN-03) |
+| Onda 4 | 115 | Phase 108 + Phase 110 concluídas |
+
 ## Tech debt parqueado (deferido para v1.22+)
 
 Documentado em `.planning/milestones/v1.20-MILESTONE-AUDIT.md` `tech_debt:`:
@@ -44,12 +63,6 @@ Documentado em `.planning/milestones/v1.20-MILESTONE-AUDIT.md` `tech_debt:`:
 1. **Phase 100 carry-over:** cli/index.js extract helpers + branch coverage gate → 86→90 coverage ratchet
 2. **Phase 101 carry-over:** completar mutation baseline 5 files restantes (sync, ui, watch, reverse-sync, gate-runner) + CI mutation gate threshold ~55%
 3. **Phase 105 carry-over:** p99 latency monitoring com disk-persistent snapshots + M1 cold-start CLI sub-200ms
-
-## Comandos para retomar
-
-- `/discutir-fase 106` — coletar contexto para Phase 106 (após `/novo-marco` terminar)
-- `/planejar-fase 106` — pular discussão, planejar diretamente
-- Ler `.planning/milestones/v1.20-MILESTONE-AUDIT.md` para tech debt residual
 
 ## Quirk persistente (gravado em memory)
 

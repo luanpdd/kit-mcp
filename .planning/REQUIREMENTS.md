@@ -1,7 +1,7 @@
 # REQUIREMENTS.md — Milestone v1.21 Suíte Multi-Tenant SaaS B2B
 
-> Última atualização: 2026-05-10 — milestone v1.21 iniciado.
-> Status: definido. Rastreabilidade preenchida pelo roadmap em `.planning/ROADMAP.md`.
+> Última atualização: 2026-05-10 — rastreabilidade preenchida pelo roadmap.
+> Status: definido. Rastreabilidade completa — todos os REQs mapeados para exatamente uma phase.
 
 ## Contexto
 
@@ -133,12 +133,68 @@
 
 ## Rastreabilidade
 
-(preenchida pelo roadmap em `.planning/ROADMAP.md` após `/novo-marco` Step 10)
-
 | REQ-ID | Phase |
 |---|---|
-| (TBD) | (TBD) |
+| ARCH-01 | 106 |
+| ARCH-02 | 106 |
+| ARCH-03 | 108 |
+| ARCH-04 | 108 |
+| ARCH-05 | 106 |
+| ARCH-06 | 106 |
+| ORG-01 | 107 |
+| ORG-02 | 107 |
+| ORG-03 | 107 |
+| RBAC-01 | 108 |
+| RBAC-02 | 108 |
+| RBAC-03 | 108 |
+| RBAC-04 | 108 |
+| INVITE-01 | 110 |
+| INVITE-02 | 110 |
+| INVITE-03 | 110 |
+| INVITE-04 | 110 |
+| ADMIN-01 | 111 |
+| ADMIN-02 | 111 |
+| ADMIN-03 | 111 |
+| ADMIN-04 | 111 |
+| AUDIT-01 | 109 |
+| AUDIT-02 | 109 |
+| AUDIT-03 | 109 |
+| AUDIT-04 | 109 |
+| LGPD-01 | 114 |
+| LGPD-02 | 114 |
+| LGPD-03 | 114 |
+| LGPD-04 | 114 |
+| LGPD-05 | 114 |
+| LGPD-06 | 114 |
+| WHATSAPP-01 | 112 |
+| WHATSAPP-02 | 112 |
+| WHATSAPP-03 | 112 |
+| WHATSAPP-04 | 112 |
+| WHATSAPP-05 | 112 |
+| WHATSAPP-06 | 112 |
+| WHATSAPP-07 | 112 |
+| CRM-01 | 113 |
+| CRM-02 | 113 |
+| CRM-03 | 113 |
+| CRM-04 | 113 |
+| CRM-05 | 113 |
+| REACT-01 | 115 |
+| REACT-02 | 115 |
+| REACT-03 | 115 |
+| REACT-04 | 115 |
+| REACT-05 | 115 |
+| REACT-06 | 115 |
+| SUITE-01 | 116 |
+| SUITE-02 | 116 |
+| SUITE-03 | 116 |
+| SUITE-04 | 116 |
+| SUITE-05 | 116 |
+| SUITE-06 | 116 |
+| SUITE-07 | 116 |
+| TEST-01 | 116 |
+| TEST-02 | 116 |
+| TEST-03 | 116 |
 
 ---
 
-**Total: 51 REQs em 11 categorias.** Cobertura derivada da pesquisa consolidada em `.planning/research/SUMMARY.md`.
+**Total: 59 REQs em 12 categorias, mapeados para 11 phases.** (Nota: o arquivo original declarava "51 REQs" mas a contagem nominal de IDs é 59 — todos mapeados.)
