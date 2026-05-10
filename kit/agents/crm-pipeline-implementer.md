@@ -140,6 +140,23 @@ CRM-PIPELINE-IMPLEMENTER · output
 - Histogram `crm.lead.time_to_close_days{org_id, won_or_lost}`
 - Alarme se `crm.lead.stage_change.count{to_stage='lost'} > baseline` → review pipeline
 
+## SELECT FOR UPDATE em Stage Transition (v1.22+ — default agora)
+
+A trigger `validate_lead_stage_transition` agora gera `SELECT ... FOR UPDATE` por default em rows lidas para prevenir lost update quando 2 reps movem o mesmo lead simultaneamente. Padrão completo em skill [`postgres-isolamento-concorrencia`](../skills/postgres-isolamento-concorrencia/SKILL.md) (v1.22 — DDIA Ch 7).
+
+Exemplo gerado:
+
+```sql
+CREATE OR REPLACE FUNCTION validate_lead_stage_transition()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- v1.22+ DEFAULT: lock row para prevenir lost update
+  PERFORM 1 FROM leads WHERE id = NEW.id FOR UPDATE;
+  -- ... validação de transição ...
+END;
+$$ LANGUAGE plpgsql;
+```
+
 ## Ver também
 
 - [crm-lead-pipeline-patterns](../skills/crm-lead-pipeline-patterns/SKILL.md) — base de conhecimento

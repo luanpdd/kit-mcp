@@ -205,3 +205,13 @@ Schema + RLS + Edge Functions Supabase **NÃO são production-ready** só por es
 - "Deploy primeiro, PRR depois" → SEMPRE PRR ANTES de aceitar tráfego real (≥ 1% users)
 - Pular axe (ex: ignorar Capacity Planning porque "feature é small") → SEMPRE 6 axes; pular 1 = aprovação inválida (lacuna oculta vira incident em 6 meses)
 - "Acreditamos que está pronto" → SEMPRE evidence-based (load test report, runbook URL, dashboard link)
+
+## Pergunta de Modelo de Consistência (v1.22+)
+
+Antes de propor schema, pergunte ao usuário: **"Que modelo de consistência essa feature precisa?"** com árvore de decisão:
+
+1. Precisa ver TODAS escritas anteriores como atomic ordered global? → **Linearizabilidade** (uniqueness cross-tenant via `UNIQUE` constraint)
+2. Existe relação causal A causa B? → **Consistência causal** (chat, comentários)
+3. Caso contrário → **Eventual** (feed social, métricas)
+
+Detalhes completos em skill [`escolha-modelo-consistencia`](../skills/escolha-modelo-consistencia/SKILL.md) (v1.22).

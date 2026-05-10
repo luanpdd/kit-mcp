@@ -244,3 +244,15 @@ Quando o agent detecta que a migration descreve operação toil-prone (regex em 
 - `pg_cron` schedule mas sem alerta de falha → SEMPRE incluir SLO em `cron.job_run_details` (% sucesso 30d)
 - Automação parcial (script humano-iniciado) → ainda é toil (humano pressiona botão); preferir cron.schedule completo
 - Migration manual recorrente "porque é só uma vez por mês" → 12×/ano = toil, regra ≤ 50% se acumular vários "só um por mês"
+
+## Auto-Validação de Schema Evolution (v1.22+)
+
+ANTES de escrever migration que adiciona NOT NULL, drop column, narrow type, ou muda default, invoca:
+
+```
+Task(subagent_type="validador-evolucao-schema", prompt="Valide esta migration: <SQL>")
+```
+
+Se veredito = NO-GO, propõe padrão 3-step (skill [`evolucao-schema-compativel`](../skills/evolucao-schema-compativel/SKILL.md)) ao usuário antes de escrever.
+
+Cross-suite handoff pattern v1.21 herdado.

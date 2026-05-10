@@ -232,6 +232,16 @@ where not exists (
 - Histogram `audit.duration_ms` (latência total da auditoria)
 - Cada gap fica registrado em `obs.events` com `audit_run_id` para rastreabilidade
 
+## Detecção de Hot Tenant Gap (v1.22+)
+
+Além dos detectores de isolamento existentes, agora invoca:
+
+```
+Task(subagent_type="detector-tenant-quente", prompt="Detecte hot tenants no projeto Supabase")
+```
+
+Findings de hot tenant entram no `ISOLATION-AUDIT.md` como categoria adicional. Mitigação sugerida via skill [`tenant-quente-mitigacao`](../skills/tenant-quente-mitigacao/SKILL.md) (v1.22).
+
 ## Ver também
 
 - [multi-tenant-rls-hierarchy](../skills/multi-tenant-rls-hierarchy/SKILL.md) — base de conhecimento (helpers + patterns)
