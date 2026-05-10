@@ -1,537 +1,1031 @@
-# Pesquisa de Stack — Suíte Supabase v1.8 (`@luanpdd/kit-mcp`)
+# Pesquisa de Stack — Suíte Multi-Tenant SaaS B2B (`@luanpdd/kit-mcp` v1.21)
 
-**Domínio:** Conteúdo de kit (skills/agents/commands) cobrindo o ecossistema Supabase 2026 que NÃO está nos 7 guias-fonte fornecidos pelo user.
-**Pesquisado:** 2026-05-06
-**Confiança:** HIGH (todas as fontes são docs oficiais Supabase + GitHub canônico + npm; versões verificadas ao vivo).
-**Escopo:** Identificar componentes/serviços Supabase (Storage, Vector, Queues/Cron, Auth avançado, Branches, CLI, MCP server) que merecem (ou NÃO) skill/agent dedicado. Diferencia **table-stakes** (sem isso, não é Supabase moderno) de **differentiator** (legal ter, pode esperar v1.9+).
+**Domínio:** Multi-Tenant SaaS B2B — React + Supabase + Vercel
+**Pesquisado:** 2026-05-10
+**Confiança:** HIGH (versões verificadas via npm/docs oficiais; padrões validados em fontes primárias)
 
----
-
-## Contexto: O que JÁ está coberto pelos 7 guias-fonte (NÃO duplicar)
-
-| Guia-fonte | Skill prevista no PROJECT.md | Cobre |
-|-----------|------------------------------|-------|
-| Realtime AI Assistant Guide | `supabase-realtime` | broadcast vs postgres_changes, presence, RLS realtime, naming, triggers `realtime.broadcast_changes` |
-| Bootstrap Next.js v16 + Auth SSR | `supabase-auth-ssr` | `@supabase/ssr`, getAll/setAll, browser/server clients, proxy |
-| Writing Edge Functions | `supabase-edge-functions` | Deno runtime, `npm:`/`jsr:`, env vars, Hono/Express |
-| Declarative Database Schema | `supabase-declarative-schema` | `supabase/schemas/`, `db diff`, caveats |
-| RLS policies | `supabase-rls-policies` | `auth.uid()`, per-operation, indexing, MFA aal |
-| Database functions | `supabase-database-functions` | SECURITY INVOKER, `set search_path = ''`, immutable/stable, triggers |
-| Migrations | `supabase-migrations` | `YYYYMMDDHHmmss_*.sql`, RLS obrigatório |
-| Postgres SQL style | `supabase-postgres-style` | lowercase, snake_case, plurals, ISO 8601 |
+> Stack que as SKILLS devem citar/recomendar para USUÁRIOS do kit construindo apps B2B multi-tenant.
+> O kit-mcp em si não adiciona nenhuma dependência — este documento é sobre o que recomendar
+> para consumidores. Contexto anterior (v1.8 Supabase) ainda válido; este arquivo cobre
+> APENAS o novo domínio multi-tenant B2B (v1.21).
 
 ---
 
-## Veredito por Componente Supabase
+## 1. RBAC — Autorização client-side
 
-### Tabela-Mestre (Table-Stakes vs Differentiator)
+### Decisao canonica: `@casl/ability` v6 + `@casl/react`
 
-| Componente | Categoria | Coberto pelos 7 guias? | Decisão | Skill/Agent dedicado? |
-|-----------|-----------|------------------------|---------|----------------------|
-| **Storage (File buckets)** | TABLE-STAKES | NÃO | Adicionar | Skill `supabase-storage` |
-| **pgvector / Embeddings** | TABLE-STAKES (em 2026) | NÃO | Adicionar | Skill `supabase-vector` |
-| **Vector Buckets (S3)** | DIFFERENTIATOR (alpha) | NÃO | Mencionar dentro de `supabase-vector` | NÃO — ainda alpha |
-| **Analytics Buckets (Iceberg)** | DIFFERENTIATOR (alpha) | NÃO | Mencionar dentro de `supabase-storage` | NÃO — ainda alpha |
-| **Queues (pgmq)** | DIFFERENTIATOR (importante) | NÃO | Adicionar | Skill `supabase-queues-cron` (combinada) |
-| **Cron (pg_cron)** | DIFFERENTIATOR (importante) | NÃO | Adicionar | (mesma skill acima) |
-| **Auth: OTP/Magic Link** | TABLE-STAKES | PARCIAL (SSR cobre client) | Estender | Mencionar em `supabase-auth-ssr` + skill nova `supabase-auth-methods` |
-| **Auth: SSO/SAML** | DIFFERENTIATOR (enterprise) | NÃO | Adicionar | Pequena seção em `supabase-auth-methods` |
-| **Auth: Anonymous** | DIFFERENTIATOR (importante) | NÃO | Adicionar | Mesma skill |
-| **Auth: MFA TOTP/Phone** | TABLE-STAKES | PARCIAL (RLS cobre aal) | Estender | Mesma skill |
-| **Auth: Hooks (Send SMS/Email/MFA)** | DIFFERENTIATOR | NÃO | Mencionar | Mesma skill |
-| **Branches (preview DBs)** | TABLE-STAKES (workflow) | NÃO | Adicionar | Skill `supabase-branches` |
-| **CLI** | TABLE-STAKES (toolchain) | PARCIAL (migrations cita commands) | Skill canônica de referência | Skill `supabase-cli` |
-| **MCP server oficial** | TABLE-STAKES (para os agents) | NÃO | Documentar tools | Tabela de referência **dentro** dos agents |
-| **Database Webhooks (pg_net)** | DIFFERENTIATOR | NÃO | Mencionar | Pequena seção em `supabase-database-functions` (já existe) |
-| **PostgREST custom schema** | DIFFERENTIATOR | NÃO | Mencionar | Pequena seção em `supabase-postgres-style` (já existe) |
-| **Edge Functions: Background Tasks** | DIFFERENTIATOR (importante) | PARCIAL (guia menciona `EdgeRuntime.waitUntil`) | Estender | Já em `supabase-edge-functions` |
+**Racional:** CASL e a unica lib RBAC JavaScript que e genuinamente isomorfica (mesmo codigo
+frontend/backend), tem integracao React de primeira classe via hook `useAbility` e componente
+`<Can>`, e tem footprint minimo (~5 KB min+gzip para `@casl/ability`, +1 KB para `@casl/react`).
+A v6 e stable e ativamente mantida.
 
----
+| Pacote | Versao | Proposito |
+|--------|--------|-----------|
+| `@casl/ability` | **6.8.0** (latest, ~3 meses atras) | Core: definicao de rules + check `can(action, resource)` |
+| `@casl/react` | 4.x (segue @casl/ability) | `<Can>` component + `useAbility` hook |
 
-## 1. Supabase Storage — TABLE-STAKES
+**Padrao de integracao com Supabase:**
 
-**Veredito:** SKILL DEDICADA (`supabase-storage`).
+```ts
+// PT-BR: popula o Ability a partir dos claims do token Supabase (custom access token hook)
+import { defineAbility } from '@casl/ability'
 
-**Por que merece skill própria:**
-- Storage tem suas próprias **policies RLS específicas** sobre `storage.objects` (não public.*) que diferem em sintaxe e helpers (`storage.foldername(name)`, `bucket_id`, `owner_id`).
-- Buckets públicos vs privados têm modelos de acesso radicalmente diferentes (signed URLs vs public URLs).
-- Image transformations exigem Pro plan e config no dashboard.
-- Os 7 guias-fonte NÃO mencionam Storage de forma alguma.
+export function buildAbility(claims: {
+  role: string
+  org_id: string
+  permissions: string[]  // vindas do custom access token hook
+}) {
+  return defineAbility((can) => {
+    for (const perm of claims.permissions) {
+      const [action, resource] = perm.split(':')  // ex: 'read:leads'
+      can(action, resource, { org_id: claims.org_id })  // scope por org
+    }
+    if (claims.role === 'super_admin') {
+      can('manage', 'all')
+    }
+  })
+}
+```
 
-**Conteúdo canônico que a skill precisa cobrir:**
+```tsx
+// PT-BR: componente PermissionGate usando CASL
+import { useAbility } from '@casl/react'
+import { AbilityContext } from './ability-context'
 
-| Tópico | Pattern canônico |
-|--------|------------------|
-| Buckets privados (default) | RLS obrigatório em `storage.objects` por bucket |
-| Buckets públicos | Bypass de access control para download; upload ainda requer policy |
-| Pasta-por-usuário | `(storage.foldername(name))[1] = (select auth.jwt()->>'sub')` |
-| Owner-based access | `(select auth.jwt()->>'sub') = owner_id` |
-| Signed URLs | `createSignedUrl(path, expiresIn)` — TTL configurável |
-| Image transformations | `getPublicUrl(path, { transform: { width, height, quality } })` — Pro+ apenas |
-| File size limits | 500GB em paid plans (free: muito menor) |
+export function PermissionGate({
+  action,
+  resource,
+  children,
+  fallback = null,
+}: {
+  action: string
+  resource: string
+  children: React.ReactNode
+  fallback?: React.ReactNode
+}) {
+  const ability = useAbility(AbilityContext)
+  if (!ability.can(action, resource)) return <>{fallback}</>
+  return <>{children}</>
+}
 
-**Tipos especializados de bucket (mencionar mas NÃO criar skill separada):**
-- **Vector Buckets** (alpha 2026) — sobre Amazon S3 Vectors, similarity search built-in, single distance operator `<===>`. Mencionar dentro da skill `supabase-vector` como alternativa cold-storage para milhões de embeddings.
-- **Analytics Buckets** (alpha 2026) — sobre Apache Iceberg + AWS S3 Tables, columnar storage para workloads analíticos. Mencionar como nota de "futuro" — ainda alpha, breaking changes esperadas.
+// Uso:
+// <PermissionGate action="delete" resource="leads">
+//   <DeleteButton />
+// </PermissionGate>
+```
 
-**Fontes:**
-- [Storage Buckets | Supabase Docs](https://supabase.com/docs/guides/storage/buckets/fundamentals)
-- [Storage Access Control | Supabase Docs](https://supabase.com/docs/guides/storage/security/access-control)
-- [Storage Image Transformations | Supabase Docs](https://supabase.com/docs/guides/storage/serving/image-transformations)
-- [Vector Buckets | Supabase Docs](https://supabase.com/docs/guides/storage/vector/introduction)
-- [Analytics Buckets | Supabase Docs](https://supabase.com/docs/guides/storage/analytics/introduction)
+**Regra critica:** CASL no frontend e apenas UX (hide/show). A autorizacao real fica em RLS
+Postgres + Edge Functions. Nunca confiar em CASL como barreira de seguranca.
 
----
+### Por que nao Casbin
 
-## 2. pgvector / Embeddings / Semantic Search — TABLE-STAKES (em 2026)
+Casbin JS e design-first para backend Go/Java. O port JavaScript e pesado, nao tem integracao
+React nativa, e o modelo CONF file e overkill para a maioria dos apps SaaS. Anti-recomendado
+para React.
 
-**Veredito:** SKILL DEDICADA (`supabase-vector`).
+### Por que nao Permify / Oso / Permit.io
 
-**Por que merece skill própria:**
-- pgvector é a abordagem **default** para RAG/AI no stack Supabase 2026. Aplicações com agente IA quase sempre precisam.
-- Patterns de indexing (HNSW vs IVFFlat) e operators de distância (`<=>`, `<#>`, `<->`) são específicos e errar mata a performance.
-- `auth.uid()` em RLS sobre tabela de embeddings é um pattern específico (RAG with permissions) que merece destaque.
-- Nenhum dos 7 guias-fonte toca em embeddings.
-
-**Conteúdo canônico que a skill precisa cobrir:**
-
-| Tópico | Recomendação canônica 2026 |
-|--------|---------------------------|
-| Extensão | `create extension vector with schema extensions;` |
-| Coluna típica | `embedding vector(1536)` para OpenAI text-embedding-3-small |
-| Index para <1M rows | HNSW (cosine: `vector_cosine_ops`) — recall melhor, build mais lento (one-time) |
-| Index para memória reduzida | IVFFlat (lista de centroides) — recall menor, mais barato |
-| Distance operator default | `<=>` (cosine) se embeddings não normalizados; `<#>` (negative inner product) se normalizados (ex: OpenAI) |
-| RAG com permissions | RLS sobre tabela de embeddings + `auth.uid()` no SELECT — restringe documentos retornados |
-| Modelo embedding | **NÃO trocar** — comparar embeddings de modelos diferentes retorna lixo |
-| Hybrid search | Coluna `tsvector` + coluna `vector` na mesma tabela; queries combinam |
-| Automatic embeddings | `pgmq` + `pg_cron` + Edge Function = trigger automático ao inserir texto |
-
-**Vector Buckets (alpha) — quando usar em vez de pgvector:**
-- Backend processing de **milhões** de vectors (não real-time UI).
-- Cold storage barato (S3-native).
-- Single similarity algorithm aceita.
-- **NÃO usar** para apps user-facing pequenas — pgvector é mais flexível.
-
-**Fontes:**
-- [pgvector: Embeddings and vector similarity | Supabase Docs](https://supabase.com/docs/guides/database/extensions/pgvector)
-- [AI & Vectors | Supabase Docs](https://supabase.com/docs/guides/ai)
-- [RAG with Permissions | Supabase Docs](https://supabase.com/docs/guides/ai/rag-with-permissions)
-- [Automatic embeddings | Supabase Docs](https://supabase.com/docs/guides/ai/automatic-embeddings)
-- [Semantic search | Supabase Docs](https://supabase.com/docs/guides/ai/semantic-search)
-- [Introducing Vector Buckets (blog 2026)](https://supabase.com/blog/vector-buckets)
+Sao servicos externos (latencia de rede em cada check). Fazem sentido para empresas com
+multiplos microsservicos precisando de policy store centralizado. Para um monolito React +
+Supabase, adicionar uma chamada de rede a cada check de permissao e custo desnecessario.
+Anti-recomendado para estagio de startup.
 
 ---
 
-## 3. Queues (pgmq) + Cron (pg_cron) — DIFFERENTIATOR (importante)
+## 2. Auth claim management — JWT custom claims multi-tenant
 
-**Veredito:** UMA SKILL COMBINADA (`supabase-queues-cron`).
+### Decisao canonica: Custom Access Token Hook + `@supabase/ssr` v0.10.x (Next.js) ou `@supabase/supabase-js` v2 (Vite SPA)
 
-**Por que combinar (não separar):**
-- Os dois **trabalham juntos** no pattern canônico Supabase 2026: pg_cron agenda → tira mensagem da queue (pgmq) → invoca Edge Function.
-- Separar viraria duas skills meio-vazias com cross-references constantes.
-- Ambas são extensions Postgres com APIs SQL similares (`pgmq.send`, `cron.schedule`).
+| Runtime | Pacote | Versao |
+|---------|--------|--------|
+| Next.js v15+ App Router | `@supabase/ssr` | **0.10.2** (latest, ~22 dias atras) |
+| Vite SPA (sem SSR) | `@supabase/supabase-js` | **2.105.4** (latest) |
 
-**Por que NÃO é table-stakes:**
-- Apps simples conseguem viver sem queues (síncrono via Edge Function basta). Cron sim é importante mas frequentemente é só "schedule a function".
-- Differentiator porque desbloqueia background processing sem dep externa (Trigger.dev, Inngest).
+**Injetar `org_id` e `app_role` no JWT via Custom Access Token Hook:**
 
-**Conteúdo canônico que a skill precisa cobrir:**
+```sql
+-- PT-BR: hook Supabase Auth que roda antes de cada emissao de token
+-- registrar no dashboard: Authentication > Hooks > Custom Access Token
+create or replace function public.custom_access_token_hook(event jsonb)
+returns jsonb
+language plpgsql
+stable
+security definer
+set search_path = ''
+as $$
+declare
+  claims jsonb;
+  v_org_id uuid;
+  v_role text;
+  v_permissions text[];
+begin
+  claims := event->'claims';
 
-| Tópico | Pattern canônico 2026 |
-|--------|----------------------|
-| Requisito | Postgres 15.6.1.143+ para pgmq |
-| Criar queue | `select pgmq.create('my_queue');` |
-| Enviar mensagem | `select pgmq.send('my_queue', '{"job":"x"}'::jsonb);` |
-| Consumir | `select pgmq.read('my_queue', 30, 1);` (visibility 30s) |
-| Delivery guarantee | Exactly-once dentro da janela de visibility |
-| Agendar cron | `select cron.schedule('job_name', '*/5 * * * *', $$select 1$$);` |
-| Cron + Edge Function | `select net.http_post(url := 'https://...functions/v1/handler', ...) ` agendado |
-| Pattern queue worker | pg_cron a cada 1min → função SQL que faz `pgmq.read` → invoca Edge Function via `net.http_post` |
-| Expor pgmq via PostgREST | Schema `pgmq_public` precisa ser exposto + grants (cuidado em production) |
+  -- PT-BR: busca org ativa e role do membro autenticado
+  select m.org_id, m.role, array_agg(p.code)
+    into v_org_id, v_role, v_permissions
+    from public.org_members m
+    left join public.role_permissions rp on rp.role = m.role
+    left join public.permissions p on p.id = rp.permission_id
+   where m.user_id = (event->>'user_id')::uuid
+     and m.is_active = true
+     and (
+       -- PT-BR: org ativa: preferencialmente a do app_metadata, senao a mais antiga
+       m.org_id = (claims->'app_metadata'->>'active_org_id')::uuid
+       or not exists (
+         select 1 from public.org_members m2
+          where m2.user_id = m.user_id
+            and m2.org_id = (claims->'app_metadata'->>'active_org_id')::uuid
+       )
+     )
+   group by m.org_id, m.role
+   limit 1;
 
-**Fontes:**
-- [Supabase Queues](https://supabase.com/modules/queues)
-- [pgmq: Queues | Supabase Docs](https://supabase.com/docs/guides/database/extensions/pgmq)
-- [Supabase Cron](https://supabase.com/modules/cron)
-- [pg_cron | Supabase Docs](https://supabase.com/docs/guides/database/extensions/pg_cron)
-- [Build Queue Worker (Cron + Queue + Edge Function)](https://dev.to/suciptoid/build-queue-worker-using-supabase-cron-queue-and-edge-function-19di)
+  if v_org_id is not null then
+    claims := jsonb_set(claims, '{org_id}', to_jsonb(v_org_id::text));
+    claims := jsonb_set(claims, '{app_role}', to_jsonb(v_role));
+    claims := jsonb_set(claims, '{permissions}', to_jsonb(v_permissions));
+  end if;
 
----
+  return jsonb_set(event, '{claims}', claims);
+end;
+$$;
 
-## 4. Auth Avançado (OTP/Magic Link/SSO/Anonymous/MFA Phone/Hooks) — TABLE-STAKES
+-- PT-BR: grants obrigatorios para o hook funcionar
+grant usage on schema public to supabase_auth_admin;
+grant execute on function public.custom_access_token_hook to supabase_auth_admin;
+revoke execute on function public.custom_access_token_hook from authenticated, anon, public;
+```
 
-**Veredito:** SKILL DEDICADA (`supabase-auth-methods`) complementar a `supabase-auth-ssr`.
+**Helper function de RLS (sem query extra por request):**
 
-**O que JÁ está em `supabase-auth-ssr`:** apenas o bootstrap SSR Next.js — **client setup**, cookies, middleware. Zero sobre métodos.
+```sql
+-- PT-BR: extrair org_id do JWT — O(1), sem roundtrip ao DB
+create or replace function auth.org_id() returns uuid
+  language sql stable
+  security definer
+  set search_path = ''
+  as $$
+    select (auth.jwt()->>'org_id')::uuid
+  $$;
 
-**O que JÁ está em `supabase-rls-policies`:** RLS com `auth.uid()` e checks de `aal2` para MFA. **Não** cobre como usuário **chega** ao aal2.
+create or replace function auth.app_role() returns text
+  language sql stable
+  security definer
+  set search_path = ''
+  as $$
+    select auth.jwt()->>'app_role'
+  $$;
 
-**Por que merece skill própria (não inflar `supabase-auth-ssr`):**
-- Auth-SSR é sobre **infraestrutura** (cookies/SSR/proxy). Auth-methods é sobre **fluxos** (OTP, OAuth, MFA, anonymous → permanent). Misturar enche demais.
-- 5+ métodos de auth com APIs distintas: passar tudo pra `auth-ssr` faria a skill ficar gigante.
+-- Exemplo de policy usando os helpers:
+create policy "members_select_own_org"
+  on public.leads for select to authenticated
+  using (org_id = (select auth.org_id()));
+```
 
-**Conteúdo canônico que a skill precisa cobrir:**
+**Limitacao critica:** O JWT aumenta em tamanho a cada claim adicionado. Para usuarios com
+multiplas orgs, nao colocar todos os `org_id` em array no token. Padrao canonico: um `org_id`
+ativo por sessao. Org switcher muda via re-auth (ver secao 2a).
 
-| Método | Pattern canônico | Notas |
-|--------|------------------|-------|
-| Magic Link / OTP por email | `signInWithOtp({ email })` | Default = magic link; flag `shouldCreateUser` controla criação |
-| OTP por SMS/WhatsApp | `signInWithOtp({ phone })` | Provider obrigatório: Twilio/MessageBird/Vonage |
-| OAuth providers | `signInWithOAuth({ provider, options })` | 20+ providers; redirectTo importante para SSR |
-| Anonymous Sign-in | `signInAnonymously()` | Cria user sem identidade — convertível depois |
-| Anonymous → Permanent | `updateUser({ email })` + verificação email/phone | userId NÃO muda — dados preservados |
-| Linking de identities | `linkIdentity()` | Requer "Manual Linking" habilitado no projeto |
-| MFA TOTP enroll | `mfa.enroll({ factorType: 'totp' })` → QR code | Free em todos os projetos |
-| MFA TOTP verify | `mfa.challenge()` → `mfa.verify()` | Resulta em aal=aal2 no JWT |
-| MFA Phone | `mfa.enroll({ factorType: 'phone' })` | Provider SMS obrigatório |
-| MFA aal check em RLS | `(select auth.jwt()->>'aal') = 'aal2'` | Use em policies para dados sensíveis |
-| WebAuthn / Passkeys | `mfa.enroll({ factorType: 'webauthn' })` | FIDO2; segundo fator OU passwordless |
-| SSO/SAML | Setup CLI: `supabase sso add` + IdP metadata | Pro plan+; enterprise only |
-| Auth Hook: Send SMS | Webhook custom para roteamento via provider próprio | Bypassa Twilio default |
-| Auth Hook: Send Email | Webhook custom (Resend, SendGrid, etc.) | |
-| Auth Hook: MFA Verification | Custom checks no flow MFA | |
-| Custom claims em JWT | Hook "Custom Access Token" | Adiciona claims que RLS pode ler via `auth.jwt()->>'plan'` etc. |
-
-**Fontes:**
-- [Auth | Supabase Docs](https://supabase.com/docs/guides/auth)
-- [Anonymous Sign-Ins | Supabase Docs](https://supabase.com/docs/guides/auth/auth-anonymous)
-- [Multi-Factor Authentication (TOTP)](https://supabase.com/docs/guides/auth/auth-mfa/totp)
-- [Multi-Factor Authentication (Phone)](https://supabase.com/docs/guides/auth/auth-mfa/phone)
-- [Single Sign-On with SAML 2.0](https://supabase.com/docs/guides/auth/enterprise-sso/auth-sso-saml)
-- [Auth Hooks | Supabase Docs](https://supabase.com/docs/guides/auth/auth-hooks)
-- [Phone Login | Supabase Docs](https://supabase.com/docs/guides/auth/phone-login)
-
----
-
-## 5. Branches / Preview Environments — TABLE-STAKES (workflow)
-
-**Veredito:** SKILL DEDICADA (`supabase-branches`).
-
-**Por que merece skill própria:**
-- Branches têm **lifecycle** (preview vs persistent), **workflow** (clone→pull→migrate→seed→deploy), e **integração GitHub** que é não-trivial.
-- Mudou em 2025-2026: "Branching 2.0" removeu requisito de GitHub, default agora é "branching without git". Quem aprendeu antes precisa aprender de novo.
-- Workflow de migrations é **diferente** entre main project e branch. Skill `supabase-migrations` foca em estrutura do arquivo SQL, não no fluxo de promoção entre branches.
-- Differentiator que virou table-stakes: review de PR sem branch DB hoje é considerado workflow imaturo.
-
-**Conteúdo canônico que a skill precisa cobrir:**
-
-| Tópico | Pattern canônico 2026 |
-|--------|----------------------|
-| Tipos de branch | Preview (efêmero, deletável) vs Persistent (staging/QA/dev) |
-| Criar branch (CLI) | `supabase branches create my-branch` |
-| Criar branch (dashboard) | "Branching 2.0" — no Git required, default 2026 |
-| Listar branches | `supabase branches list` |
-| Atualizar branch | `supabase branches update <id>` |
-| Deletar branch | `supabase branches delete <name|id>` |
-| GitHub integration | PR no GitHub → cria preview branch automaticamente; migrations em `./supabase/migrations` rodam |
-| Deployment workflow | Clone → Pull → Health → Configure → **Migrate** → Seed → Deploy (Edge Functions) |
-| Estado de migrations | Branch sabe quais migrations rodou; aplica só novas |
-| Reset branch | `supabase branches reset` — útil para iterar local antes de promover |
-| Persistent branch use case | Staging/QA — não auto-paused, não auto-deleted |
-| Custo | Branches contam para projeto; ver pricing antes de criar muitas |
-
-**Fontes:**
-- [Branching | Supabase Docs](https://supabase.com/docs/guides/deployment/branching)
-- [Working with branches](https://supabase.com/docs/guides/deployment/branching/working-with-branches)
-- [GitHub integration](https://supabase.com/docs/guides/deployment/branching/github-integration)
-- [Branching Without Git Is Now The Default (blog)](https://supabase.com/blog/branching-without-git-is-now-the-default)
-- [CLI: supabase branches reference](https://supabase.com/docs/reference/cli/supabase-branches)
+**Vite SPA:** Usa `createClient` de `@supabase/supabase-js` com listener `onAuthStateChange`.
+Sessao armazenada em `localStorage` (padrao Supabase para SPAs).
 
 ---
 
-## 6. Supabase CLI — TABLE-STAKES (toolchain)
+## 2a. Org Switcher — padrao de troca de org ativa
 
-**Veredito:** SKILL DEDICADA (`supabase-cli`).
+**Problema:** JWT tem `org_id` fixo ate expirar (~1h). Trocar de org requer novo token.
 
-**Por que merece skill própria:**
-- Os 7 guias-fonte mencionam comandos pontuais (`db diff`, `migration new`) mas não há referência consolidada.
-- Versão estável atual: **v2.98.x** (maio 2026). Linha 2.x trouxe "Config as Code" — breaking change para quem usava 1.x.
-- Comandos críticos para os agents conhecerem (especialmente `supabase-migration-writer` e `supabase-edge-fn-writer`).
+**Solucao canonica:** Edge Function (service_role) que chama `admin.updateUserById` atualizando
+`app_metadata.active_org_id` e em seguida retorna novo token via `refreshSession`.
 
-**Conteúdo canônico que a skill precisa cobrir:**
+```ts
+// PT-BR: Edge Function para trocar org ativa — usa service_role (nunca expor no client)
+// supabase/functions/switch-org/index.ts
+import { createClient } from 'npm:@supabase/supabase-js@2'
 
-### Versão recomendada (2026)
+Deno.serve(async (req) => {
+  const { newOrgId } = await req.json()
+  const authHeader = req.headers.get('Authorization')!
+  const userClient = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_ANON_KEY')!,
+    { global: { headers: { Authorization: authHeader } } }
+  )
+  const { data: { user } } = await userClient.auth.getUser()
+  if (!user) return new Response('Unauthorized', { status: 401 })
 
-| Item | Valor |
-|------|-------|
-| Versão estável atual | **v2.98.2** (release 2026-05-05) |
-| Linha mínima recomendada | v2.95.x+ |
-| Node requirement (npx) | Node.js 20+ |
-| Instalação global | **NÃO** suportada via npm; usar Homebrew, Scoop, ou binary |
+  // PT-BR: verifica se usuario e membro da org alvo
+  const { data: membership } = await userClient
+    .from('org_members')
+    .select('role')
+    .eq('org_id', newOrgId)
+    .eq('user_id', user.id)
+    .eq('is_active', true)
+    .single()
+  if (!membership) return new Response('Forbidden', { status: 403 })
 
-### Comandos críticos por categoria
+  const adminClient = createClient(
+    Deno.env.get('SUPABASE_URL')!,
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY')!
+  )
+  await adminClient.auth.admin.updateUserById(user.id, {
+    app_metadata: { active_org_id: newOrgId }
+  })
+  // PT-BR: forcaa refresh do token no client (re-trigger hook de custom claims)
+  return new Response(JSON.stringify({ ok: true }))
+})
+```
 
-**Setup & Local Dev:**
-- `supabase init` — bootstrap `./supabase/`
-- `supabase start` — sobe stack local (Postgres, Auth, Storage, Edge Functions, Realtime)
-- `supabase stop` — para containers
-- `supabase status` — saúde dos serviços locais
-- `supabase db reset` — recria DB local do zero
-
-**Migrations:**
-- `supabase migration new <name>` — cria arquivo `YYYYMMDDHHmmss_<name>.sql`
-- `supabase db diff -f <name>` — gera migration a partir de mudanças no DB local
-- `supabase db push` — aplica migrations pendentes em projeto remoto
-- `supabase migration list` — lista status migrations
-- `supabase migration repair` — sincroniza tabela de tracking
-
-**Declarative Schema:**
-- `supabase db diff --schema public` — diff entre `./supabase/schemas/` e DB
-- `supabase db dump` — exporta schema atual
-- `supabase db lint` — valida estilo
-
-**Edge Functions:**
-- `supabase functions new <name>`
-- `supabase functions serve` — local
-- `supabase functions deploy <name>`
-- `supabase functions list`
-- `supabase secrets set KEY=value` (env vars)
-- `supabase secrets list`
-
-**Branches:**
-- `supabase branches create/list/update/delete`
-
-**Types:**
-- `supabase gen types typescript --project-id <id> > types/database.ts`
-
-**Auth:**
-- `supabase sso add --type saml` (configurar IdP)
-
-**Login & link:**
-- `supabase login` (com PAT — Personal Access Token)
-- `supabase link --project-ref <ref>` (associa pasta local a projeto)
-
-**Fontes:**
-- [CLI Reference | Supabase Docs](https://supabase.com/docs/reference/cli/introduction)
-- [Supabase CLI Getting Started](https://supabase.com/docs/guides/local-development/cli/getting-started)
-- [Releases · supabase/cli](https://github.com/supabase/cli/releases) — v2.98.2 release notes
-- [Supabase CLI v2: Config as Code](https://supabase.com/blog/cli-v2-config-as-code)
-- [supabase npm package](https://www.npmjs.com/package/supabase)
+**Anti-pattern:** Nao guardar `active_org_id` apenas no estado React — perde ao refresh de
+pagina. Deve refletir no JWT via `app_metadata` (persistido no Supabase Auth).
 
 ---
 
-## 7. MCP Server Oficial Supabase — TABLE-STAKES (para os agents)
+## 3. Webhook handling — Evolution Go / WhatsApp
 
-**Veredito:** **NÃO** criar skill dedicada; **SIM** criar **tabela canônica de tools** que os agents da Suíte podem referenciar (linkado a partir de `supabase-architect`, `supabase-migration-writer`, etc.).
+### Decisao canonica: Node.js `crypto` built-in — sem lib externa
 
-**Por que NÃO skill:**
-- Skill é conteúdo consultável. Tools MCP são **ferramentas que o agent invoca** — referência técnica, não tutorial.
-- Os agents da Suíte vão **listar `tools:`** no frontmatter incluindo `mcp__supabase__*`. Eles precisam saber **quais nomes confiar**.
+Evolution Go usa `GLOBAL_API_KEY` como autenticacao de API e segue o padrao de webhooks da Meta
+(WhatsApp Business API): header `X-Hub-Signature-256: sha256=<hmac>`.
 
-**Implementação recomendada:**
-1. **Documento de referência** em `kit/agents/_shared/supabase-mcp-tools.md` (precedente: pattern de `_shared/` já existe na codebase para v1.7).
-2. Cada agent da Suíte que usa MCP referencia esse doc.
-3. **Cuidado:** o frontmatter `tools:` em `schema-checker.md` usa um UUID instance-specific (`mcp__0a712001-6cbb-44ef-a5f4-a24ea40894fa__execute_sql`). Em conteúdo de kit canônico (que vai pra outros consumidores), usar nomes genéricos `mcp__supabase__execute_sql` e documentar que o consumidor precisa configurar seu próprio MCP.
+**Nao adicionar nenhuma lib externa para HMAC.** Node.js `crypto` / Deno `SubtleCrypto` sao
+suficientes e sao o padrao da industria (GitHub, Stripe, Meta usam o mesmo approach).
 
-### Tabela canônica de tools (versão 0.8.x — pre-1.0)
+**Padrao canonico — Supabase Edge Function (Deno):**
 
-**Pacote:** `@supabase/mcp-server-supabase`
-**Versão estável atual:** **v0.8.1** (publicada ~feb/mar 2026). Pre-1.0 — esperar breaking changes.
-**Invocação típica:** `npx -y @supabase/mcp-server-supabase@latest --access-token <PAT>`
-**Read-only mode:** flag `--read-only` (recomendado para qualquer agent que NÃO seja escritor)
+```ts
+// PT-BR: valida assinatura HMAC-SHA256 do webhook Meta/WhatsApp / Evolution Go
+// CRITICO: verificar ANTES de qualquer parse de JSON — usar raw bytes
+async function validateWebhookSignature(
+  rawBody: ArrayBuffer,
+  signatureHeader: string,  // valor de X-Hub-Signature-256
+  secret: string
+): Promise<boolean> {
+  const encoder = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw',
+    encoder.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
+  )
+  const computed = await crypto.subtle.sign('HMAC', key, rawBody)
+  const hexComputed = 'sha256=' + Array.from(new Uint8Array(computed))
+    .map(b => b.toString(16).padStart(2, '0')).join('')
+  // PT-BR: timing-safe comparison — crypto.subtle nao expoe timingSafeEqual diretamente
+  // usar length check + XOR para evitar timing attack
+  if (hexComputed.length !== signatureHeader.length) return false
+  let diff = 0
+  for (let i = 0; i < hexComputed.length; i++) {
+    diff |= hexComputed.charCodeAt(i) ^ signatureHeader.charCodeAt(i)
+  }
+  return diff === 0
+}
 
-| Feature group | Tools (todos com prefixo `mcp__supabase__`) | Para qual agent? |
-|---------------|--------------------------------------------|------------------|
-| **Account** | `list_projects`, `get_project`, `create_project`, `pause_project`, `restore_project`, `list_organizations`, `get_organization`, `get_cost`, `confirm_cost` | `supabase-architect` (planejamento) |
-| **Knowledge Base** | `search_docs` | TODOS — fallback antes de assumir API |
-| **Database** | `list_tables`, `list_extensions`, `list_migrations`, `apply_migration`, `execute_sql` | `supabase-migration-writer`, `supabase-rls-writer`, `schema-checker` (existente) |
-| **Debugging** | `get_logs` (api/postgres/edge-functions/auth/storage/realtime), `get_advisors` (security/performance) | `supabase-architect` (auditoria), debug |
-| **Development** | `get_project_url`, `get_publishable_keys`, `generate_typescript_types` | `supabase-edge-fn-writer`, `supabase-auth-bootstrapper` |
-| **Edge Functions** | `list_edge_functions`, `get_edge_function`, `deploy_edge_function` | `supabase-edge-fn-writer` |
-| **Branching** | `create_branch`, `list_branches`, `delete_branch`, `merge_branch`, `reset_branch`, `rebase_branch` | `supabase-architect` (workflow), `supabase-migration-writer` |
-| **Storage** (NÃO habilitado por default) | `list_storage_buckets`, `get_storage_config`, `update_storage_config` | (futuro — quando criarmos `supabase-storage-writer`) |
+Deno.serve(async (req) => {
+  const rawBody = await req.arrayBuffer()  // PT-BR: raw antes de parse
+  const sig = req.headers.get('x-hub-signature-256') ?? ''
+  const valid = await validateWebhookSignature(rawBody, sig, Deno.env.get('WEBHOOK_SECRET')!)
+  if (!valid) return new Response('Invalid signature', { status: 401 })
 
-### Regras de uso para os agents
+  const payload = JSON.parse(new TextDecoder().decode(rawBody))
+  // PT-BR: processar async para responder rapido
+  EdgeRuntime.waitUntil(processWebhook(payload))
+  return new Response('', { status: 202 })
+})
+```
 
-| Regra | Justificativa |
-|-------|---------------|
-| `apply_migration` para DDL (CREATE TABLE, ALTER, RLS) | Tracked no DB; rastreável |
-| `execute_sql` para queries DML / SELECT | Não tracked — leitura ou data ops |
-| **Nunca** apontar para projeto de produção | Recomendação oficial Supabase 2026 |
-| Usar `--read-only` para auditoria | Evita escrita acidental durante diagnóstico |
-| Sempre `search_docs` antes de inventar API | LLM tende a alucinar; docs Supabase mudam frequentemente |
-| Antes de `apply_migration` que toque dados existentes → invocar `schema-checker` (precedente em v1.x) | Pattern já estabelecido na codebase |
+**Idempotencia — padrao Stripe aplicado:**
 
-**Fontes:**
-- [Supabase MCP Server (blog oficial)](https://supabase.com/blog/mcp-server)
-- [github.com/supabase-community/supabase-mcp](https://github.com/supabase-community/supabase-mcp)
-- [@supabase/mcp-server-supabase | npm](https://www.npmjs.com/package/@supabase/mcp-server-supabase) — v0.8.1
-- [MCP | Supabase Docs](https://supabase.com/docs/guides/getting-started/mcp)
+```sql
+-- PT-BR: tabela de deduplicacao de webhooks (idempotency keys)
+-- event_id: valor do campo id do payload Evolution Go ou X-Event-Id header
+create table public.webhook_events (
+  event_id text primary key,
+  org_id uuid,                           -- se o webhook e org-scoped
+  source text not null,                  -- 'evolution_go' | 'meta_whatsapp' | 'stripe'
+  received_at timestamptz default now(),
+  processed_at timestamptz,
+  status text default 'pending',         -- pending | processed | failed
+  payload jsonb
+);
+-- PT-BR: index para limpeza de retencao
+create index webhook_events_age_idx on public.webhook_events (received_at);
+-- PT-BR: limpar eventos com mais de 7 dias (pg_cron)
+-- select cron.schedule('clean-webhooks', '0 3 * * *',
+--   $$delete from public.webhook_events where received_at < now() - interval '7 days'$$);
+```
 
----
+**Anti-pattern:** Nao usar `===` string comparison para HMAC — timing attack. Usar XOR loop
+(Deno) ou `timingSafeEqual` (Node.js).
 
-## 8. Componentes que NÃO merecem skill/agent (apenas seção dentro de outra)
-
-### Database Webhooks (pg_net)
-
-**Onde:** mencionar dentro de `supabase-database-functions` (já planejada).
-**Por que não skill própria:** webhooks no Supabase são literalmente um tipo específico de trigger SQL chamando `net.http_post`. Não há setup/lifecycle separado.
-**Pattern canônico:** trigger `AFTER INSERT/UPDATE/DELETE` → função → `net.http_post(url, headers, body)`.
-**Cuidado:** **nunca** criar trigger sobre tabelas `net.*` — risco de loop infinito.
-**Versão pg_net atual:** v0.10.0 (recomendado upgrade).
-
-### PostgREST Custom Schemas / Hardening Data API
-
-**Onde:** mencionar dentro de `supabase-postgres-style` (já planejada) OU em uma seção da skill `supabase-rls-policies`.
-**Por que não skill própria:** é uma decisão arquitetural pontual (default `public` vs schema dedicado `api`), não um workflow contínuo.
-**Pattern canônico 2026:**
-- Não confiar mais em "expor `public` automaticamente" — **breaking change** Supabase 2025-2026 exige opt-in via grants.
-- Considerar schema `api` separado, com grants explícitos por role.
-- Sempre `grant select on table <name> to authenticated, anon;` ao criar table que precisa Data API.
-
-### Realtime Limits / Quotas
-
-**Onde:** mencionar dentro de `supabase-realtime` (já planejada).
-**Por que não skill própria:** é uma seção curta de "limites a saber" — não justifica skill.
-**Pontos críticos:**
-- 100 subscribers num INSERT = 100 RLS queries (cuidar de indexing).
-- Uma authorization check por subscription, cacheado pela duração da conexão.
-- Disable de canais públicos por projeto vem aí (em desenvolvimento).
-
-### Edge Functions: Background Tasks / WebSockets / Ephemeral Storage
-
-**Onde:** estender `supabase-edge-functions` (já planejada).
-**Por que não skill própria:** são features da mesma runtime, mesma API surface.
-**Limites importantes 2026:**
-- Background tasks: 150s free / 400s paid.
-- `EdgeRuntime.waitUntil(promise)` para fire-and-forget após response.
-- Útil para AI inference longa, processamento de mídia.
+**Retry handling:** Aceitar `202 Accepted` imediato, processar async via `EdgeRuntime.waitUntil`
+ou pgmq queue. Nunca processar sincronamente dentro do timeout de webhook.
 
 ---
 
-## Resumo Final — O que a v1.8 deve incluir
+## 4. Invite token generation
 
-### Skills DEFINITIVAS (recomendação 8 do PROJECT.md → 14)
+### Decisao canonica: `crypto.randomBytes(32).toString('hex')` — token opaco, sem JWT
 
-Os 8 originais permanecem. Adicionar **6 skills extras** que a pesquisa identificou como table-stakes ou critical-differentiator:
+**Racional:** Tokens de invite sao single-use e armazenados em DB com expiracao. JWT seria
+overengineering — adiciona complexidade de assinatura para algo que o DB ja controla por primary
+key + expiracao. Alem disso, JWTs tem superficie de ataque conhecida (alg: none, key confusion
+CVE-2015-9235) desnecessaria para este caso de uso.
 
-1. ~~`supabase-realtime`~~ (planejada)
-2. ~~`supabase-auth-ssr`~~ (planejada)
-3. ~~`supabase-edge-functions`~~ (planejada — estender com background tasks)
-4. ~~`supabase-declarative-schema`~~ (planejada)
-5. ~~`supabase-rls-policies`~~ (planejada — estender com webhook + Data API hardening)
-6. ~~`supabase-database-functions`~~ (planejada — estender com pg_net webhook)
-7. ~~`supabase-migrations`~~ (planejada)
-8. ~~`supabase-postgres-style`~~ (planejada — estender com Data API custom schema)
-9. **NOVA: `supabase-storage`** — Storage RLS, signed URLs, image transformations, vector buckets/analytics buckets como notas
-10. **NOVA: `supabase-vector`** — pgvector + embeddings + RAG with permissions + automatic embeddings
-11. **NOVA: `supabase-queues-cron`** — pgmq + pg_cron + queue worker pattern
-12. **NOVA: `supabase-auth-methods`** — OTP/Magic Link/OAuth/SSO/Anonymous/MFA/Hooks/Custom claims
-13. **NOVA: `supabase-branches`** — preview/persistent, lifecycle, GitHub integration, deployment workflow
-14. **NOVA: `supabase-cli`** — referência canônica de comandos por categoria, versão v2.98.x
+**Padrao canonico:**
 
-**Total revisado: 14 skills** (vs 8 originais).
+```ts
+// Node.js (Edge Function Deno)
+import { randomBytes } from 'node:crypto'          // Node.js
+// Deno nativo (sem imports):
+const bytes = new Uint8Array(32)
+crypto.getRandomValues(bytes)                       // 256 bits de entropia
+const token = Array.from(bytes)
+  .map(b => b.toString(16).padStart(2, '0')).join('')  // 64 chars hex
+```
 
-### Agents DEFINITIVOS (sem mudança no plano original)
+**Schema canonico:**
 
-Os 6 agents do PROJECT.md cobrem o trabalho ativo. Nenhuma adição da pesquisa **exige** novo agent — `supabase-architect` cobre branches/cli como decisões de design; novos agents virariam micro-managers.
+```sql
+-- PT-BR: tabela de invites com token opaco
+create table public.org_invites (
+  id uuid primary key default gen_random_uuid(),
+  token text unique not null,          -- randomBytes(32).toString('hex') — 256 bits
+  org_id uuid not null references public.orgs(id) on delete cascade,
+  invited_email text not null,
+  role text not null,                  -- role pre-definido (admin | member | viewer)
+  expires_at timestamptz not null default (now() + interval '7 days'),
+  accepted_at timestamptz,
+  declined_at timestamptz,
+  created_by uuid references auth.users(id),
+  created_at timestamptz default now()
+);
 
-**Adendo:** considerar futuro agent `supabase-storage-writer` em v1.9+ se Storage virar área quente (deferir).
+-- PT-BR: indices para lookup rapido e limpeza
+create index org_invites_token_idx on public.org_invites (token);
+create index org_invites_expire_idx
+  on public.org_invites (expires_at)
+  where accepted_at is null and declined_at is null;
 
-### Tabela de tools MCP
+-- PT-BR: RLS — apenas membros admin da org veem invites pendentes
+alter table public.org_invites enable row level security;
+create policy "admin_select_org_invites"
+  on public.org_invites for select to authenticated
+  using (
+    org_id = (select auth.org_id())
+    and (select auth.app_role()) in ('admin', 'owner')
+  );
+```
 
-Criar `kit/agents/_shared/supabase-mcp-tools.md` (precedente `_shared/` de v1.7) com a tabela canônica acima. Cada um dos 6 agents da Suíte referencia esse doc no seu `tools:` frontmatter usando nomes genéricos `mcp__supabase__*`.
+**Por que nao magic-link Supabase para invite:** Magic links sao para autenticacao (login), nao
+para invite de membro. Para invite, voce precisa de role pre-definido, expiracao customizada, e
+possibilidade de aceitar sem criar conta imediatamente. Token opaco + accept flow proprio e mais
+flexivel.
 
-### Comando
-
-`/supabase [subcomando]` — sem mudança no plano. Subcomandos provavelmente: `arquiteto | migration | rls | edge | realtime | auth | storage | vector | queue | branch`.
+**Por que nao JWT para invite:** O token de invite NAO precisa de payload verificavel pelo client
+offline. Qualquer dado necessario (role, org_id) esta no DB atrelado ao token. JWT adiciona
+superficie de ataque sem beneficio neste cenario.
 
 ---
 
-## Compatibilidade de Versões (2026-05-06)
+## 5. Audit log — multi-tenant
 
-| Pacote / Componente | Versão estável atual | Notas |
-|---------------------|---------------------|-------|
-| Supabase CLI | **v2.98.2** | release 2026-05-05; linha 2.x ("Config as Code") obrigatória |
-| `@supabase/mcp-server-supabase` | **v0.8.1** | pre-1.0 — esperar breakings |
-| `@supabase/ssr` | (cobertura via guia user) | usar em conjunto com `@supabase/supabase-js` v2.x |
-| `pgmq` extension | requer Postgres **15.6.1.143+** | upgrade obrigatório se em versão antiga |
-| `pg_net` extension | **v0.10.0** | upgrade recomendado |
-| `pgvector` extension | latest via Supabase platform | suporta HNSW + IVFFlat |
-| Vector Buckets | **alpha pública** | breaking changes esperadas — não usar em produção crítica |
-| Analytics Buckets | **alpha** | idem |
-| Branching 2.0 (no-Git default) | GA em 2025 | default em todos os novos projetos |
+### Decisao canonica: Custom trigger em Postgres com `org_id` explicito
+
+**Opcoes avaliadas:**
+
+| Opcao | Recomendacao | Motivo |
+|-------|-------------|--------|
+| Custom triggers + tabela `audit_log` | **USAR** | Schema com `org_id`, RLS, controle de retencao |
+| `supa_audit` extension | Nao usar sem customizacao | Schema sem `org_id` — dados de tenants misturados |
+| `pgaudit` extension | Nao usar para app-level | Statement-level apenas, grava em arquivo de log (nao tabela), inacessivel via SQL |
+| OpenTelemetry spans para audit | Nao usar como SSOT | Semconv audit nao estabilizada em 2026 (issue #2468 aberta); spans expiram antes de prazo LGPD |
+
+**Schema canonico:**
+
+```sql
+-- PT-BR: tabela de audit log multi-tenant com isolamento por org_id
+create table public.audit_log (
+  id bigint generated always as identity primary key,
+  org_id uuid not null,               -- isolamento multi-tenant (NUNCA NULL)
+  table_name text not null,
+  operation text not null check (operation in ('INSERT', 'UPDATE', 'DELETE')),
+  record_id text,                     -- pk da linha afetada (cast to text)
+  user_id uuid,                       -- auth.uid() no momento — pode ser null (service_role)
+  old_data jsonb,                     -- estado antes (null para INSERT)
+  new_data jsonb,                     -- estado depois (null para DELETE)
+  changed_at timestamptz default now() not null
+);
+
+-- PT-BR: indices para queries comuns por tenant
+create index audit_log_org_time_idx on public.audit_log (org_id, changed_at desc);
+create index audit_log_table_idx on public.audit_log (org_id, table_name, changed_at desc);
+create index audit_log_record_idx on public.audit_log (org_id, record_id) where record_id is not null;
+
+-- PT-BR: RLS — cada tenant ve apenas seu proprio audit log
+alter table public.audit_log enable row level security;
+
+create policy "audit_select_own_org"
+  on public.audit_log for select to authenticated
+  using (org_id = (select auth.org_id()));
+```
+
+**Trigger canonico (reutilizavel em qualquer tabela que tenha `org_id`):**
+
+```sql
+create or replace function public.audit_trigger_fn()
+returns trigger
+language plpgsql
+security definer
+set search_path = ''
+as $$
+begin
+  insert into public.audit_log
+    (org_id, table_name, operation, record_id, user_id, old_data, new_data)
+  values (
+    coalesce(new.org_id, old.org_id),          -- funciona para UPDATE e DELETE
+    tg_table_name,
+    tg_op,
+    coalesce(new.id::text, old.id::text),       -- assume PK = id (adaptar se diferente)
+    (select auth.uid()),
+    case when tg_op = 'INSERT' then null else to_jsonb(old) end,
+    case when tg_op = 'DELETE' then null else to_jsonb(new) end
+  );
+  return coalesce(new, old);
+end;
+$$;
+
+-- PT-BR: aplicar em tabelas criticas (leads, membros, pagamentos, etc.)
+create trigger audit_leads
+  after insert or update or delete on public.leads
+  for each row execute function public.audit_trigger_fn();
+```
+
+**Retencao com pg_cron:**
+
+```sql
+-- PT-BR: limpeza semanal — configuravel por org via tabela de config
+select cron.schedule(
+  'audit-log-retention',
+  '0 3 * * 0',  -- domingo 3am UTC
+  $$
+    delete from public.audit_log
+     where changed_at < now() - interval '90 days'
+  $$
+);
+```
+
+**Performance warning (do Supabase oficial):** Triggers de audit reduzem throughput de escrita.
+Nao recomendado em tabelas com pico de escrita > 3k ops/s. Para high-write tables, usar abordagem
+assincrona: trigger insere em pgmq queue, Edge Function consome e grava em `audit_log`.
 
 ---
 
-## O Que NÃO Cobrir (out of scope para v1.8)
+## 6. CRM state machine
 
-| Item | Por Que NÃO |
-|------|-------------|
-| Self-hosting Supabase | Audience do kit é usuário de Supabase Cloud; SH é nicho. |
-| `pg_graphql` / GraphQL API | Niche; quem precisa procura especialista. PostgREST cobre 95% dos casos. |
-| Wrappers (Foreign Data Wrappers) | Avançado demais; introdução de complexidade sem demanda clara. |
-| Realtime sob auto-hosted | Mesmo motivo do self-hosting. |
-| Vector Buckets com pattern profundo | Ainda alpha — pattern não estabilizou. Mencionar, não detalhar. |
-| Analytics Buckets com pattern profundo | Idem. |
-| MCP server self-hosted alternatives (HenkDz, Quegenx, alexander-zuev) | Foco no canônico (`supabase-community`). Mencionar existência se relevante. |
-| Trigger.dev / Inngest comparações | Não somos consultores de stack — kit é sobre Supabase. |
+### Decisao canonica: XState v5 (client-side) + CHECK constraint / trigger Postgres (server-side)
+
+| Camada | Tecnologia | Versao |
+|--------|-----------|--------|
+| Client-side orchestration | `xstate` | **5.24.0** |
+| React hooks | `@xstate/react` | **6.1.0** |
+| Server-side validation | Postgres `CHECK` constraint + trigger | built-in |
+
+**XState v5 padrao para lead pipeline:**
+
+```ts
+import { createMachine } from 'xstate'
+
+// PT-BR: state machine de lead — apenas transicoes validas sao permitidas
+export const leadMachine = createMachine({
+  id: 'lead',
+  initial: 'new',
+  states: {
+    new: {
+      on: {
+        QUALIFY: 'qualified',
+        DISCARD: 'lost',
+      },
+    },
+    qualified: {
+      on: {
+        PROPOSE: 'proposal',
+        DISCARD: 'lost',
+      },
+    },
+    proposal: {
+      on: {
+        NEGOTIATE: 'negotiation',
+        DISCARD: 'lost',
+      },
+    },
+    negotiation: {
+      on: {
+        WIN: 'won',
+        LOSE: 'lost',
+      },
+    },
+    won: { type: 'final' },
+    lost: { type: 'final' },
+  },
+})
+```
+
+**Validacao server-side (independente do client):**
+
+```sql
+-- PT-BR: tipo enum para status de lead
+create type lead_status as enum ('new', 'qualified', 'proposal', 'negotiation', 'won', 'lost');
+
+-- PT-BR: trigger para validar transicoes de estado no servidor (mirror do XState machine)
+create or replace function public.validate_lead_transition()
+returns trigger
+language plpgsql
+as $$
+begin
+  if old.status = new.status then return new; end if;  -- sem mudanca
+  if not (
+    (old.status = 'new'         and new.status in ('qualified', 'lost'))     or
+    (old.status = 'qualified'   and new.status in ('proposal', 'lost'))      or
+    (old.status = 'proposal'    and new.status in ('negotiation', 'lost'))   or
+    (old.status = 'negotiation' and new.status in ('won', 'lost'))
+  ) then
+    raise exception 'transicao de lead invalida: % → %', old.status, new.status
+      using errcode = 'P0001';
+  end if;
+  return new;
+end;
+$$;
+
+create trigger validate_lead_status_transition
+  before update of status on public.leads
+  for each row execute function public.validate_lead_transition();
+```
+
+**Quando usar Zustand em vez de XState para CRM:** XState e ideal quando ha fluxo complexo
+(guards, parallel states, delayed transitions). Para pipelines simples (<5 estados, sem guards),
+Zustand e suficiente e menor em bundle. Usar XState quando ha WhatsApp conversation state machine
+— conversacoes tem estados paralelos (ativo, aguardando, encerrado, bot vs humano).
+
+**Bundle consideration:** `xstate` 5.x = 2.09 MB unpacked (minificado/gzipped muito menor).
+Importar apenas o que usar com tree-shaking.
+
+---
+
+## 7. React state management para multi-tenant
+
+### Decisao canonica: Zustand v5 para org context global
+
+| Lib | Versao | Bundle (min+gzip) | Recomendacao |
+|-----|--------|-------------------|-------------|
+| `zustand` | **5.0.10** | ~1 KB | **Canonica** — org/tenant context global |
+| `jotai` | **2.20.0** | ~4 KB | Complementar — estado granular derivado |
+| Context API | built-in | 0 KB | Apenas para dados estaticos que nao re-renderizam |
+
+**Zustand v5 para org context (com persist):**
+
+```ts
+// PT-BR: store de org ativa — persiste entre refreshes de pagina
+import { create } from 'zustand'
+import { persist } from 'zustand/middleware'
+
+interface OrgStore {
+  activeOrgId: string | null
+  activeRole: string | null
+  orgs: Array<{ id: string; name: string; role: string }>
+  switchOrg: (orgId: string) => Promise<void>
+  setOrgs: (orgs: OrgStore['orgs']) => void
+}
+
+export const useOrgStore = create<OrgStore>()(
+  persist(
+    (set, get) => ({
+      activeOrgId: null,
+      activeRole: null,
+      orgs: [],
+      setOrgs: (orgs) => set({ orgs }),
+      switchOrg: async (orgId) => {
+        const org = get().orgs.find(o => o.id === orgId)
+        if (!org) return
+        // PT-BR: chama Edge Function switch-org que atualiza app_metadata + refresh do token
+        await fetch('/functions/v1/switch-org', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ newOrgId: orgId }),
+        })
+        // PT-BR: refresh do client para pegar novo JWT com org_id atualizado
+        await supabase.auth.refreshSession()
+        set({ activeOrgId: orgId, activeRole: org.role })
+      },
+    }),
+    { name: 'org-store' }  // PT-BR: persiste em localStorage
+  )
+)
+```
+
+**Por que nao Context API para org context:** Context API causa re-render em todos os consumers
+quando o valor muda. Para org context (lido em quase todos os componentes), isso gera re-renders
+desnecessarios. Zustand tem subscriptions granulares — so re-renderiza quem usa o campo especifico.
+
+**Por que nao Redux Toolkit:** Bundle ~15 KB vs ~1 KB Zustand. Redux Toolkit e indicado quando ha
+time grande (>10 devs) precisando de DevTools avancado e time travel debugging.
+
+**Jotai como complemento:** Usar para estado derivado do org context (ex: features habilitadas
+para a org atual, permissoes calculadas). `atom(() => ...)` e ideal para derivacoes reativas sem
+re-renderizar tudo.
+
+---
+
+## 8. shadcn/ui — componentes para member management
+
+### Decisao canonica: shadcn/ui CLI (sem numero de versao semver — e copy-paste)
+
+shadcn/ui nao e um pacote npm com versao — e uma CLI que copia componentes para o projeto.
+A versao efetiva e determinada pelo TanStack Table e Radix primitives subjacentes.
+
+**Stack base 2026 para projeto novo:**
+
+```bash
+# PT-BR: stack canonico para projeto B2B SaaS novo em 2026
+npx create-next-app@latest --typescript --tailwind  # Next.js 15, React 19, Tailwind v4
+npx shadcn@latest init
+```
+
+**Componentes shadcn especificos para member management:**
+
+| Componente shadcn | Uso em multi-tenant |
+|-------------------|---------------------|
+| `data-table` | Lista de membros com sorting/filtering/pagination (TanStack Table v8) |
+| `dialog` | Modal de invite, modal de confirmacao de remocao |
+| `select` | Role selector (admin / member / viewer) |
+| `badge` | Exibir role/status do membro (Active, Invited, Suspended) |
+| `dropdown-menu` | Acoes por membro: editar role, remover, re-enviar invite |
+| `avatar` | Avatar do membro (iniciais ou foto) |
+| `command` | Org switcher com busca instantanea (`Command` + `Popover`) |
+| `form` | Formulario de invite com `react-hook-form` + `zod` |
+| `toast` | Feedback de acoes: invite enviado, erro de permissao, etc. |
+
+**Dependencias implicitas instaladas com shadcn:**
+
+- `@tanstack/react-table` v8 — engine do data-table (sorting, filtering, pagination, row selection)
+- `react-hook-form` + `@hookform/resolvers` + `zod` — formularios com validacao
+- `@radix-ui/*` — primitives acessiveis (Dialog, Select, DropdownMenu, Avatar, Command)
+
+**Org switcher canonico com shadcn Command:**
+
+```tsx
+// PT-BR: org switcher — Command (busca) dentro de Popover
+// Dispara useOrgStore.switchOrg ao selecionar uma org
+import { Command, CommandInput, CommandList, CommandItem } from '@/components/ui/command'
+import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { useOrgStore } from '@/stores/org-store'
+
+export function OrgSwitcher() {
+  const { orgs, activeOrgId, switchOrg } = useOrgStore()
+  const activeOrg = orgs.find(o => o.id === activeOrgId)
+
+  return (
+    <Popover>
+      <PopoverTrigger asChild>
+        <button className="flex items-center gap-2">
+          {activeOrg?.name ?? 'Selecionar org'}
+        </button>
+      </PopoverTrigger>
+      <PopoverContent>
+        <Command>
+          <CommandInput placeholder="Buscar org..." />
+          <CommandList>
+            {orgs.map(org => (
+              <CommandItem key={org.id} onSelect={() => switchOrg(org.id)}>
+                {org.name}
+              </CommandItem>
+            ))}
+          </CommandList>
+        </Command>
+      </PopoverContent>
+    </Popover>
+  )
+}
+```
+
+---
+
+## 9. Connection pooling — Supabase + Vercel Edge
+
+### Decisao canonica: Supavisor transaction mode (porta 6543) para Vercel/serverless
+
+**Contexto 2026:** Supabase deprecou o Session Mode na porta 6543 em 2025-02-28.
+Apos a mudanca:
+
+- **Porta 6543:** apenas transaction mode (Supavisor)
+- **Porta 5432:** session mode direto (nao pooled)
+
+| Contexto de deploy | String de conexao | Modo |
+|--------------------|--------------------|------|
+| Vercel Functions (serverless) | `DATABASE_POOLER_URL` (porta 6543) | Transaction mode — obrigatorio |
+| Supabase Edge Functions | Conexao via `supabase-js` (HTTP, nao SQL direto) | N/A |
+| Long-running Node.js server | `DATABASE_URL` (porta 5432) | Session mode — OK |
+| Prisma + Vercel | `DATABASE_URL` = porta 6543 + `?pgbouncer=true&connection_limit=1` | Transaction mode |
+| Drizzle + Vercel | `DATABASE_URL` = porta 6543 | Transaction mode |
+
+**Por que transaction mode para Vercel:** Serverless functions abrem nova conexao por invocacao.
+Sem pool, com trafego moderado as conexoes Postgres se esgotam rapidamente (Free: 60 conn,
+Pro: 200 conn). Transaction mode retorna a conexao ao pool assim que a query termina.
+
+**Dedicated Pooler (PgBouncer):** Clientes Pro/Team podem provisionar PgBouncer dedicado
+co-localizado com o DB para menor latencia. Prioritario para multi-tenant com alta concorrencia.
+
+**Vercel + IPv6:** Vercel nao suporta IPv6 puro. Supavisor dual-stack resolve transparentemente.
+
+**Multi-tenant e Supavisor:** Supavisor foi construido nativamente para multi-tenant
+(Supabase cloud serve multiplos projetos). Per-tenant pool isolation e suportado.
+
+---
+
+## 10. LGPD tooling
+
+### Decisao canonica: custom Postgres tables + pg_cron para automacao (sem lib externa de terceiro)
+
+**Racional:** Nao existe biblioteca Node.js estabelecida para LGPD compliance de nivel enterprise
+em 2026 que valha adicionar como dependencia. Os requisitos de LGPD sao implementados como
+padroes de schema + automation + politicas operacionais.
+
+**Schema canonico para LGPD:**
+
+```sql
+-- PT-BR: registro de consentimento por titular de dados (data subject)
+-- base legal: art. 7 e 8 LGPD (Lei 13.709/2018)
+create table public.consent_records (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references public.orgs(id),
+  subject_id uuid references auth.users(id),       -- null se pre-cadastro
+  subject_email text,                               -- para titulares sem conta
+  purpose text not null,                            -- 'crm_contact' | 'marketing' | 'whatsapp_messaging'
+  legal_basis text not null,                        -- 'consent' | 'legitimate_interest' | 'contract' | 'legal_obligation'
+  granted_at timestamptz default now(),
+  revoked_at timestamptz,
+  policy_version text not null,                     -- versao do texto de politica aceito
+  ip_address inet,                                  -- evidencia de consentimento
+  constraint valid_lgpd_basis check (
+    legal_basis in ('consent', 'legitimate_interest', 'contract',
+                    'legal_obligation', 'vital_interests', 'public_task', 'research')
+  )
+);
+
+-- PT-BR: requisicoes de direitos do titular (DSR — Data Subject Request)
+-- prazo LGPD: 15 dias para resposta (art. 19)
+create table public.data_subject_requests (
+  id uuid primary key default gen_random_uuid(),
+  org_id uuid not null references public.orgs(id),
+  subject_email text not null,
+  subject_name text,
+  request_type text not null check (
+    request_type in ('access', 'rectification', 'deletion', 'portability',
+                     'restriction', 'objection', 'withdraw_consent')
+  ),
+  status text not null default 'pending' check (
+    status in ('pending', 'in_progress', 'completed', 'rejected')
+  ),
+  requested_at timestamptz default now(),
+  deadline_at timestamptz generated always as
+    (requested_at + interval '15 days') stored,    -- prazo legal LGPD
+  completed_at timestamptz,
+  rejection_reason text,
+  response_data jsonb                              -- para portabilidade: JSON do export
+);
+
+create index dsr_deadline_idx on public.data_subject_requests (deadline_at)
+  where status in ('pending', 'in_progress');
+create index dsr_org_idx on public.data_subject_requests (org_id, requested_at desc);
+```
+
+**Automacao com pg_cron:**
+
+```sql
+-- PT-BR: alerta diario para DSRs proximos do prazo (15 dias LGPD)
+select cron.schedule(
+  'lgpd-dsr-deadline-alert',
+  '0 8 * * *',  -- 8am UTC diario
+  $$
+    insert into public.platform_notifications (type, org_id, payload)
+    select 'dsr_deadline_warning', org_id,
+           jsonb_build_object('request_id', id, 'deadline', deadline_at, 'type', request_type)
+      from public.data_subject_requests
+     where status in ('pending', 'in_progress')
+       and deadline_at < now() + interval '3 days'
+  $$
+);
+
+-- PT-BR: retencao automatica — anonimizar dados de orgs encerradas apos 30 dias
+select cron.schedule(
+  'lgpd-data-retention',
+  '0 2 * * 0',  -- domingo 2am UTC
+  $$
+    update public.leads
+       set email = 'anonimizado@lgpd.invalid',
+           phone = null,
+           name = 'Anonimizado LGPD'
+     where org_id in (
+       select id from public.orgs
+        where deleted_at is not null
+          and deleted_at < now() - interval '30 days'
+     )
+  $$
+);
+```
+
+**Por que nao Vanta/Drata SDKs para LGPD:** Sao plataformas de compliance enterprise
+(SOC 2, ISO 27001) focadas em coleta de evidencias e auditorias — nao em implementar
+data subject rights programaticamente. Relevantes para SaaS que precisa de certificacoes
+enterprise, mas nao substituem o schema acima.
+
+**Por que nao pgaudit para LGPD:** pgaudit grava em arquivo de log (nao em tabela), sem `org_id`
+canonico, sem retencao controlavel por tenant. Custom triggers em tabela de `audit_log` (secao 5)
+sao superiores para LGPD porque: sao queryaveis por SQL, tem `org_id` explicito, e a retencao
+e configuravel por tenant.
+
+**Notificacao de violacao (72h LGPD, art. 48):** Implementar via alert em `audit_log` + webhook
+para canal de seguranca (Slack/email). Nao ha lib especifica — e um runbook operacional.
+
+---
+
+## Stack Recomendado — Tabela consolidada
+
+### Tecnologias Core
+
+| Tecnologia | Versao 2026 | Proposito no multi-tenant |
+|------------|------------|--------------------------|
+| `@supabase/ssr` | **0.10.2** | Auth SSR (Next.js v15+ App Router) |
+| `@supabase/supabase-js` | **2.105.4** | Auth SPA (Vite), client universal |
+| `@casl/ability` | **6.8.0** | RBAC client-side (check can/cannot por resource) |
+| `@casl/react` | **4.x** | `<Can>` component + `useAbility` hook |
+| `zustand` | **5.0.10** | Org context global (org switcher state) |
+| `xstate` | **5.24.0** | State machine para WhatsApp conversation + CRM lead pipeline |
+| `@xstate/react` | **6.1.0** | Hooks React para XState v5 |
+| Node.js `crypto` (built-in) | Node.js built-in | HMAC webhook validation + token invite |
+| Supavisor (porta 6543) | gerenciado Supabase | Connection pooling para Vercel/serverless |
+
+### Bibliotecas de Suporte
+
+| Biblioteca | Versao | Proposito | Quando Usar |
+|------------|--------|-----------|-------------|
+| `jotai` | **2.20.0** | Atoms derivados do org context | Estado granular reativo derivado do org store |
+| `@tanstack/react-table` | v8 (via shadcn) | Data table membros | Toda UI de listagem com sorting/filter/pagination |
+| `react-hook-form` + `zod` | atuais (via shadcn) | Formulario invite + validacao | Formularios de onboarding e invite flow |
+| `shadcn/ui` (CLI) | latest (copy-paste) | UI: data-table, dialog, command, badge | Member management UI completa |
+
+### Extensoes Postgres (habilitadas no Supabase)
+
+| Extension | Proposito | Habilitada Por Default? |
+|-----------|-----------|------------------------|
+| `pg_cron` | Jobs de retention LGPD, alertas DSR, limpeza de webhooks | Nao — habilitar manualmente |
+| `pgmq` | Fila async para webhook processing high-volume | Nao — habilitar manualmente |
+
+### Padrao de Hook SQL
+
+| Artefato | Proposito |
+|----------|-----------|
+| `custom_access_token_hook` | Injetar org_id + app_role + permissions no JWT |
+| `audit_trigger_fn` | Audit log multi-tenant com org_id |
+| `validate_lead_transition` | Validar state machine de CRM server-side |
+
+---
+
+## Instalacao
+
+```bash
+# PT-BR: auth + RBAC
+npm install @supabase/ssr @supabase/supabase-js @casl/ability @casl/react
+
+# PT-BR: state management
+npm install zustand xstate @xstate/react
+
+# PT-BR: shadcn (CLI — nao npm install direto)
+npx shadcn@latest init
+npx shadcn@latest add data-table dialog select badge dropdown-menu avatar command form toast
+
+# PT-BR: dependencias implicitas (shadcn instala automaticamente):
+# @tanstack/react-table react-hook-form @hookform/resolvers zod @radix-ui/*
+```
+
+---
+
+## Alternativas Consideradas
+
+| Recomendado | Alternativa | Quando usar a alternativa |
+|-------------|------------|--------------------------|
+| `@casl/ability` | Permify / Oso | Multiplos microsservicos precisando de policy store centralizado |
+| `@casl/ability` | Casbin JS | Nunca para React — Casbin JS e para backend, sem React integration nativa |
+| `zustand` | Context API | Dados estaticos que nao causam re-render em cascata (theme, locale) |
+| `zustand` | Redux Toolkit | Times grandes (>10 devs) que precisam de DevTools avancado + time travel |
+| `xstate` v5 | Zustand para state machine | Pipelines simples com <5 estados e sem guards/parallel states |
+| Custom triggers (audit) | `supa_audit` extension | Se o schema nao precisa de `org_id` — generico sem tenant isolation |
+| Custom triggers (audit) | `pgaudit` | Se o requisito e compliance de statement-level para DBA audit |
+| Token opaco hex (invite) | `jsonwebtoken` lib | Para invite tokens que precisam ser verificaveis offline pelo client sem DB roundtrip |
+| Supavisor porta 6543 | Direct connection porta 5432 | Apenas para long-running Node.js servers com conexoes persistentes |
+| pg_cron + schema custom (LGPD) | Vanta/Drata SDK | Plataformas de evidencias enterprise (SOC 2, ISO 27001) |
+
+---
+
+## O Que NAO Usar
+
+| Evitar | Por Que | Usar Em Vez Disso |
+|--------|---------|-------------------|
+| `@supabase/auth-helpers-nextjs` | DEPRECATED — quebra em Next.js v14+, sem updates de seguranca | `@supabase/ssr` v0.10.x |
+| Casbin JS no frontend React | Bundle pesado, sem React integration, design para backend | `@casl/ability` + `@casl/react` |
+| `user_metadata` em RLS para role | Editavel pelo client via `auth.updateUser()` — privilege escalation trivial | `app_metadata` (somente service_role pode mutar) |
+| `Math.random()` para tokens | Nao criptograficamente seguro — previsivel com poucos tokens observados | `crypto.randomBytes(32)` / `crypto.getRandomValues()` |
+| JWT para invite tokens | Surface de ataque (alg: none, key confusion CVE-2015-9235) sem beneficio | Token opaco hex + tabela `org_invites` |
+| `pgaudit` para app-level audit | Grava em arquivo de log, sem `org_id`, sem retencao por tenant | Custom triggers em `audit_log` com `org_id` |
+| `supa_audit` sem customizacao | Schema sem `org_id` — dados de multiplos tenants misturados | Custom triggers com `org_id` explicito |
+| Vanta/Drata SDK para implementar LGPD | Sao plataformas de evidencias, nao implementacoes de data subject rights | Custom schema Postgres + pg_cron |
+| Redux Toolkit | Bundle ~15 KB vs ~1 KB Zustand para mesma funcionalidade em SaaS mid-size | Zustand v5 |
+| Session mode Supavisor porta 6543 | Deprecado 2025-02-28 — porta 6543 e agora apenas transaction mode | Transaction mode porta 6543 (serverless) / porta 5432 (session) |
+| OpenTelemetry spans como SSOT de audit | Semconv audit nao estabilizada (issue #2468 aberta); spans expiram antes do prazo LGPD | Custom triggers em `audit_log` |
+
+---
+
+## Variantes de Stack por Condicao
+
+**Se Next.js App Router (v15+):**
+- Usar `@supabase/ssr` v0.10.x com `createServerClient` + `createBrowserClient`
+- Middleware obrigatorio para refresh de sessao
+- `cookies: { getAll, setAll }` — nunca metodos individuais
+
+**Se Vite SPA (sem SSR):**
+- Usar `@supabase/supabase-js` v2.105.4 diretamente
+- `onAuthStateChange` para reagir a troca de org
+- `localStorage` para persistencia de sessao (padrao Supabase)
+- Zustand `persist` middleware para org context entre refreshes de pagina
+
+**Se usuario tem multiplas orgs:**
+- Org switcher via Edge Function que chama `admin.updateUserById` e `refreshSession`
+- Zustand `persist` para manter `active_org_id` entre navegacoes
+- NUNCA colocar todos os `org_id` do usuario no JWT — apenas o ativo
+
+**Se write throughput em tabela auditada > 1k ops/s:**
+- Desabilitar trigger sincrono na tabela
+- Usar pgmq queue: trigger insere mensagem → Edge Function consome async → grava em `audit_log`
+
+**Se app precisa de compliance SOC 2 alem de LGPD:**
+- Avaliar Vanta/Drata para coleta de evidencias (nao para implementacao de schema)
+- Custom audit log (secao 5) alimenta as evidencias que Vanta/Drata coletam
+
+**Se CRM pipeline tem <5 estados e sem logica condicional:**
+- Usar Zustand simples com campo `status: LeadStatus`
+- XState so justifica quando ha guards, parallel states, ou delayed transitions
+
+---
+
+## Compatibilidade de Versoes
+
+| Pacote | Compativel Com | Notas |
+|--------|---------------|-------|
+| `@supabase/ssr` 0.10.x | Next.js 14, 15 / Node.js >= 18 | Nao compativel com `@supabase/auth-helpers-nextjs` (conflito de cookies) |
+| `zustand` 5.x | React 18, 19 / TypeScript >= 4.5 | Requer `useSyncExternalStore` — nao compativel com React < 18 |
+| `@casl/ability` 6.x | Qualquer framework JS | Isomorfico — mesma versao no browser e no Node.js |
+| `xstate` 5.x | React 18, 19 (via `@xstate/react` 6.x) | v4 e v5 tem API incompativel — nao misturar |
+| `shadcn/ui` (2026) | Next.js 15 + React 19 + Tailwind v4 | Para projetos React 18 + Tailwind v3, shadcn ainda funciona (backward compat) |
+| Supavisor transaction mode | `@supabase/supabase-js` (HTTP) / Prisma / Drizzle | Prisma requer `?pgbouncer=true&connection_limit=1` na connection string |
+| `jotai` 2.x | React 18, 19 | Compativel com `use` hook do React 19 |
 
 ---
 
 ## Fontes
 
-### Storage
-- [Storage Buckets | Supabase Docs](https://supabase.com/docs/guides/storage/buckets/fundamentals)
-- [Storage Access Control | Supabase Docs](https://supabase.com/docs/guides/storage/security/access-control)
-- [Storage Image Transformations | Supabase Docs](https://supabase.com/docs/guides/storage/serving/image-transformations)
-- [Vector Buckets | Supabase Docs](https://supabase.com/docs/guides/storage/vector/introduction)
-- [Analytics Buckets | Supabase Docs](https://supabase.com/docs/guides/storage/analytics/introduction)
-- [Introducing Vector Buckets (blog 2026)](https://supabase.com/blog/vector-buckets)
-
-### pgvector / AI
-- [pgvector: Embeddings and vector similarity](https://supabase.com/docs/guides/database/extensions/pgvector)
-- [AI & Vectors | Supabase Docs](https://supabase.com/docs/guides/ai)
-- [RAG with Permissions](https://supabase.com/docs/guides/ai/rag-with-permissions)
-- [Automatic embeddings](https://supabase.com/docs/guides/ai/automatic-embeddings)
-- [Semantic search](https://supabase.com/docs/guides/ai/semantic-search)
-
-### Queues / Cron
-- [Supabase Queues](https://supabase.com/modules/queues)
-- [pgmq: Queues](https://supabase.com/docs/guides/database/extensions/pgmq)
-- [Supabase Cron](https://supabase.com/modules/cron)
-- [pg_cron](https://supabase.com/docs/guides/database/extensions/pg_cron)
-- [Background Jobs and Queues for Self-Hosted Supabase with pgmq](https://www.supascale.app/blog/background-jobs-and-queues-for-selfhosted-supabase-with-pgmq)
-- [Supabase Just Got More Powerful: Queue, Cron, and Background Tasks](https://supabase.com/blog/edge-functions-background-tasks-websockets)
-
-### Auth (avançado)
-- [Auth | Supabase Docs](https://supabase.com/docs/guides/auth)
-- [Anonymous Sign-Ins](https://supabase.com/docs/guides/auth/auth-anonymous)
-- [MFA TOTP](https://supabase.com/docs/guides/auth/auth-mfa/totp)
-- [MFA Phone](https://supabase.com/docs/guides/auth/auth-mfa/phone)
-- [SAML SSO](https://supabase.com/docs/guides/auth/enterprise-sso/auth-sso-saml)
-- [Auth Hooks](https://supabase.com/docs/guides/auth/auth-hooks)
-- [Phone Login](https://supabase.com/docs/guides/auth/phone-login)
-- [Passwordless email logins](https://supabase.com/docs/guides/auth/auth-email-passwordless)
-
-### Branches
-- [Branching | Supabase Docs](https://supabase.com/docs/guides/deployment/branching)
-- [Working with branches](https://supabase.com/docs/guides/deployment/branching/working-with-branches)
-- [GitHub integration](https://supabase.com/docs/guides/deployment/branching/github-integration)
-- [Branching Without Git Is Now The Default](https://supabase.com/blog/branching-without-git-is-now-the-default)
-
-### CLI
-- [CLI Reference](https://supabase.com/docs/reference/cli/introduction)
-- [CLI Getting Started](https://supabase.com/docs/guides/local-development/cli/getting-started)
-- [Releases · supabase/cli](https://github.com/supabase/cli/releases)
-- [Supabase CLI v2: Config as Code](https://supabase.com/blog/cli-v2-config-as-code)
-- [supabase | npm](https://www.npmjs.com/package/supabase)
-
-### MCP
-- [Supabase MCP Server (blog)](https://supabase.com/blog/mcp-server)
-- [github.com/supabase-community/supabase-mcp](https://github.com/supabase-community/supabase-mcp)
-- [@supabase/mcp-server-supabase | npm](https://www.npmjs.com/package/@supabase/mcp-server-supabase)
-- [MCP | Supabase Docs](https://supabase.com/docs/guides/getting-started/mcp)
-
-### Outros
-- [Database Webhooks](https://supabase.com/docs/guides/database/webhooks)
-- [Hardening the Data API](https://supabase.com/docs/guides/api/hardening-data-api)
-- [Using Custom Schemas](https://supabase.com/docs/guides/api/using-custom-schemas)
-- [Realtime Authorization](https://supabase.com/docs/guides/realtime/authorization)
-- [Realtime Limits](https://supabase.com/docs/guides/realtime/limits)
-- [Background Tasks (Edge Functions)](https://supabase.com/docs/guides/functions/background-tasks)
+- [Supabase Custom Access Token Hook](https://supabase.com/docs/guides/auth/auth-hooks/custom-access-token-hook) — padrao JWT custom claims + org_id
+- [Supabase Custom Claims RBAC](https://supabase.com/docs/guides/database/postgres/custom-claims-and-role-based-access-control-rbac) — hook SQL + RLS com claims
+- [Supabase Connect to Postgres](https://supabase.com/docs/guides/database/connecting-to-postgres) — Supavisor transaction vs session mode
+- [Supabase supa_audit GitHub](https://github.com/supabase/supa_audit) — extensao audit sem multi-tenant nativo
+- [Supabase pgAudit Docs](https://supabase.com/docs/guides/database/extensions/pgaudit) — statement-level, arquivo de log
+- [Supabase Postgres Audit blog](https://supabase.com/blog/postgres-audit) — custom trigger em 150 linhas
+- [pganalyze: pgAudit vs supa_audit](https://pganalyze.com/blog/5mins-postgres-auditing-pgaudit-supabase-supa-audit) — comparacao de abordagens
+- [CASL v6 docs](https://casl.js.org/v6/en/guide/install/) — isomorphic RBAC
+- [@casl/ability npm](https://www.npmjs.com/package/@casl/ability) — v6.8.0 verificado
+- [@casl/react npm](https://www.npmjs.com/package/@casl/react) — v4.x, React hooks + Can component
+- [Permit.io: CASL for React](https://www.permit.io/blog/how-to-use-casl-for-implementing-authorization-in-react) — integracao React com CASL
+- [zustand npm](https://www.npmjs.com/package/zustand) — v5.0.10 verificado
+- [zustand v5 announcement](https://pmnd.rs/blog/announcing-zustand-v5/) — React 18+ only, mudancas v5
+- [jotai npm](https://www.npmjs.com/package/jotai) — v2.20.0 (publicado 2026-05-09)
+- [xstate npm](https://www.npmjs.com/package/xstate) — v5.24.0
+- [@xstate/react npm](https://www.npmjs.com/package/@xstate/react) — v6.1.0
+- [@supabase/ssr npm](https://www.npmjs.com/package/@supabase/ssr) — v0.10.2 (latest)
+- [shadcn/ui Tailwind v4 docs](https://ui.shadcn.com/docs/tailwind-v4) — Next.js 15 + React 19 + Tailwind v4
+- [shadcn/ui data-table](https://ui.shadcn.com/docs/components/radix/data-table) — TanStack Table v8 integration
+- [HMAC webhook guide](https://hookdeck.com/webhooks/guides/how-to-implement-sha256-webhook-signature-verification) — SHA256 + timing-safe
+- [Webhook security patterns](https://didit.me/blog/webhook-security-patterns/) — idempotency keys + 7-day retention
+- [Evolution Go GitHub](https://github.com/evolution-foundation/evolution-go) — GLOBAL_API_KEY auth, WEBHOOK_URL config
+- [WhatsApp webhook guide](https://hookdeck.com/webhooks/platforms/guide-to-whatsapp-webhooks-features-and-best-practices) — X-Hub-Signature-256
+- [OTel audit log proposal (issue #2468)](https://github.com/open-telemetry/semantic-conventions/issues/2468) — convencao nao estabilizada em 2026
+- [LGPD compliance guide 2026](https://captaincompliance.com/education/lgpd-compliance-checklist/) — 15 dias DSR, 72h breach notification
+- [State management 2026 comparison](https://dev.to/jsgurujobs/state-management-in-2026-zustand-vs-jotai-vs-redux-toolkit-vs-signals-2gge) — Zustand canonico 2026
+- [React state Zustand vs Jotai 2026](https://www.salmanizhar.com/blog/modern-state-management-comparison) — benchmark e recomendacoes
+- [Production Postgres Pooling 2026](https://nerdleveltech.com/production-postgres-pooling-pgbouncer-supabase-supavisor-tutorial) — Supavisor + pgBouncer
 
 ---
-*Pesquisa de stack para: Suíte Supabase v1.8 — kit-mcp content layer*
-*Pesquisado: 2026-05-06*
-*Confiança: HIGH — todas as fontes são oficiais Supabase + GitHub canônico + npm; versões verificadas ao vivo.*
+
+*Pesquisa de stack para: Suite Multi-Tenant SaaS B2B — kit-mcp v1.21*
+*Pesquisado: 2026-05-10*
