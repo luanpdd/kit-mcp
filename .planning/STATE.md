@@ -2,13 +2,13 @@
 state_version: 1.0
 milestone: v1.20
 milestone_name: — Tech Debt Closure & Quality Hardening
-status: Phase 100 entregou 169 testes (482→651, +35.1%), 7/8 hot files ≥90% coverage, all-files 81.51%→86.84%, CI threshold 80→86. cli/index.js capped at 82.61% por limite estrutural (live spawn + TTY); 86→90 ratchet diferido para v1.21+ com 3 avenues canônicas documentadas inline em ci.yml.
-last_updated: "2026-05-10T05:36:15.241Z"
+status: Phase 101 entregou Stryker baseline (mutation score 57.40% em 10/15 src/core files, 1310 mutants). Tooling instalado (devDeps), config canônica, audit doc com 3 avenues v1.21+ documentadas. Suite 651 unit/integration green, budget 6 preservado.
+last_updated: "2026-05-10T07:00:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 1
-  total_plans: 2
-  completed_plans: 2
+  completed_phases: 2
+  total_plans: 3
+  completed_plans: 3
 ---
 
 # STATE.md
@@ -29,7 +29,7 @@ Status: Phase 100 entregou 169 testes (482→651, +35.1%), 7/8 hot files ≥90% 
 | Phase | REQ | Foco | Status |
 |---|---|---|---|
 | 100 | INFRA-20-01 | Coverage ratchet 80→86% (90 deferido v1.21+) | ✅ 2/2 planos |
-| 101 | INFRA-20-02 | Mutation testing baseline (stryker) | 📋 |
+| 101 | INFRA-20-02 | Mutation testing baseline 57.40% (10/15 files) | ✅ 1/1 plano |
 | 102 | OBS-20-01 | Auto-snapshot em metrics-snapshot tool | 📋 |
 | 103 | OBS-20-02 | Multi-window burn-rate (1h fast + 6h slow) | 📋 |
 | 104 | SRE-20-01 | PRR Emergency 4/5 → 5/5 (RUNBOOK + drill log) | 📋 |
@@ -72,12 +72,20 @@ Status: Phase 100 entregou 169 testes (482→651, +35.1%), 7/8 hot files ≥90% 
 
 `gh auth switch --user luanpdd` é necessário ANTES de cada `git push` — wincred cache reverte para `in100tiva` (que não tem acesso ao luanpdd/kit-mcp).
 
+## Decisões do Plan 101-01 (2026-05-10)
+
+1. **Per-file Stryker run via wrapper** — naive all-files levaria ~100min wall-clock. `scripts/run-mutation-baseline.mjs` roda 1 file por vez com test files focused (~10-100s cada). Total ~9min para 10 files vs ~100min naive.
+2. **Scope src/core/ apenas** — coração do MCP server (registry, kit, sync, gates, watch, metrics). cli/ui/mcp-server adiados pra v1.21+ baseado em ROI.
+3. **commandRunner: node test/run.mjs test/unit** — exact parity com `npm test`. node:test runner do Stryker exige perTest hooks que node:test não fornece.
+4. **10/15 files baseline esta sessão** — sessão API timeout interrompeu reverse-sync.js. 5 files restantes (sync, ui, watch, reverse-sync, gate-runner) documentados em Avenue A do MUTATION-BASELINE.md ToDo. Não bloqueia milestone.
+5. **Mutation gate em CI deferido para v1.21+** — proposta strawman de threshold 55% (margin vs 57.40% baseline) documentada em Avenue C, condicional a baseline 100% complete primeiro.
+
 ## Próximo passo
 
-Phase 100 concluída. Executar **Phase 101** — Mutation Testing Baseline (stryker). Adiciona stryker-mutator como dev dep, configura `stryker.config.json` para `src/core/`, npm script `test:mutation`, baseline mutation score em `.planning/audits/v1.20/MUTATION-BASELINE.md`. Não bloqueia CI nesta versão (gate v1.21+).
+Phase 101 concluída. Executar **Phase 102** — Auto-snapshot em metrics-snapshot Tool MCP. Tool MCP `metrics-snapshot` automaticamente persiste snapshot via `metrics.persistSnapshot()` em vez de exigir trigger manual externo. Comportamento idempotente — chamadas repetidas dentro de 1s não duplicam.
 
 Pré-requisitos atendidos:
 
-- Suite >= 482 baseline (entregue: 651) ✅
-- Coverage gate verde (entregue: 86.84% >= 86%) ✅
-- Phase 100 complete (2/2 SUMMARYs) ✅
+- Phase 100 + 101 complete ✅
+- Suite green ✅
+- Stable API v1.0+ preservada ✅

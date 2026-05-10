@@ -1,0 +1,31 @@
+Running mutation baseline for 15 files…
+
+▶ src/core/error-redaction.js  (tests: 1)
+  ✓ 90.63% (58k/6s/0t/0n; 64 total) in 10.9s
+▶ src/core/failures.js  (tests: 1)
+  ✓ 76.98% (97k/29s/0t/0n; 126 total) in 18.6s
+▶ src/core/gate-runner.js  (tests: 2)
+  ✖ exit 1 after 6.9s
+file:///D:/projetos/opensource/mcp/node_modules/@stryker-mutator/core/dist/src/process/3-dry-run-executor.js:65
+                    throw new ConfigError('There were failed tests in the initial test run.');
+                          ^
+
+ConfigError: There were failed tests in the initial test run.
+    at DryRunExecutor.validateResultCompleted (file:///D:/projetos/opensource/mcp/node_modules/@s
+▶ src/core/gates.js  (tests: 1)
+  ✓ 66.67% (62k/31s/0t/0n; 93 total) in 20.4s
+▶ src/core/kit.js  (tests: 2)
+  ✓ 65.18% (145k/78s/1t/0n; 224 total) in 98.2s
+▶ src/core/manifest-verify.js  (tests: 2)
+  ✓ 59.48% (90k/62s/1t/0n; 153 total) in 86.1s
+▶ src/core/metrics.js  (tests: 2)
+  ✓ 78.29% (101k/28s/0t/0n; 129 total) in 27.4s
+▶ src/core/path-safety.js  (tests: 2)
+  ✓ 17.24% (10k/48s/0t/0n; 58 total) in 18.7s
+▶ src/core/reflect.js  (tests: 2)
+  ✓ 52.49% (105k/105s/11t/0n; 221 total) in 213.0s
+▶ src/core/registry.js  (tests: 1)
+  ✓ 18.62% (27k/118s/0t/0n; 145 total) in 17.5s
+▶ src/core/replays.js  (tests: 2)
+  ✓ 45.36% (44k/53s/0t/0n; 97 total) in 18.7s
+▶ src/core/reverse-sync.js  (tests: 3)
