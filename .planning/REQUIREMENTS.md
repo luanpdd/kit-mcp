@@ -26,7 +26,7 @@ Este milestone fecha todos eles. Zero superfície de API nova; 1 dev dep nova (s
 ### Observabilidade
 
 - [x] **OBS-20-01**: Tool MCP `metrics-snapshot` automaticamente persiste o snapshot via `metrics.persistSnapshot()` em vez de exigir trigger manual. Comportamento idempotente — chamadas repetidas dentro de 1s não duplicam. (Entregue 2026-05-10 via Phase 102: handleMetricsSnapshot modificado com throttle 1s in-memory + graceful fs error. 4 regression tests novos cobrindo first-persist/within-1s-reuse/after-1s-persist/fs-graceful. Stable API v1.0+ literal preservada.)
-- [ ] **OBS-20-02**: SLOs YAML aceitam campo `windows: { fast: <duration>, slow: <duration> }` com defaults `1h`/`6h`. `/burn-rate-status` calcula e exibe burn rate para ambas as janelas, status enum considera dual-window (fast em PAGE, slow em TICKET).
+- [x] **OBS-20-02**: SLOs YAML têm `alert_thresholds.page` (fast — 1h/5m/14.4×) + `alert_thresholds.ticket` (slow — 6h/30m/6×); `/burn-rate-status` calcula fastBurn + slowBurn independentes via 2 loadSnapshots calls, combinedStatus enum (PAGE both / TICKET slow only / WARN fast spike OR mild ≥1× / OK / no_data conservative). Skill burn-rate-alerting cross-referenced 9× no command. (Entregue 2026-05-10 via Phase 103: dual-window calc em kit/commands/burn-rate-status.md + 5 schema tests + 8 combinedStatus tests + manifest regen. Suite 546→559 unit. Stable API v1.0+ literal preservada — zero src/+bin/ changes.)
 
 ### SRE PRR
 
@@ -53,7 +53,7 @@ Este milestone fecha todos eles. Zero superfície de API nova; 1 dev dep nova (s
 | INFRA-20-01 | 100 | Complete |
 | INFRA-20-02 | 101 | Complete |
 | OBS-20-01 | 102 | Complete |
-| OBS-20-02 | 103 | pending |
+| OBS-20-02 | 103 | Complete |
 | SRE-20-01 | 104 | pending |
 | SRE-20-02 | 105 | pending |
 

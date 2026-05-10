@@ -1,6 +1,6 @@
 {
   "version": "1.19.0",
-  "timestamp": "2026-05-09T17:51:43.115Z",
+  "timestamp": "2026-05-10T07:04:05.917Z",
   "files": {
     "COMANDOS.md": "d24ec61a6ec35db314cc5f2ae287bfb927b794789c8f1d558c55862f5e6534b2",
     "COMPATIBILITY.md": "794e336a87045cdf0161785b9a7a0975a49abbd80bdd816b8852251fcc8126ca",
@@ -68,7 +68,7 @@
     "commands/auditar-uat.md": "83e9f21584938350ee96ef0f0bb870786537bf38220c7a8ec0e04d06659c6bda",
     "commands/autonomo.md": "ae5746a8b9cd63d9ac8cf2774b8b466789ccefec3d9e267dcb98d97481ede57f",
     "commands/branch-pr.md": "77866ec7ef8d65ad6cea9d17491b7c7605238b3a3505dd3e128f18cd150c9be4",
-    "commands/burn-rate-status.md": "040fcc64b00bf5bcb9b69b7d3c1ef729647ddf0060d232fe061ea70b242747cf",
+    "commands/burn-rate-status.md": "29f127472a5862f3071e95f596d8410551a43b8b811d1801c36075fa13201fc3",
     "commands/capturar-payloads.md": "507d009d9fb28fe12d18c3d3a599fbb23605254564e5753b056e0f32fb92f20b",
     "commands/caracterizar-prompt.md": "996b923d6c807d94be77d14dbfec3fdabf98d3bf111f6928932421b724847fb3",
     "commands/caracterizar.md": "994ce4136ba44b74890874f3274c26bcdc9f4feb5f4852cb0288687142ab1403",

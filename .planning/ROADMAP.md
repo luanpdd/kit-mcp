@@ -9,7 +9,7 @@
 **Milestone:** v1.20 — Tech Debt Closure & Quality Hardening (fecha 6 itens parqueados pós-v1.19)
 **Numeração de fases:** continua de v1.19 (último concluído: Fase 99) → v1.20 começa em **Fase 100**
 **Total de fases:** 6 (Fases 100-105)
-**Status:** 🚧 EM ANDAMENTO — 3/6 fases concluídas (Phase 100, 101, 102 completas).
+**Status:** 🚧 EM ANDAMENTO — 4/6 fases concluídas (Phase 100, 101, 102, 103 completas).
 **Criado:** 2026-05-10
 **Origem:** tech debt em [.planning/milestones/v1.19-MILESTONE-AUDIT.md](.planning/milestones/v1.19-MILESTONE-AUDIT.md). Continuação direta da v1.19 — eleva PRR 28→30/30 e estabelece mutation testing canônico.
 
@@ -69,20 +69,26 @@
 **Progresso por plano:**
 - ✅ **Plan 102-01** (concluído 2026-05-10) — handler modificado em src/mcp-server/index.js com throttle + graceful fs + 4 regression tests novos em test/unit/mcp-metrics-snapshot-auto-persist.test.js (commits cf0c492 + af4a2a7)
 
-### Phase 103: Multi-window Burn-rate (1h fast + 6h slow) 📋
+### Phase 103: Multi-window Burn-rate (1h fast + 6h slow) ✅
 
-**Status:** PLANEJADA
+**Status:** CONCLUÍDA — 1/1 plano concluído (2026-05-10)
 
-**Goal:** Substituir single-window burn-rate (atual) por dual-window aplicando precisamente o skill `burn-rate-alerting` (lookahead/baseline fator 4×). SLOs YAML ganham campo `windows: { fast: <duration>, slow: <duration> }` com defaults `1h`/`6h`. `/burn-rate-status` calcula e exibe burn rate para ambas as janelas; status enum considera dual-window (fast em PAGE, slow em TICKET).
+**Goal:** Substituir single-window burn-rate (atual) por dual-window aplicando precisamente o skill `burn-rate-alerting` (lookahead/baseline fator 4×). SLOs YAML já tinham `alert_thresholds.page` (1h/5m/14.4×) + `alert_thresholds.ticket` (6h/30m/6×); Phase 103 conecta o command a esses thresholds, calcula burn rate independente fast/slow, e introduz status enum combinado.
 
-**REQ:** OBS-20-02
+**Resultado:** `/burn-rate-status` agora chama `loadSnapshots()` 2× (fast 1h + slow 6h baselines) e renderiza tabela com colunas Fast (1h) / Slow (6h) / Combined explícitas. `combinedStatus()` inline JS implementa canonical Google SRE logic: PAGE (ambos críticos) / TICKET (slow only) / WARN (fast spike OR mild ≥1× either) / OK / no_data (conservative — qualquer janela null wins). Skill burn-rate-alerting cross-referenced 9× no command; fator 4× canonical 5× hits. Defensive defaults (14.4/6/1h/6h) aplicados se YAML omitir blocos. Stable API v1.0+ literal preservada — zero src/+bin/ changes; mudança exclusivamente kit/ + test/.
+
+**REQ:** OBS-20-02 ✅ (completo — dual-window calc + 13 regression tests + skill cross-ref + defensive defaults)
 
 **Critérios de sucesso:**
-- Schema YAML SLO aceita `windows: { fast, slow }` opcional com defaults `1h`/`6h` aplicados quando ausente.
-- `kit/commands/burn-rate-status.md` calcula burn rate independente para janela fast e slow; tabela de output ganha colunas `fast_burn`, `slow_burn`, `fast_status`, `slow_status`.
-- Status enum dual-window: PAGE quando `fast_burn ≥ 14.4` E `slow_burn ≥ 6` simultaneamente; TICKET quando `slow_burn ≥ 1` mas fast OK; WARN quando apenas fast ≥ 14.4 transitório.
-- Regression tests cobrem ≥ 6 cenários (PAGE both, TICKET slow-only, WARN fast-only-transient, OK ambos baixos, no_data, defaults aplicados).
-- `kit/skills/burn-rate-alerting/SKILL.md` cross-referenced ativamente; documentação inline aponta para fator 4× lookahead/baseline.
+- Schema YAML SLO valida `alert_thresholds.page` + `.ticket` blocks (ordering invariants, canonical multipliers). ✅ (5 tests novos em slo-schema.test.js)
+- `kit/commands/burn-rate-status.md` calcula burn rate independente para janela fast e slow; tabela de output ganha colunas `Fast (1h)`, `Slow (6h)`, `Combined`. ✅ (14 hits para fast_burn|slow_burn|fast_status|slow_status|combined_status)
+- Status enum dual-window: PAGE (ambos críticos) / TICKET (slow only) / WARN (fast spike OR mild ≥1× either) / OK / no_data (conservative). ✅
+- Regression tests cobrem ≥ 6 cenários canônicos (PAGE both, TICKET slow-only, WARN fast-only, WARN mild, OK steady, OK zero, no_data partial, custom multipliers). ✅ **Atingido: 8 tests** em burn-rate-calc.test.js (excede ≥6 mínimo)
+- `kit/skills/burn-rate-alerting/SKILL.md` cross-referenced ativamente; documentação inline aponta para fator 4× lookahead/baseline. ✅ (9 hits skill, 5 hits fator 4×)
+- Stable API v1.0+ preservada (zero alterações em src/+bin/). ✅
+
+**Progresso por plano:**
+- ✅ **Plan 103-01** (concluído 2026-05-10) — kit/commands/burn-rate-status.md rewrite + 5 schema tests + 8 combinedStatus tests + manifest regen (commits 029321a + 38e3de1 + 8282057). Suite 546→559 unit (+13).
 
 ### Phase 104: PRR Emergency Axe 4/5 → 5/5 📋
 

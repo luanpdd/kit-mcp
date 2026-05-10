@@ -2,23 +2,23 @@
 state_version: 1.0
 milestone: v1.20
 milestone_name: — Tech Debt Closure & Quality Hardening
-status: Phase 102 entregou auto-snapshot em metrics-snapshot MCP tool (OBS-20-01). handleMetricsSnapshot agora invoca persistSnapshot() com throttle 1s + graceful fs error. 4 regression tests novos (suite 542→546 unit). Stable API v1.0+ literal preservada — zero changes em signature/return shape. Side effect verificável live em integration tests.
-last_updated: "2026-05-10T07:30:00.000Z"
+status: Phase 103 entregou multi-window burn-rate (OBS-20-02). /burn-rate-status agora calcula fast (1h) + slow (6h) independentes com combinedStatus enum (PAGE/TICKET/WARN/OK/no_data) per skill burn-rate-alerting fator 4× canonical. 13 testes novos (suite 546→559 unit). Stable API v1.0+ literal preservada — zero src/+bin/ changes; mudança exclusivamente kit/ + test/.
+last_updated: "2026-05-10T08:00:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 3
-  total_plans: 4
-  completed_plans: 4
+  completed_phases: 4
+  total_plans: 5
+  completed_plans: 5
 ---
 
 # STATE.md
 
 ## Posição Atual
 
-Fase: 102 (Auto-snapshot em metrics-snapshot Tool) ✅ concluída
-Plano: 102-01 ✅ concluído
-Status: Phase 102 entregou OBS-20-01 — handleMetricsSnapshot auto-persiste via persistSnapshot() com throttle 1s in-memory + graceful fs error. 4 regression tests novos. Suite 542→546 unit, 0 fail. Stable API v1.0+ literal preservada (signature parameterless, return shape inalterado).
-Última atividade: 2026-05-10 — Plan 102-01 concluído (commits cf0c492 + af4a2a7), Phase 102 fechada
+Fase: 103 (Multi-window Burn-rate) ✅ concluída
+Plano: 103-01 ✅ concluído
+Status: Phase 103 entregou OBS-20-02 — /burn-rate-status calcula dual-window (fastBurn 1h baseline + slowBurn 6h baseline) via 2 loadSnapshots calls; combinedStatus enum PAGE (ambos críticos) / TICKET (slow only) / WARN (fast spike OR mild >=1×) / OK / no_data (conservative — qualquer janela null wins). 13 testes novos (5 schema + 8 combinedStatus). Suite 546→559 unit, 0 fail. Skill burn-rate-alerting cross-referenced 9× no command, fator 4× canonical 5×. Stable API v1.0+ literal preservada.
+Última atividade: 2026-05-10 — Plan 103-01 concluído (commits 029321a feat + 38e3de1 test + 8282057 test), Phase 103 fechada
 
 ## Milestone ativo
 
@@ -31,7 +31,7 @@ Status: Phase 102 entregou OBS-20-01 — handleMetricsSnapshot auto-persiste via
 | 100 | INFRA-20-01 | Coverage ratchet 80→86% (90 deferido v1.21+) | ✅ 2/2 planos |
 | 101 | INFRA-20-02 | Mutation testing baseline 57.40% (10/15 files) | ✅ 1/1 plano |
 | 102 | OBS-20-01 | Auto-snapshot em metrics-snapshot tool | ✅ 1/1 plano |
-| 103 | OBS-20-02 | Multi-window burn-rate (1h fast + 6h slow) | 📋 |
+| 103 | OBS-20-02 | Multi-window burn-rate (1h fast + 6h slow) | ✅ 1/1 plano |
 | 104 | SRE-20-01 | PRR Emergency 4/5 → 5/5 (RUNBOOK + drill log) | 📋 |
 | 105 | SRE-20-02 | PRR Performance 4/5 → 5/5 (lazy-load + p95 sub-100ms) | 📋 |
 
@@ -81,12 +81,23 @@ Status: Phase 102 entregou OBS-20-01 — handleMetricsSnapshot auto-persiste via
 5. **Cache-bust query string em dynamic import** para reset do `_lastAutoPersistTs` entre testes — ESM idiomatic; transitivamente reset os Maps de metrics.js também.
 6. **Test 4 (fs error) via blocker file** — pre-criar `.planning` como arquivo regular força `fs.mkdir(.../snapshots)` a lançar ENOTDIR. Cross-platform (Windows + Linux + macOS), zero monkey-patch de ESM bindings.
 
+## Decisões do Plan 103-01 (2026-05-10)
+
+1. **Dual-window via 2 loadSnapshots calls** — fastBurn (1h baseline) + slowBurn (6h baseline) calculados independentemente. Phase 99 já planejou para este uso (`loadSnapshots(rootDir, windowMs)` aceita janela arbitrária).
+2. **Combined status enum 5 valores** — PAGE (ambos críticos) / TICKET (slow only) / WARN (fast spike OR mild ≥1× either) / OK / no_data segue canonical Google SRE da skill `burn-rate-alerting` verbatim.
+3. **Conservative no_data** — qualquer janela null wins. Mesmo com outra janela crítica, partial info NÃO escala para PAGE. Auto-persist Phase 102 garante snapshots quase imediatamente, então no_data é raro em produção real.
+4. **Defensive defaults aplicados inline** — 14.4 / 6 / 1h / 6h se YAML omitir alert_thresholds. Schema test (slo-schema.test.js +5 tests) força declaração explícita. Defaults são fallback puro safe-failure.
+5. **ETA computado do slow window** — mais estável vs fast spike. 1h burn pode flapar; 6h smoothing dá ETA realista.
+6. **combinedStatus inline em test (não export)** — preserva Stable API v1.0+ literal. Helper duplicado vs export adiciona ZERO surface area. Drift detectado em CI.
+7. **extractAlertBlock via line-scan + indent tracking** — alternativa a `js-yaml` dep (violaria dep budget Phase 92.01). Robusto para shape canonical do projeto.
+8. **Manifest regen via scripts/regen-manifest.js após kit/ edit** — kit/ é tamper-evident SHA-256 manifest. optional-deps.test.js falha CI se manifest stale. Workflow padrão.
+
 ## Próximo passo
 
-Phase 102 concluída. Executar **Phase 103** — Multi-window Burn-rate (1h fast + 6h slow). SLOs YAML aceitam campo `windows: { fast, slow }` com defaults 1h/6h; `/burn-rate-status` calcula e exibe burn rate dual-window aplicando skill `burn-rate-alerting` (lookahead/baseline fator 4×). Phase 102 garante snapshots auto-populados — pré-requisito atendido.
+Phase 103 concluída. Executar **Phase 104** — PRR Emergency Axe 4/5 → 5/5 via expansão do RUNBOOK.md com 3+ scenarios novos (boot failure, sidecar port collision, npm CVE rotation), drill log template criado e populado com primeira entry.
 
 Pré-requisitos atendidos:
 
-- Phase 100 + 101 + 102 complete ✅
-- Suite green (546 unit / 109 integration) ✅
-- Stable API v1.0+ preservada cross-3-phases ✅
+- Phase 100 + 101 + 102 + 103 complete ✅
+- Suite green (559 unit / 109 integration) ✅
+- Stable API v1.0+ preservada cross-4-phases ✅
