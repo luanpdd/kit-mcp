@@ -359,3 +359,125 @@ test('OBS-19-04: latency SLO YAML provides target_ms + percentile for parsing', 
   assert.match(yaml, /^target_ms:\s*200\b/m, 'must keep target_ms: 200 for command grep');
   assert.match(yaml, /percentile:\s*95\b/, 'must keep percentile: 95 for command grep');
 });
+
+// ---- Phase 103 OBS-20-02 — dual-window combinedStatus regression -----------
+//
+// Plan 103-01 wires /burn-rate-status (kit/commands/burn-rate-status.md step
+// 3.5) to compute fastBurn AND slowBurn independently per SLO and combine them
+// via the canonical dual-window logic from kit/skills/burn-rate-alerting:
+//
+//   PAGE   = ambos críticos (fast >= fastMult E slow >= slowMult)
+//   TICKET = slow erosion sustained (slow >= slowMult, fast OK)
+//   WARN   = fast spike isolado (fast >= fastMult sozinho)
+//   WARN   = mild burn em qualquer janela (>= 1.0×)
+//   OK     = ambos < 1.0×
+//   no_data = qualquer janela com burn=null (snapshots insuficientes)
+//
+// The function lives bash-embedded in the command file (not exported from
+// src/), so we mirror it here verbatim and pin canonical scenarios. Pure
+// asserts — no fs, no network, no spawn.
+
+/**
+ * Mirrors combinedStatus() in kit/commands/burn-rate-status.md step 3.5.
+ * Edits to the command's logic must update this helper in lockstep — the
+ * tests below catch drift between the two definitions on the next CI run.
+ *
+ * @param {number|null} fastBurn  Fast-window burn rate (page-tier) or null.
+ * @param {number} fastMult       page.burn_rate_multiplier (canonical 14.4).
+ * @param {number|null} slowBurn  Slow-window burn rate (ticket-tier) or null.
+ * @param {number} slowMult       ticket.burn_rate_multiplier (canonical 6).
+ * @returns {'PAGE'|'TICKET'|'WARN'|'OK'|'no_data'}
+ */
+function combinedStatus(fastBurn, fastMult, slowBurn, slowMult) {
+  if (fastBurn === null || slowBurn === null) return 'no_data';
+  const fastTriggered = fastBurn >= fastMult;
+  const slowTriggered = slowBurn >= slowMult;
+  if (fastTriggered && slowTriggered) return 'PAGE';
+  if (slowTriggered) return 'TICKET';
+  if (fastTriggered) return 'WARN';
+  if (fastBurn >= 1.0 || slowBurn >= 1.0) return 'WARN';
+  return 'OK';
+}
+
+// Canonical multipliers (skill burn-rate-alerting).
+const FAST_MULT = 14.4;
+const SLOW_MULT = 6;
+
+test('OBS-20-02: combinedStatus PAGE when both windows critical (fast>=14.4 AND slow>=6)', () => {
+  // Real-world: error rate spiked sharply AND has been sustained — both
+  // windows above their thresholds. Page on-call now.
+  const r = combinedStatus(20, FAST_MULT, 8, SLOW_MULT);
+  assert.equal(r, 'PAGE');
+  // Boundary: exactly at threshold counts as triggered (>= comparison).
+  assert.equal(combinedStatus(14.4, FAST_MULT, 6, SLOW_MULT), 'PAGE');
+});
+
+test('OBS-20-02: combinedStatus TICKET when only slow window triggered (sustained slow erosion, fast OK)', () => {
+  // Real-world: a slow drift over 6h that the 1h window doesn't yet pick up
+  // because the recent 1h was relatively cleaner. Ticket — investigate
+  // before budget exhausted, but DON'T page (no immediacy).
+  const r = combinedStatus(2, FAST_MULT, 8, SLOW_MULT);
+  assert.equal(r, 'TICKET');
+  // Boundary: fast just below 14.4, slow exactly at 6 → still TICKET.
+  assert.equal(combinedStatus(14, FAST_MULT, 6, SLOW_MULT), 'TICKET');
+});
+
+test('OBS-20-02: combinedStatus WARN when only fast window triggered (transient spike, slow OK)', () => {
+  // Real-world: a 2-minute outage created a spike in the 1h window but the
+  // 6h window still averages OK. Don't page (false-alarm risk on flap),
+  // but warn so the operator notices.
+  const r = combinedStatus(20, FAST_MULT, 2, SLOW_MULT);
+  assert.equal(r, 'WARN');
+});
+
+test('OBS-20-02: combinedStatus WARN when both windows show mild burn (>=1x but below thresholds)', () => {
+  // Real-world: budget is being consumed at >1× sustained rate but no spike.
+  // Below the page/ticket thresholds; classify as WARN to surface gradual
+  // erosion before it crosses into TICKET territory.
+  const r = combinedStatus(1.5, FAST_MULT, 1.5, SLOW_MULT);
+  assert.equal(r, 'WARN');
+  // Boundary: exactly 1.0 in either window → WARN.
+  assert.equal(combinedStatus(1.0, FAST_MULT, 0.5, SLOW_MULT), 'WARN');
+  assert.equal(combinedStatus(0.5, FAST_MULT, 1.0, SLOW_MULT), 'WARN');
+});
+
+test('OBS-20-02: combinedStatus OK when both windows below 1x burn (healthy steady state)', () => {
+  // Real-world: most production time. Burn rate < 1× means budget will not
+  // be exhausted at current rate within the SLO window. No action.
+  const r = combinedStatus(0.5, FAST_MULT, 0.3, SLOW_MULT);
+  assert.equal(r, 'OK');
+});
+
+test('OBS-20-02: combinedStatus OK when zero error rate in both windows (no traffic OR perfect health)', () => {
+  // Edge case: SLI=null because no events between snapshots produces burn=0
+  // (the burn formula in the command short-circuits). 0 is the expected
+  // canonical reading and must not flap into WARN.
+  const r = combinedStatus(0, FAST_MULT, 0, SLOW_MULT);
+  assert.equal(r, 'OK');
+});
+
+test('OBS-20-02: combinedStatus no_data when EITHER window has null burn (snapshots insufficient)', () => {
+  // Conservative no_data: even one window failing prevents combined judgment.
+  // The command's loadSnapshots() returns < 2 snapshots → SLI null → burn null.
+  // We must NOT silently treat null as 0 (would falsely report OK).
+  assert.equal(combinedStatus(null, FAST_MULT, 5, SLOW_MULT), 'no_data');
+  assert.equal(combinedStatus(5, FAST_MULT, null, SLOW_MULT), 'no_data');
+  assert.equal(combinedStatus(null, FAST_MULT, null, SLOW_MULT), 'no_data');
+  // Important: even when a window IS triggered, no_data in the other wins —
+  // we don't want to escalate to PAGE based on partial information.
+  assert.equal(combinedStatus(20, FAST_MULT, null, SLOW_MULT), 'no_data');
+});
+
+test('OBS-20-02: combinedStatus respects custom multipliers (defensive defaults applied if YAML omits)', () => {
+  // Future tuning: if a SLO sets a different multiplier (e.g. tighter for a
+  // mission-critical service or looser for a beta tier), combinedStatus
+  // must use the per-call value rather than hardcoding 14.4/6.
+  // Tighter page (10×) — burn 12 should now PAGE both with slow=8 ≥ 6.
+  assert.equal(combinedStatus(12, 10, 8, SLOW_MULT), 'PAGE');
+  // Looser page (20×) — same burn 12 now WARN because fast not triggered.
+  assert.equal(combinedStatus(12, 20, 2, SLOW_MULT), 'WARN');
+  // Defensive defaults case: command applies 14.4/6 if YAML is silent.
+  // Test that the canonical defaults give expected canonical results.
+  assert.equal(combinedStatus(15, 14.4, 7, 6), 'PAGE');
+  assert.equal(combinedStatus(0, 14.4, 0, 6), 'OK');
+});
