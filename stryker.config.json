@@ -8,7 +8,7 @@
   ],
   "testRunner": "command",
   "commandRunner": {
-    "command": "node test/run.mjs test/unit"
+    "command": "node test/run-mutation.mjs test/unit"
   },
   "coverageAnalysis": "off",
   "reporters": [
