@@ -133,7 +133,7 @@ jobs:
         if: matrix.target == 'claude-code'
         run: npm run test:integration
 
-      - name: Audit — line coverage threshold (REQ INFRA-17-02 / INFRA-18-01 / INFRA-19-01)
+      - name: Audit — line coverage threshold (REQ INFRA-17-02 / INFRA-18-01 / INFRA-19-01 / INFRA-20-01)
         # INFRA-17-02: surface untested branches via Node 20+ built-in coverage
         # (`node --experimental-test-coverage`). Single-shot on Linux Node 22 to
         # avoid duplicating the run across the 3×3×8 = 72-cell smoke matrix —
@@ -143,14 +143,30 @@ jobs:
         #   v1.17 (Phase 93.01): 65% (baseline 69.00%, 4 below for noise margin)
         #   v1.18 (Phase 97.01): 75% (baseline 77.89%, 3 below for noise margin)
         #   v1.19 (Phase 98.01): 80% (baseline 81.51%, 1.5 below for noise margin)
+        #   v1.20 (Phase 100.01): 86% (baseline 86.84%, 0.84 below for noise margin)
         # Phase 98.01 added 2 test files (+33 tests) lifting the two hot files
         # remaining at the 50s%:
         #   src/ui/auto-spawn.js          57% → 88%  (auto-spawn-paths.test.js, +30 pp)
         #   src/cli/index.js              55% → 75%  (cli-subcommands.test.js,  +20 pp)
-        # Future ratchet (v1.20+): 85% by either (a) extracting cli/index.js
-        # remaining helpers to sibling modules for in-process testing, (b)
-        # lifting render.js (33%) and reflect.js (56%), or (c) merging branch
-        # coverage as a 2nd gate (currently 78.52% branch).
+        # Phase 100.01 added 8 test files (+169 tests) lifting 7/8 hot files to
+        # ≥ 90% line coverage:
+        #   src/cli/render.js             33.69% → 98.93%  (render-paths.test.js)
+        #   src/core/ui.js                52.43% → 95.68%  (core-ui-paths.test.js)
+        #   src/cli/upgrade-check.js      60.00% → 93.33%  (upgrade-check-paths.test.js)
+        #   src/core/reflect.js           56.28% → 93.12%  (reflect-paths.test.js)
+        #   src/ui/client.js              48.46% → 100.00% (ui-client-paths.test.js)
+        #   src/core/reverse-sync.js      75.27% → 93.01%  (reverse-sync-paths.test.js)
+        #   src/mcp-server/index.js       81.06% → 95.71%  (mcp-server-paths.test.js)
+        #   src/cli/index.js              75.07% → 82.61%  (cli-extras.test.js — capped)
+        # cli/index.js remains at 82.61% because the remaining uncovered paths
+        # require live spawn (kit watch, ui start) or interactive TTY (install
+        # write confirm, doctor version branches). Lifting them would require
+        # adding `__test` exports that violate Stable API v1.0+. The 90% target
+        # is therefore deferred to v1.21+ once Phase 105 (Performance) lazy-loads
+        # more of cli/index.js or extracts helpers into testable submodules.
+        # Future ratchet (v1.21+): (a) mutation testing as a 2nd gate via Phase
+        # 101 stryker baseline; (b) 86 → 90 ratchet once cli/index.js helpers
+        # are extracted; (c) branch coverage as a 2nd gate (currently 83.58%).
         #
         # Output format (Node 22 node:test reporter):
         #   ℹ all files                 |  81.51 |    78.52 |   76.32 |
@@ -158,7 +174,7 @@ jobs:
         if: matrix.os == 'ubuntu-latest' && matrix.node == '22' && matrix.target == 'claude-code'
         shell: bash
         run: |
-          THRESHOLD=80
+          THRESHOLD=86
           # `--experimental-test-coverage` writes the coverage report to stdout
           # via the reporter; tests' own console output goes to the report too.
           # Capture all output; tests must still pass (handled by Tests step above).
