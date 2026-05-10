@@ -49,11 +49,11 @@ Este milestone fecha todos eles. Zero superfície de API nova; 1 dev dep nova (s
 
 | REQ-ID | Phase | Status |
 |---|---|---|
-| INFRA-20-01 | TBD | pending |
-| INFRA-20-02 | TBD | pending |
-| OBS-20-01 | TBD | pending |
-| OBS-20-02 | TBD | pending |
-| SRE-20-01 | TBD | pending |
-| SRE-20-02 | TBD | pending |
+| INFRA-20-01 | 100 | pending |
+| INFRA-20-02 | 101 | pending |
+| OBS-20-01 | 102 | pending |
+| OBS-20-02 | 103 | pending |
+| SRE-20-01 | 104 | pending |
+| SRE-20-02 | 105 | pending |
 
 (Preenchido pelo roadmapper.)
