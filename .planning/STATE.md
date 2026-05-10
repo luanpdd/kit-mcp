@@ -1,9 +1,9 @@
 ---
 state_version: 1.0
-milestone: (none)
-milestone_name: ""
-status: Idle — v1.19.0 publicada. Pronto para /novo-marco v1.20+.
-last_updated: "2026-05-09T18:00:00.000Z"
+milestone: v1.20
+milestone_name: "Tech Debt Closure & Quality Hardening"
+status: Definindo requisitos
+last_updated: "2026-05-10T00:00:00.000Z"
 progress:
   total_phases: 0
   completed_phases: 0
@@ -15,36 +15,22 @@ progress:
 
 ## Posição Atual
 
-Fase: nenhuma
-Status: **IDLE** — v1.19.0 publicada em npm 2026-05-09T17:54Z. Pronto para próxima sessão iniciar v1.20 via `/novo-marco`.
+Fase: Não iniciada (definindo requisitos)
+Plano: —
+Status: Definindo requisitos
+Última atividade: 2026-05-10 — Milestone v1.20 iniciado
 
 ## Milestone ativo
 
-**Nenhum.** Última release: v1.19.0 (Maturidade Operacional). 7 releases publicadas em 2026-05-09 (v1.13 → v1.19) totalizando 21 fases, 49 REQs, 482 testes baseline, PRR 28/30, coverage 81.51%.
+**v1.20 Tech Debt Closure & Quality Hardening** — fechamento de 5 itens parqueados pós-v1.19. Target PRR 28→30/30, coverage 80→90%, mutation testing baseline.
 
-## Para próxima sessão
+## Contexto Acumulado (v1.19 e anteriores)
 
-1. **Status:** repo em estado excelente — Stable API v1.0+ preservada cross-7-releases, 0 vulnerabilidades, working tree clean.
-2. **Tech debt v1.20+ identificado:**
-   - Auto-snapshot em metrics-snapshot tool call
-   - Multi-window burn-rate (1h fast + 6h slow)
-   - Mutation testing (stryker)
-   - Coverage 80% → 90% ratchet
-   - Emergency 4/5 → 5/5 (mais runbook scenarios?)
-   - Performance 4/5 → 5/5 (já difícil — wins escalonáveis exhausted)
-3. **PRR atual: 28/30** — apenas Emergency e Performance em 4/5; ganhos marginais.
+- v1.19.0 publicada 2026-05-09 (Maturidade Operacional)
+- 7 releases em 2026-05-09 (v1.13→v1.19) = 21 fases entregues
+- Suite atual: 482 testes, coverage 81.51%, PRR 28/30
+- Stable API v1.0+ preservada cross-7-releases
 
-## Comandos para retomar
-
-- `/novo-marco` — iniciar v1.20 (precisa direção: features novas? mais hardening? mutation testing?)
-- Ler `.planning/audits/v1.16/AUDIT-SYNTHESIS.md` para tech debt residual
-- Ler `.planning/v1.19-MILESTONE-AUDIT.md` para baseline atual
-
-## Quirk persistente (gravado em memory)
+## Quirk persistente
 
 `gh auth switch --user luanpdd` é necessário ANTES de cada `git push` — wincred cache reverte para `in100tiva` (que não tem acesso ao luanpdd/kit-mcp).
-
-## Histórico
-
-- v1.13.0 → v1.19.0 — 7 releases publicadas em 2026-05-09 (~9h sessão)
-- Todos artefatos em `.planning/milestones/v1.X-{ROADMAP,MILESTONE-AUDIT}.md`

@@ -1,17 +1,48 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-09 — v1.13 Security & Performance Hardening **entregue**.
+> Última atualização: 2026-05-10 — v1.20 Tech Debt Closure & Quality Hardening **iniciado**.
 
 ## Estado Atual
 
-**v1.13.0 — Security & Performance Hardening** **entregue** 2026-05-09 (Phases 79-81, 11 REQs, 33 testes novos, 210 baseline final). Suíte de hardening interno derivada de meta-auditoria com 12 agentes em paralelo sobre v1.12.1 — content-zero por design (não adiciona ao kit, repara o framework). Fechou 4 vulnerabilidades CRITICAL/HIGH (gates.run via MCP exec, replayId path traversal, npm ci strict, publish gates), aplicou pattern v1.12.1 a 6 hooks restantes (categorizados A/B/C/E), capturou ~30k tokens em quick wins (slim cap 44.4% redução real, hooks block dedup, CHANGELOG fora do tarball), eliminou 3 fontes de drift (CHANGELOG/README/MCP version). Stable API v1.0+ preservada.
+**v1.19.0 — Maturidade Operacional** **entregue** 2026-05-09 (Phases 98-99, 5 REQs, 64 testes novos, 482 baseline final). Coverage 81.51%, PRR 28/30. Burn-rate calculator wired aos SLOs (.planning/slos/*.yml + .planning/metrics/snapshots/), retention 30d. 7 releases consecutivas em 2026-05-09 (v1.13→v1.19) totalizando 21 fases.
 
-**Tech debt documentado para v1.14:** 4 CVEs ativas em transitivas do `@modelcontextprotocol/sdk@1.29.0`, 7 issues HIGH não tocadas (reverse-sync trust, CSP unsafe-inline, /shutdown auth, gate-runner tmpdir, file-manifest verification, reflect.js leak, sync 8-IDE matrix), README counters auto-gen, T2/T3 token wins. Auditoria-base permanece em `.planning/codebase/concerns.md` + `.planning/PRR-REPORT.md` + `.planning/TOIL-AUDIT.md`.
+**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.19 (Hardening + Suítes auto-aplicadas). 6 suítes ativas no kit + framework eat-your-own-dog-food (golden signals + SLOs + RUNBOOK + burn-rate live).
 
-**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13 (Hardening). 6 suítes ativas no kit + framework hardened.
+## Milestone Atual: v1.20 Tech Debt Closure & Quality Hardening
 
-## Milestone Atual: v1.12 Legacy Code Mastery & AI-Era Refactoring
+**Objetivo:** Fechar os 5 itens de tech debt parqueados pós-v1.19, elevando PRR 28→30/30 e estabelecendo mutation testing como gate de qualidade canônico do kit.
+
+**Funcionalidades alvo (todas internas, zero superfície de API nova):**
+
+- **Auto-snapshot em `metrics-snapshot`** — chamadas ao tool MCP `metrics-snapshot` automaticamente persistem snapshot via `metrics.persistSnapshot()` em vez de exigir trigger manual. Fecha gap operacional onde snapshots ficam vazios em produção até alguém lembrar.
+- **Multi-window burn-rate** — substitui single-window (atual) por dual-window: 1h fast (page) + 6h slow (ticket), aplicando precisamente o `burn-rate-alerting` skill (lookahead/baseline fator 4×). `/burn-rate-status` e SLOs YAML ganham campo `windows: [fast, slow]`.
+- **Mutation testing via stryker** — adiciona `stryker-mutator` como dev dep, `stryker.config.json` configurado para src/core/, npm script `test:mutation`, baseline mutation score documentado em `.planning/audits/v1.20/MUTATION-BASELINE.md`. Não bloqueia CI por enquanto (gate v1.21+).
+- **Coverage ratchet 80→90%** — eleva line threshold em ci.yml de 80→90; identifica top arquivos abaixo do alvo, escreve testes targeted. Continuação direta de Phase 98 (v1.19).
+- **PRR Emergency 4→5** — RUNBOOK.md ganha 3+ scenarios novos (boot failure, sidecar port collision, SDK CVE rotation), inclui drill log template.
+- **PRR Performance 4→5** — wins marginais restantes (lazy-load chokidar, sync watcher debounce tuning, MCP roundtrip p95 sub-100ms).
+
+**Decisões de stack:**
+- 1 dev dep nova (stryker-mutator). Stable API v1.0+ preservada.
+- Roadmap começa em **Phase 100** (continua de v1.19 que terminou em Phase 99).
+- Conteúdo PT-BR (alinhado v1.8-v1.19).
+
+**Contrato preservado:** Quem usa kit-mcp em produção não percebe diferença além de auto-snapshot ativo (transparente) e dual-window burn-rate em SLOs. CI permanece verde.
+
+## ~~Milestone Anterior: v1.13-v1.19 — Hardening Series (entregue 2026-05-09)~~
+
+7 releases consecutivas em 2026-05-09 elevaram o kit de v1.12.1 a v1.19.0:
+- v1.13 Security & Performance Hardening (Phases 79-81)
+- v1.14 Web/Core Security Hardening (Phases 82-84)
+- v1.15 DX & Token Economy Wave 2 (Phases 85-87)
+- v1.16 Performance Runtime Wave (Phases 88-89)
+- v1.17 Performance Wave 2 + Quick Wins (Phases 90-93)
+- v1.18 Eat Your Own Dog Food (Phases 94-97)
+- v1.19 Maturidade Operacional (Phases 98-99)
+
+PRR 22→28/30, coverage 65→81.51%, suite 210→482 testes. Detalhes em `.planning/MILESTONES.md` + audits específicos.
+
+## ~~Milestone Anterior: v1.12 Legacy Code Mastery & AI-Era Refactoring~~
 
 **Objetivo:** Adicionar 5ª suíte ao kit (Legacy) derivada do livro Feathers (2004) — *characterization tests*, *seams*, *sprout/wrap*, *effect analysis*, *monster methods*, *extract class*, *programming by difference*, *API-only applications*, *shotgun surgery*, *storytelling/naked CRC* — todos modernizados para o contexto atual onde Supabase Edge Functions são as principais "API-only applications", LLMs são dependências legítimas que precisam ser fakeadas/instrumentadas, prompts são código legado que precisa de characterization, e embeddings + IA podem substituir trabalho mecânico de detecção.
 
