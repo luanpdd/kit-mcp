@@ -1,0 +1,133 @@
+# REQUIREMENTS.md — Milestone v1.22 Suíte DDIA Foundations
+
+> Definido em 2026-05-10. Material-fonte: *Designing Data-Intensive Applications* — Martin Kleppmann (O'Reilly Media, 2017). ISBN 978-1-449-37332-0. Capítulos cobertos: 4, 5, 6, 7, 8, 9, 11.
+
+## Contexto
+
+8ª suíte do kit-mcp (após Supabase v1.8, Observabilidade v1.9, SRE v1.10, SRE Resilience v1.11, Legacy v1.12, Hardening v1.13-v1.20, Multi-Tenant SaaS B2B v1.21). Fecha gaps de **consistency, partitioning, isolation, distributed systems traps e event streams** identificados nas suítes existentes — particularmente nos pontos onde apps multi-tenant Supabase têm race conditions sutis ou hot tenants degradam performance global.
+
+**Material-fonte:** análise direta do livro DDIA (Kleppmann 2017) — sem research adicional necessária (livro É a research).
+
+**Stack alvo dos consumidores:** Postgres + Supabase + Edge Functions (mesma base de v1.8/v1.21).
+
+**Contrato preservado:** content-only milestone, Stable API v1.0+ inalterada, zero deps novas no kit-mcp (apenas markdown).
+
+## Requisitos do Milestone v1.22
+
+### Arquitetura da Suíte (SUITE)
+
+- [ ] **SUITE-01**: Comando `/dados-distribuidos` com sinônimos PT/EN (`dados-distribuidos`, `ddia`, `dados`, `consistencia`, `replicacao`, `streams`) seguindo padrão `/multi-tenant`/`/sre`/`/legacy`
+- [ ] **SUITE-02**: `/dados-distribuidos` rotea para subcomandos: `auditar-consistencia`, `auditar-tenant-quente`, `validar-evolucao-schema`, `implementar-cdc` — com fallback amigável quando subcomando inexistente
+- [ ] **SUITE-03**: Glossário compartilhado em `kit/skills/_shared-dados-distribuidos/glossary.md` (PT-BR ↔ EN) cobrindo: linearizabilidade, consistência causal, consistência eventual, atualização perdida (lost update), distorção de escrita (write skew), leitura fantasma (phantom read), MVCC, CDC, event sourcing, fencing token, partição quente (hot partition), líder-seguidor (leader-follower), broker baseado em log, etc.
+
+### Evolução de Schema Compatível (EVOLUCAO) — DDIA Ch 4
+
+- [ ] **EVOLUCAO-01**: Skill `evolucao-schema-compativel` documenta padrão de 3 passos canônico (adicionar nullable → backfill em batches → impor NOT NULL); inclui SQL completo para cada passo
+- [ ] **EVOLUCAO-02**: Skill cobre compatibilidade backward/forward para contratos de API em Edge Functions (versionamento de payload, campos opcionais, nunca-remover-obrigatório)
+- [ ] **EVOLUCAO-03**: Skill mapeia análogos Avro/Protobuf de schema evolution para Postgres (rename de coluna via view, alargamento de tipo seguro vs estreitamento inseguro, mudança de default em coluna em uso)
+- [ ] **EVOLUCAO-04**: Skill cobre rolling upgrade em apps client-side (deploy escalonado, compat de JWT/session entre versões)
+
+### Consistência de Leitura em Réplicas (LEITURA) — DDIA Ch 5
+
+- [ ] **LEITURA-01**: Skill `consistencia-leitura-replica` documenta os 3 problemas canônicos do Ch 5: read-after-write (ler-própria-escrita) inconsistente, leituras não-monotônicas, prefixo causal violado
+- [ ] **LEITURA-02**: Skill mapeia soluções para contexto Supabase: leitura no líder após escrita do usuário, sticky session por user_id no roteamento de réplica, detecção de leitura stale via timestamp
+- [ ] **LEITURA-03**: Skill cobre Supavisor read replica routing (porta 6543) + quando usar pooler.read.* vs pooler.transaction.*
+- [ ] **LEITURA-04**: Skill cobre interação Realtime broadcast vs leitura no DB (broadcast pode chegar antes do commit replicar para read replica) + padrão "ler o próprio broadcast"
+
+### Mitigação de Tenant Quente (TENANT) — DDIA Ch 6
+
+- [ ] **TENANT-01**: Skill `tenant-quente-mitigacao` documenta detecção do "tenant Justin Bieber" — métricas canônicas (queries/min ratio, storage GB ratio, slots de conexão ratio) com thresholds (3x P50, 10x P50)
+- [ ] **TENANT-02**: Skill apresenta 5 estratégias de mitigação com tradeoffs: rate limit por tenant, pool de conexão isolado, read replica dedicada, desnormalização (cache no Postgres), request shaping (fila com prioridade)
+- [ ] **TENANT-03**: Skill cobre particionamento por range vs hash para tenant_id em tabelas grandes (>50k rows/tenant) com árvore de decisão
+- [ ] **TENANT-04**: Skill documenta estratégias de índice secundário (document-partitioned vs term-partitioned) aplicado a queries cross-tenant em views super-admin
+- [ ] **TENANT-05**: Skill cobre rebalanceamento: quando (e como) mover tenant para schema/instância dedicada sem downtime
+
+### Isolamento e Concorrência Postgres (ISOLAMENTO) — DDIA Ch 7
+
+- [ ] **ISOLAMENTO-01**: Skill `postgres-isolamento-concorrencia` documenta os 6 tipos de race condition (dirty read, dirty write, read skew, lost update, write skew, phantom read) com SQL exemplo de cada — termos EN preservados pois são canônicos no manual Postgres
+- [ ] **ISOLAMENTO-02**: Skill define árvore de decisão para escolha de isolation level Postgres: READ COMMITTED (default, 95% dos casos) vs REPEATABLE READ (snapshot isolation/MVCC) vs SERIALIZABLE (SSI)
+- [ ] **ISOLAMENTO-03**: Skill cobre 3 padrões para prevenir lost update: SELECT FOR UPDATE, UPDATE atômico com WHERE conditions, advisory_xact_lock; com tradeoff de performance
+- [ ] **ISOLAMENTO-04**: Skill cobre prevenção de write skew via materialização do conflito: FOR UPDATE em todas as rows lidas, OU exclusion constraints no DB, OU SERIALIZABLE
+- [ ] **ISOLAMENTO-05**: Skill mapeia prevenção de phantom read via index-range locks ou predicate locks (SERIALIZABLE em Postgres usa SSI = predicate-aware)
+
+### Armadilhas de Sistemas Distribuídos (ARMADILHAS) — DDIA Ch 8
+
+- [ ] **ARMADILHAS-01**: Skill `armadilhas-sistemas-distribuidos` documenta perigos do clock skew — diferença entre `now()` (início da transação, monotônico) vs `clock_timestamp()` (real-time, pode pular) vs `transaction_timestamp()` (alias para `now()`); quando NÃO usar wall clock
+- [ ] **ARMADILHAS-02**: Skill cobre fencing tokens canônicos para distributed locks: pg_advisory_xact_lock + sequence monotônico para ID do token; aplicação em super-admin actions, jobs agendados, eleição de líder
+- [ ] **ARMADILHAS-03**: Skill documenta padrões de GC pause / process pause + impacto em sistemas distribuídos (expiração de lease durante pause leva a split brain) + mitigação via fencing token
+- [ ] **ARMADILHAS-04**: Skill cobre falhas parciais: detecção de falha por timeout é falaciosa; padrão "phi accrual" failure detector; quando assumir nó morto vs apenas lento
+- [ ] **ARMADILHAS-05**: Skill mapeia modelos de sistema (byzantine vs crash-stop vs crash-recovery) — quando cada um aplica em contexto Supabase (geralmente crash-recovery)
+
+### Escolha do Modelo de Consistência (MODELO) — DDIA Ch 9
+
+- [ ] **MODELO-01**: Skill `escolha-modelo-consistencia` apresenta árvore de decisão: linearizabilidade vs causal vs eventual; com exemplos canônicos (uniqueness constraint = linearizabilidade, feed social = eventual, chat = causal)
+- [ ] **MODELO-02**: Skill documenta uniqueness constraints distribuídos via single-leader Postgres (UNIQUE constraint) — explica por que UPDATE+SELECT em nível de app é inseguro mesmo com SELECT FOR UPDATE
+- [ ] **MODELO-03**: Skill cobre análogos de total order broadcast em Postgres (logical replication slots, posição WAL) e quando é necessário
+- [ ] **MODELO-04**: Skill mapeia teorema CAP ao real (PACELC) — durante partição: consistency vs availability; durante operação normal: latency vs consistency
+- [ ] **MODELO-05**: Skill cobre limitações do 2PC (two-phase commit) + alternativas modernas (sagas, transactional outbox) para consistência cross-service
+
+### Streams de Eventos & CDC (STREAMS) — DDIA Ch 11
+
+- [ ] **STREAMS-01**: Skill `streams-eventos-cdc` documenta diferença entre brokers AMQP/JMS-style vs log-based; mapeamento: pgmq = log-based, postgres LISTEN/NOTIFY = AMQP-style
+- [ ] **STREAMS-02**: Skill cobre padrões CDC (Change Data Capture) em Postgres: wal2json + Supabase Realtime broadcast, OU pglogical → Kafka externo; use cases (índice de busca, desnormalização, sync multi-region)
+- [ ] **STREAMS-03**: Skill documenta padrão event sourcing em Postgres: tabela de eventos como source of truth + projeções (materialized views ou desnormalizações mantidas por trigger); audit_log v1.21 mapeado para semântica de event sourcing
+- [ ] **STREAMS-04**: Skill cobre semântica exactly-once em pgmq: tabela de dedup com unique constraint em event_id, idempotency key no handler, transactional outbox para writes cross-service
+- [ ] **STREAMS-05**: Skill cobre 3 tipos de stream join: stream-stream (com janela temporal), stream-table (CDC + atividade), table-table (merge de changelogs); padrões em Postgres
+- [ ] **STREAMS-06**: Skill mapeia log compaction: pgmq não tem nativo (usa retention TTL); event sourcing precisa snapshot + compact
+
+### Agentes de Auditoria (AGENTE)
+
+- [ ] **AGENTE-01**: Agent `auditor-consistencia-isolamento` scaneia migrations + RPCs + Edge Functions; detecta 6 anti-patterns canônicos (SELECT-then-UPDATE sem FOR UPDATE, trigger sem materializar predicate, `now()` em lógica de expiração, UNIQUE check em nível de app, write cross-tenant sem lock, handler sem idempotência)
+- [ ] **AGENTE-02**: Agent `auditor-consistencia-isolamento` produz `AUDITORIA-CONSISTENCIA.md` priorizado P0/P1/P2 com findings linkados a arquivo:linha + sugestão de fix
+- [ ] **AGENTE-03**: Agent `detector-tenant-quente` consulta logs Supabase via `mcp__supabase__execute_sql` para queries dos últimos 30d, agrupa por org_id, identifica outliers (>3x P50 = WARN, >10x P50 = CRITICAL)
+- [ ] **AGENTE-04**: Agent `detector-tenant-quente` produz `AUDITORIA-TENANT-QUENTE.md` com top 5 tenants quentes + métricas + estratégia de mitigação sugerida (consome skill `tenant-quente-mitigacao`)
+- [ ] **AGENTE-05**: Agent `validador-evolucao-schema` recebe SQL de migration via stdin, detecta breaks: NOT NULL adicionado em coluna existente, column dropped, type narrowed, default mudado em coluna em uso
+- [ ] **AGENTE-06**: Agent `validador-evolucao-schema` produz veredito GO/NO-GO/NEEDS-REVIEW com sugestão de migration segura (3-step) quando NO-GO
+
+### Integração Cross-Suite (CROSS) — patches em skills/agents existentes
+
+- [ ] **CROSS-01**: Skill `multi-tenant-performance-scaling` (v1.21) ganha seção "Detecção e Mitigação de Tenant Quente" referenciando `tenant-quente-mitigacao` (v1.22)
+- [ ] **CROSS-02**: Skill `multi-tenant-rls-hierarchy` (v1.21) ganha seção "Invariantes Linearizáveis Cross-Tenant" (uniqueness constraints cross-org, padrões FOR UPDATE)
+- [ ] **CROSS-03**: Skill `crm-lead-pipeline-patterns` (v1.21) ganha SELECT FOR UPDATE em trigger de transição de stage (prevenção de lost update)
+- [ ] **CROSS-04**: Skill `super-admin-platform-pattern` (v1.21) ganha fencing token para TTL de impersonação (anti split-brain durante GC pause)
+- [ ] **CROSS-05**: Skill `cascading-failures` (v1.11) ganha "Clock Skew" como failure mode adicional (cross-ref `armadilhas-sistemas-distribuidos`)
+- [ ] **CROSS-06**: Skill `audit-log-multi-tenant` (v1.21) ganha seção "Semântica Event Sourcing" + padrão de log compaction
+- [ ] **CROSS-07**: Skill `supabase-cron-queues` (v1.8) ganha "Padrões Exactly-Once" — idempotency keys, dedup table, transactional outbox
+- [ ] **CROSS-08**: Skill `supabase-migrations` (v1.8) ganha "Padrão Rolling-Upgrade" — link para padrão 3-step de `evolucao-schema-compativel`
+- [ ] **CROSS-09**: Agent `supabase-architect` (v1.8) ganha pergunta upfront "Que modelo de consistência essa feature precisa?" + árvore de decisão
+- [ ] **CROSS-10**: Agent `supabase-migration-writer` (v1.8) auto-invoca `validador-evolucao-schema` ANTES de escrever migration arriscada
+- [ ] **CROSS-11**: Agent `multi-tenant-isolation-auditor` (v1.21) ganha detecção de gap de tenant quente (consome `detector-tenant-quente`)
+- [ ] **CROSS-12**: Agent `crm-pipeline-implementer` (v1.21) gera SELECT FOR UPDATE em transição de stage (default agora)
+
+### Documentação e Descoberta (DOC)
+
+- [ ] **DOC-01**: AUTOGEN-COUNTS.md regenerado: 57→60 agents, 88→89 commands, 60→67 skills (+7 novas + 1 glossário), 23 gates (mantido)
+- [ ] **DOC-02**: file-manifest.json regenerado (esperado 355→~395 files; +7 skills + 3 agents + 1 command + glossário + roadmap + audit)
+- [ ] **DOC-03**: README.md kit/ ganha seção "Suíte DDIA Foundations" no índice
+- [ ] **DOC-04**: CHANGELOG.md ganha entry v1.22.0 com sumário das adições
+- [ ] **DOC-05**: Convenção PT-BR para naming de skills/agents/commands documentada em `kit/skills/_shared-dados-distribuidos/glossary.md` (a partir de v1.22 — convenção nova)
+
+## Requisitos Futuros (deferidos para v1.23+)
+
+- Skills específicas para CRDTs (mergeable counters, OR-Sets) — relevante para colaborativo realtime mas fora do escopo Supabase atual
+- Skills para batch processing (DDIA Ch 10) — não cobertas; pgmq + scheduled jobs já satisfazem maior parte dos use cases
+- Skill para multi-region active-active deployment (Supabase + Vercel multi-region) — deferido também em v1.21
+- Tooling para visualização de event flow (CDC pipeline diagram generator)
+
+## Fora do Escopo (excluídos com motivo)
+
+- **Capítulos 1-3 do DDIA** — Reliability/Scalability/Maintainability já cobertos por suítes SRE v1.10/v1.11; Storage and Retrieval (B-trees, LSM, column-stores) é detalhe de implementação Postgres, não escolha do consumidor do kit
+- **Capítulo 10 (Batch Processing)** — MapReduce + distributed filesystems não aplicáveis a Supabase serverless; pgmq + Edge Functions cobrem o uso real
+- **Spanner-style TrueTime** — não disponível em Postgres/Supabase, e o livro mesmo nota que é caro demais para 99% dos casos
+- **Byzantine fault tolerance** — over-engineering para apps SaaS standard; só relevante para blockchain/critical safety systems
+- **Implementação de novo broker** (estilo Kafka custom) — fora do scope do kit; documentamos uso de pgmq apenas
+
+## Rastreabilidade
+
+| Phase | REQ-IDs cobertos |
+|-------|------------------|
+| 117 | (definido pelo roadmapper) |
+| 118 | (definido pelo roadmapper) |
+| ... | ... |
+
+(Preenchido pelo roadmapper ao gerar ROADMAP.md)

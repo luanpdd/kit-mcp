@@ -15,35 +15,37 @@
 
 **Objetivo:** Adicionar 8ª suíte ao kit derivada de *Designing Data-Intensive Applications* (Martin Kleppmann, O'Reilly 2017) — fechar gaps de consistency, replication, partitioning hot spots, isolation levels, distributed systems traps (clock skew, fencing tokens) e event streams (CDC, event sourcing) nas suítes /supabase v1.8 + /multi-tenant v1.21 existentes.
 
+**Convenção de naming (a partir de v1.22):** todos os artefatos novos (skills, agents, commands) com nomes em **PT-BR claros e descritivos**. Termos técnicos canônicos preservados (CDC, RLS, MVCC, Postgres, write skew em descrições internas pois são canônicos no manual oficial), mas nomes de arquivos/identificadores em PT-BR.
+
 **Funcionalidades alvo (todas aditivas, zero superfície de API quebrada):**
 
-- **Skills novos (7)** — 1 skill por capítulo chave do DDIA, mapeando para Postgres/Supabase:
-  - `schema-evolution-rolling-upgrades` (Ch 4 Encoding & Evolution) — backward/forward compat para migrations + Edge Function API contracts; padrão 3-step migration (add nullable → backfill → enforce NOT NULL); avro/protobuf schema evolution analogues para Postgres
-  - `replication-lag-consistency` (Ch 5 Replication) — read-after-write, monotonic reads, consistent prefix em context Supabase (read replicas via Supavisor, realtime broadcast vs DB read, Edge Functions reading after writes)
-  - `tenant-hot-spot-mitigation` (Ch 6 Partitioning) — detect+mitigate "Justin Bieber tenant" (1 tenant >>> outros); estratégias: per-tenant rate limit, isolated connection pool, dedicated read replica, denormalization, request shaping; range vs hash partitioning para tenant_id
-  - `postgres-isolation-and-write-skew` (Ch 7 Transactions) — quando READ COMMITTED (default) vs REPEATABLE READ vs SERIALIZABLE; SELECT FOR UPDATE patterns; lost update prevention via row-level lock OU atomic UPDATE; write skew detection + materialização do conflict via FOR UPDATE/advisory lock; phantom reads
-  - `distributed-systems-traps` (Ch 8 Trouble with Distributed Systems) — clock skew dangers (`now()` vs `clock_timestamp()` vs `transaction_timestamp()` semantics); fencing tokens para distributed locks (advisory locks, super-admin actions); GC pauses; partial failures; falsy timeout-based failure detection
-  - `consistency-model-selection` (Ch 9 Consistency & Consensus) — quando precisa linearizability (uniqueness constraint cross-tenant) vs causal consistency vs eventual; distributed uniqueness via Postgres single-leader; total order broadcast analogues
-  - `event-streams-cdc-sourcing` (Ch 11 Stream Processing) — CDC patterns via wal2json/pglogical; event sourcing em Postgres (audit_log como source of truth + projeções); exactly-once semantics em pgmq via dedup table; log-based vs JMS-style brokers; transactional outbox
+- **Skills novos (7)** — 1 skill por capítulo chave do DDIA, nomes PT-BR descritivos:
+  - `evolucao-schema-compativel` (Ch 4 Encoding & Evolution) — compat backward/forward para migrations + contratos de API em Edge Functions; padrão 3-passos (adicionar nullable → backfill → impor NOT NULL); análogos Avro/Protobuf para Postgres
+  - `consistencia-leitura-replica` (Ch 5 Replication) — read-after-write, leituras monotônicas, prefixo causal consistente em contexto Supabase (read replicas via Supavisor, realtime broadcast vs leitura DB, Edge Functions lendo após writes)
+  - `tenant-quente-mitigacao` (Ch 6 Partitioning) — detectar+mitigar "tenant Justin Bieber" (1 tenant >>> outros); estratégias: rate limit por tenant, pool de conexão isolado, read replica dedicada, desnormalização, request shaping; particionamento range vs hash para tenant_id
+  - `postgres-isolamento-concorrencia` (Ch 7 Transactions) — quando READ COMMITTED (default) vs REPEATABLE READ vs SERIALIZABLE; padrões SELECT FOR UPDATE; prevenção de lost update via row-level lock OU atomic UPDATE; detecção de write skew + materialização via FOR UPDATE/advisory lock; phantom reads
+  - `armadilhas-sistemas-distribuidos` (Ch 8 Trouble with Distributed Systems) — perigos de clock skew (semântica `now()` vs `clock_timestamp()` vs `transaction_timestamp()`); fencing tokens para distributed locks (advisory locks, ações super-admin); GC pauses; falhas parciais; detecção falaciosa por timeout
+  - `escolha-modelo-consistencia` (Ch 9 Consistency & Consensus) — quando precisa linearizabilidade (uniqueness constraint cross-tenant) vs consistência causal vs eventual; uniqueness distribuído via single-leader Postgres; análogos de total order broadcast
+  - `streams-eventos-cdc` (Ch 11 Stream Processing) — padrões CDC via wal2json/pglogical; event sourcing em Postgres (audit_log como source of truth + projeções); semântica exactly-once em pgmq via dedup table; brokers log-based vs AMQP/JMS-style; transactional outbox
 
-- **Agents novos (3)** — workers especializados consumindo skills DDIA:
-  - `consistency-isolation-auditor` — scaneia migrations/RPCs/Edge Functions por race condition vulns: SELECT-then-UPDATE sem FOR UPDATE (lost update vulnerable), trigger + check constraint que não materializa o predicate (write skew vulnerable), `now()`/`clock_timestamp()` em expiration logic (clock skew vulnerable), reliance em app-level UNIQUE check vs DB constraint, cross-tenant write sem proper FOR UPDATE LOCKING
-  - `hot-tenant-detector` — analisa logs Supabase via `mcp__supabase__execute_sql`/get_logs (last 30d) → detecta tenants com queries/storage/connections >>> outros; sugere mitigation strategy específica baseada no perfil de uso
-  - `schema-evolution-checker` — pré-check de migration ANTES de apply: flagra quebras de backward/forward compat (NOT NULL adicionado em coluna existente, column dropped, type narrowed, default changed em coluna em uso); sugere padrão 3-step migration
+- **Agents novos (3)** — workers especializados, nomes PT-BR:
+  - `auditor-consistencia-isolamento` — scaneia migrations/RPCs/Edge Functions por vulns de race condition: SELECT-then-UPDATE sem FOR UPDATE (lost update vulnerable), trigger + check constraint que não materializa o predicate (write skew vulnerable), `now()`/`clock_timestamp()` em lógica de expiração (clock skew vulnerable), dependência em UNIQUE check em nível de app vs DB constraint, write cross-tenant sem FOR UPDATE LOCKING adequado
+  - `detector-tenant-quente` — analisa logs Supabase via `mcp__supabase__execute_sql`/get_logs (últimos 30d) → detecta tenants com queries/storage/conexões >>> outros; sugere estratégia de mitigação específica baseada no perfil de uso
+  - `validador-evolucao-schema` — pré-validação de migration ANTES do apply: flagra quebras de compat backward/forward (NOT NULL adicionado em coluna existente, column dropped, type narrowed, default mudado em coluna em uso); sugere padrão 3-passos quando arriscado
 
 - **Command novo (1):**
-  - `/ddia [subcomando]` — orquestrador da Suíte DDIA (sinônimos PT/EN: `ddia`, `consistency`, `consistencia`, `partitioning`, `streams`); subcomandos: `consistency-audit`, `hot-tenant-audit`, `schema-evolution-check`, `cdc-implement`
+  - `/dados-distribuidos [subcomando]` — orquestrador da Suíte DDIA (sinônimos PT/EN: `dados-distribuidos`, `ddia`, `dados`, `consistencia`, `replicacao`, `streams`); subcomandos: `auditar-consistencia`, `auditar-tenant-quente`, `validar-evolucao-schema`, `implementar-cdc`
 
-- **Updates cross-suite (12 patches em skills/agents existentes):**
-  - `multi-tenant-performance-scaling` ← hot-spot detection + range vs hash p/ tenant_id
-  - `multi-tenant-rls-hierarchy` ← linearizability cross-tenant invariants
-  - `crm-lead-pipeline-patterns` ← SELECT FOR UPDATE em stage transition trigger
-  - `super-admin-platform-pattern` ← fencing token p/ impersonation TTL
+- **Updates cross-suite (12 patches em skills/agents existentes — nomes EN preservados pois são artefatos pré-v1.22):**
+  - `multi-tenant-performance-scaling` ← detecção de tenant quente + range vs hash para tenant_id
+  - `multi-tenant-rls-hierarchy` ← invariantes linearizáveis cross-tenant
+  - `crm-lead-pipeline-patterns` ← SELECT FOR UPDATE em trigger de transição de stage
+  - `super-admin-platform-pattern` ← fencing token para TTL de impersonação
   - `cascading-failures` ← clock skew como failure mode adicional
-  - `audit-log-multi-tenant` ← event sourcing semantics + log compaction
-  - `supabase-cron-queues` ← exactly-once patterns + idempotency keys + transactional outbox
-  - `supabase-migrations` ← rolling-upgrade pattern (3-step NOT NULL) reference
-  - Agents: `supabase-architect` (consistency requirements upfront), `supabase-migration-writer` (auto-detect schema evolution risks), `multi-tenant-isolation-auditor` (hot-tenant gap detection), `crm-pipeline-implementer` (FOR UPDATE locks built-in)
+  - `audit-log-multi-tenant` ← semântica event sourcing + log compaction
+  - `supabase-cron-queues` ← padrões exactly-once + idempotency keys + transactional outbox
+  - `supabase-migrations` ← referência ao padrão rolling-upgrade (3-passos NOT NULL)
+  - Agents: `supabase-architect` (pergunta consistency upfront), `supabase-migration-writer` (auto-detect schema evolution risks), `multi-tenant-isolation-auditor` (gap detection de tenant quente), `crm-pipeline-implementer` (FOR UPDATE locks built-in)
 
 **Decisões de stack:**
 - Zero deps novas. Apenas conteúdo de kit (markdown). Stable API v1.0+ preservada — só adições.
