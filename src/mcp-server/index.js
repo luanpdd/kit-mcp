@@ -31,7 +31,7 @@ import { recordReplay, listReplays, loadReplay, annotateReplay } from '../core/r
 import { installMcp, listInstallTargets } from './install.js';
 import { ensureSidecar } from '../ui/auto-spawn.js';
 import { wrapProgressForUi } from '../ui/wrapper.js';
-import { incrementInvocation, recordLatency, snapshot as metricsSnapshot } from '../core/metrics.js';
+import { incrementInvocation, recordLatency, snapshot as metricsSnapshot, persistSnapshot } from '../core/metrics.js';
 
 const TOOLS = [
   {
@@ -308,8 +308,29 @@ async function handleInstall(args) {
 // OBS-18 (Phase 94.01): metrics-snapshot is parameterless and read-only.
 // Returns the live snapshot synchronously — no auth, no projectRoot guard
 // (no disk reads, no shell). Wraps in an async fn for handler-API uniformity.
+//
+// OBS-20-01 (Phase 102): auto-persist throttle — clients polling rapidly
+// shouldn't create N files per second. 1s is generous vs typical 30s+ polls.
+// State is in-memory; resets on server restart. Closes the operational gap
+// where snapshots dir was empty until someone manually triggered persist.
+let _lastAutoPersistTs = 0;
+const AUTO_PERSIST_THROTTLE_MS = 1000;
+
 async function handleMetricsSnapshot() {
-  return metricsSnapshot();
+  const payload = metricsSnapshot();
+  const now = Date.now();
+  if (now - _lastAutoPersistTs >= AUTO_PERSIST_THROTTLE_MS) {
+    try {
+      await persistSnapshot();
+      _lastAutoPersistTs = now;
+    } catch (err) {
+      // OBS-20-01: graceful — log to stderr, do NOT fail the handler.
+      // In-memory snapshot still returned normally so the client tool call
+      // contract is preserved even when fs is read-only or quota-exhausted.
+      process.stderr.write(`[kit-mcp] auto-snapshot persist failed: ${err.message}\n`);
+    }
+  }
+  return payload;
 }
 
 const HANDLERS = {
