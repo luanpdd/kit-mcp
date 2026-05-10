@@ -9,13 +9,13 @@
 **Milestone:** v1.20 — Tech Debt Closure & Quality Hardening (fecha 6 itens parqueados pós-v1.19)
 **Numeração de fases:** continua de v1.19 (último concluído: Fase 99) → v1.20 começa em **Fase 100**
 **Total de fases:** 6 (Fases 100-105)
-**Status:** 📋 PLANEJADO — 0/6 fases concluídas. Pronto para `/discutir-fase 100` ou `/planejar-fase 100`.
+**Status:** 🚧 EM ANDAMENTO — 0/6 fases concluídas (Phase 100: 1/2 planos completos).
 **Criado:** 2026-05-10
 **Origem:** tech debt em [.planning/milestones/v1.19-MILESTONE-AUDIT.md](.planning/milestones/v1.19-MILESTONE-AUDIT.md). Continuação direta da v1.19 — eleva PRR 28→30/30 e estabelece mutation testing canônico.
 
-### Phase 100: Coverage Ratchet 80% → 90% 📋
+### Phase 100: Coverage Ratchet 80% → 90% 🚧
 
-**Status:** PLANEJADA
+**Status:** EM ANDAMENTO — 1/2 planos concluídos
 
 **Goal:** Elevar CI line coverage threshold de 80% → 90%, identificando os arquivos abaixo do alvo e escrevendo testes targeted. Continuação direta da Phase 98 (v1.19, 75→80%).
 
@@ -24,9 +24,13 @@
 **Critérios de sucesso:**
 - `.github/workflows/ci.yml` THRESHOLD atualizado 80 → 90.
 - Top arquivos abaixo de 90% identificados via `node --experimental-test-coverage` parsing; cada um recebe testes targeted até alcançar ≥ 90%.
-- Suite agregada cresce ≥ 30 testes vs baseline v1.19 (482 → ≥ 512).
+- Suite agregada cresce ≥ 30 testes vs baseline v1.19 (482 → ≥ 512). ✅ **Atingido: +169 (482→651)**
 - CI all-green pós-merge — coverage real ≥ 90% confirmado pelo gate.
-- Stable API v1.0+ preservada (zero alterações em superfície de exports).
+- Stable API v1.0+ preservada (zero alterações em superfície de exports). ✅
+
+**Progresso por plano:**
+- ✅ **Plan 100-01** (concluído 2026-05-10) — 8 test files, 169 testes, 7/8 hot files ≥90% (cli/index.js parou em 82.61%, trade-off documentado em SUMMARY)
+- 📋 **Plan 100-02** — bump CI threshold + verificação final
 
 ### Phase 101: Mutation Testing Baseline (stryker) 📋
 
