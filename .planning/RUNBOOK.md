@@ -15,6 +15,10 @@
 | `kit sync install` errors with `EMANIFESTMISMATCH` | Manifest mismatch | [Scenario 3](#3-manifest-mismatch-on-sync) |
 | GitHub Actions release workflow red, npm shows old version | npm publish fail | [Scenario 4](#4-npm-publish-workflow-fail) |
 | User reports "files missing" in `.claude/` after sync | Sync corruption | [Scenario 5](#5-sync-corruption-partial-write) |
+| `npm test` passes locally but CI red on coverage gate | CI coverage regression | [Scenario 6](#6-ci-coverage-gate-regression) |
+| stderr shows `[kit-mcp] auto-snapshot persist failed` | Auto-snapshot persist failure | [Scenario 7](#7-auto-snapshot-persist-failure) |
+| Two IDEs running, only one shows sidecar UI events | Multi-IDE sidecar port collision | [Scenario 8](#8-multi-ide-sidecar-port-collision) |
+| Release workflow red with "high CVE in transitive dep" | Critical CVE blocks publish | [Scenario 9](#9-critical-cve-blocks-publish) |
 | MCP-tool error rate climbing | Service degrading — see [SLO check](#slo-check-is-the-service-degraded) |
 
 ---
@@ -281,6 +285,237 @@ test -f .claude/.kit-mcp/last-sync.json && echo "manifest snapshot present"
 
 ---
 
+## 6. CI coverage gate regression
+
+**Symptom**
+
+- A PR or push to `main` fails the line-coverage gate with `::error::line coverage XX% < 86% threshold`.
+- The local `npm test` passed, but the CI step `Audit — line coverage threshold` exits non-zero.
+- The threshold of `86` was introduced in Phase 100.02 (v1.20 ratchet — see [`ci.yml`](../.github/workflows/ci.yml) `THRESHOLD=86` block) and applies on `ubuntu-latest` × Node 22 × `claude-code` only.
+
+**Diagnosis**
+
+```bash
+# 1. Reproduce the CI coverage run locally — the "%" is reported on the
+#    "ℹ all files" footer of the Node 22 built-in coverage reporter.
+node --experimental-test-coverage --test test/unit/*.test.js > /tmp/cov.txt 2>&1
+grep "^ℹ all files" /tmp/cov.txt
+
+# 2. List per-file coverage sorted ascending — the regressed file is usually
+#    one that was edited in the same PR and lost test coverage.
+grep "^ℹ src/" /tmp/cov.txt | sort -t'|' -k2 -n | head -10
+
+# 3. If the regression is in a file the PR did not touch, somebody removed
+#    or skipped a test. Bisect with git:
+git log -p --since="1 week ago" -- test/unit/ | head -200
+
+# 4. If the threshold itself feels wrong (paths were extracted/refactored
+#    legitimately), inspect the threshold history block in ci.yml — it
+#    documents the 65 → 75 → 80 → 86 ratchet path with rationale.
+grep -n "THRESHOLD" .github/workflows/ci.yml
+```
+
+**Fix**
+
+| Diagnosis | Fix |
+|---|---|
+| File touched in PR added uncovered lines | Add targeted unit tests covering the new branches. The pattern from Phase 100.01 is one test file per hot path (`render-paths.test.js`, `core-ui-paths.test.js`, etc.) — keep the same one-file-per-target shape. |
+| Test removed by mistake (`git log -p test/unit/` shows the deletion) | Revert the deletion or add a replacement test that preserves the assertion intent. |
+| Refactor legitimately moved lines into harder-to-test territory (live spawn, interactive TTY, network) | Either extract the testable helper into a sibling module (`*-paths.js`) and import it, or document an inline rationale and **temporarily** rollback the `THRESHOLD` value in `ci.yml`. Open a follow-up issue with the v1.21+ ratchet path (see Phase 100.02 SUMMARY for the canonical 3 avenues — mutation gate, helper extraction, branch coverage). |
+| New `__test`-only export added to `src/` | Reject — Stable API v1.0+ forbids new `__test` exports. Use SDK-internal access pattern (`server._requestHandlers`) or fixture-driven end-to-end tests instead, per Plan 100-01 decision 1. |
+| `cli/index.js` is the cap (currently 82.61% — see ci.yml history block) | Expected. Don't try to lift it without extracting helpers; the uncovered paths require live spawn or interactive TTY by design. Lifting that file is queued for v1.21+ (Phase 105 follow-up). |
+
+**Verification**
+
+```bash
+# Re-run the same one-shot the CI step uses — exit 0 when the gate passes.
+node --experimental-test-coverage --test test/unit/*.test.js > /tmp/cov.txt 2>&1
+LINE_COV=$(grep "^ℹ all files" /tmp/cov.txt | head -1 | awk -F'|' '{print $2}' | tr -d ' %')
+echo "Line coverage: $LINE_COV% (threshold: 86%)"
+[ "${LINE_COV%.*}" -ge 86 ] && echo "OK" || echo "STILL BELOW THRESHOLD"
+```
+
+> **Cross-ref:** Phase 100 (Coverage ratchet 80 → 86 with rationale + 3 avenues for v1.21+) at [`.planning/phases/100-coverage-ratchet-80-90/`](./phases/100-coverage-ratchet-80-90/). The exhaustive threshold history (65 → 75 → 80 → 86) lives inline in `ci.yml` so future maintainers don't need to leave the file to understand the ratchet path.
+
+---
+
+## 7. Auto-snapshot persist failure
+
+**Symptom**
+
+- The MCP server stderr stream shows `[kit-mcp] auto-snapshot persist failed: <error>` repeatedly (once per `metrics-snapshot` tool call after the 1s throttle window).
+- Tool handler still returns the in-memory payload normally — the contract `{counters, latency}` is preserved (Phase 102 graceful design).
+- But `.planning/metrics/snapshots/` is empty or stale, and `/burn-rate-status` reports `no_data` because [`metrics.loadSnapshots`](../src/core/metrics.js) finds nothing on disk to read.
+
+**Diagnosis**
+
+```bash
+# 1. Capture the exact error type from stderr — common categories are
+#    ENOSPC (disk full), EACCES (permission denied), EISDIR / ENOTDIR
+#    (path-shape mismatch — usually .planning/metrics existing as a regular
+#    file), and EROFS (read-only mount).
+# Filter stderr from the IDE's MCP log if available, or reproduce by calling
+# the tool directly via your MCP client and watching stderr.
+
+# 2. Disk space — kit-mcp writes JSON snapshots ~5-15 KB each, plus rolling
+#    cleanup of files older than 30d (Phase 99). If /home or %USERPROFILE%
+#    is at 100%, the persist fails even though the in-memory payload returns.
+df -h .planning
+
+# 3. Permissions — the snapshots subdir must be writable by the same user
+#    that runs the MCP server (the IDE process owner).
+ls -la .planning/metrics/snapshots/ 2>/dev/null || echo "directory missing"
+
+# 4. Path-shape — if .planning/metrics exists as a regular FILE rather than
+#    a directory, mkdir(.../snapshots) throws ENOTDIR. This is the failure
+#    mode test 4 in mcp-metrics-snapshot-auto-persist.test.js (Phase 102).
+file .planning/metrics 2>/dev/null
+
+# 5. Direct invoke to isolate the failure — call persistSnapshot() outside
+#    the MCP handler. Same code path, no MCP transport noise.
+node -e "import('./src/core/metrics.js').then(m => m.persistSnapshot().then(p => console.log('OK', p)).catch(e => console.error('FAIL', e.code, e.message)))"
+```
+
+**Fix**
+
+| Diagnosis | Fix |
+|---|---|
+| `ENOSPC` (disk full) | Free disk space. Older snapshots are auto-cleaned at >30d (Phase 99 retention), but in-flight saturation can still trip. After freeing space, the next tool call writes a fresh snapshot. |
+| `EACCES` / permission denied | `chmod -R u+rwX .planning/metrics/` (or `icacls` on Windows). The directory was likely created with stricter umask by another process or root. |
+| `.planning/metrics` exists as a regular file (ENOTDIR) | `rm .planning/metrics` then re-trigger any tool call. The auto-snapshot path will recreate the directory on demand. |
+| Permission denied via security software (Windows Defender, antivirus quarantine on `.json` writes) | Whitelist `.planning/metrics/snapshots/` (or the project root) in the AV exclusion list. Same fix shape as Scenario 5 antivirus quarantine. |
+| `EROFS` (read-only mount) | The project is on a read-only mount (e.g. squashfs, NFS export with `ro`). Move the project to a writable location, or set `KIT_MCP_METRICS_DIR=<writable-path>` if/when that env override ships (currently absent — file an issue). |
+| Throttle skips (no error, just empty) | Expected — the in-memory `_lastAutoPersistTs` guard suppresses writes within 1s of each other (Phase 102 throttle decision). Check that you ran two tool calls > 1s apart before declaring failure. |
+
+**Verification**
+
+```bash
+# 1. stderr clean after the fix — call the tool again and watch stderr.
+# 2. New snapshot file appears in the directory:
+ls .planning/metrics/snapshots/*.json 2>/dev/null | wc -l
+# Expected: at least one fresh file with mtime in the last few seconds.
+
+# 3. /burn-rate-status command no longer returns no_data once at least 1
+#    snapshot covers the lookahead window (1h fast / 6h slow per Phase 103).
+```
+
+> **Cross-ref:** Phase 102 (auto-snapshot graceful design) at [`.planning/phases/102-auto-snapshot-metrics-tool/`](./phases/102-auto-snapshot-metrics-tool/) and Phase 99 (retention + burn-rate calc) at [`.planning/phases/99-metrics-retention-burnrate-calc/`](./phases/99-metrics-retention-burnrate-calc/). The stderr message format is fixed in [`src/mcp-server/index.js`](../src/mcp-server/index.js) handleMetricsSnapshot wrap.
+
+---
+
+## 8. Multi-IDE sidecar port collision
+
+**Symptom**
+
+- The user opens the same project in Claude Code AND Cursor (or any 2+ IDEs) at the same time.
+- Both auto-spawn a sidecar (default base port 7100) and the second one escalates to 7101..7199 per [`src/ui/port.js`](../src/ui/port.js) auto-port logic.
+- Hooks fire from IDE A, but the UI sees them in IDE B (or vice versa) — events route to the wrong sidecar because the project's shared `.kit-mcp/sidecar.lock` records only one PID/port pair at a time.
+
+**Diagnosis**
+
+```bash
+# 1. List sidecars currently bound to the 71xx range.
+ss -tlnp 2>/dev/null | grep -E '710[0-9]|71[0-9]{2}' || netstat -an | grep 71
+
+# 2. Inspect the lockfile — pid + port + startedAt + ttlSec are recorded.
+#    A shared lockfile means both IDEs see the same record; only the most
+#    recent writer wins.
+cat .claude/.kit-mcp/sidecar.lock 2>/dev/null || cat .kit-mcp/sidecar.lock 2>/dev/null
+
+# 3. Hit each suspected port's healthz to differentiate active sidecars.
+curl -fsS http://localhost:7100/healthz
+curl -fsS http://localhost:7101/healthz
+
+# 4. If you cannot tell which IDE owns which sidecar, kill them and observe
+#    which IDE re-spawns first.
+ps -ef | grep -E 'kit-mcp|sidecar' | grep -v grep
+```
+
+**Fix**
+
+| Diagnosis | Fix |
+|---|---|
+| Both IDEs share the same project lockfile, last writer wins | Per-IDE port base override: in IDE B's environment (settings → MCP server env, or shell rc when launching that IDE), set `KIT_MCP_UI_PORT_BASE=7200`. The two sidecars then bind to disjoint ranges (7100-7199 and 7200-7299) and stop fighting for the lockfile. |
+| Stale lockfile from IDE A blocks IDE B's spawn | `kit ui stop --project-root .` is idempotent. Then IDE B's next tool call will auto-spawn cleanly into the cleared lockfile slot. Same recovery shape as Scenario 2 stale-lockfile. |
+| You want one shared sidecar (single UI surface for both IDEs) | Set `KIT_MCP_UI_PORT=7100` (note: `_PORT`, not `_PORT_BASE`) in BOTH IDEs. The first one to spawn wins; the second one connects as client and emits hooks into the shared event bus. Both IDEs see the same events. |
+| Hooks route to wrong sidecar in spite of disjoint ranges | Check the hook publisher's `KIT_MCP_UI_PORT` env. The publisher uses the lockfile by default; setting `KIT_MCP_UI_PORT` explicit pins the hook to a specific sidecar regardless of which one wrote the lockfile last. See [`src/ui/auto-spawn.js`](../src/ui/auto-spawn.js) and the Phase 21 hook publisher. |
+| Both IDEs run different kit-mcp versions (one stale via `npx -y` cache) | Re-run `npx -y @luanpdd/kit-mcp@latest --version` in each IDE shell. The IDE caches `npx` resolutions; a stale version can spawn a different sidecar build entirely. Restart the IDE after upgrading. |
+
+**Verification**
+
+```bash
+# Each IDE should report its own active sidecar with a distinct port:
+# (run inside each IDE's environment)
+kit ui status --project-root .                            # → "🟢 running on http://localhost:71xx"
+# Different x's per IDE; no port conflict reported.
+
+# Hooks route correctly: trigger an action in IDE A, confirm only IDE A's UI
+# tab shows the new event line. Repeat for IDE B.
+```
+
+> **Cross-ref:** Sidecar architecture lives in Phases 13/14 (v1.2) at [`.planning/phases/13-sidecar/`](./phases/13-sidecar/) and [`.planning/phases/14-ui-frontend/`](./phases/14-ui-frontend/). Hook publisher routing is Phase 21. The auto-port escalation logic is in [`src/ui/port.js`](../src/ui/port.js) and the lockfile contract in [`src/ui/lockfile.js`](../src/ui/lockfile.js).
+
+---
+
+## 9. Critical CVE blocks publish
+
+**Symptom**
+
+- `git push origin v<X.Y.Z>` succeeded, but the GitHub Actions release workflow shows red on the audit step with `npm audit found 1 high severity vulnerability`.
+- A direct dep (`@modelcontextprotocol/sdk`, `commander`, `picocolors`) or a transitive dep is flagged.
+- The CI gate `Audit — npm audit (high/critical CVEs in runtime deps)` exits non-zero — see the rule in [`ci.yml`](../.github/workflows/ci.yml) which runs `npm audit --omit=dev --audit-level=high` against `dependencies` and `optionalDependencies` only.
+
+**Diagnosis**
+
+```bash
+# 1. Inspect the failing run — the audit output names the package + CVE.
+gh run list --workflow release.yml --limit 5
+gh run view <run-id> --log-failed | head -50
+
+# 2. Reproduce the audit gate locally with the same flags as CI.
+npm audit --omit=dev --audit-level=high
+
+# 3. If the flagged package is transitive, surface the chain to figure out
+#    which direct dep brought it in.
+npm ls <flagged-package>
+
+# 4. Read the CVE description — DoS-only theoretical CVEs are different
+#    from RCE / data exfiltration / auth bypass severity.
+# Visit https://github.com/advisories/GHSA-<id> from the audit output.
+```
+
+**Fix**
+
+| Diagnosis | Fix |
+|---|---|
+| Direct dep has a patched version available | `npm install <dep>@<patched-version>`, commit, retag (`git tag -d v<X.Y.Z> && git push --delete origin v<X.Y.Z> && git tag v<X.Y.Z> && git push --tags`). |
+| Transitive dep has the vulnerability, direct dep won't ship a fix yet | Use [`npm overrides`](https://docs.npmjs.com/cli/v10/configuring-npm/package-json#overrides) in `package.json` to pin the transitive to a patched version. Commit, retag. Document the override + CVE link in `package.json` comments (line above the `overrides` block) for future maintainers. |
+| Direct dep is unmaintained / no patch in sight | File an issue against the direct dep maintainer. If the CVE is theoretical-only DoS (no RCE, no data leak) and you must ship, **temporarily** flip the audit gate from `--audit-level=high` to `--audit-level=critical` in `ci.yml` with an inline comment (`# Temporary: <CVE-id> tracked at #<issue>; revert when patched`) and an open issue blocking the next release. Never bypass without an issue and a revert plan. |
+| `NPM_TOKEN` problem masquerades as audit fail (red workflow, vague error) | Re-read the workflow log carefully. Token errors usually say `403` / `401`; audit errors say `found N high vulnerabilities`. They look superficially similar in summary view. |
+| New direct dep added in the same PR pushed total > 6 budget | Different gate — `Audit — runtime deps budget (REQ INFRA-17-01)` fails first. Drop the new dep or follow the budget-bump protocol (ADR in `.planning/decisions.md` + budget number bump in `ci.yml`). |
+
+**Verification**
+
+```bash
+# 1. Local audit gate exits 0:
+npm audit --omit=dev --audit-level=high
+echo "audit exit: $?"
+
+# 2. Retag and re-fire the workflow:
+git tag -d v<X.Y.Z>
+git push --delete origin v<X.Y.Z>
+git tag v<X.Y.Z>
+git push --tags
+
+# 3. Workflow turns green; npm registry shows the new version.
+gh run list --workflow release.yml --limit 1                 # status: success
+npm view @luanpdd/kit-mcp version                            # equals tagged version
+```
+
+> **Cross-ref:** Phase 92.01 (audit gate at high severity) at [`.planning/phases/92-deps-budget-runtime/`](./phases/92-deps-budget-runtime/), Phase 89 (manifest regen at `prepublish`) at [`.planning/phases/89-cold-start-perf/`](./phases/89-cold-start-perf/), and the [`hermetic-builds`](../kit/skills/hermetic-builds/SKILL.md) skill — its "audit gate is the only defense, intentionally" rationale is the canonical reason this RUNBOOK section exists.
+
+---
+
 ## SLO check — is the service degraded?
 
 When unsure whether a user-reported issue is "broken" vs "slow", check the SLOs:
@@ -323,7 +558,11 @@ There is no on-call rotation today (single-repo, single-human maintainer). Escal
 - Skill: [`production-readiness-review`](../kit/skills/production-readiness-review/SKILL.md) — the 6-axis PRR scorecard whose Operations axis this RUNBOOK satisfies.
 - Skill: [`blameless-postmortems`](../kit/skills/blameless-postmortems/SKILL.md) — what to do *after* an incident is resolved.
 - Skill: [`core-analysis-loop`](../kit/skills/core-analysis-loop/SKILL.md) — scientific method for hypothesis-driven debugging during an active incident.
+- Skill: [`hermetic-builds`](../kit/skills/hermetic-builds/SKILL.md) — rationale for the audit gate referenced in [Scenario 9](#9-critical-cve-blocks-publish).
 - Doc: [`.planning/FAILURE-MODES.md`](./FAILURE-MODES.md) — top-down catalog of the failure modes this RUNBOOK responds to.
 - Doc: [`.planning/BENCHMARK.md`](./BENCHMARK.md) — baseline performance envelope; "is this slow?" answers live there.
 - Doc: [`.planning/slos/`](./slos/) — SLO definitions consumed by `/burn-rate-status`.
 - Module: [`src/core/metrics.js`](../src/core/metrics.js) — the in-memory golden-signals store the snapshot reads.
+- Audit: [`.planning/audits/v1.20/MUTATION-BASELINE.md`](./audits/v1.20/MUTATION-BASELINE.md) — Stryker mutation baseline established in Phase 101 (v1.20).
+- Audit: [`.planning/audits/v1.20/EMERGENCY-DRILL-LOG.md`](./audits/v1.20/EMERGENCY-DRILL-LOG.md) — trimestral game-day cadence; first entry 2026-Q2.
+- Audit: [`.planning/audits/v1.20/PRR-RECHECK.md`](./audits/v1.20/PRR-RECHECK.md) — v1.19 → v1.20 PRR axis movement (Emergency 4/5 → 5/5 from this RUNBOOK expansion).
