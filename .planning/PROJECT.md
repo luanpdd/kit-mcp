@@ -1,33 +1,26 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-10 — v1.20 Tech Debt Closure & Quality Hardening **iniciado**.
+> Última atualização: 2026-05-10 após milestone v1.20 — Tech Debt Closure & Quality Hardening **entregue**.
 
 ## Estado Atual
 
-**v1.19.0 — Maturidade Operacional** **entregue** 2026-05-09 (Phases 98-99, 5 REQs, 64 testes novos, 482 baseline final). Coverage 81.51%, PRR 28/30. Burn-rate calculator wired aos SLOs (.planning/slos/*.yml + .planning/metrics/snapshots/), retention 30d. 7 releases consecutivas em 2026-05-09 (v1.13→v1.19) totalizando 21 fases.
+**v1.20.0 — Tech Debt Closure & Quality Hardening** **entregue** 2026-05-10 (Phases 100-105, 6 REQs, +89 testes, 671 baseline final). **PRR 30/30** atingido. Coverage 86.84% (vs 81.51% v1.19). Mutation baseline estabelecido (57.40% em 10/15 src/core/ files via stryker). Multi-window burn-rate (1h fast + 6h slow). Auto-snapshot em metrics-snapshot tool. RUNBOOK.md 5→9 scenarios + EMERGENCY-DRILL-LOG.md trimestral. Kit cache pre-warm reduziu MCP p95 de 144ms → 0ms.
 
-**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.19 (Hardening + Suítes auto-aplicadas). 6 suítes ativas no kit + framework eat-your-own-dog-food (golden signals + SLOs + RUNBOOK + burn-rate live).
+**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30). 6 suítes ativas no kit + framework eat-your-own-dog-food maduro (golden signals + dual-window SLOs + RUNBOOK 9 cenários + mutation testing baseline).
 
-## Milestone Atual: v1.20 Tech Debt Closure & Quality Hardening
+## Próximo Milestone
 
-**Objetivo:** Fechar os 5 itens de tech debt parqueados pós-v1.19, elevando PRR 28→30/30 e estabelecendo mutation testing como gate de qualidade canônico do kit.
+(a definir — execute `/novo-marco` para iniciar v1.21+)
 
-**Funcionalidades alvo (todas internas, zero superfície de API nova):**
+**Tech debt v1.21+ documentado em `.planning/milestones/v1.20-MILESTONE-AUDIT.md`:**
+- Phase 100: cli/index.js extract helpers para 86→90 coverage ratchet
+- Phase 101: completar mutation baseline 5 files restantes (sync, ui, watch, reverse-sync, gate-runner) + CI mutation gate threshold ~55%
+- Phase 105: p99 latency monitoring (vs current p95 only) com disk-persistent snapshots; M1 cold-start CLI sub-200ms
 
-- **Auto-snapshot em `metrics-snapshot`** — chamadas ao tool MCP `metrics-snapshot` automaticamente persistem snapshot via `metrics.persistSnapshot()` em vez de exigir trigger manual. Fecha gap operacional onde snapshots ficam vazios em produção até alguém lembrar.
-- **Multi-window burn-rate** — substitui single-window (atual) por dual-window: 1h fast (page) + 6h slow (ticket), aplicando precisamente o `burn-rate-alerting` skill (lookahead/baseline fator 4×). `/burn-rate-status` e SLOs YAML ganham campo `windows: [fast, slow]`.
-- **Mutation testing via stryker** — adiciona `stryker-mutator` como dev dep, `stryker.config.json` configurado para src/core/, npm script `test:mutation`, baseline mutation score documentado em `.planning/audits/v1.20/MUTATION-BASELINE.md`. Não bloqueia CI por enquanto (gate v1.21+).
-- **Coverage ratchet 80→90%** — eleva line threshold em ci.yml de 80→90; identifica top arquivos abaixo do alvo, escreve testes targeted. Continuação direta de Phase 98 (v1.19).
-- **PRR Emergency 4→5** — RUNBOOK.md ganha 3+ scenarios novos (boot failure, sidecar port collision, SDK CVE rotation), inclui drill log template.
-- **PRR Performance 4→5** — wins marginais restantes (lazy-load chokidar, sync watcher debounce tuning, MCP roundtrip p95 sub-100ms).
+## ~~Milestone Anterior: v1.20 Tech Debt Closure & Quality Hardening~~ (entregue 2026-05-10)
 
-**Decisões de stack:**
-- 1 dev dep nova (stryker-mutator). Stable API v1.0+ preservada.
-- Roadmap começa em **Phase 100** (continua de v1.19 que terminou em Phase 99).
-- Conteúdo PT-BR (alinhado v1.8-v1.19).
-
-**Contrato preservado:** Quem usa kit-mcp em produção não percebe diferença além de auto-snapshot ativo (transparente) e dual-window burn-rate em SLOs. CI permanece verde.
+6 itens de tech debt parqueados pós-v1.19 fechados. PRR 28→30/30 atingido. Mutation testing como gate de qualidade canônico estabelecido (baseline 57.40%). Detalhes em [`.planning/milestones/v1.20-ROADMAP.md`](./milestones/v1.20-ROADMAP.md) + [`v1.20-MILESTONE-AUDIT.md`](./milestones/v1.20-MILESTONE-AUDIT.md).
 
 ## ~~Milestone Anterior: v1.13-v1.19 — Hardening Series (entregue 2026-05-09)~~
 

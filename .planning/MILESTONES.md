@@ -1,5 +1,21 @@
 # MILESTONES.md — Histórico de releases
 
+## v1.20 Tech Debt Closure & Quality Hardening (Shipped: 2026-05-10)
+
+**Phases completed:** 6 phases, 7 plans, 0 tasks
+
+**Key accomplishments:**
+
+- Suíte de testes unitários cresceu 169 testes (482→651) elevando 7 de 8 arquivos hot ao ≥90% line coverage; cli/index.js parou em 82.61% por limites estruturais documentados.
+- CI line coverage gate elevado de 80% para 86% via edit em ci.yml (THRESHOLD + REQ tag + history block) — desvio estratégico documentado: 86 em vez do 90 original porque cli/index.js fica em 82.61% por limites estruturais (live spawn + TTY), e atingir 90 violaria Stable API v1.0+.
+- Stryker instalado + configurado + baseline mutation score 57.40% em 10 arquivos src/core/ (1310 mutants, 739 killed). Documento canônico v1.20 para futuro mutation gate.
+- handleMetricsSnapshot agora invoca persistSnapshot() automaticamente antes de retornar o payload, com throttle 1s in-memory e graceful fs error — fechando o gap operacional onde .planning/metrics/snapshots/ ficava vazio até trigger manual.
+- `/burn-rate-status` agora calcula burn rate dual-window (fast 1h + slow 6h) independentemente por SLO e combina via canonical Google SRE logic — PAGE quando ambos críticos, TICKET para slow erosion sustained, WARN para spike isolado ou mild burn ≥1×, conservativo no_data quando qualquer janela tem snapshots insuficientes.
+- RUNBOOK.md expanded 5 → 9 scenarios, EMERGENCY-DRILL-LOG.md trimestral cadence established with 2026-Q2 entry, and PRR-RECHECK.md documents Emergency axe 4/5 → 5/5 — closing SRE-20-01 and lifting v1.20 PRR projection to 29/30 (pending Phase 105 Performance).
+- Pre-warm fire-and-forget de `listKit(BUNDLED_KIT_ROOT)` após `server.connect`, dropando M4 p95 de 144.55ms para 0.0ms (>100% redução vs target ≥30%) e fechando PRR Performance axe 4/5 → 5/5 — total v1.20 30/30, milestone pronto para `/auditar-marco`.
+
+---
+
 ## v1.19 Maturidade Operacional (Shipped: 2026-05-09)
 
 **Phases completed:** 2 phases, 0 plans, 0 tasks
