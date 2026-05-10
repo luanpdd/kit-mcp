@@ -1,9 +1,9 @@
 ---
 state_version: 1.0
-milestone: (none)
-milestone_name: ""
-status: Idle — v1.20.0 entregue 2026-05-10. Pronto para /novo-marco v1.21+.
-last_updated: "2026-05-10T08:30:00.000Z"
+milestone: v1.21
+milestone_name: "Suíte Multi-Tenant SaaS B2B"
+status: Definindo requisitos
+last_updated: "2026-05-10T11:00:00.000Z"
 progress:
   total_phases: 0
   completed_phases: 0
@@ -15,14 +15,18 @@ progress:
 
 ## Posição Atual
 
-Fase: nenhuma
-Status: **IDLE** — v1.20.0 arquivada 2026-05-10. Pronto para `/novo-marco` v1.21+.
+Fase: Não iniciada (definindo requisitos)
+Plano: —
+Status: Definindo requisitos
+Última atividade: 2026-05-10 — Milestone v1.21 iniciado (Suíte Multi-Tenant SaaS B2B)
 
 ## Milestone ativo
 
-**Nenhum.** Última release: v1.20.0 (Tech Debt Closure & Quality Hardening). 6 fases entregues, 6 REQs, +89 testes baseline, PRR final **30/30**.
+**v1.21 Suíte Multi-Tenant SaaS B2B** — iniciada 2026-05-10. Definindo requisitos.
 
-## Estado pós-v1.20
+6ª suíte do kit, especializa `/supabase` v1.8 para apps B2B com hierarquia firm→department→leader→collaborator, RBAC granular, invite flow, super-admin platform, audit logs, compliance LGPD, integração Evolution Go/WhatsApp, CRM lead pipeline, e React patterns multi-tenant.
+
+## Contexto Acumulado (do milestone anterior)
 
 - **Suite total:** 671 testes (562 unit + 109 integration), 0 fail, 2 skip
 - **Coverage:** 86.84% line (CI threshold 86)
@@ -33,7 +37,7 @@ Status: **IDLE** — v1.20.0 arquivada 2026-05-10. Pronto para `/novo-marco` v1.
 - **Stable API v1.0+:** preservada cross-8-releases (v1.13→v1.20)
 - **Working tree:** clean (post-archive)
 
-## Tech debt parqueado para v1.21+
+## Tech debt parqueado (deferido para v1.22+)
 
 Documentado em `.planning/milestones/v1.20-MILESTONE-AUDIT.md` `tech_debt:`:
 
@@ -43,7 +47,8 @@ Documentado em `.planning/milestones/v1.20-MILESTONE-AUDIT.md` `tech_debt:`:
 
 ## Comandos para retomar
 
-- `/novo-marco` — iniciar v1.21+ (precisa direção: completar mutation baseline? coverage ratchet 86→90? feature work?)
+- `/discutir-fase 106` — coletar contexto para Phase 106 (após `/novo-marco` terminar)
+- `/planejar-fase 106` — pular discussão, planejar diretamente
 - Ler `.planning/milestones/v1.20-MILESTONE-AUDIT.md` para tech debt residual
 
 ## Quirk persistente (gravado em memory)

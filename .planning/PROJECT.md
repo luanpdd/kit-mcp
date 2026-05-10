@@ -1,7 +1,7 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-10 após milestone v1.20 — Tech Debt Closure & Quality Hardening **entregue**.
+> Última atualização: 2026-05-10 — milestone v1.21 (Suíte Multi-Tenant SaaS B2B) iniciado.
 
 ## Estado Atual
 
@@ -9,14 +9,76 @@
 
 **Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30). 6 suítes ativas no kit + framework eat-your-own-dog-food maduro (golden signals + dual-window SLOs + RUNBOOK 9 cenários + mutation testing baseline).
 
-## Próximo Milestone
+## Milestone Atual: v1.21 Suíte Multi-Tenant SaaS B2B
 
-(a definir — execute `/novo-marco` para iniciar v1.21+)
+**Objetivo:** Adicionar a 6ª suíte ao kit (Multi-Tenant SaaS B2B) — comando `/multi-tenant` + 10 agents + 15 skills + glossário compartilhado, especializando a suíte `/supabase` v1.8 existente para apps B2B com hierarquia firm→department→leader→collaborator e RBAC granular. Stack alvo: React + Supabase + Vercel.
 
-**Tech debt v1.21+ documentado em `.planning/milestones/v1.20-MILESTONE-AUDIT.md`:**
-- Phase 100: cli/index.js extract helpers para 86→90 coverage ratchet
-- Phase 101: completar mutation baseline 5 files restantes (sync, ui, watch, reverse-sync, gate-runner) + CI mutation gate threshold ~55%
-- Phase 105: p99 latency monitoring (vs current p95 only) com disk-persistent snapshots; M1 cold-start CLI sub-200ms
+**Funcionalidades alvo (todas aditivas, zero superfície de API quebrada):**
+
+- **Comando** `/multi-tenant` orquestrador (sinônimos PT/EN: `multi-tenant`, `b2b`, `tenant`, `escritorio`) com ~11 subcomandos roteando para os agents da suíte
+
+- **Agents core (4)** — design + audit:
+  - `b2b-saas-architect` — projeta hierarquia firm→department→role→permission antes de migrations (especializa `supabase-architect` v1.8)
+  - `multi-tenant-rls-writer` — RLS hierárquica (org-level, dept-level, role-based, permission-based, super-admin bypass) com helper functions PG (especializa `supabase-rls-writer` v1.8)
+  - `multi-tenant-isolation-auditor` — verifica que não há data leak entre orgs (cross-tenant SELECT, RLS bypass paths)
+  - `lgpd-compliance-auditor` — auditoria LGPD per-tenant (data subject rights, retention, consent management, data export/delete)
+
+- **Agents implementers (6)** — workers ativos:
+  - `org-onboarding-implementer` — fluxo signup → criar org → primeiro admin → setup wizard
+  - `invite-flow-implementer` — token-based invites com role pré-definido + accept flow
+  - `super-admin-implementer` — você como god-mode sobre todos tenants (cross-tenant view, billing, métricas)
+  - `audit-log-implementer` — audit trail multi-tenant (quem fez o quê em qual org, retention)
+  - `evolution-go-integrator` — webhooks Evolution Go/WhatsApp (signature validation, idempotency, dedup, rate limit Meta)
+  - `crm-pipeline-implementer` — leads + sales pipeline + ownership transfer + scoring + state machine
+
+- **Skills core (4)** — arquitetura e padrões:
+  - `b2b-saas-architecture` — patterns canônicos (org/dept/role/permission, single vs shared schema, tenant isolation strategy)
+  - `multi-tenant-rls-hierarchy` — RLS para hierarquia firm/dept/role com helper functions PG (`is_member_of`, `has_role`, `has_permission`)
+  - `rbac-permissions-matrix-supabase` — modelagem permissions (action × resource × scope)
+  - `multi-tenant-performance-scaling` — partitioning por org_id, indexing strategy, connection pooling, MVs per-tenant
+
+- **Skills flow (3)** — fluxos canônicos:
+  - `org-onboarding-flow` — signup → setup wizard → first admin → invitar membros
+  - `member-invite-flow` — token-based invites com role pré-definido (accept, decline, resend, expire)
+  - `super-admin-platform-pattern` — view sobre todos tenants (impersonation, audit, cross-tenant queries)
+
+- **Skills compliance (2)** — regulatório:
+  - `audit-log-multi-tenant` — patterns canônicos (event taxonomy, retention, query, export)
+  - `lgpd-multi-tenant-compliance` — data subject rights por tenant, consent management, retention policies, data export/delete
+
+- **Skills domain (3)** — verticais aplicáveis a qualquer nicho:
+  - `evolution-go-whatsapp-integration` — webhooks (signature, idempotency, dedup), rate limit Meta, message queue patterns
+  - `whatsapp-conversation-state-machine` — modelagem de conversação WhatsApp como state machine
+  - `crm-lead-pipeline-patterns` — state machine de leads, scoring, ownership, stage transitions
+
+- **Skills React (3)** — frontend patterns:
+  - `org-switcher-react-pattern` — UI org switcher com state management (assume Vite SPA OU Next.js v16)
+  - `permission-gate-react-pattern` — `<PermissionGate permission="x">` declarativo
+  - `member-management-react-shadcn` — list + invite + role manager UI (shadcn/ui canonical)
+
+- **Glossário compartilhado:** `kit/skills/_shared-multi-tenant/glossary.md` — vocabulário PT-BR↔EN (tenant, org, member, role, permission, RLS scope, cross-tenant, super-admin, audit log, etc.)
+
+**Decisões de stack:**
+- **Stack alvo:** React + Supabase + Vercel — caminho `@supabase/ssr` para Next.js v16 OU `@supabase/supabase-js` para Vite SPA
+- **Não duplica** suíte `/supabase` v1.8 — agents novos invocam `supabase-architect`, `supabase-rls-writer`, `supabase-edge-fn-writer`, `supabase-cron-queues` etc. e adicionam camada multi-tenant especializada
+- **Verticais específicas (advocacia/OAB) fora do escopo** — genérico B2B aplicável a qualquer nicho (advocacia, médicos, contadores, vendas, etc.)
+- Zero deps novas. Apenas conteúdo de kit (markdown). Stable API v1.0+ preservada — só adições.
+- Conteúdo PT-BR (alinhado v1.8/v1.9/v1.10/v1.11/v1.12). Code blocks EN com comentários PT-BR.
+- Roadmap começa em **Phase 106** (continuação de v1.20 que terminou em 105).
+
+**Beneficiários principais:**
+- Suíte Supabase v1.8 — agents existentes ficam invocados pela camada multi-tenant
+- Suíte Observabilidade v1.9 — `obs.events` ganha `tenant_id` canônico desde projeto; audit triggers por tenant
+- Suíte SRE v1.10 — `prr-conductor` ganha checks de isolamento multi-tenant em Axe 1 (System Architecture); cross-tenant data leak vira incident class
+- Suíte Legacy v1.12 — `multi-tenant-rls-writer` herda anti-pitfalls de `supabase-rls-writer` (`(select auth.uid())` wrapper, no `user_metadata` em authz)
+- Fluxo framework — `/discutir-fase` para apps B2B passa a perguntar sobre isolamento multi-tenant
+
+**Contrato preservado:** Quem usa kit-mcp em produção não percebe nada além de novos artefatos disponíveis ao sincronizar (`kit sync install <target>`). CI permanece verde. Stable API v1.0+ inalterada.
+
+**Tech debt deferido para v1.22+** (do v1.20 audit):
+- Phase 100 carry-over: cli/index.js extract helpers para 86→90 coverage ratchet
+- Phase 101 carry-over: completar mutation baseline 5 files restantes + CI mutation gate threshold ~55%
+- Phase 105 carry-over: p99 latency monitoring + M1 cold-start CLI sub-200ms
 
 ## ~~Milestone Anterior: v1.20 Tech Debt Closure & Quality Hardening~~ (entregue 2026-05-10)
 
