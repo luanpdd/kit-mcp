@@ -4,7 +4,7 @@
 
 ## Em andamento
 
-### v1.21 Suíte Multi-Tenant SaaS B2B (Phases 106–116)
+## v1.21 — Suíte Multi-Tenant SaaS B2B (Phases 106–116)
 
 > Gerado: 2026-05-10 | 11 phases | 15 skills + 10 agents + 1 command + 1 glossário + 3 gates | 59 REQs
 
@@ -18,7 +18,7 @@
 
 ---
 
-#### Ondas de Execução
+### Ondas de Execução
 
 ```
 Onda 1 (paralelo):  Phase 106  Phase 116
@@ -34,7 +34,7 @@ Onda 4:             Phase 115
 
 ---
 
-#### Phase 106 — Schema Core + Helper Functions PG
+### Phase 106: Schema Core + Helper Functions PG
 
 **Objetivo:** Estabelecer o schema canônico de 7 tabelas multi-tenant + conteúdo das 4 helper functions `private.*` + skill `b2b-saas-architecture` + skill `multi-tenant-performance-scaling`. Fundação sobre a qual todas as fases seguintes se apoiam.
 
@@ -56,7 +56,7 @@ Onda 4:             Phase 115
 
 ---
 
-#### Phase 107 — Org Onboarding Flow
+### Phase 107: Org Onboarding Flow
 
 **Objetivo:** Skill `org-onboarding-flow` + agent `org-onboarding-implementer` — fluxo signup → criar org → primeiro admin → setup wizard, com slug imutável e redirect trail.
 
@@ -80,7 +80,7 @@ Onda 4:             Phase 115
 
 ---
 
-#### Phase 108 — RLS Hierarchy Completa + RBAC
+### Phase 108: RLS Hierarchy Completa + RBAC
 
 **Objetivo:** Skill `multi-tenant-rls-hierarchy` + skill `rbac-permissions-matrix-supabase` + agent `multi-tenant-rls-writer` + agent `multi-tenant-isolation-auditor` — 4 helper functions PG com signatures completas, policies compostas, herança dept→org, e matrix action × resource × scope.
 
@@ -107,7 +107,7 @@ Onda 4:             Phase 115
 
 ---
 
-#### Phase 109 — Audit Log Multi-Tenant
+### Phase 109: Audit Log Multi-Tenant
 
 **Objetivo:** Skill `audit-log-multi-tenant` + agent `audit-log-implementer` — tabela `audit_log` append-only, taxonomy canônica de 7 eventos, retention via pg_cron (3 tiers), PII sanitization automática, legal hold flag para erasure LGPD.
 
@@ -133,7 +133,7 @@ Onda 4:             Phase 115
 
 ---
 
-#### Phase 110 — Invite Flow
+### Phase 110: Invite Flow
 
 **Objetivo:** Skill `member-invite-flow` + agent `invite-flow-implementer` — token SHA-256 com hash no banco, TTL 7 dias, single-use, state machine com 5 estados, email-lock obrigatório, idempotência em accept com race protection via `FOR UPDATE`.
 
@@ -157,7 +157,7 @@ Onda 4:             Phase 115
 
 ---
 
-#### Phase 111 — Super Admin Platform
+### Phase 111: Super Admin Platform
 
 **Objetivo:** Skill `super-admin-platform-pattern` + agent `super-admin-implementer` — cross-tenant view, impersonation (padrão GitHub Enterprise), banner visual obrigatório, motivo obrigatório, TTL 30min, `super_admin: bool` em `app_metadata` via service_role exclusivamente.
 
@@ -181,7 +181,7 @@ Onda 4:             Phase 115
 
 ---
 
-#### Phase 112 — WhatsApp / Evolution Go Integration
+### Phase 112: WhatsApp / Evolution Go Integration
 
 **Objetivo:** Skill `evolution-go-whatsapp-integration` + skill `whatsapp-conversation-state-machine` + agent `evolution-go-integrator` — webhook URL path com tenant_id, HMAC per-org, idempotência via `ON CONFLICT DO NOTHING`, rate limit Meta 80 msg/s, state machine xstate v5 persistida em PG.
 
@@ -207,7 +207,7 @@ Onda 4:             Phase 115
 
 ---
 
-#### Phase 113 — CRM Lead Pipeline
+### Phase 113: CRM Lead Pipeline
 
 **Objetivo:** Skill `crm-lead-pipeline-patterns` + agent `crm-pipeline-implementer` — 6 stages canônicos, state machine via trigger Postgres (não só CHECK constraint), ownership transfer com notification + audit, lead dedup, integração WhatsApp.
 
@@ -231,7 +231,7 @@ Onda 4:             Phase 115
 
 ---
 
-#### Phase 114 — LGPD Compliance
+### Phase 114: LGPD Compliance
 
 **Objetivo:** Skill `lgpd-multi-tenant-compliance` + agent `lgpd-compliance-auditor` — 9 direitos Art. 18 com workflow per-tenant, DSR SLA 15 dias (Art. 19) com alerta pg_cron D-3, consent granular com default opt-out, erasure via anonymization (nunca hard delete), cross-border config.
 
@@ -256,7 +256,7 @@ Onda 4:             Phase 115
 
 ---
 
-#### Phase 115 — Frontend React Patterns
+### Phase 115: Frontend React Patterns
 
 **Objetivo:** Skill `org-switcher-react-pattern` + skill `permission-gate-react-pattern` + skill `member-management-react-shadcn` — URL-based org context, CASL React `@casl/ability` 6.8, shadcn/ui 9 components canônicos, zustand v5 org store, JWT stale strategy após role change.
 
@@ -282,7 +282,7 @@ Onda 4:             Phase 115
 
 ---
 
-#### Phase 116 — Kit Artifacts: Command + Glossário + Audit Gates + Release
+### Phase 116: Kit Artifacts: Command + Glossário + Audit Gates + Release
 
 **Objetivo:** Artefatos cross-cutting da suíte — comando `/multi-tenant` orquestrador com ~11 subcomandos + sinônimos PT/EN, glossário `_shared-multi-tenant/glossary.md` com cross-ref ativo para `_shared-supabase`, 3 audit gates novos, release artifacts atualizados (README, AUTOGEN-COUNTS, file-manifest.json, COMPATIBILITY.md). Pattern de cross-suite invocation documentado explicitamente no command.
 
@@ -309,7 +309,7 @@ Onda 4:             Phase 115
 
 ---
 
-#### Mapeamento de Fases (tabela executiva)
+### Mapeamento de Fases (tabela executiva)
 
 | Phase | Nome | REQs cobertos | Artefatos | Onda |
 |---|---|---|---|---|
@@ -329,7 +329,7 @@ Onda 4:             Phase 115
 
 ---
 
-#### Dependências entre Fases
+### Dependências entre Fases
 
 ```
 Phase 106 (base)
