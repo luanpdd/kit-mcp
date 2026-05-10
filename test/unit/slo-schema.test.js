@@ -137,3 +137,156 @@ test('OBS-18-03/04: both SLO files have a 30d sliding window (skill rule)', () =
   assert.match(avail, /^window:\s*30d_sliding\b/m);
   assert.match(lat, /^window:\s*30d_sliding\b/m);
 });
+
+// ---- Phase 103 OBS-20-02 — dual-window alert_thresholds invariants ---------
+//
+// Plan 103-01 wires /burn-rate-status to read alert_thresholds.page (fast /
+// page-tier) AND alert_thresholds.ticket (slow / ticket-tier) blocks from each
+// SLO YAML. The command computes fastBurn + slowBurn independently and applies
+// the canonical dual-window logic from kit/skills/burn-rate-alerting/SKILL.md
+// (PAGE both / TICKET slow only / WARN fast spike / OK / no_data).
+//
+// These tests pin down the YAML shape the command depends on. If a future SLO
+// file omits page or ticket blocks, the command would silently fall back to
+// defensive defaults (14.4 / 6) — these tests force the omission to be a
+// deliberate choice expressed in code rather than a quiet drift.
+
+/**
+ * Parse a YAML duration ("1h", "30m", "6h", "5m") to milliseconds. Mirrors
+ * the to_ms() bash helper in burn-rate-status.md so the assertions exercise
+ * the exact unit conversion the command does.
+ */
+function durationToMs(s) {
+  const match = String(s).trim().match(/^([0-9]+)([hmsd])$/);
+  if (!match) return null;
+  const [, n, unit] = match;
+  const num = parseInt(n, 10);
+  switch (unit) {
+    case 'h': return num * 3_600_000;
+    case 'm': return num * 60_000;
+    case 's': return num * 1_000;
+    case 'd': return num * 86_400_000;
+    default: return null;
+  }
+}
+
+/**
+ * Extract page or ticket alert_thresholds block fields from YAML text.
+ * Lightweight regex parser mirroring the awk state machine in
+ * burn-rate-status.md step 3.2. Returns { lookahead, baseline, multiplier }
+ * or nulls when fields are absent.
+ */
+function extractAlertBlock(yaml, severity) {
+  // Find the start of `alert_thresholds:` and slice out its block. The block
+  // begins after the keyword line and continues until the next top-level key
+  // (a key starting at column 0). Inside the block, page and ticket are
+  // sibling keys at one indent level deeper.
+  const arStart = yaml.search(/^\s+alert_thresholds:/m);
+  if (arStart < 0) return { lookahead: null, baseline: null, multiplier: null };
+  // Truncate at the next top-level YAML key (column-0 letter then `:`).
+  const after = yaml.slice(arStart);
+  const endMatch = after.slice(1).search(/^[a-z][a-z_]*:/m);
+  const block = endMatch < 0 ? after : after.slice(0, endMatch + 1);
+
+  // Slice the severity sub-block. Locate `<severity>:` keyword line, then
+  // capture lines until the next sibling key (same indent as `<severity>:`)
+  // or the end of the block.
+  const lines = block.split(/\r?\n/);
+  const sevLineIdx = lines.findIndex(l => new RegExp(`^\\s+${severity}:\\s*$`).test(l));
+  if (sevLineIdx < 0) return { lookahead: null, baseline: null, multiplier: null };
+  const sevIndent = lines[sevLineIdx].match(/^\s*/)[0].length;
+  const sevContent = [];
+  for (let i = sevLineIdx + 1; i < lines.length; i++) {
+    const indent = lines[i].match(/^(\s*)\S/);
+    if (indent && indent[1].length <= sevIndent && lines[i].trim().length > 0) break; // sibling key reached
+    sevContent.push(lines[i]);
+  }
+  const sev = sevContent.join('\n');
+  const grab = (k) => {
+    const m = sev.match(new RegExp(`^\\s+${k}:\\s*([^\\s#]+)`, 'm'));
+    return m ? m[1] : null;
+  };
+  return {
+    lookahead: grab('lookahead'),
+    baseline: grab('baseline'),
+    multiplier: grab('burn_rate_multiplier'),
+  };
+}
+
+test('OBS-20-02: every SLO YAML declares alert_thresholds.page block with lookahead/baseline/burn_rate_multiplier', () => {
+  // The /burn-rate-status command reads each SLO file and pulls FAST_LOOKAHEAD,
+  // FAST_BASELINE, FAST_MULTIPLIER from alert_thresholds.page. If any SLO
+  // omits the page block or any of its three required fields, the command
+  // falls through to defensive defaults — silent drift we want to forbid.
+  for (const f of ['mcp-tool-availability.yml', 'mcp-tool-latency.yml']) {
+    const yaml = readSlo(f);
+    const page = extractAlertBlock(yaml, 'page');
+    assert.ok(page.lookahead, `${f}: alert_thresholds.page.lookahead missing`);
+    assert.ok(page.baseline, `${f}: alert_thresholds.page.baseline missing`);
+    assert.ok(page.multiplier, `${f}: alert_thresholds.page.burn_rate_multiplier missing`);
+  }
+});
+
+test('OBS-20-02: every SLO YAML declares alert_thresholds.ticket block with lookahead/baseline/burn_rate_multiplier', () => {
+  // Same constraint for the slow / ticket-tier block. The command reads
+  // SLOW_LOOKAHEAD, SLOW_BASELINE, SLOW_MULTIPLIER from here.
+  for (const f of ['mcp-tool-availability.yml', 'mcp-tool-latency.yml']) {
+    const yaml = readSlo(f);
+    const ticket = extractAlertBlock(yaml, 'ticket');
+    assert.ok(ticket.lookahead, `${f}: alert_thresholds.ticket.lookahead missing`);
+    assert.ok(ticket.baseline, `${f}: alert_thresholds.ticket.baseline missing`);
+    assert.ok(ticket.multiplier, `${f}: alert_thresholds.ticket.burn_rate_multiplier missing`);
+  }
+});
+
+test('OBS-20-02: page lookahead < ticket lookahead (fast vs slow ordering invariant)', () => {
+  // Skill burn-rate-alerting names the page tier "short-term" and the ticket
+  // tier "long-term". The order is semantic — confusing them flips alert
+  // routing (page-worthy alerts go to ticket queue and vice versa). This test
+  // catches that.
+  for (const f of ['mcp-tool-availability.yml', 'mcp-tool-latency.yml']) {
+    const yaml = readSlo(f);
+    const page = extractAlertBlock(yaml, 'page');
+    const ticket = extractAlertBlock(yaml, 'ticket');
+    const pageMs = durationToMs(page.lookahead);
+    const ticketMs = durationToMs(ticket.lookahead);
+    assert.ok(pageMs !== null, `${f}: page.lookahead "${page.lookahead}" unparseable`);
+    assert.ok(ticketMs !== null, `${f}: ticket.lookahead "${ticket.lookahead}" unparseable`);
+    assert.ok(pageMs < ticketMs,
+      `${f}: page.lookahead (${page.lookahead}, ${pageMs}ms) must be < ticket.lookahead (${ticket.lookahead}, ${ticketMs}ms)`);
+  }
+});
+
+test('OBS-20-02: page baseline < ticket baseline (fast vs slow baseline ordering)', () => {
+  // Same ordering constraint applies to baseline windows. Page baseline (5m
+  // canonical) catches sudden spikes; ticket baseline (30m canonical) smooths
+  // out short bursts and surfaces sustained erosion.
+  for (const f of ['mcp-tool-availability.yml', 'mcp-tool-latency.yml']) {
+    const yaml = readSlo(f);
+    const page = extractAlertBlock(yaml, 'page');
+    const ticket = extractAlertBlock(yaml, 'ticket');
+    const pageMs = durationToMs(page.baseline);
+    const ticketMs = durationToMs(ticket.baseline);
+    assert.ok(pageMs !== null, `${f}: page.baseline "${page.baseline}" unparseable`);
+    assert.ok(ticketMs !== null, `${f}: ticket.baseline "${ticket.baseline}" unparseable`);
+    assert.ok(pageMs < ticketMs,
+      `${f}: page.baseline (${page.baseline}, ${pageMs}ms) must be < ticket.baseline (${ticket.baseline}, ${ticketMs}ms)`);
+  }
+});
+
+test('OBS-20-02: standard multipliers are 14.4 (page) / 6 (ticket) per skill burn-rate-alerting canonical', () => {
+  // The skill carries the 14.4 / 6 numbers verbatim from the Honeycomb /
+  // Google SRE recommendation. Until a future phase tunes them against
+  // measured volume, both kit-mcp SLOs must keep the canonical values. If a
+  // future tuning phase changes them per-SLO, this test forces the change to
+  // be deliberate (edit the test) rather than silent drift.
+  for (const f of ['mcp-tool-availability.yml', 'mcp-tool-latency.yml']) {
+    const yaml = readSlo(f);
+    const page = extractAlertBlock(yaml, 'page');
+    const ticket = extractAlertBlock(yaml, 'ticket');
+    assert.equal(parseFloat(page.multiplier), 14.4,
+      `${f}: page.burn_rate_multiplier must be 14.4 (canonical Google SRE; got ${page.multiplier})`);
+    assert.equal(parseFloat(ticket.multiplier), 6,
+      `${f}: ticket.burn_rate_multiplier must be 6 (canonical Google SRE; got ${ticket.multiplier})`);
+  }
+});
