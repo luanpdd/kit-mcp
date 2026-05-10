@@ -294,6 +294,10 @@ Antes de aceitar serviço em prod:
 
 ---
 
+## Clock Skew como Failure Mode (v1.22+)
+
+> Além dos triggers canônicos do cap 22 (sem timeout, retry sem jitter, sem circuit breaker), clock skew é failure mode adicional em sistemas distribuídos: nó com relógio adiantado pode marcar lease expirada antes do tempo real, disparando reeleição desnecessária e cascading failure. Padrão de mitigação (fencing token + nunca usar `clock_timestamp()` em lógica de expiração) em [`armadilhas-sistemas-distribuidos`](../armadilhas-sistemas-distribuidos/SKILL.md) (v1.22 — DDIA Ch 8).
+
 ## Ver também
 
 - [`_shared-sre/glossary.md`](../_shared-sre/glossary.md) — vocabulário cap 22 (cascading failure, retry storm, etc.)

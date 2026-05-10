@@ -258,6 +258,15 @@ async function processJob(msg) {
 }
 ```
 
+## Padrões Exactly-Once em pgmq (v1.22+)
+
+> Background jobs em pgmq tendem a duplicate processing em retry/timeout. Padrão canônico (DDIA Ch 11):
+> 1. **Dedup table** com `unique(event_id)` — INSERT antes do processamento; falha = já processado.
+> 2. **Idempotency key** no handler — mesmo input → mesmo output (sem efeitos colaterais).
+> 3. **Transactional outbox** — write DB + event em mesma transação atomic; processador async lê outbox e publica.
+>
+> Detalhes completos em [`streams-eventos-cdc`](../streams-eventos-cdc/SKILL.md) (v1.22).
+
 ## Ver também
 
 - [supabase-edge-functions](../supabase-edge-functions/SKILL.md) — Edge Functions consumindo pgmq

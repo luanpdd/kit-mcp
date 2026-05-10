@@ -324,6 +324,12 @@ tenant_id uuid -- nullable
 
 **Certo:** LIST partitioning por `tenant_id` (ver [`multi-tenant-performance-scaling`](../multi-tenant-performance-scaling/SKILL.md)). Cada org = partição própria. Retention vira `DROP TABLE <partition>` (instantâneo).
 
+## Semântica Event Sourcing + Log Compaction (v1.22+)
+
+> A tabela `audit_log` append-only mapeia diretamente para padrão **event sourcing** (DDIA Ch 11) — eventos são source-of-truth, projeções (denormalizações via trigger ou MVs) derivam estado atual. Padrão completo em [`streams-eventos-cdc`](../streams-eventos-cdc/SKILL.md) (v1.22).
+
+**Log compaction:** após retention TTL (30d/90d/365d), considerar snapshot periódico do estado dos aggregates antes de purgar — permite replay parcial sem perder histórico de longo prazo importante (legal hold).
+
 ## Ver também
 
 - [supabase-cron-queues](../supabase-cron-queues/SKILL.md) — pg_cron pattern usado para retention scheduler (cross-suite)

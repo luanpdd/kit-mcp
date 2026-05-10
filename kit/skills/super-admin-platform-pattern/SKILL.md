@@ -312,6 +312,10 @@ using ((auth.jwt()->'user_metadata'->>'super_admin')::boolean = true)
 
 **Certo:** REGRA #6 — modal exige typed slug + reason + checkbox + RPC valida tudo server-side. Soft delete preferred.
 
+## Fencing Token para TTL de Impersonação (v1.22+)
+
+> A TTL de 30min de impersonação é vulnerável a split-brain durante GC pause: super-admin A inicia impersonação, sofre GC pause de 35min, TTL expira, super-admin B inicia outra impersonação no mesmo target, A volta ainda achando que tem sessão. Mitigação canônica: fencing token monotônico em `super_admin_impersonations` table — storage rejeita writes com token < último visto. Padrão completo em [`armadilhas-sistemas-distribuidos`](../armadilhas-sistemas-distribuidos/SKILL.md) (v1.22 — DDIA Ch 8).
+
 ## Ver também
 
 - [audit-log-multi-tenant](../audit-log-multi-tenant/SKILL.md) — Phase 109, audit_logs + event `super_admin_action` (REGRA #1)

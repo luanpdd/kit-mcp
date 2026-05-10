@@ -300,6 +300,10 @@ create index members_user_active_idx
 
 Apenas rows ativas no index. Tamanho 10× menor, query plan idêntico em hot path.
 
+## Detecção e Mitigação de Tenant Quente (v1.22+)
+
+> Para detectar e mitigar o "tenant Justin Bieber" (1 tenant >>> outros), ver skill [`tenant-quente-mitigacao`](../tenant-quente-mitigacao/SKILL.md) (v1.22 — DDIA Ch 6). Cobre 3 métricas canônicas (queries/min, storage GB, conexões), 5 estratégias de mitigação (rate limit, pool isolado, replica dedicada, MV, request shaping), particionamento range vs hash para tenant_id, e rebalanceamento sem downtime.
+
 ## Ver também
 
 - [b2b-saas-architecture](../b2b-saas-architecture/SKILL.md) — schema canônico que esta skill performance-otimiza (skill irmã)

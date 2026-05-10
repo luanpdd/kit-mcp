@@ -316,6 +316,23 @@ delete from public.leads where id = '<lead_id>';
 
 **Certo:** soft delete (`status = 'archived'`) ou FK CASCADE com cuidado + audit log antes.
 
+## Prevenção de Lost Update em Stage Transition (v1.22+)
+
+> A trigger `validate_lead_stage_transition` deve usar `SELECT ... FOR UPDATE` em rows lidas para prevenir lost update quando 2 reps tentam mover o mesmo lead simultaneamente. Padrão completo em [`postgres-isolamento-concorrencia`](../postgres-isolamento-concorrencia/SKILL.md) (v1.22 — DDIA Ch 7).
+
+Exemplo aplicado:
+
+```sql
+CREATE OR REPLACE FUNCTION validate_lead_stage_transition()
+RETURNS TRIGGER AS $$
+BEGIN
+  -- Lock row para prevenir lost update
+  PERFORM 1 FROM leads WHERE id = NEW.id FOR UPDATE;
+  -- ... validação ...
+END;
+$$ LANGUAGE plpgsql;
+```
+
 ## Ver também
 
 - [b2b-saas-architecture](../b2b-saas-architecture/SKILL.md) — schema base

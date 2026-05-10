@@ -166,6 +166,16 @@ using (auth.uid() = user_id)
 using ((select auth.uid()) = user_id)
 ```
 
+## Padrão Rolling-Upgrade para Migrations Arriscadas (v1.22+)
+
+> Migrations que adicionam `NOT NULL` em coluna existente, mudam tipo, ou removem column quebram backward compat com app rodando V1+V2 em paralelo. Padrão canônico **3-passos** (DDIA Ch 4):
+> 1. `ALTER TABLE ... ADD COLUMN x text` (nullable)
+> 2. `UPDATE ... SET x = ... WHERE x IS NULL LIMIT 10000` em loop até 100% backfill
+> 3. `ALTER TABLE ... ALTER COLUMN x SET NOT NULL` apenas após verificação
+>
+> Padrão completo em [`evolucao-schema-compativel`](../evolucao-schema-compativel/SKILL.md) (v1.22).
+> Validação automática via agent [`validador-evolucao-schema`](../../agents/validador-evolucao-schema.md) (v1.22).
+
 ## Ver também
 
 - [supabase-postgres-style](../supabase-postgres-style/SKILL.md) — convenção de naming + style aplicada

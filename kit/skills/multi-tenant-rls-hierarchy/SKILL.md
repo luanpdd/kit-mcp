@@ -327,6 +327,10 @@ create policy "super_admin_bypass" on public.leads as permissive for all to auth
 
 **Certo:** policy super_admin OK, mas **toda operação super_admin** deve emitir evento `super_admin_action` em `audit_log` (Phase 109). Trigger AFTER INSERT/UPDATE/DELETE em tabelas críticas que checa `private.is_super_admin()` e registra.
 
+## Invariantes Linearizáveis Cross-Tenant (v1.22+)
+
+> Para uniqueness constraints cross-org (slug global, license key) e padrões `SELECT FOR UPDATE` em writes cross-tenant, ver skill [`escolha-modelo-consistencia`](../escolha-modelo-consistencia/SKILL.md) (v1.22 — DDIA Ch 9). Resumo: deixe `UNIQUE` constraint Postgres disparar via `INSERT ... ON CONFLICT DO NOTHING RETURNING` em vez de UPDATE+SELECT em nível de app (race window).
+
 ## Ver também
 
 - [supabase-rls-policies](../supabase-rls-policies/SKILL.md) — anti-patterns base v1.8 herdados (REGRA #6)
