@@ -1,15 +1,30 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-10 — milestone v1.21 (Suíte Multi-Tenant SaaS B2B) iniciado.
+> Última atualização: 2026-05-10 — milestone v1.21 (Suíte Multi-Tenant SaaS B2B) entregue.
 
 ## Estado Atual
 
-**v1.20.0 — Tech Debt Closure & Quality Hardening** **entregue** 2026-05-10 (Phases 100-105, 6 REQs, +89 testes, 671 baseline final). **PRR 30/30** atingido. Coverage 86.84% (vs 81.51% v1.19). Mutation baseline estabelecido (57.40% em 10/15 src/core/ files via stryker). Multi-window burn-rate (1h fast + 6h slow). Auto-snapshot em metrics-snapshot tool. RUNBOOK.md 5→9 scenarios + EMERGENCY-DRILL-LOG.md trimestral. Kit cache pre-warm reduziu MCP p95 de 144ms → 0ms.
+**v1.21.0 — Suíte Multi-Tenant SaaS B2B** **entregue** 2026-05-10 (Phases 106-116, 11 phases, 59 REQs, content-only milestone). 6ª suíte adicionada ao kit-mcp — `/multi-tenant` + 10 agents + 15 skills + glossário compartilhado, especializando `/supabase` v1.8 para apps B2B com hierarquia firm→department→leader→collaborator e RBAC granular via cross-suite Task() handoff (zero duplicação de lógica). AUTOGEN-COUNTS: 47→57 agents, 87→88 commands, 45→60 skills, 20→23 gates; file-manifest 327→355 files. Stable API v1.0+ preservada (zero alterações em `src/core/`). PRR 30/30 mantido (content-only).
 
-**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30). 6 suítes ativas no kit + framework eat-your-own-dog-food maduro (golden signals + dual-window SLOs + RUNBOOK 9 cenários + mutation testing baseline).
+**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30) + **v1.21 (Multi-Tenant SaaS B2B)**. **7 suítes ativas no kit** + framework eat-your-own-dog-food maduro (golden signals + dual-window SLOs + RUNBOOK 9 cenários + mutation testing baseline). Cross-suite invocation pattern formalizado em v1.21.
 
-## Milestone Atual: v1.21 Suíte Multi-Tenant SaaS B2B
+## Próximo milestone: v1.22 (a definir)
+
+**Tech debt parqueado para v1.22+** (carry-over de v1.20 + v1.21):
+- Phase 100 carry-over: cli/index.js extract helpers para 86→90 coverage ratchet
+- Phase 101 carry-over: completar mutation baseline 5 files restantes (sync, ui, watch, reverse-sync, gate-runner) + CI mutation gate threshold ~55%
+- Phase 105 carry-over: p99 latency monitoring com disk-persistent snapshots + M1 cold-start CLI sub-200ms
+- v1.21 deferred: TanStack Start, Expo, SolidStart/SvelteKit/Nuxt integrations
+- v1.21 deferred: Hono/Express/Fastify backend integrations
+- v1.21 deferred: WhatsApp template management + media handling (Supabase Storage)
+- v1.21 deferred: CRM advanced — AI scoring, conversion analytics
+- v1.21 deferred: Multi-region deployment patterns (Vercel + Supabase replicas)
+- v1.21 deferred: Advanced audit log analytics dashboards
+
+**Próximo passo:** `/novo-marco` para iniciar v1.22 com questionamento → pesquisa → requisitos → roadmap.
+
+## ~~Milestone Anterior: v1.21 Suíte Multi-Tenant SaaS B2B~~ (entregue 2026-05-10)
 
 **Objetivo:** Adicionar a 6ª suíte ao kit (Multi-Tenant SaaS B2B) — comando `/multi-tenant` + 10 agents + 15 skills + glossário compartilhado, especializando a suíte `/supabase` v1.8 existente para apps B2B com hierarquia firm→department→leader→collaborator e RBAC granular. Stack alvo: React + Supabase + Vercel.
 
@@ -79,6 +94,8 @@
 - Phase 100 carry-over: cli/index.js extract helpers para 86→90 coverage ratchet
 - Phase 101 carry-over: completar mutation baseline 5 files restantes + CI mutation gate threshold ~55%
 - Phase 105 carry-over: p99 latency monitoring + M1 cold-start CLI sub-200ms
+
+**Resultado v1.21:** ✅ ENTREGUE — 11/11 phases, 59/59 REQs, 18 commits atomic, [audit](./milestones/v1.21-MILESTONE-AUDIT.md) status `passed`, [roadmap](./milestones/v1.21-ROADMAP.md) arquivado.
 
 ## ~~Milestone Anterior: v1.20 Tech Debt Closure & Quality Hardening~~ (entregue 2026-05-10)
 

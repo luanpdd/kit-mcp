@@ -1,5 +1,24 @@
 # MILESTONES.md — Histórico de releases
 
+## v1.21 Suíte Multi-Tenant SaaS B2B (Shipped: 2026-05-10)
+
+**Phases completed:** 11 phases, 11 plans, 0 tasks
+
+**Key accomplishments:**
+
+- 6ª suíte adicionada ao kit-mcp (Multi-Tenant SaaS B2B) — comando `/multi-tenant` orquestrador + 10 agents + 15 skills + glossário compartilhado `_shared-multi-tenant/glossary.md`, especializando `/supabase` v1.8 para apps B2B com hierarquia firm→department→leader→collaborator e RBAC granular sem duplicar lógica via cross-suite Task() handoff explicitamente documentado.
+- Schema canônico de 7 tabelas multi-tenant (`organizations`, `departments`, `roles`, `permissions`, `role_permissions`, `organization_members`, `department_members`) + 4 helper functions PG (`private.is_member_of`, `private.has_role`, `private.has_permission`, `private.is_super_admin`) com signature SQL completa marcada `STABLE` + partial index `organization_members(user_id, org_id) WHERE status='active'` documentado para tabelas 100k+ rows.
+- Audit log multi-tenant append-only (`REVOKE DELETE FROM authenticated`) com taxonomy canônica de 7 eventos (login/member_invited/role_changed/data_exported/member_removed/settings_changed/super_admin_action), retention via pg_cron (Free 30d/Pro 90d/Enterprise 365d), PII sanitization SHA-256 e flag `legal_hold` para LGPD — BLOCKER ADMIN-03 desbloqueado para Phase 111.
+- Invite flow completo com token SHA-256 (raw no email + hash no banco), TTL 7 dias single-use, state machine 5 estados (pending→accepted|rejected|cancelled|expired), email-lock obrigatório, idempotência via `SELECT ... FOR UPDATE` em transação para race protection.
+- Super Admin platform impersonation (padrão GitHub Enterprise) com 3 requisitos mandatórios: banner visual, motivo obrigatório, TTL 30min — `super_admin: bool` setado APENAS via service_role; agent ABORTA se Phase 109 audit log não está implementado (BLOCKER ADMIN-03 enforced).
+- WhatsApp/Evolution Go integration: webhook URL path `/functions/v1/whatsapp/{org_id}/webhook` com tenant_id ANTES do parse, HMAC per-org validado ANTES de `JSON.parse` (WHATSAPP-07), idempotência `unique(org_id, message_id) ON CONFLICT DO NOTHING`, rate limit Meta 80 msg/s + state machine xstate v5 persistida em PG.
+- CRM lead pipeline com 6 stages canônicos (lead→qualified→proposal→negotiation→won|lost), state machine via trigger Postgres `BEFORE UPDATE` com `RAISE EXCEPTION` (não só CHECK constraint contornável), ownership transfer com notification + audit obrigatório, lead dedup `unique(org_id, phone)` + `unique(org_id, email)`, integração WhatsApp lookup contact→lead.
+- LGPD compliance per-tenant: 9 direitos Art. 18 (confirmação/acesso/correção/anonimização/portabilidade/eliminação/info compart./revogação consent/revisão decisão automatizada), DSR SLA 15 dias (Art. 19) com pg_cron alerta D-3, consent default opt-out (Art. 8 §5), erasure via anonymization (UUID preserved + PII NULL/hash), cross-border `gru1` Vercel + `sa-east-1` Supabase.
+- React patterns multi-tenant: `org-switcher` URL-based `/orgs/[slug]/` com middleware Next.js v16 + `useParams()` para Vite SPA, `permission-gate` com `@casl/ability` 6.8 + anti-pattern client-only sem RLS server-side documentado, `member-management` com 9 componentes shadcn/ui canônicos (data-table TanStack v8, dialog, select, badge, dropdown-menu, avatar, command, form, toast).
+- Cross-suite invocation pattern formalizado — agents v1.21 delegam para agents v1.8 via cross-ref Markdown + `Task()` handoff documentado em command + glossário + cada agent. Stable API v1.0+ preservada (zero alterações em `src/core/`). AUTOGEN-COUNTS regen: 47→57 agents, 87→88 commands, 45→60 skills, 20→23 gates; file-manifest.json 327→355 files.
+
+---
+
 ## v1.20 Tech Debt Closure & Quality Hardening (Shipped: 2026-05-10)
 
 **Phases completed:** 6 phases, 7 plans, 0 tasks

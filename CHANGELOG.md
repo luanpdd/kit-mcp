@@ -6,6 +6,91 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.21.0] - 2026-05-10
+
+**Suíte Multi-Tenant SaaS B2B** — 6ª suíte do kit-mcp adicionada. Especialização sobre `/supabase` v1.8 para apps B2B com hierarquia firm→department→leader→collaborator e RBAC granular.
+
+11 fases (106-116), 11 plans, 0 tasks, 18 commits atomic, content-only milestone. Stable API v1.0+ preservada (zero alterações em `src/core/`). PRR 30/30 mantido.
+
+### Comando + Glossário (Phase 116)
+- **SUITE-01..07:** `kit/commands/multi-tenant.md` (orquestrador com ~11 subcomandos + sinônimos PT/EN: `multi-tenant`, `b2b`, `tenant`, `escritorio`) + `kit/skills/_shared-multi-tenant/glossary.md` (cross-ref para `_shared-supabase`).
+- **3 audit gates:** `gates/multi-tenant-rls-coverage.mjs`, `gates/service-role-not-in-user-facing.mjs`, `gates/dept-cycle-prevention.mjs`.
+
+### Schema + Helpers PG (Phase 106)
+- **ARCH-01..06:** Skills `b2b-saas-architecture` + `multi-tenant-performance-scaling`. Schema canônico de 7 tabelas (`organizations`, `departments`, `roles`, `permissions`, `role_permissions`, `organization_members`, `department_members`) + 4 helper functions PG (`private.is_member_of`, `private.has_role`, `private.has_permission`, `private.is_super_admin`) marcadas `STABLE` + partial index `organization_members(user_id, org_id) WHERE status='active'`. JWT minimal (`super_admin: bool` em `app_metadata`). Supavisor 6543 transaction mode.
+
+### Org Onboarding (Phase 107)
+- **ORG-01..03:** Skill `org-onboarding-flow` + agent `org-onboarding-implementer`. Slug imutável + redirect trail via `organization_slug_history`.
+
+### RLS Hierarchy + RBAC (Phase 108)
+- **ARCH-03/04 + RBAC-01..04:** Skills `multi-tenant-rls-hierarchy` + `rbac-permissions-matrix-supabase`. Agents `multi-tenant-rls-writer` + `multi-tenant-isolation-auditor`. Regra "user só atribui roles ≤ ao próprio role". Herança dept→org via `coalesce(dm.role_id, om.role_id)`.
+
+### Audit Log Multi-Tenant (Phase 109)
+- **AUDIT-01..04:** Skill `audit-log-multi-tenant` + agent `audit-log-implementer`. Append-only via `REVOKE DELETE FROM authenticated`. Taxonomy 7 eventos (`login`/`member_invited`/`role_changed`/`data_exported`/`member_removed`/`settings_changed`/`super_admin_action`). Retention 3 tiers (Free 30d/Pro 90d/Enterprise 365d) via pg_cron + flag `legal_hold` para LGPD. PII sanitization SHA-256.
+
+### Invite Flow (Phase 110)
+- **INVITE-01..04:** Skill `member-invite-flow` + agent `invite-flow-implementer`. Token SHA-256 (raw email + hash banco), TTL 7d single-use, state machine 5 estados, email-lock obrigatório, idempotência via `SELECT ... FOR UPDATE`.
+
+### Super Admin Platform (Phase 111)
+- **ADMIN-01..04:** Skill `super-admin-platform-pattern` + agent `super-admin-implementer`. Impersonation GitHub Enterprise style + banner visual + reason obrigatório + TTL 30min. Agent ABORTA se Phase 109 audit log ausente (BLOCKER ADMIN-03).
+
+### WhatsApp / Evolution Go (Phase 112)
+- **WHATSAPP-01..07:** Skills `evolution-go-whatsapp-integration` + `whatsapp-conversation-state-machine` + agent `evolution-go-integrator`. Webhook URL path `/functions/v1/whatsapp/{org_id}/webhook`, HMAC ANTES de `JSON.parse`, idempotência `unique(org_id, message_id) ON CONFLICT DO NOTHING`, rate limit Meta 80 msg/s, state machine xstate v5.
+
+### CRM Lead Pipeline (Phase 113)
+- **CRM-01..05:** Skill `crm-lead-pipeline-patterns` + agent `crm-pipeline-implementer`. 6 stages canônicos (lead→qualified→proposal→negotiation→won|lost), state machine via trigger Postgres (não só CHECK), ownership transfer com notification + audit, dedup `unique(org_id, phone)` + `unique(org_id, email)`, integração WhatsApp lookup contact→lead.
+
+### LGPD Compliance (Phase 114)
+- **LGPD-01..06:** Skill `lgpd-multi-tenant-compliance` + agent `lgpd-compliance-auditor`. 9 direitos Art. 18, DSR SLA 15 dias (Art. 19) + pg_cron alerta D-3, consent default opt-out (Art. 8 §5), erasure via anonymization (UUID preserved + PII NULL/hash), cross-border `gru1` Vercel + `sa-east-1` Supabase.
+
+### Frontend React Patterns (Phase 115)
+- **REACT-01..06:** Skills `org-switcher-react-pattern` + `permission-gate-react-pattern` + `member-management-react-shadcn`. URL `/orgs/[slug]/` Next.js v16 + middleware OR `useParams()` Vite SPA. `@casl/ability` 6.8 + anti-pattern client-only sem RLS server-side. 9 componentes shadcn canônicos (data-table TanStack v8, dialog, select, badge, dropdown-menu, avatar, command, form, toast). zustand v5 persist + JWT stale strategy.
+
+### AUTOGEN regen (Phase 116 final)
+- 47→**57 agents**, 87→**88 commands**, 45→**60 skills**, 20→**23 audit gates**.
+- file-manifest.json: 327→**355 files** hashed.
+
+### Cross-suite invocation pattern (NEW v1.21)
+- Agents v1.21 delegam para agents v1.8 via cross-ref Markdown + `Task()` handoff (zero duplicação de lógica Supabase).
+- Pattern formalizado em `kit/commands/multi-tenant.md` + glossário + cada agent v1.21.
+
+### Tech debt → v1.22+
+- TanStack Start, Expo, SolidStart/SvelteKit/Nuxt integrations
+- Hono/Express/Fastify backend integrations
+- WhatsApp template management + media handling (Supabase Storage)
+- CRM advanced: AI scoring + conversion analytics
+- Multi-region deployment patterns (Vercel + Supabase replicas)
+- Advanced audit log analytics dashboards
+- Carry-over v1.20: cli/index.js extract helpers (86→90 ratchet); mutation baseline 5 files restantes; p99 latency monitoring + M1 cold-start CLI sub-200ms
+
+[v1.21 milestone audit](./.planning/milestones/v1.21-MILESTONE-AUDIT.md) · [v1.21 ROADMAP](./.planning/milestones/v1.21-ROADMAP.md) · [v1.21 REQUIREMENTS](./.planning/milestones/v1.21-REQUIREMENTS.md)
+
+## [1.20.0] - 2026-05-10
+
+**Tech Debt Closure & Quality Hardening** — fecha 6 itens parqueados pós-v1.19 (PRR 28→30/30, mutation testing baseline, multi-window burn-rate, RUNBOOK 5→9 cenários, MCP cache pre-warm).
+
+6 fases (100-105), 7 plans, 0 tasks. Suite 482→**671 tests** (+189). Coverage 81.51%→**86.84%**. PRR **30/30** atingido.
+
+### Coverage Ratchet 80% → 86% (Phase 100)
+- **INFRA-20-01:** Threshold CI bumped 80→86%. 169 tests novos em 8 arquivos hot. cli/index.js capped at 82.61% por live spawn / interactive TTY (atingir 90% violaria Stable API v1.0+). Raw 90% target diferido para v1.21+ com 3 avenues canônicas inline em ci.yml.
+
+### Mutation Testing Baseline (Phase 101)
+- **QUAL-20-01:** Stryker 9.6.1 instalado + configurado. Baseline **57.40%** em 10 arquivos `src/core/` (1310 mutants, 739 killed). Documento canônico v1.20 para futuro mutation gate.
+
+### Auto-snapshot metrics-snapshot tool (Phase 102)
+- **OBS-20-01:** `handleMetricsSnapshot` invoca `persistSnapshot()` automaticamente antes de retornar payload, com throttle 1s in-memory e graceful fs error. Fecha gap operacional `.planning/metrics/snapshots/` vazio.
+
+### Multi-Window Burn-Rate (Phase 103)
+- **OBS-20-02:** `/burn-rate-status` calcula burn rate dual-window (1h fast + 6h slow) independentemente por SLO. Combinação canonical Google SRE: PAGE quando ambos críticos, TICKET para slow erosion sustained, WARN para spike isolado, conservativo no_data quando snapshots insuficientes.
+
+### Emergency Response 5/5 (Phase 104)
+- **SRE-20-01:** RUNBOOK.md expanded 5→9 scenarios. EMERGENCY-DRILL-LOG.md trimestral cadence + 2026-Q2 entry. PRR-RECHECK.md documents Emergency axe 4/5→5/5.
+
+### Performance 5/5 (Phase 105)
+- **PERF-20-01:** Pre-warm fire-and-forget de `listKit(BUNDLED_KIT_ROOT)` após `server.connect`. M4 MCP p95 144.55ms→**0.0ms** (>100% redução). PRR Performance axe 4/5→5/5. Total v1.20 **30/30**.
+
+[v1.20 milestone audit](./.planning/milestones/v1.20-MILESTONE-AUDIT.md) · [v1.20 ROADMAP](./.planning/milestones/v1.20-ROADMAP.md)
+
 ## [1.19.0] - 2026-05-09
 
 **Maturidade Operacional** — fecha tech debt remanescente da v1.18 (coverage 75→80% + metrics retention + burn-rate live).
