@@ -51,7 +51,7 @@ Analise o draft SQL. Classifique cada statement:
 
 ### Step 2 — Apply Defense-in-Depth Checklist
 
-Para cada tabela detectada, valide 7 items canônicos:
+Para cada tabela detectada, valide 8 items canônicos (v1.24 — Camada 8 adicionada):
 
 - [ ] **C1**: Policy explícita por tabela (4 granulares: SELECT/INSERT/UPDATE/DELETE) — não `for all`
 - [ ] **C2**: Event trigger `rls_auto_enable` instalado no projeto (query `pg_event_trigger` — HARDEN-05)
@@ -60,6 +60,7 @@ Para cada tabela detectada, valide 7 items canônicos:
 - [ ] **C5**: Views com `security_invoker=true` (Postgres 15+)
 - [ ] **C6**: Service role caveat — caller não está expondo `SERVICE_ROLE_KEY` ao cliente
 - [ ] **C7**: `(select auth.uid())` wrapper + `IS NOT NULL AND ...` em todas policies de auth
+- [ ] **C8 (v1.24)**: Tabelas com colunas sensíveis (PII, audit payload, billing, tokens) têm column-level privileges aplicados — `REVOKE table-level` + `GRANT column-level` granular (Detector 8 abaixo)
 
 ### Step 3 — Decide Verdict
 
@@ -208,6 +209,68 @@ Detectados 3 anti-patterns simultâneos:
 
 **Confirme com o user humano antes de prosseguir.** Sem confirmação, este agent NÃO aplica o rewrite — devolve controle ao caller para clarificação.
 ```
+
+## HARDEN-07 (v1.24): Detector 8 — Column-Level Privileges em tabelas PII
+
+Em CREATE TABLE com colunas potencialmente sensíveis (PII, audit payload, billing, tokens), aplique Detector 8 para detectar gap de Camada 8 (column-level privileges).
+
+### Query de detecção (live mode via mcp__supabase__execute_sql)
+
+```sql
+-- detectar colunas sensíveis sem column-level GRANT/REVOKE
+select c.table_schema, c.table_name, c.column_name, c.data_type
+from information_schema.columns c
+where c.table_schema = 'public'
+  and c.table_name = '<table_being_audited>'
+  and c.column_name ilike any (array[
+    '%email%', '%phone%', '%ssn%', '%cpf%', '%token%',
+    '%password%', '%credit_card%', '%bank_account%', '%salary%',
+    '%payload%'
+  ])
+  and not exists (
+    select 1 from information_schema.column_privileges p
+    where p.table_schema = c.table_schema
+      and p.table_name = c.table_name
+      and p.column_name = c.column_name
+  );
+```
+
+Se `count >= 1`, há gap defense-in-depth Camada 8.
+
+### HARDEN-08 (v1.24): Chain cooperativo para `supabase-column-privileges-writer`
+
+Quando Detector 8 encontra gap, faça handoff cooperativo:
+
+```python
+column_priv_result = Task(
+  subagent_type="supabase-column-privileges-writer",
+  prompt=f"""
+  <upstream_intent>
+  Source agent: supabase-rls-hardener
+  Original goal: aplicar Camada 8 (column-level privileges) em tabela com PII detectado pelo Detector 8
+  Constraints: tabela {table_name} tem coluna(s) sensível(eis) {sensitive_cols}; precisa REVOKE table-level + GRANT column-level apenas em colunas não-sensíveis
+  </upstream_intent>
+
+  <table>schema: public, name: {table_name}</table>
+
+  <sensitive_columns>
+  {format_sensitive_cols(detected_cols)}
+  </sensitive_columns>
+
+  <allowed_roles>
+  - service_role: SELECT all (admin tasks)
+  - authenticated: SELECT non-sensitive columns only
+  - anon: SELECT minimal subset (or denied)
+  </allowed_roles>
+
+  <user_facing_caller>{self.user_facing}</user_facing_caller>
+  """
+)
+```
+
+Hardener processa verdict GO/STRENGTHEN/REWRITE retornado pelo column-privileges-writer. Em REWRITE com user_facing_caller=true, hardener inclui confirmação pendente no próprio output.
+
+**Comportamento:** Detector 8 + chain HARDEN-08 são **OPT-IN** — só ativados quando tabela tem colunas potencialmente sensíveis detectadas via keyword matching. Para tabelas sem PII, Detector 8 é skip.
 
 ## HARDEN-05: Validar Event Trigger `rls_auto_enable`
 

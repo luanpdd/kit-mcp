@@ -40,6 +40,7 @@ Agents disponíveis: `kit/agents/supabase-*.md` (Phase 26) + `kit/agents/schema-
 | `migration` | `migrar`, `migrate` | `supabase-migration-writer` (v1.23: auto-chain cooperativo com hardener em CREATE TABLE) |
 | `rls` | — | `supabase-rls-writer` (v1.23: GRANTs + IS NOT NULL + views security_invoker) |
 | `hardener` | `harden`, `endurecer` | `supabase-rls-hardener` (v1.23 canonical materializer — recebe draft via Task) |
+| `column` | `coluna`, `col-priv` | `supabase-column-privileges-writer` (v1.24 canonical materializer column-level — recebe spec via Task) |
 | `edge` | `edge-function`, `function`, `funcao` | `supabase-edge-fn-writer` |
 | `realtime` | `tempo-real` | `supabase-realtime-implementer` |
 | `auth` | `autenticacao`, `auth-ssr` | `supabase-auth-bootstrapper` |
@@ -73,6 +74,7 @@ arquiteto, architect, arch       → supabase-architect
 migration, migrar, migrate       → supabase-migration-writer  (v1.23: auto-chain hardener em CREATE TABLE)
 rls                              → supabase-rls-writer        (v1.23: GRANTs + IS NOT NULL + views security_invoker)
 hardener, harden, endurecer      → supabase-rls-hardener      (v1.23 canonical materializer)
+column, coluna, col-priv         → supabase-column-privileges-writer  (v1.24 canonical materializer column-level — feature AVANÇADA)
 edge, edge-function, function, funcao → supabase-edge-fn-writer
 realtime, tempo-real             → supabase-realtime-implementer
 auth, autenticacao, auth-ssr     → supabase-auth-bootstrapper
@@ -164,6 +166,8 @@ mode: rag-embeddings   (ou cron-pgmq-edge)
 **Subcomando `migration` (v1.23 — CMD-02):** após `supabase-migration-writer` produzir SQL inicial, o agent **AUTOMATICAMENTE** invoca `supabase-rls-hardener` via `Task()` para validar defense-in-depth em CREATE TABLE. Output final inclui verdict + RLS auto-injetada. Caller NÃO precisa invocar hardener separadamente — é parte do contrato do subcomando.
 
 **Subcomando `hardener` (v1.23 novo):** dispatch direto para `supabase-rls-hardener`. Útil quando caller tem draft SQL pronto e quer apenas validação/hardening sem gerar SQL novo. Aceita input com bloco `<draft_sql>` no `$ARGUMENTS` ou via stdin.
+
+**Subcomando `column` (v1.24 novo):** dispatch direto para `supabase-column-privileges-writer`. Recebe spec de table + colunas sensíveis + roles permitidos e produz REVOKE table-level + GRANT column-level. **Feature AVANÇADA** — apenas para casos com PII compliance (LGPD/GDPR), audit log payload, billing data, tokens raw. Para casos comuns (admin/user roles), prefira dedicated role table pattern (documentado em [`supabase-column-level-security`](../skills/supabase-column-level-security/SKILL.md)). Aceita input com bloco `<sensitive_columns>` e `<allowed_roles>` no `$ARGUMENTS`.
 
 ## 5. Output
 
