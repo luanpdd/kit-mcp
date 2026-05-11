@@ -41,6 +41,7 @@ Agents disponíveis: `kit/agents/supabase-*.md` (Phase 26) + `kit/agents/schema-
 | `rls` | — | `supabase-rls-writer` (v1.23: GRANTs + IS NOT NULL + views security_invoker) |
 | `hardener` | `harden`, `endurecer` | `supabase-rls-hardener` (v1.23 canonical materializer — recebe draft via Task) |
 | `column` | `coluna`, `col-priv` | `supabase-column-privileges-writer` (v1.24 canonical materializer column-level — recebe spec via Task) |
+| `rbac` | `roles`, `permissions`, `claims` | `supabase-rbac-implementer` (v1.25 canonical materializer Custom Claims & RBAC via Auth Hook — recebe spec via Task) |
 | `edge` | `edge-function`, `function`, `funcao` | `supabase-edge-fn-writer` |
 | `realtime` | `tempo-real` | `supabase-realtime-implementer` |
 | `auth` | `autenticacao`, `auth-ssr` | `supabase-auth-bootstrapper` |
@@ -75,6 +76,7 @@ migration, migrar, migrate       → supabase-migration-writer  (v1.23: auto-cha
 rls                              → supabase-rls-writer        (v1.23: GRANTs + IS NOT NULL + views security_invoker)
 hardener, harden, endurecer      → supabase-rls-hardener      (v1.23 canonical materializer)
 column, coluna, col-priv         → supabase-column-privileges-writer  (v1.24 canonical materializer column-level — feature AVANÇADA)
+rbac, roles, permissions, claims → supabase-rbac-implementer           (v1.25 canonical materializer Custom Claims & RBAC via Auth Hook)
 edge, edge-function, function, funcao → supabase-edge-fn-writer
 realtime, tempo-real             → supabase-realtime-implementer
 auth, autenticacao, auth-ssr     → supabase-auth-bootstrapper
@@ -168,6 +170,8 @@ mode: rag-embeddings   (ou cron-pgmq-edge)
 **Subcomando `hardener` (v1.23 novo):** dispatch direto para `supabase-rls-hardener`. Útil quando caller tem draft SQL pronto e quer apenas validação/hardening sem gerar SQL novo. Aceita input com bloco `<draft_sql>` no `$ARGUMENTS` ou via stdin.
 
 **Subcomando `column` (v1.24 novo):** dispatch direto para `supabase-column-privileges-writer`. Recebe spec de table + colunas sensíveis + roles permitidos e produz REVOKE table-level + GRANT column-level. **Feature AVANÇADA** — apenas para casos com PII compliance (LGPD/GDPR), audit log payload, billing data, tokens raw. Para casos comuns (admin/user roles), prefira dedicated role table pattern (documentado em [`supabase-column-level-security`](../skills/supabase-column-level-security/SKILL.md)). Aceita input com bloco `<sensitive_columns>` e `<allowed_roles>` no `$ARGUMENTS`.
+
+**Subcomando `rbac` (v1.25 novo):** dispatch direto para `supabase-rbac-implementer`. Recebe spec de roles + permissions matrix + multi_tenant flag e materializa setup completo (7 passos canônicos: enum types + user_roles + role_permissions + Custom Access Token Auth Hook + supabase_auth_admin GRANTs + authorize() function + RLS policies template + client jwt-decode snippet). Pattern recomendado v1.25 para RBAC — zero-JOIN em policies via claim no JWT. Caveat JWT freshness (mudanças refletem após token refresh). Aceita input com bloco `<roles>` + `<permissions_matrix>` + `<multi_tenant>` no `$ARGUMENTS`. Cross-ref skill [`supabase-custom-claims-rbac`](../skills/supabase-custom-claims-rbac/SKILL.md).
 
 ## 5. Output
 

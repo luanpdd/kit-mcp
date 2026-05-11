@@ -297,9 +297,89 @@ Auth events são SLI primário — "successful login %" é métrica de saúde di
 
 **Output adicionado:** seção "## Observability hooks" com snippet de span wrapper em handlers `/auth/*`.
 
+## Custom Claims & RBAC integration (v1.25 — AUTH-PATCH-01)
+
+Quando o projeto usa **RBAC via Custom Access Token Auth Hook** (skill `supabase-custom-claims-rbac` v1.25), este agent inclui no bootstrap:
+
+### 1. Dependency `jwt-decode`
+
+Adicionar ao `package.json`:
+
+```bash
+npm install jwt-decode
+```
+
+### 2. `utils/supabase/client.ts` — listener com decoder
+
+```ts
+import { createBrowserClient } from '@supabase/ssr'
+import { jwtDecode } from 'jwt-decode'
+
+export function createClient() {
+  const supabase = createBrowserClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  )
+
+  // listener para decodificar custom claims após login/refresh
+  supabase.auth.onAuthStateChange(async (event, session) => {
+    if (session) {
+      const jwt = jwtDecode<{ user_role?: string }>(session.access_token)
+      // userRole disponível para UI conditional rendering
+      // (use context provider para propagar — não documentado aqui)
+      console.log('User role from JWT:', jwt.user_role)
+    }
+  })
+
+  return supabase
+}
+```
+
+### 3. `utils/supabase/server.ts` — server-side decode
+
+```ts
+import { jwtDecode } from 'jwt-decode'
+
+export async function getUserRole() {
+  const supabase = await createClient()
+  const { data: { session } } = await supabase.auth.getSession()
+  if (!session) return null
+
+  const jwt = jwtDecode<{ user_role?: string }>(session.access_token)
+  return jwt.user_role ?? null
+}
+```
+
+### 4. Handoff cooperativo para `supabase-rbac-implementer`
+
+Quando caller sinaliza `enable_rbac: true` ou detecta tabela `user_roles` no projeto, faça handoff:
+
+```python
+Task(subagent_type="supabase-rbac-implementer", prompt=f"""
+<upstream_intent>
+Source agent: supabase-auth-bootstrapper
+Original goal: bootstrap Next.js v16 + Supabase Auth com RBAC via Custom Access Token Auth Hook
+Constraints: projeto novo Next.js v16; jwt-decode adicionado ao package.json; listener jwt decode adicionado em client.ts; helper getUserRole() adicionado em server.ts
+</upstream_intent>
+
+<roles>{caller_provided_roles or default ['admin', 'user']}</roles>
+<permissions_matrix>{caller_provided or default}</permissions_matrix>
+<multi_tenant>{caller_provided}</multi_tenant>
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+**Caveats embutidos no bootstrap:**
+
+- ⚠ JWT freshness: mudanças em user_roles refletem após refresh (TTL 1h). Para revogação imediata, usar `auth.admin.signOut(userId)` no server-side com service_role.
+- ⚠ Auth hook deve ser habilitado no Dashboard (Authentication > Hooks Beta) ou config.toml local — esse setup não é automatizado pelo bootstrap (DDL do hook é feito pelo `supabase-rbac-implementer` mas o enable depende de UI/config).
+- ⚠ `jwt-decode` é apenas decode (NÃO valida assinatura) — para validação server-side, use `@supabase/ssr` `getUser()` que valida.
+
 ## Ver também
 
 - [supabase-auth-ssr](../skills/supabase-auth-ssr/SKILL.md) — base de conhecimento canônica
 - [supabase-rls-policies](../skills/supabase-rls-policies/SKILL.md) — RLS aplicado quando user autenticado consulta tabelas
+- [supabase-custom-claims-rbac](../skills/supabase-custom-claims-rbac/SKILL.md) (v1.25) — Custom Access Token Auth Hook + jwt-decode
+- [supabase-rbac-implementer](./supabase-rbac-implementer.md) (v1.25) — canonical handoff target para RBAC setup
 - [structured-events](../skills/structured-events/SKILL.md) — campos canônicos para auth events
 - [event-based-slos](../skills/event-based-slos/SKILL.md) *(Phase 32)* — SLO de "successful login %"

@@ -61,6 +61,7 @@ Para cada tabela detectada, valide 8 items canônicos (v1.24 — Camada 8 adicio
 - [ ] **C6**: Service role caveat — caller não está expondo `SERVICE_ROLE_KEY` ao cliente
 - [ ] **C7**: `(select auth.uid())` wrapper + `IS NOT NULL AND ...` em todas policies de auth
 - [ ] **C8 (v1.24)**: Tabelas com colunas sensíveis (PII, audit payload, billing, tokens) têm column-level privileges aplicados — `REVOKE table-level` + `GRANT column-level` granular (Detector 8 abaixo)
+- [ ] **C9 (v1.25)**: Projetos com tabela `user_roles` têm **Custom Access Token Auth Hook** instalado + `supabase_auth_admin` com GRANTs corretos + `authorize()` function presente — RBAC delivered via JWT claim, não JOIN custoso em policies (Detector 9 abaixo)
 
 ### Step 3 — Decide Verdict
 
@@ -271,6 +272,61 @@ column_priv_result = Task(
 Hardener processa verdict GO/STRENGTHEN/REWRITE retornado pelo column-privileges-writer. Em REWRITE com user_facing_caller=true, hardener inclui confirmação pendente no próprio output.
 
 **Comportamento:** Detector 8 + chain HARDEN-08 são **OPT-IN** — só ativados quando tabela tem colunas potencialmente sensíveis detectadas via keyword matching. Para tabelas sem PII, Detector 8 é skip.
+
+## HARDEN-09 (v1.25): Detector 9 — Custom Access Token Auth Hook para RBAC
+
+Em projetos com tabela `public.user_roles`, valide que **Custom Access Token Auth Hook** está instalado + `supabase_auth_admin` tem GRANTs corretos + `authorize()` function presente.
+
+### Query de detecção (live mode via mcp__supabase__execute_sql)
+
+```sql
+-- Detectar projects com user_roles mas SEM auth hook configurado
+select
+  (select count(*) from pg_tables where schemaname = 'public' and tablename = 'user_roles') as has_user_roles_table,
+  (select count(*) from pg_proc where pronamespace = 'public'::regnamespace
+    and proname = 'custom_access_token_hook') as has_hook_function,
+  case when (select count(*) from pg_proc where pronamespace = 'public'::regnamespace
+    and proname = 'custom_access_token_hook') > 0
+    then has_function_privilege('supabase_auth_admin',
+      'public.custom_access_token_hook(jsonb)', 'EXECUTE')
+    else false
+  end as auth_admin_can_execute,
+  (select count(*) from pg_proc where pronamespace = 'public'::regnamespace
+    and proname = 'authorize') as has_authorize_function;
+```
+
+**Gap conditions (Detector 9 flags):**
+
+- `has_user_roles_table > 0 AND has_hook_function = 0` → tabela existe mas hook não criado
+- `has_hook_function > 0 AND auth_admin_can_execute = false` → hook existe mas GRANT EXECUTE faltando
+- `has_user_roles_table > 0 AND has_authorize_function = 0` → policies não usam pattern authorize()
+
+### HARDEN-10 (v1.25): Chain cooperativo para `supabase-rbac-implementer`
+
+Quando Detector 9 encontra gap, faça handoff cooperativo:
+
+```python
+rbac_result = Task(
+  subagent_type="supabase-rbac-implementer",
+  prompt=f"""
+  <upstream_intent>
+  Source agent: supabase-rls-hardener
+  Original goal: instalar Custom Access Token Auth Hook + GRANTs + authorize() function para projeto com user_roles table existente
+  Constraints: gap detectado pelo Detector 9 — {gap_description}
+  </upstream_intent>
+
+  <roles>{detected_roles_from_user_roles_table}</roles>
+
+  <permissions_matrix>{detected_or_default_matrix}</permissions_matrix>
+
+  <multi_tenant>{detect_if_org_id_in_user_roles}</multi_tenant>
+
+  <user_facing_caller>{self.user_facing}</user_facing_caller>
+  """
+)
+```
+
+Hardener processa verdict GO/STRENGTHEN/REWRITE retornado pelo rbac-implementer. Comportamento OPT-IN — só ativado se `user_roles` table detectada (não força em projetos sem RBAC).
 
 ## HARDEN-05: Validar Event Trigger `rls_auto_enable`
 
