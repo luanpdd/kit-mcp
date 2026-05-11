@@ -185,9 +185,41 @@ Constraints: REVOKE DELETE/UPDATE obrigatório (append-only); helper function pr
 
 Hardener valida que append-only é blindado (sem policy de DELETE/UPDATE), GRANTs corretos, RLS ativa. **NUNCA descarte intent upstream silenciosamente**.
 
+## Cooperative handoff column-level (v1.24 — CROSS-11)
+
+Audit log tem coluna `payload` (jsonb) que pode conter PII (IP, user agent, email em event login). Aplique Camada 8 de defense-in-depth via handoff cooperativo:
+
+```python
+Task(subagent_type="supabase-column-privileges-writer", prompt=f"""
+<upstream_intent>
+Source agent: audit-log-implementer
+Original goal: PII sanitization granular por coluna em audit_log para compliance LGPD/GDPR
+Constraints: payload jsonb tem PII em events de login (IP, UA) + member_invited (email); legível só por security_admin + service_role
+</upstream_intent>
+
+<table>schema: public, name: audit_log</table>
+
+<sensitive_columns>
+- payload (jsonb — PII em events)
+- actor_email (PII se presente)
+</sensitive_columns>
+
+<allowed_roles>
+- service_role: SELECT all
+- security_admin: SELECT all
+- authenticated: SELECT (id, event_type, user_id, org_id, occurred_at) — excluding payload + actor_email
+</allowed_roles>
+
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+**Princípio canônico v1.23 (herdado em v1.24):** agents não-Supabase pensam/planejam; agents Supabase materializam/hardenam.
+
 ## Ver também
 
 - [supabase-rls-hardener](./supabase-rls-hardener.md) — canonical handoff target v1.23 (validation append-only)
+- [supabase-column-privileges-writer](./supabase-column-privileges-writer.md) — canonical handoff target v1.24 (column-level PII sanitization)
 - [audit-log-multi-tenant](../skills/audit-log-multi-tenant/SKILL.md) — base de conhecimento (DDL + regras)
 - [supabase-cron-queues](../skills/supabase-cron-queues/SKILL.md) — pattern pg_cron (cross-suite)
 - [supabase-migration-writer](./supabase-migration-writer.md) — agent invocado para SQL final

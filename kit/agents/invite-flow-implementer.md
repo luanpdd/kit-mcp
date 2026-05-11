@@ -148,9 +148,40 @@ Constraints: token SHA-256 (raw enviado por email, hash no banco); TTL 7d single
 
 Hardener valida token security (hash apenas no DB), RPC com SECURITY DEFINER em schema private, RLS por org_id. **NUNCA descarte intent upstream silenciosamente**.
 
+## Cooperative handoff column-level (v1.24 — CROSS-15)
+
+`org_invites.token_raw` é gerado durante create do invite (raw enviado por email, hash armazenado). Após email enviado, **nenhum role além de service_role** deve poder ler o raw — é segredo de uso único. Aplique handoff cooperativo column-level:
+
+```python
+Task(subagent_type="supabase-column-privileges-writer", prompt=f"""
+<upstream_intent>
+Source agent: invite-flow-implementer
+Original goal: token raw column (org_invites.token_raw) legível APENAS para service_role pós-criação
+Constraints: token_raw é segredo único, enviado por email durante create; hash armazenado para validation em accept; raw NUNCA visível em REST API; member_invited audit event não logga token_raw
+</upstream_intent>
+
+<table>schema: public, name: org_invites</table>
+
+<sensitive_columns>
+- token_raw (text — segredo, apenas service_role)
+</sensitive_columns>
+
+<allowed_roles>
+- service_role: SELECT all (incluindo token_raw — usado durante envio de email)
+- authenticated: SELECT (id, org_id, email, role, status, expires_at, created_at, accepted_at) — sem token_raw
+- anon: SELECT (status) — minimal, para "this invite is still valid?" check pre-login
+</allowed_roles>
+
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+**Caveat:** mesmo com column-level, considere também armazenar APENAS o hash do token (não o raw) na tabela. token_raw fica em memory durante envio do email e descartado. Isso é defense-in-depth Camada 9 (não armazenar segredos).
+
 ## Ver também
 
 - [supabase-rls-hardener](./supabase-rls-hardener.md) — canonical handoff target v1.23
+- [supabase-column-privileges-writer](./supabase-column-privileges-writer.md) — canonical handoff target v1.24 (column-level token raw)
 - [member-invite-flow](../skills/member-invite-flow/SKILL.md) — base de conhecimento
 - [supabase-migration-writer](./supabase-migration-writer.md) — invoked via Task() para SQL
 - [supabase-edge-fn-writer](./supabase-edge-fn-writer.md) — invoked via Task() para Edge Function

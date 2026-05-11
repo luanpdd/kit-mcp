@@ -272,9 +272,40 @@ Constraints: helper functions já existem em schema private (is_member_of, has_r
 
 Hardener processa verdict GO/STRENGTHEN/REWRITE-com-confirmação. **NUNCA descarte intent upstream silenciosamente** — conflitos viram diff explícito. Princípio canônico v1.23: agents não-Supabase pensam/planejam; agents Supabase materializam/hardenam; ninguém descarta o outro.
 
+## Cooperative handoff column-level (v1.24 — CROSS-14)
+
+Em hierarquia multi-tenant org→dept→role→permission, column-level pode ser aplicado para restringir acesso granular a colunas sensíveis dentro de tabelas multi-tenant. Casos típicos: department_settings com colunas configurações sensíveis visíveis apenas para department_lead; org_billing com colunas credit_card_token visíveis apenas para org_owner.
+
+```python
+Task(subagent_type="supabase-column-privileges-writer", prompt=f"""
+<upstream_intent>
+Source agent: multi-tenant-rls-writer
+Original goal: column-level privileges dentro de hierarquia org/dept/role/permission
+Constraints: tabela {table_name} tem coluna(s) sensível(eis) {sensitive_cols} que devem ser legíveis apenas para role específico na hierarquia; helper functions existem em schema private (private.is_member_of, private.has_role, private.has_permission)
+</upstream_intent>
+
+<table>schema: public, name: {table_name}</table>
+
+<sensitive_columns>
+{sensitive_cols_list}
+</sensitive_columns>
+
+<allowed_roles>
+- service_role: SELECT all
+- {specific_role}: SELECT all (via private.has_role check em RLS combinada)
+- authenticated: SELECT non-sensitive columns
+</allowed_roles>
+
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+**Caveat hierarquia:** column-level é Postgres role-level (não muda baseado em RLS row context). Para casos onde acesso depende de hierarquia *dinâmica* (membership ativa em dept específico), prefira RLS policy + dedicated role table (mais flexível). Use column-level apenas para casos estáticos com role Postgres separado.
+
 ## Ver também
 
 - [supabase-rls-hardener](./supabase-rls-hardener.md) — canonical handoff target v1.23 (verdicts GO/STRENGTHEN/REWRITE)
+- [supabase-column-privileges-writer](./supabase-column-privileges-writer.md) — canonical handoff target v1.24 (column-level hierarquia)
 - [supabase-rls-writer](./supabase-rls-writer.md) — agent base v1.8 que herda anti-pitfalls
 - [supabase-rls-policies](../skills/supabase-rls-policies/SKILL.md) — base de conhecimento canônica v1.8
 - [multi-tenant-rls-hierarchy](../skills/multi-tenant-rls-hierarchy/SKILL.md) — base de conhecimento desta agent

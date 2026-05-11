@@ -217,9 +217,42 @@ Constraints: DSR SLA 15 dias (Art. 19) com alert pg_cron D-3; consent default op
 
 Hardener valida pseudonymization correto, retention policies via pg_cron, PII sanitization em audit_logs. **NUNCA descarte intent upstream silenciosamente**.
 
+## Cooperative handoff column-level (v1.24 — CROSS-12)
+
+DSR (Data Subject Request) workflow precisa de erasure granular por coluna — não só DELETE row, mas anonymize PII columns específicas. Cross-border PII restriction (gru1 Vercel + sa-east-1 Supabase) também requer column-level audit. Aplique handoff cooperativo:
+
+```python
+Task(subagent_type="supabase-column-privileges-writer", prompt=f"""
+<upstream_intent>
+Source agent: lgpd-compliance-auditor
+Original goal: implementar DSR + erasure por coluna + cross-border PII restriction para LGPD Art. 18 compliance
+Constraints: DSR table tem colunas PII (subject_email, subject_phone, subject_address); erasure via anonymization (não DELETE); legível só por dpo_role + service_role; cross-border config sa-east-1 obrigatório
+</upstream_intent>
+
+<table>schema: public, name: dsr_requests</table>
+
+<sensitive_columns>
+- subject_email
+- subject_phone
+- subject_address
+- subject_metadata (jsonb — pode ter info sensível adicional)
+</sensitive_columns>
+
+<allowed_roles>
+- service_role: SELECT all (admin tasks)
+- dpo_role: SELECT all (Data Protection Officer — quem processa DSR)
+- authenticated: SELECT (id, request_type, status, created_at, resolved_at) — minimal
+- anon: denied (sem GRANT)
+</allowed_roles>
+
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
 ## Ver também
 
 - [supabase-rls-hardener](./supabase-rls-hardener.md) — canonical handoff target v1.23
+- [supabase-column-privileges-writer](./supabase-column-privileges-writer.md) — canonical handoff target v1.24 (column-level DSR/erasure)
 - [lgpd-multi-tenant-compliance](../skills/lgpd-multi-tenant-compliance/SKILL.md) — base de conhecimento
 - [audit-log-multi-tenant](../skills/audit-log-multi-tenant/SKILL.md) — Phase 109, PII sanitization + legal_hold
 - [multi-tenant-isolation-auditor](./multi-tenant-isolation-auditor.md) — agent sibling padrão de audit

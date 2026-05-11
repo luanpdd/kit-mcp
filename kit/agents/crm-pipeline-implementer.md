@@ -177,9 +177,42 @@ Constraints: lead dedup (unique org_id,phone) + (unique org_id,email); state mac
 
 Hardener valida policies por org_id, GRANTs corretos, trigger SECURITY DEFINER em schema private (se aplicável). **NUNCA descarte intent upstream silenciosamente**.
 
+## Cooperative handoff column-level (v1.24 — CROSS-13)
+
+Lead PII columns (phone, email) podem precisar de column-level restriction para LGPD compliance — apenas owner do lead ou lead_manager role vê os dados de contato completos. Aplique handoff cooperativo:
+
+```python
+Task(subagent_type="supabase-column-privileges-writer", prompt=f"""
+<upstream_intent>
+Source agent: crm-pipeline-implementer
+Original goal: lead PII columns (phone, email) com REVOKE select cross-user para LGPD compliance
+Constraints: lead.phone e lead.email são PII; visível apenas para owner (RLS) + lead_manager role (column-level); company_name e job_title públicos para membros da org
+</upstream_intent>
+
+<table>schema: public, name: leads</table>
+
+<sensitive_columns>
+- phone
+- email
+- notes (jsonb — pode ter PII em call notes)
+</sensitive_columns>
+
+<allowed_roles>
+- service_role: SELECT all
+- lead_manager: SELECT all (admin do CRM)
+- authenticated: SELECT (id, org_id, owner_id, company_name, job_title, stage, lead_value, created_at) — sem PII
+</allowed_roles>
+
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+**Importante:** combinar com RLS row-level (owner vê próprio lead inteiro) — RLS filtra qual lead; column-level filtra quais colunas DENTRO do lead. Owner pode precisar SELECT phone do PRÓPRIO lead — considere policy `for select to authenticated using (owner_id = (select auth.uid()))` granted em todas colunas, e usar column-level apenas para cross-user (outro member da org tentando ver lead alheio).
+
 ## Ver também
 
 - [supabase-rls-hardener](./supabase-rls-hardener.md) — canonical handoff target v1.23
+- [supabase-column-privileges-writer](./supabase-column-privileges-writer.md) — canonical handoff target v1.24 (column-level lead PII)
 - [crm-lead-pipeline-patterns](../skills/crm-lead-pipeline-patterns/SKILL.md) — base de conhecimento
 - [evolution-go-integrator](./evolution-go-integrator.md) — Phase 112 (cross-phase handoff)
 - [supabase-migration-writer](./supabase-migration-writer.md) — invoked via Task() para SQL
