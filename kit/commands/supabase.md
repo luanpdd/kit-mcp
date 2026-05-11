@@ -42,6 +42,7 @@ Agents disponíveis: `kit/agents/supabase-*.md` (Phase 26) + `kit/agents/schema-
 | `hardener` | `harden`, `endurecer` | `supabase-rls-hardener` (v1.23 canonical materializer — recebe draft via Task) |
 | `column` | `coluna`, `col-priv` | `supabase-column-privileges-writer` (v1.24 canonical materializer column-level — recebe spec via Task) |
 | `rbac` | `roles`, `permissions`, `claims` | `supabase-rbac-implementer` (v1.25 canonical materializer Custom Claims & RBAC via Auth Hook — recebe spec via Task) |
+| `role` | `papel`, `roles-pg` | `supabase-roles-implementer` (v1.26 canonical materializer Postgres Roles — recebe spec via Task; system access) |
 | `edge` | `edge-function`, `function`, `funcao` | `supabase-edge-fn-writer` |
 | `realtime` | `tempo-real` | `supabase-realtime-implementer` |
 | `auth` | `autenticacao`, `auth-ssr` | `supabase-auth-bootstrapper` |
@@ -77,6 +78,7 @@ rls                              → supabase-rls-writer        (v1.23: GRANTs +
 hardener, harden, endurecer      → supabase-rls-hardener      (v1.23 canonical materializer)
 column, coluna, col-priv         → supabase-column-privileges-writer  (v1.24 canonical materializer column-level — feature AVANÇADA)
 rbac, roles, permissions, claims → supabase-rbac-implementer           (v1.25 canonical materializer Custom Claims & RBAC via Auth Hook)
+role, papel, roles-pg            → supabase-roles-implementer          (v1.26 canonical materializer Postgres Roles — system access only)
 edge, edge-function, function, funcao → supabase-edge-fn-writer
 realtime, tempo-real             → supabase-realtime-implementer
 auth, autenticacao, auth-ssr     → supabase-auth-bootstrapper
@@ -172,6 +174,8 @@ mode: rag-embeddings   (ou cron-pgmq-edge)
 **Subcomando `column` (v1.24 novo):** dispatch direto para `supabase-column-privileges-writer`. Recebe spec de table + colunas sensíveis + roles permitidos e produz REVOKE table-level + GRANT column-level. **Feature AVANÇADA** — apenas para casos com PII compliance (LGPD/GDPR), audit log payload, billing data, tokens raw. Para casos comuns (admin/user roles), prefira dedicated role table pattern (documentado em [`supabase-column-level-security`](../skills/supabase-column-level-security/SKILL.md)). Aceita input com bloco `<sensitive_columns>` e `<allowed_roles>` no `$ARGUMENTS`.
 
 **Subcomando `rbac` (v1.25 novo):** dispatch direto para `supabase-rbac-implementer`. Recebe spec de roles + permissions matrix + multi_tenant flag e materializa setup completo (7 passos canônicos: enum types + user_roles + role_permissions + Custom Access Token Auth Hook + supabase_auth_admin GRANTs + authorize() function + RLS policies template + client jwt-decode snippet). Pattern recomendado v1.25 para RBAC — zero-JOIN em policies via claim no JWT. Caveat JWT freshness (mudanças refletem após token refresh). Aceita input com bloco `<roles>` + `<permissions_matrix>` + `<multi_tenant>` no `$ARGUMENTS`. Cross-ref skill [`supabase-custom-claims-rbac`](../skills/supabase-custom-claims-rbac/SKILL.md).
+
+**Subcomando `role` (v1.26 novo):** dispatch direto para `supabase-roles-implementer`. Recebe spec de custom Postgres roles + hierarchy + GRANT matrix e materializa setup completo (CREATE ROLE com LOGIN PASSWORD opcional + role hierarchy INHERIT/NOINHERIT + GRANT/REVOKE per schema/table/function + password security check). **System access apenas** — para application access (end-users), use `/supabase rbac` (v1.25). Aceita input com bloco `<roles_to_create>` + `<grants>` + `<use_case>` no `$ARGUMENTS`. Cross-ref skill [`supabase-postgres-roles`](../skills/supabase-postgres-roles/SKILL.md).
 
 ## 5. Output
 

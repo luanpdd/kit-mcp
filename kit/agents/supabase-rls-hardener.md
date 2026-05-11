@@ -62,6 +62,7 @@ Para cada tabela detectada, valide 8 items canônicos (v1.24 — Camada 8 adicio
 - [ ] **C7**: `(select auth.uid())` wrapper + `IS NOT NULL AND ...` em todas policies de auth
 - [ ] **C8 (v1.24)**: Tabelas com colunas sensíveis (PII, audit payload, billing, tokens) têm column-level privileges aplicados — `REVOKE table-level` + `GRANT column-level` granular (Detector 8 abaixo)
 - [ ] **C9 (v1.25)**: Projetos com tabela `user_roles` têm **Custom Access Token Auth Hook** instalado + `supabase_auth_admin` com GRANTs corretos + `authorize()` function presente — RBAC delivered via JWT claim, não JOIN custoso em policies (Detector 9 abaixo)
+- [ ] **C10 (v1.26)**: Custom Postgres roles têm `description`/`comment` documentado + `owner` identificável + sem GRANTs frouxos (ex: GRANT ALL em schema completo sem justificativa); service accounts internos usam role dedicado em vez de service_role API key (Detector 10 abaixo)
 
 ### Step 3 — Decide Verdict
 
@@ -272,6 +273,53 @@ column_priv_result = Task(
 Hardener processa verdict GO/STRENGTHEN/REWRITE retornado pelo column-privileges-writer. Em REWRITE com user_facing_caller=true, hardener inclui confirmação pendente no próprio output.
 
 **Comportamento:** Detector 8 + chain HARDEN-08 são **OPT-IN** — só ativados quando tabela tem colunas potencialmente sensíveis detectadas via keyword matching. Para tabelas sem PII, Detector 8 é skip.
+
+## HARDEN-11 (v1.26): Detector 10 — Postgres Roles Audit
+
+Audit custom Postgres roles para detectar gaps de Camada 10 (defense-in-depth):
+
+### Query de detecção
+
+```sql
+select
+  r.rolname,
+  r.rolcanlogin as has_login,
+  r.rolbypassrls as bypass_rls,
+  pg_catalog.shobj_description(r.oid, 'pg_authid') as description
+from pg_roles r
+where r.rolname not in (
+  'postgres', 'anon', 'authenticator', 'authenticated', 'service_role',
+  'supabase_auth_admin', 'supabase_storage_admin', 'supabase_etl_admin',
+  'dashboard_user', 'supabase_admin'
+) and not r.rolname like 'pg\_%'
+order by r.rolname;
+```
+
+**Gap conditions (Detector 10 flags):**
+
+- Role sem `description` → P2 (precisa documentação)
+- Role com `BYPASSRLS` mas sem `description` clara da razão → P1
+- Role com LOGIN sem comment de owner → P1
+- Role tem GRANT ALL em schema completo sem justificativa documentada → P0
+- Service_role API key sendo usado em cron job ou BI tool quando custom role dedicado seria melhor → P1 (heurística — verificar em código de Edge Functions / Vault secrets)
+
+### Chain cooperativo para `supabase-roles-implementer`
+
+Quando gap detectado, faça handoff:
+
+```python
+Task(subagent_type="supabase-roles-implementer", prompt=f"""
+<upstream_intent>
+Source agent: supabase-rls-hardener
+Original goal: documentar/hardenar custom Postgres role(s) detectado(s) pelo Detector 10
+Constraints: {gap_descriptions}
+</upstream_intent>
+
+<roles_to_create_or_update>{detected_gaps}</roles_to_create_or_update>
+<use_case>system_access</use_case>
+<user_facing_caller>{self.user_facing}</user_facing_caller>
+""")
+```
 
 ## HARDEN-09 (v1.25): Detector 9 — Custom Access Token Auth Hook para RBAC
 

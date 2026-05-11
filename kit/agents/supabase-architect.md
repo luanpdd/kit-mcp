@@ -124,6 +124,23 @@ projeto: {project_id ou "novo"} · tier: {tier} · gerado em {timestamp}
 ## 5. Edge Functions / Background (se aplicável)
 {functions + cron pattern}
 
+## 5.1 Postgres Roles (v1.26 — ARCH-PATCH-01)
+
+**Pergunta canônica upfront:** Esta feature precisa de **service accounts internos** (custom Postgres roles)?
+
+Casos típicos:
+- Cron jobs com pg_cron (cleanup, retention) — recomenda role dedicado em vez de service_role API key
+- BI tools (Metabase, dbt) conectando direto no DB — recomenda role read-only com BYPASSRLS
+- ETL scripts (replication, backups) — recomenda role com permissions específicos
+- Admin roles para column-level GRANTs (security_admin, dpo_role, lead_manager)
+
+**Se sim, listar service accounts esperados:**
+- {role_name}: {description}, owner: {team_email}, type: {group|user}, bypassrls: {bool}
+
+**Cross-suite handoff:** delegar criação para `supabase-roles-implementer` (v1.26) na ordem de implementação.
+
+Para application access (end-users), usar **RLS + Custom Claims** (skill `supabase-custom-claims-rbac` v1.25) — NÃO criar Postgres roles para "admin vs user" end-users.
+
 ## 6. Ordem de Implementação
 {sequence numerada com agent delegate}
 
