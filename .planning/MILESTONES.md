@@ -1,5 +1,23 @@
 # MILESTONES.md — Histórico de releases
 
+## v1.27 Supabase Branching & CI/CD Workflow (Shipped: 2026-05-11)
+
+**Phases completed:** 7 phases (149-155), 45 REQs covered (100%), 20 atomic commits
+
+**Key accomplishments:**
+
+- **5 skills novas** (`kit/skills/`): `supabase-branching-workflow` (544 linhas — preview vs persistent, deploy DAG 7 steps, GitHub integration setup, Dashboard alpha caveats, custo Branching Compute Hours FORA do Spend Cap), `supabase-config-toml-remotes` (807 linhas — `[remotes]` block, secrets per-branch, dotenvx encrypted fields, 6 grupos canônicos), `supabase-ci-cd-github-actions` (880 linhas — 8 workflows canônicos com warning "never to public repo" 2×), `supabase-pgtap-testing` (1053 linhas — pgTAP + Deno tests + cross-ref legacy-characterizer, gap testing nunca antes coberto), `supabase-migration-repair` (823 linhas — migration list/repair, rollback preview, schema drift, permission denied troubleshooting). Total: **4107 linhas** de conteúdo canônico.
+- **2 agents novos** (`kit/agents/`): `supabase-branching-architect` (562 linhas — projeta estratégia branching ANTES do setup, coleta 4 decisões via AskUserQuestion, produz BRANCHING-DESIGN.md, cross-suite delega para `supabase-architect`), `supabase-cicd-pipeline-implementer` (777 linhas — recebe BRANCHING-DESIGN.md + materializa 7-8 workflows GitHub Actions + cross-suite handoffs para `supabase-migration-writer` e `release-pipeline-auditor`). Verdicts canônicos GO/STRENGTHEN/REWRITE-com-confirmação (pattern v1.23). Total: **1339 linhas**.
+- **Cross-suite enrichment (3 agents v1.x patched):** `supabase-architect` (v1.8) ganha section "Branching Strategy Decision" com handoff cooperativo + cost alert Branching Compute fora do Spend Cap. `supabase-migration-writer` (v1.23) ganha warnings sobre concurrent `db push` from different machines + timestamp order após rebase. `release-pipeline-auditor` (v1.10) ganha "Branching Workflow Validation" com 4 checks (required check Supabase Preview, secrets stored, migration safety pre-merge, backup workflow não em repo público).
+- **9ª trilha de maturidade adicionada:** deployment maturity. Complementa as 4 trilhas de segurança Supabase (RLS row-level v1.23 + Column-Level v1.24 + Custom Claims app access v1.25 + Postgres Roles system access v1.26) — ortogonal: trilhas v1.23-v1.26 controlam **quem vê o quê**; trilha v1.27 controla **como mudanças chegam à produção**.
+- **3 cross-suite handoffs novos** (ARCH-05 → `supabase-architect`, CICD-03 → `supabase-migration-writer`, CICD-04 → `release-pipeline-auditor`). Total cross-suite handoffs cumulativos: **27** (12 RLS v1.23 + 5 column v1.24 + 3 RBAC v1.25 + 4 Roles v1.26 + 3 Branching v1.27).
+- **Princípio canônico v1.23 preservado (herdado v1.24/v1.25/v1.26):** agents não-Supabase pensam/planejam; agents Supabase materializam/hardenam; ninguém descarta upstream. Aplicado em ambos os agents novos (architect coleta decisões SEM descartar intent; cicd-implementer materializa com verdicts construtivos GO/STRENGTHEN/REWRITE-com-confirmação, não BLOCK rígido).
+- **Anti-patterns canônicos capturados (cumulativo cross-skills):** backup em repo público (warning 2× na skill + reforço 3× no cicd-implementer), schema changes direto no remote bypassing migration history, concurrent `db push` from different machines, "update branch" sobrescreve all edge functions (perda silenciosa), Branching Compute Hours fora do Spend Cap (custo invisível), timestamps wrong order após git rebase, `migration repair` esperando reverter SQL (atualiza tracking table only), encrypted: syntax em field não-designated (não decripta silenciosamente).
+- Glossário compartilhado `_shared-supabase/glossary.md` ganhou 10 termos novos com tag `(v1.27)`: Branching Compute Hours, Branching workflow (Supabase), Deploy DAG (7 steps), dotenvx encrypted fields, Migration repair, Persistent branch, pgTAP testing, Preview branch, `[remotes]` block, Schema drift.
+- AUTOGEN-COUNTS regen: 64→**66 agents** (+2: supabase-branching-architect + supabase-cicd-pipeline-implementer), 89 commands (mantido), 71→**76 skills** (+5: branching-workflow + config-toml-remotes + ci-cd-github-actions + pgtap-testing + migration-repair), 23 gates (mantido); file-manifest 375→**382 files**. Stable API v1.0+ preservada cross-15-releases (v1.13→v1.27). Defense-in-depth camadas mantidas em 10 (v1.27 é ortogonal — deployment maturity). Próximo marco: v1.28 (a definir — candidatos: Supabase Vault encryption-at-rest, Backup & Recovery dedicado, outros Auth Hooks, MFA enforcement, Terraform provider).
+
+---
+
 ## v1.26 Postgres Roles (Shipped: 2026-05-11)
 
 **Phases completed:** 6 phases (143-148), 34 REQs covered (100%), 7 atomic commits

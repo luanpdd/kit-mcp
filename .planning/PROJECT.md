@@ -1,15 +1,34 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-11 — milestone v1.27 (Supabase Branching & CI/CD Workflow) iniciado.
+> Última atualização: 2026-05-11 — milestone v1.27 (Supabase Branching & CI/CD Workflow) entregue.
 
 ## Estado Atual
+
+**v1.27.0 — Supabase Branching & CI/CD Workflow** **entregue** 2026-05-11 (Phases 149-155, 7 phases, 45 REQs, 20 atomic commits, content-only milestone). Adicionou **9ª trilha de maturidade** (deployment maturity) — ortogonal às 4 trilhas de segurança Supabase (RLS v1.23 + Column-Level v1.24 + Custom Claims v1.25 + Postgres Roles v1.26). 5 skills novas + 2 agents novos + 3 cross-suite enrichments. 27 cross-suite handoffs cumulativos. AUTOGEN-COUNTS: 64→**66 agents**, 89 commands (mantido), 71→**76 skills**, 23 gates (mantido); file-manifest 375→**382 files**. Stable API v1.0+ preservada cross-**15 releases** (v1.13→v1.27). PRR 30/30 mantido. Defense-in-depth: 10 camadas mantidas (v1.27 ortogonal).
+
+## Próximo milestone: v1.28 (a definir)
+
+**Possíveis candidatos:**
+- Supabase Vault (encryption at rest) — proteção em repouso para PII columns
+- Backup & Recovery dedicado (RTO/RPO, PITR, restore drills)
+- Outros Auth Hooks (Send Email, Send SMS, MFA Verification, Password Verification, Before User Created)
+- MFA enforcement patterns (AAL2 obrigatório)
+- Terraform provider (alternativa IaC)
+
+**Próximo passo:** `/novo-marco` para iniciar v1.28.
+
+## ~~Milestone Anterior: v1.27 Supabase Branching & CI/CD Workflow~~ (entregue 2026-05-11)
+
+Ver `.planning/milestones/v1.27-ROADMAP.md` para detalhes completos. Resumo: 7 phases (149-155) entregando 5 skills novas + 2 agents novos + cross-suite enrichment em 3 agents v1.x.
+
+## ~~Milestone Anterior: v1.26 Postgres Roles~~ (entregue 2026-05-11)
 
 **v1.26.0 — Postgres Roles** **entregue** 2026-05-11 (Phases 143-148, 6 phases, 34 REQs, content-only milestone). Adicionou **Camada 10** de defense-in-depth (Postgres Roles Hierarchy) à Suíte Supabase — fundação que sustenta as 3 trilhas anteriores (RLS v1.23 + Column-Level v1.24 + Custom Claims RBAC v1.25). Skill nova `supabase-postgres-roles` (10 predefined Supabase roles documentados + 4 patterns canônicos + 5 anti-patterns) + agent novo `supabase-roles-implementer` (canonical materializer paralelo aos 3 hardeners) + 4 cross-suite handoffs Postgres Roles (audit-log → `security_admin`, lgpd → `dpo_role`, crm → `lead_manager`, super-admin → `platform_admin`). Princípio canônico v1.23 herdado. AUTOGEN-COUNTS: 63→**64 agents** (+1: supabase-roles-implementer), 89 commands (mantido), 70→**71 skills** (+1: supabase-postgres-roles), 23 gates (mantido); file-manifest 373→**375 files**. Stable API v1.0+ preservada cross-14-releases. PRR 30/30 mantido.
 
 **Stack acumulado:** v1.8 + v1.9 + v1.10 + v1.11 + v1.12 + v1.13-v1.20 + v1.21 + v1.22 + v1.23 (RLS) + v1.24 (Column-Level) + v1.25 (Custom Claims & RBAC) + **v1.26 (Postgres Roles)**. **8 suítes ativas no kit** + framework maduro. Defense-in-depth: **10 camadas** (Camada 10 = Postgres Roles Hierarchy). Cross-suite invocation pattern formalizado v1.21, enriquecido v1.23/v1.24/v1.25/v1.26 (handoff cooperativo SQL + column-level + RBAC + Postgres roles). **Total cross-suite handoffs cumulativos: 24** (12 RLS v1.23 + 5 column v1.24 + 3 RBAC v1.25 + 4 Roles v1.26). Trilha de segurança Supabase consolidada: **RLS (linha) + Column-Level (coluna) + Custom Claims (app access role) + Postgres Roles (system access role)**. Convenção PT-BR mantida.
 
-## Milestone Atual: v1.27 Supabase Branching & CI/CD Workflow
+## ~~Milestone Atual: v1.27 Supabase Branching & CI/CD Workflow~~ (entregue — detalhes abaixo)
 
 **Objetivo:** Adicionar pattern canônico de **branching workflow + CI/CD GitHub Actions** à Suíte Supabase. Profissionaliza o fluxo de deploy substituindo "push direto na main" por preview branches + pipelines automatizadas — abrindo a **9ª trilha de maturidade** do kit (após defense-in-depth completo em v1.23-v1.26). Complementa as 4 trilhas de segurança (RLS+Column+Claims+Roles) com **deployment maturity**.
 
