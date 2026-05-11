@@ -1,9 +1,9 @@
 ---
 state_version: 1.0
-milestone: none
-milestone_name: "—"
-status: "v1.22 entregue, aguardando próximo milestone"
-last_updated: "2026-05-10T17:30:00.000Z"
+milestone: v1.23
+milestone_name: "Reforço RLS Supabase + Handoff Cooperativo SQL"
+status: "Definindo requisitos"
+last_updated: "2026-05-10T18:30:00.000Z"
 progress:
   total_phases: 0
   completed_phases: 0
@@ -15,38 +15,43 @@ progress:
 
 ## Posição Atual
 
-Fase: — (nenhum milestone ativo)
+Fase: Não iniciada (definindo requisitos)
 Plano: —
-Status: v1.22.0 entregue — working tree limpo após `/concluir-marco v1.22`. Pronto para `/novo-marco` v1.23.
-Última atividade: 2026-05-10 — `/concluir-marco v1.22` (7 phases archived → milestones/v1.22-phases/, package.json 1.21.0→1.22.0, tag v1.22.0)
+Status: Definindo requisitos
+Última atividade: 2026-05-10 — Milestone v1.23 iniciado via `/novo-marco`
 
 ## Milestone ativo
 
-_Nenhum_ — v1.22 entregue. Use `/novo-marco` para iniciar v1.23.
+**v1.23 Reforço RLS Supabase + Handoff Cooperativo SQL** — incorporar 100% da doc oficial RLS da Supabase; agents externos passam draft SQL via `Task()` cooperativo para agents Supabase materializarem hardening (não BLOCK, não descarta upstream).
+
+**Princípio canônico:** Agents não-Supabase pensam/planejam. Agents Supabase materializam/hardenam. Nenhum lado descarta o outro.
+
+**Entregáveis previstos (9):** patches em skill `supabase-rls-policies` + agent `supabase-rls-writer` + skill `supabase-migrations` + agent `supabase-migration-writer` + command `/supabase`; skill nova `supabase-rls-defense-in-depth`; agent novo `supabase-rls-hardener` (verdicts GO/STRENGTHEN/REWRITE-com-confirmação); patches cross-suite em 10 agents externos; auto-enable RLS event trigger como default em projetos novos.
+
+**Próximo marco parqueado:** v1.24 Segurança em Nível de Coluna (Column-Level Security) — após v1.23 concluído.
 
 ## Contexto Acumulado (do milestone v1.22 entregue)
 
-- **Suite kit:** 8 suítes ativas (Supabase v1.8, Observabilidade v1.9, SRE v1.10, SRE Resilience v1.11, Legacy v1.12, Hardening v1.13-v1.20, Multi-Tenant SaaS B2B v1.21, **DDIA Foundations v1.22**)
-- **Counts:** 60 agents, 89 commands, 67 skills, 23 audit gates (post-v1.22)
-- **file-manifest:** 367 files hashed (355→367 em v1.22)
-- **Coverage:** 86.84% line (mantida; content-only milestone)
+- **Suite kit:** 8 suítes ativas (Supabase v1.8, Observabilidade v1.9, SRE v1.10, SRE Resilience v1.11, Legacy v1.12, Hardening v1.13-v1.20, Multi-Tenant SaaS B2B v1.21, DDIA Foundations v1.22)
+- **Counts pré-v1.23:** 60 agents, 89 commands, 67 skills, 23 audit gates
+- **file-manifest:** 367 files hashed
+- **Coverage:** 86.84% line (mantida; v1.23 será content-only)
 - **PRR:** **30/30** (mantido cross-content-only milestone)
 - **Mutation baseline:** 57.40% (mantido)
 - **MCP p95 latency:** 0ms (mantido)
-- **Stable API v1.0+:** preservada cross-10-releases (v1.13→v1.22)
-- **Cross-suite invocation pattern:** formalizado em v1.21, herdado em v1.22 (3 agents v1.22 → agents v1.8/v1.21 via Task() handoff)
-- **Convenção PT-BR naming:** estabelecida em v1.22 (artefatos novos PT-BR; pré-v1.22 preservados)
-- **Working tree:** clean (post-archive)
+- **Stable API v1.0+:** preservada cross-10-releases (v1.13→v1.22) — v1.23 mantém
+- **Cross-suite invocation pattern:** formalizado em v1.21, herdado em v1.22, **enriquecido em v1.23 com semântica cooperativa explícita**
+- **Convenção PT-BR naming:** estabelecida em v1.22 (artefatos novos PT-BR; pré-v1.22 preservados) — v1.23 segue
+- **Working tree:** clean ao iniciar v1.23
 
 ## Próximo passo
 
 ```
-/novo-marco
+Definir REQUIREMENTS.md por categoria com REQ-IDs (continuar de v1.22)
+Invocar roadmapper para criar ROADMAP.md (start phase 124)
 ```
 
-`/clear` primeiro → janela de contexto fresca para questionamento → pesquisa → requisitos → roadmap.
-
-## Tech debt parqueado (deferido para v1.23+)
+## Tech debt parqueado (deferido para v1.24+)
 
 **Carry-over de v1.20:**
 1. Phase 100: cli/index.js extract helpers + branch coverage gate → 86→90 coverage ratchet

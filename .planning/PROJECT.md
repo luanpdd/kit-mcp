@@ -1,7 +1,7 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-10 — milestone v1.22 (Suíte DDIA Foundations) entregue.
+> Última atualização: 2026-05-10 — milestone v1.23 (Reforço RLS Supabase + Auto-Redirect SQL/Postgres) iniciado.
 
 ## Estado Atual
 
@@ -9,9 +9,74 @@
 
 **Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30) + v1.21 (Multi-Tenant SaaS B2B) + **v1.22 (DDIA Foundations)**. **8 suítes ativas no kit** + framework eat-your-own-dog-food maduro (golden signals + dual-window SLOs + RUNBOOK 9 cenários + mutation testing baseline). Cross-suite invocation pattern formalizado em v1.21 + convenção PT-BR a partir de v1.22.
 
-## Próximo milestone: v1.23 (a definir)
+## Milestone Atual: v1.23 Reforço RLS Supabase + Handoff Cooperativo SQL
 
-**Tech debt parqueado para v1.23+** (carry-over de v1.20 + v1.21 + v1.22):
+**Objetivo:** Garantir que TODO SQL/Postgres/DDL/banco de dados gerado pelo kit passe pela trilha de segurança da Suíte Supabase via **handoff cooperativo** — agents externos (multi-tenant, debugger, planner, executor, etc.) planejam/sugerem estrutura SQL; agents Supabase materializam o código final hardenado preservando intent upstream. Incorpora 100% do conteúdo da documentação oficial RLS da Supabase.
+
+**Princípio canônico:** Agents não-Supabase **pensam / planejam**. Agents Supabase **materializam / hardenam**. Nenhum lado descarta o outro — quando há conflito de patterns, agent Supabase explica e propõe alternativa via diff, nunca reescreve silenciosamente.
+
+**Funcionalidades alvo (9 entregáveis, todos aditivos, zero superfície de API quebrada):**
+
+1. **Patch skill `supabase-rls-policies`** — incorpora 100% da doc oficial fornecida no prompt do milestone:
+   - GRANT SELECT/INSERT/UPDATE/DELETE TO anon/authenticated/service_role antes de ENABLE RLS
+   - `auth.uid() IS NOT NULL AND ...` (anti silent-fail anônimo)
+   - Views com `security_invoker=true` (Postgres 15+) — patternização do bypass default
+   - Diferença `anon` Postgres role vs anonymous Auth user (claim `is_anonymous` no JWT)
+   - Performance: minimize joins (IN ao invés de JOIN), filtros redundantes client-side (.eq() mesmo com policy), security definer functions com cache via (select)
+   - `raw_app_meta_data` vs `raw_user_meta_data` + JWT freshness caveat + cookie 4096 bytes
+   - Defense in depth narrative — RLS como camada vs third-party tooling
+
+2. **Patch agent `supabase-rls-writer`** — emite GRANTs antes de ENABLE RLS; inclui `IS NOT NULL` check opcional; gera views com `security_invoker=true` quando aplicável. Recebe draft/intent via `Task()` upstream context (handoff cooperativo).
+
+3. **Patch skill `supabase-migrations`** — template default de tabela nova passa a incluir como bloco obrigatório: GRANT statements + ALTER ENABLE RLS + indices em colunas RLS + 4 policies granulares.
+
+4. **Patch agent `supabase-migration-writer`** — recebe draft/planejamento SQL via `Task()` upstream context + intent original. Em CREATE TABLE, auto-chain para `supabase-rls-writer` ou `supabase-rls-hardener`. Materializa migration final hardenada **preservando intent**. Devolve SQL pronto + nota de divergências (se houver).
+
+5. **Patch command `/supabase`** — exposto como **serviço de materialização**: qualquer agent invoca `/supabase migration "<plano>"` ou via `Task()` para receber SQL hardenado. Não bloqueia — recebe planejamento e devolve código pronto. Subcomando `migration` agora exige RLS auto-injetada no output.
+
+6. **Skill nova `supabase-rls-defense-in-depth`** — narrativa de RLS como camada de defesa em profundidade; event trigger `rls_auto_enable()` (default em projetos novos); `BYPASSRLS` role privilege para tarefas admin; service_role caveat (não bypassa RLS do user logged-in); security definer functions; views com `security_invoker=true`.
+
+7. **Agent novo `supabase-rls-hardener`** — recebe draft/plano SQL de qualquer agent (via `Task()`) + contexto upstream. Produz SQL final hardenado **preservando intent original**. Verdicts:
+   - **GO**: SQL já tem GRANT + RLS + indices corretos sem anti-patterns
+   - **STRENGTHEN**: ajusta mantendo intent, devolve diff explícito do que mudou e por quê
+   - **REWRITE**: anti-pattern crítico (user_metadata em authz, for all sem justificativa, auth.uid() sem wrapper) — **pede confirmação ao caller antes de reescrever**, nunca descarta silenciosamente
+   - Invocável cross-suite por multi-tenant, CRM, audit-log, super-admin, debugger, planner (Task handoff cooperativo)
+
+8. **Patch agents cross-suite (handoff cooperativo)** — agents externos que produzem **planejamento/sugestão SQL** passam o draft via `Task()` para `supabase-rls-hardener` ou `supabase-migration-writer`. Output final é colaborativo (agent X planeja, agent Supabase materializa). Conflitos são explicados via diff, não descartados silenciosamente. Aplicar em:
+   - `multi-tenant-rls-writer` (v1.21) — já chain para supabase-rls-writer; adicionar hardener gate cooperativo
+   - `audit-log-implementer` (v1.21) — chain cooperativo para supabase-migration-writer + hardener
+   - `crm-pipeline-implementer` (v1.21) — chain cooperativo
+   - `org-onboarding-implementer` (v1.21) — chain cooperativo
+   - `invite-flow-implementer` (v1.21) — chain cooperativo
+   - `super-admin-implementer` (v1.21) — chain cooperativo
+   - `evolution-go-integrator` (v1.21) — chain cooperativo
+   - `lgpd-compliance-auditor` (v1.21) — chain cooperativo
+   - `auditor-consistencia-isolamento` (v1.22) — valida que migrations passaram pelo hardener cooperativo
+   - `planner` + `executor` + `debugger` (framework core) — detectam SQL no plan/output e fazem handoff cooperativo para Supabase
+
+9. **Auto-enable RLS event trigger como default em migrations novas** — skill `supabase-rls-defense-in-depth` documenta como pattern obrigatório; `supabase-architect` propõe na fase de schema; `supabase-rls-hardener` valida que projetos novos têm o trigger instalado e oferece instalação se ausente.
+
+**Decisões de stack:**
+- Zero deps novas. Apenas conteúdo de kit (markdown). Stable API v1.0+ preservada — só adições.
+- Material-fonte: documentação oficial Supabase Row Level Security fornecida no prompt do usuário (cobertura 100% da doc).
+- Conteúdo PT-BR (alinhado v1.21/v1.22). Code blocks SQL EN com comentários PT-BR.
+- Roadmap começa em **Phase 124** (continuação de v1.22 que terminou em 123).
+- Convenção PT-BR para naming preservada (skill nova `supabase-rls-defense-in-depth` mantém prefixo `supabase-` por consistência com a família existente).
+- Padrão v1.21/v1.22 cross-suite invocation `Task()` handoff aplicado **com semântica cooperativa explícita**.
+
+**Beneficiários principais:**
+- Toda Suíte Supabase v1.8 — RLS pattern ganha defense-in-depth + auto-enable + IS NOT NULL + views security_invoker
+- Suíte Multi-Tenant v1.21 — 8 agents implementers ganham handoff cooperativo obrigatório
+- Suíte DDIA v1.22 — `auditor-consistencia-isolamento` ganha check de RLS hardening cooperativo
+- Fluxo framework — `executor`, `planner`, `debugger` ganham awareness de SQL/RLS via handoff cooperativo
+
+**Contrato preservado:** Quem usa kit-mcp em produção não percebe nada além de novos artefatos disponíveis ao sincronizar. CI permanece verde. Stable API v1.0+ inalterada.
+
+**Valor:** Garantir que QUALQUER fluxo do kit que produza SQL/Postgres/banco de dados passe pela trilha de segurança da Suíte Supabase **sem desperdiçar tokens** do planejamento upstream — handoff cooperativo preserva inteligência específica do agent original e garante hardening Supabase no output final. Defense in depth aplicado ao próprio framework.
+
+**Próximo passo após v1.23:** v1.24 — Segurança em Nível de Coluna (Column-Level Security) — fica parqueado para depois de v1.23 concluído.
+
+**Tech debt parqueado (carry-over de v1.20 + v1.21 + v1.22, mantido para v1.24+):**
 - Phase 100 carry-over: cli/index.js extract helpers para 86→90 coverage ratchet
 - Phase 101 carry-over: completar mutation baseline 5 files restantes + CI mutation gate threshold ~55%
 - Phase 105 carry-over: p99 latency monitoring + M1 cold-start CLI sub-200ms
@@ -21,8 +86,6 @@
 - v1.22 deferred: batch processing patterns (DDIA Ch 10 — pgmq cobre maioria dos casos)
 - v1.22 deferred: multi-region active-active deployment Supabase
 - v1.22 deferred: tooling para visualização event flow (CDC pipeline diagram)
-
-**Próximo passo:** `/novo-marco` para iniciar v1.23.
 
 ## ~~Milestone Anterior: v1.22 Suíte DDIA Foundations~~ (entregue 2026-05-10)
 
