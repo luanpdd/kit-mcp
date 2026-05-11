@@ -1,6 +1,6 @@
 ---
 name: supabase
-description: Orquestrador da Suíte Supabase — dispatch para agents especializados (arquiteto, migration, rls, edge, realtime, auth, storage, rag, cron, check) com sinônimos PT/EN.
+description: Orquestrador da Suíte Supabase — serviço de materialização (v1.23) que recebe planejamento/draft SQL de qualquer agent ou user e devolve código hardenado pronto. NUNCA bloqueia upstream — handoff cooperativo via Task(). Subcomandos arquiteto, migration, rls, hardener, edge, realtime, auth, storage, rag, cron, check com sinônimos PT/EN.
 argument-hint: "<subcomando> [args...]"
 allowed-tools:
   - Read
@@ -13,11 +13,15 @@ allowed-tools:
 ---
 
 <objective>
-Orquestrador único da Suíte Supabase. Recebe um subcomando e args, faz dispatch via `Task(subagent_type=supabase-...)` para o agent especializado correto. É o **único ponto de chain de agents Supabase** — agents permanecem função pura (anti-pitfall A10 de v1.8).
+Orquestrador único da Suíte Supabase. **Serviço de materialização (v1.23):** recebe planejamento de qualquer agent ou input do user e devolve código hardenado pronto. **NUNCA bloqueia upstream** — agents externos passam draft via `Task()` para receber SQL final hardenado preservando intent.
 
-**Cria/Atualiza:** o que cada agent invocado cria/atualiza (migrations, schemas, functions, etc.).
+Faz dispatch via `Task(subagent_type=supabase-...)` para o agent especializado correto. É o **único ponto de chain de agents Supabase** — agents permanecem função pura (anti-pitfall A10 de v1.8).
 
-**Após:** o usuário tem o output do agent (plano, código, SQL, ou veredito).
+**Princípio canônico v1.23:** Agents não-Supabase pensam/planejam; agents Supabase materializam/hardenam; ninguém descarta upstream.
+
+**Cria/Atualiza:** o que cada agent invocado cria/atualiza (migrations, schemas, functions, etc.) — com RLS auto-injetada no output via handoff cooperativo com `supabase-rls-hardener` em CREATE TABLE.
+
+**Após:** o usuário tem o output do agent (plano, código, SQL hardenado, ou veredito GO/STRENGTHEN/REWRITE).
 </objective>
 
 <execution_context>
@@ -33,8 +37,9 @@ Agents disponíveis: `kit/agents/supabase-*.md` (Phase 26) + `kit/agents/schema-
 | Subcomando | Sinônimos | Agent dispatched |
 |---|---|---|
 | `arquiteto` | `architect`, `arch` | `supabase-architect` |
-| `migration` | `migrar`, `migrate` | `supabase-migration-writer` |
-| `rls` | — | `supabase-rls-writer` |
+| `migration` | `migrar`, `migrate` | `supabase-migration-writer` (v1.23: auto-chain cooperativo com hardener em CREATE TABLE) |
+| `rls` | — | `supabase-rls-writer` (v1.23: GRANTs + IS NOT NULL + views security_invoker) |
+| `hardener` | `harden`, `endurecer` | `supabase-rls-hardener` (v1.23 canonical materializer — recebe draft via Task) |
 | `edge` | `edge-function`, `function`, `funcao` | `supabase-edge-fn-writer` |
 | `realtime` | `tempo-real` | `supabase-realtime-implementer` |
 | `auth` | `autenticacao`, `auth-ssr` | `supabase-auth-bootstrapper` |
@@ -65,8 +70,9 @@ Mapear `SUBCMD` para agent name canônico:
 
 ```
 arquiteto, architect, arch       → supabase-architect
-migration, migrar, migrate       → supabase-migration-writer
-rls                              → supabase-rls-writer
+migration, migrar, migrate       → supabase-migration-writer  (v1.23: auto-chain hardener em CREATE TABLE)
+rls                              → supabase-rls-writer        (v1.23: GRANTs + IS NOT NULL + views security_invoker)
+hardener, harden, endurecer      → supabase-rls-hardener      (v1.23 canonical materializer)
 edge, edge-function, function, funcao → supabase-edge-fn-writer
 realtime, tempo-real             → supabase-realtime-implementer
 auth, autenticacao, auth-ssr     → supabase-auth-bootstrapper
@@ -74,6 +80,31 @@ storage, armazenamento           → supabase-storage-implementer
 rag, pgvector, embeddings        → supabase-edge-fn-writer (com flag rag=true no prompt)
 cron, queues, pgmq, background   → supabase-edge-fn-writer (com flag pattern=cron-pgmq no prompt)
 check, validar, validate         → schema-checker
+```
+
+### Serviço de materialização (v1.23 — handoff cooperativo)
+
+Quando agents externos (multi-tenant, debugger, planner, executor, audit-log, CRM, etc.) precisam produzir SQL/DDL, devem invocar `/supabase migration "<plano>"` ou `Task(subagent_type=supabase-rls-hardener, prompt=<draft+intent>)` ao invés de gerar SQL próprio. O command NÃO bloqueia — recebe planejamento, devolve código hardenado.
+
+**Pattern de invocação:**
+
+```python
+# de outro agent (ex: multi-tenant-rls-writer)
+result = Task(subagent_type="supabase-rls-hardener", prompt=f"""
+<upstream_intent>
+Source agent: multi-tenant-rls-writer
+Original goal: criar policies hierárquicas org→dept→role para {table_name}
+Constraints: helper functions já existem em schema private
+</upstream_intent>
+
+<draft_sql>
+{draft_policies_sql}
+</draft_sql>
+
+<user_facing_caller>true</user_facing_caller>
+""")
+# result.verdict: GO | STRENGTHEN | REWRITE
+# result.final_sql: SQL hardenado preservando intent
 ```
 
 **Se subcomando não resolve:** exibir erro inline com lista de subcomandos válidos. Sair.
@@ -129,6 +160,10 @@ mode: rag-embeddings   (ou cron-pgmq-edge)
 **Subcomando `arquiteto`:** antes de dispatch, faça `AskUserQuestion` perguntando tier (Free/Pro/Team/Enterprise) e se vai usar branches. Inclua resposta no prompt.
 
 **Subcomando `check`:** dispatch para `schema-checker` (existente). O caller deve passar `migration_path` e `project_id` no `$ARGUMENTS` — exemplo: `/supabase check supabase/migrations/20260506_x.sql`.
+
+**Subcomando `migration` (v1.23 — CMD-02):** após `supabase-migration-writer` produzir SQL inicial, o agent **AUTOMATICAMENTE** invoca `supabase-rls-hardener` via `Task()` para validar defense-in-depth em CREATE TABLE. Output final inclui verdict + RLS auto-injetada. Caller NÃO precisa invocar hardener separadamente — é parte do contrato do subcomando.
+
+**Subcomando `hardener` (v1.23 novo):** dispatch direto para `supabase-rls-hardener`. Útil quando caller tem draft SQL pronto e quer apenas validação/hardening sem gerar SQL novo. Aceita input com bloco `<draft_sql>` no `$ARGUMENTS` ou via stdin.
 
 ## 5. Output
 
