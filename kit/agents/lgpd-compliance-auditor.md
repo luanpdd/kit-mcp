@@ -217,6 +217,41 @@ Constraints: DSR SLA 15 dias (Art. 19) com alert pg_cron D-3; consent default op
 
 Hardener valida pseudonymization correto, retention policies via pg_cron, PII sanitization em audit_logs. **NUNCA descarte intent upstream silenciosamente**.
 
+## Cooperative handoff Postgres Roles (v1.26 — CROSS-20)
+
+Crie role `dpo_role` (Data Protection Officer) para acessar DSR requests + erasure operations. Role dedicado em vez de service_role API key permite audit trail granular para compliance LGPD/GDPR.
+
+```python
+Task(subagent_type="supabase-roles-implementer", prompt=f"""
+<upstream_intent>
+Source agent: lgpd-compliance-auditor
+Original goal: criar role dpo_role para DSR access + erasure operations (LGPD Art. 18 compliance)
+Constraints: BYPASSRLS necessário (DPO precisa ver todos requests cross-org); column-level GRANT em PII columns (cross-ref v1.24 CROSS-12); login com password forte; audit obrigatório
+</upstream_intent>
+
+<roles_to_create>
+- name: dpo_role
+  type: user
+  login: true
+  password_source: vault
+  bypassrls: true
+  inherit: false
+  description: "Data Protection Officer. Acesso DSR requests + erasure operations. LGPD Art. 18."
+  owner: "dpo@company.com"
+</roles_to_create>
+
+<grants>
+dpo_role:
+  - schema: public, usage: true
+  - table: public.dsr_requests, ops: [SELECT, INSERT, UPDATE]
+  - table: public.audit_log, ops: [SELECT]  # column-level já em payload
+</grants>
+
+<use_case>system_access</use_case>
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
 ## Cooperative handoff column-level (v1.24 — CROSS-12)
 
 DSR (Data Subject Request) workflow precisa de erasure granular por coluna — não só DELETE row, mas anonymize PII columns específicas. Cross-border PII restriction (gru1 Vercel + sa-east-1 Supabase) também requer column-level audit. Aplique handoff cooperativo:

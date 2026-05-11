@@ -191,6 +191,43 @@ Constraints: cross-tenant RLS PERMISSIVE via private.is_super_admin (STABLE); TT
 
 Hardener valida BYPASSRLS / PERMISSIVE pattern (Camada 4 de defense-in-depth), SECURITY DEFINER functions em schema private, audit trigger obrigatório. **NUNCA descarte intent upstream silenciosamente**.
 
+## Cooperative handoff Postgres Roles (v1.26 — CROSS-22)
+
+Crie role `platform_admin` separado de service_role para governance + audit trail das ações de super-admin platform. Service_role API key é tudo-ou-nada; platform_admin permite granularidade e auditabilidade.
+
+```python
+Task(subagent_type="supabase-roles-implementer", prompt=f"""
+<upstream_intent>
+Source agent: super-admin-implementer
+Original goal: criar role platform_admin separado de service_role para governance + audit das ações de super-admin
+Constraints: BYPASSRLS necessário (super-admin é cross-tenant global); login com password forte; cada ação registrada em pg_stat_statements identifica platform_admin (vs service_role agregado); audit trail Phase 109 BLOCKER ADMIN-03 enforced
+</upstream_intent>
+
+<roles_to_create>
+- name: platform_admin
+  type: user
+  login: true
+  password_source: vault
+  bypassrls: true
+  inherit: false
+  description: "Platform admin para super-admin operations (orgs.*, users.*, billing.*, impersonate). Separado de service_role para audit trail granular."
+  owner: "platform-team@company.com"
+</roles_to_create>
+
+<grants>
+platform_admin:
+  - schema: public, usage: true
+  - tables: public.* (all), ops: [SELECT, INSERT, UPDATE, DELETE]
+  - schema: auth, usage: true  # acesso a auth.users via supabase_auth_admin
+</grants>
+
+<use_case>system_access</use_case>
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+**Vantagem vs service_role:** queries de platform_admin aparecem rotuladas em `pg_stat_statements` (governance + cost attribution + audit). Service_role agrega todas as queries de backend; platform_admin separa as ações super-admin para investigation pós-incident.
+
 ## Cooperative handoff RBAC via Custom Claims (v1.25 — CROSS-17)
 
 `super_admin: bool` (v1.21) é atualmente armazenado em `app_metadata` setado via service_role. A partir de v1.25, o pattern recomendado é **migrar `super_admin` para custom claim via Custom Access Token Auth Hook** — mais consistente com outros roles do sistema, type-safe via enum, RLS policies usam `authorize('platform.super_admin')` ao invés de `auth.jwt() ->> 'app_metadata' ->> 'super_admin'`.

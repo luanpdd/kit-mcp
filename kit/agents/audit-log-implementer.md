@@ -216,6 +216,39 @@ Constraints: payload jsonb tem PII em events de login (IP, UA) + member_invited 
 
 **Princípio canônico v1.23 (herdado em v1.24):** agents não-Supabase pensam/planejam; agents Supabase materializam/hardenam.
 
+## Cooperative handoff Postgres Roles (v1.26 — CROSS-19)
+
+Para acessar `audit_log.payload` (PII) com column-level GRANT (Camada 8 v1.24), crie role dedicado `security_admin` em vez de usar service_role API key. Auditabilidade superior via pg_stat_statements + role com BYPASSRLS específico. Aplique handoff cooperativo:
+
+```python
+Task(subagent_type="supabase-roles-implementer", prompt=f"""
+<upstream_intent>
+Source agent: audit-log-implementer
+Original goal: criar role security_admin para acesso payload PII do audit_log (system access)
+Constraints: BYPASSRLS necessário (security_admin precisa ver todas orgs); column-level GRANT em payload (cross-ref v1.24); login opcional (pode ser group role usado via SET ROLE de DBA)
+</upstream_intent>
+
+<roles_to_create>
+- name: security_admin
+  type: group  # ou user se DBA precisa login direto
+  login: false
+  bypassrls: true
+  inherit: false
+  description: "Role para acesso payload PII em audit_log. Usado via SET ROLE por DBAs."
+  owner: "security-team@company.com"
+</roles_to_create>
+
+<grants>
+security_admin:
+  - schema: public, usage: true
+  - table: public.audit_log, ops: [SELECT]  # column-level já aplicado via v1.24
+</grants>
+
+<use_case>system_access</use_case>
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
 ## Cooperative handoff RBAC via Custom Claims (v1.25 — CROSS-18)
 
 Mudanças em roles (INSERT/UPDATE/DELETE em `public.user_roles`) devem gerar audit log automaticamente — pattern canônico v1.25 via trigger Postgres que dispara `audit_log` event quando role muda. Aplique handoff cooperativo:

@@ -177,6 +177,41 @@ Constraints: lead dedup (unique org_id,phone) + (unique org_id,email); state mac
 
 Hardener valida policies por org_id, GRANTs corretos, trigger SECURITY DEFINER em schema private (se aplicável). **NUNCA descarte intent upstream silenciosamente**.
 
+## Cooperative handoff Postgres Roles (v1.26 — CROSS-21)
+
+Crie role `lead_manager` para acesso PII columns dos leads (phone, email, notes). Role dedicado complementa column-level GRANTs (v1.24 CROSS-13). Auditabilidade superior + governance.
+
+```python
+Task(subagent_type="supabase-roles-implementer", prompt=f"""
+<upstream_intent>
+Source agent: crm-pipeline-implementer
+Original goal: criar role lead_manager para acesso PII columns dos leads (cross-ref v1.24 column-level)
+Constraints: NÃO BYPASSRLS (deve respeitar org boundary via RLS hierárquica multi-tenant v1.21); column-level GRANT em phone/email/notes; login opcional (pode ser group usado por managers via SET ROLE)
+</upstream_intent>
+
+<roles_to_create>
+- name: lead_manager
+  type: group
+  login: false
+  bypassrls: false  # respeita org boundary
+  inherit: false
+  description: "Acesso PII columns dos leads (phone, email, notes). Usado por sales managers via SET ROLE."
+  owner: "sales-team@company.com"
+</roles_to_create>
+
+<grants>
+lead_manager:
+  - schema: public, usage: true
+  - table: public.leads, ops: [SELECT]  # column-level já aplicado via v1.24 CROSS-13
+</grants>
+
+<use_case>system_access</use_case>
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+**Caveat:** este role complementa RLS row-level (org boundary) + column-level (PII). NÃO substitui auth.users + custom claims (v1.25) — lead_manager é Postgres role para DBA/sales-ops, não para end-user via app.
+
 ## Cooperative handoff column-level (v1.24 — CROSS-13)
 
 Lead PII columns (phone, email) podem precisar de column-level restriction para LGPD compliance — apenas owner do lead ou lead_manager role vê os dados de contato completos. Aplique handoff cooperativo:
