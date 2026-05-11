@@ -335,6 +335,17 @@ Policy Enforcement:   <N>/10
 3. Re-audit em 30d para verificar progresso
 ```
 
+## Branching Workflow Validation (v1.27)
+
+Para projetos que adotaram Supabase Branching, o auditor verifica adicionalmente:
+
+- [ ] **Required check enforced:** repository settings → branches → main → required status checks inclui "Supabase Preview"
+- [ ] **Secrets stored:** SUPABASE_ACCESS_TOKEN, PRODUCTION_DB_PASSWORD, PRODUCTION_PROJECT_ID configurados em Settings → Secrets
+- [ ] **Migration safety pre-merge:** preview branch é criado antes de merge para main (não há push direto na main)
+- [ ] **Backup workflow não está em repo público:** se `backup.yml` existe E repo é público → BLOCK (warning canônico)
+
+Ver skill canônica: `kit/skills/supabase-ci-cd-github-actions/SKILL.md`.
+
 ## Quando NÃO invocar
 
 - Repo recém-criado (< 1 mês) — pipeline ainda imatura

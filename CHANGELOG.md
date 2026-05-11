@@ -6,6 +6,36 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.27.0] - 2026-05-11
+
+### Added — Supabase Branching & CI/CD Workflow (9ª trilha de maturidade)
+
+5 skills novas:
+- `supabase-branching-workflow` — preview vs persistent, deploy DAG 7 steps, GitHub integration, custo Branching Compute Hours
+- `supabase-config-toml-remotes` — [remotes] block, secrets per-branch, dotenvx encrypted fields
+- `supabase-ci-cd-github-actions` — 8 workflows canônicos (ci/staging/production/generate-types/database-tests/functions-tests/backup/notify-failure)
+- `supabase-pgtap-testing` — pgTAP database tests + Deno Edge Function tests + cross-ref legacy-characterizer
+- `supabase-migration-repair` — migration list/repair, rollback preview, schema drift, permission denied troubleshooting
+
+2 agents novos:
+- `supabase-branching-architect` — projeta estratégia branching (4 decisões + BRANCHING-DESIGN.md + handoff para supabase-architect)
+- `supabase-cicd-pipeline-implementer` — materializa 7-8 workflows + cross-suite handoffs para supabase-migration-writer + release-pipeline-auditor
+
+Cross-suite enrichment (3 agents v1.x):
+- `supabase-architect` (v1.8) — section Branching Strategy Decision
+- `supabase-migration-writer` (v1.23) — warnings concurrent push + timestamp order
+- `release-pipeline-auditor` (v1.10) — branching workflow validation
+
+Counts: 64→66 agents (+2), 71→76 skills (+5), 89 commands (mantido), 23 gates (mantido).
+
+### Principle preserved
+
+Princípio canônico v1.23 (handoff cooperativo) herdado em todos os novos agents — agents Supabase materializam, não descartam upstream.
+
+### Não-breaking
+
+Todos os artefatos são aditivos. Stable API v1.0+ preservada (15ª release consecutiva).
+
 ## [1.26.0] — 2026-05-11 — Postgres Roles
 
 Adiciona pattern canônico de **Postgres Roles management** à Suíte Supabase. Complementa RLS row-level (v1.23) + Column-Level (v1.24) + Custom Claims RBAC (v1.25) com a fundação que sustenta as 3 trilhas: roles Postgres para **system access** (cron jobs, BI tools, ETL, admin scripts). Estabelece **Camada 10** de defense-in-depth.

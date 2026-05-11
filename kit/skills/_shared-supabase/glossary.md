@@ -115,8 +115,18 @@
 | EN | PT-BR / Significado |
 |---|---|
 | **branch database** | Cópia preview do DB de produção para feature branches. |
+| **Branching Compute Hours** (v1.27) | Métrica de billing Supabase para tempo de compute consumido por branches. FORA do Spend Cap. Compute Credits NÃO aplicam. Micro $0.01344/h. |
+| **Branching workflow (Supabase)** (v1.27) | Fluxo de criar preview/persistent branches separados da production. Cada branch tem própria instância Supabase + API credentials. |
+| **Deploy DAG (7 steps)** (v1.27) | Directed Acyclic Graph que descreve deployment de branch: clone → pull → health → configure → migrate → seed → deploy. Falha em parent step skipa children. |
+| **dotenvx encrypted fields** (v1.27) | Pattern de encryptar secrets em arquivos `.env.*` commitados no git. Decryption key em `.env.keys` (gitignored). Sintaxe `encrypted:<value>` em config.toml — só funciona em designated secret fields. |
+| **Migration repair** (v1.27) | Comando `supabase migration repair --status applied\|reverted <timestamp>` que atualiza tracking table only, NÃO aplica/reverte SQL. Para corrigir history record quando schema state real está OK. |
 | **persistent branch** | Branch que sobrevive entre PRs (staging long-lived). |
+| **Persistent branch** (v1.27) | Branch Supabase long-lived (staging/QA/dev), NÃO auto-pause em inatividade, não auto-delete em PR merge. Custo Branching Compute Hours contínuo. |
+| **pgTAP testing** (v1.27) | Pattern de testing PostgreSQL usando pgTAP extension (TAP — Test Anything Protocol). Comando `supabase test db` busca em `supabase/tests/*.sql`. Funções canônicas: plan/ok/is/throws_ok/finish. |
 | **preview branch** | Branch criado para PR específico — destruído ao merge. |
+| **Preview branch** (v1.27) | Branch Supabase ephemeral, auto-pause em inatividade, auto-delete em PR merge/close. Padrão para feature development. |
+| **[remotes] block** (v1.27) | Seção em `config.toml` que define configuração branch-specific. Referencia `project_id` obtido via `supabase --experimental branches list`. Permite override de db/api/auth/edge_runtime per branch. |
+| **Schema drift** (v1.27) | Divergência entre estado real do schema e migration tracking. Causa típica: changes diretos no dashboard, ou timestamps wrong order após git rebase. Resolução via `migration repair` (tracking) ou rebase rename (timestamps). |
 
 ---
 

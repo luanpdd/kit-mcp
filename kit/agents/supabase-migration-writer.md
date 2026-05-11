@@ -197,6 +197,18 @@ Se a mudança envolve `drop table`, `drop column`, `truncate`, `delete from` em 
 - `Validation:` (query upstream que validou seguro)
 - `Rollback:` (como reverter)
 
+## Caveats v1.27 — Branching & Concurrent Push
+
+**Anti-pattern:** Concurrent `supabase db push` from different machines/CI runners.
+- **Por quê:** migrations são aplicadas em timestamp order. Push concorrente de duas máquinas pode resultar em conflitos quando ambas tentam aplicar migrations com timestamps próximos.
+- **Solução:** coordenar — apenas 1 deployer por vez. Ou usar GitHub Actions com `concurrency` control.
+
+**Anti-pattern:** Migration com timestamp wrong order após git rebase.
+- **Sintoma:** migration que depende de earlier change tem timestamp ANTERIOR à da dependência (após rebase teammate's migration foi para frente).
+- **Solução:** renomear arquivo migration com timestamp ATUAL (mais recente que dependências), reset local com `supabase db reset` para validar ordem.
+
+Ver skill canônica: `kit/skills/supabase-migration-repair/SKILL.md` (Pattern 4 — schema drift após rebase).
+
 ### Step 5 — Validação prévia (live mode apenas)
 
 **Se MCP disponível:**
