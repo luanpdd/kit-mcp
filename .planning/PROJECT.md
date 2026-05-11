@@ -1,15 +1,26 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-11 — milestone v1.26 (Postgres Roles) iniciado.
+> Última atualização: 2026-05-11 — milestone v1.26 (Postgres Roles) entregue.
 
 ## Estado Atual
 
-**v1.25.0 — Custom Claims & RBAC via Auth Hooks** **entregue** 2026-05-11 (Phases 137-142, 6 phases, 32 REQs, content-only milestone). Adicionou **Camada 9** de defense-in-depth (Auth Hooks - Custom Claims) à Suíte Supabase complementando RLS row-level (v1.23) + column-level (v1.24). Skill nova `supabase-custom-claims-rbac` (7 passos canônicos + 5 anti-patterns + caveat JWT freshness) + agent novo `supabase-rbac-implementer` (canonical materializer Custom Access Token Auth Hook) + 3 cross-suite handoffs RBAC (multi-tenant-rls-writer, super-admin-implementer, audit-log-implementer). Princípio canônico v1.23 herdado. AUTOGEN-COUNTS: 62→**63 agents** (+1: supabase-rbac-implementer), 89 commands (mantido), 69→**70 skills** (+1: supabase-custom-claims-rbac), 23 gates (mantido); file-manifest 371→**373 files**. Stable API v1.0+ preservada cross-13-releases. PRR 30/30 mantido.
+**v1.26.0 — Postgres Roles** **entregue** 2026-05-11 (Phases 143-148, 6 phases, 34 REQs, content-only milestone). Adicionou **Camada 10** de defense-in-depth (Postgres Roles Hierarchy) à Suíte Supabase — fundação que sustenta as 3 trilhas anteriores (RLS v1.23 + Column-Level v1.24 + Custom Claims RBAC v1.25). Skill nova `supabase-postgres-roles` (10 predefined Supabase roles documentados + 4 patterns canônicos + 5 anti-patterns) + agent novo `supabase-roles-implementer` (canonical materializer paralelo aos 3 hardeners) + 4 cross-suite handoffs Postgres Roles (audit-log → `security_admin`, lgpd → `dpo_role`, crm → `lead_manager`, super-admin → `platform_admin`). Princípio canônico v1.23 herdado. AUTOGEN-COUNTS: 63→**64 agents** (+1: supabase-roles-implementer), 89 commands (mantido), 70→**71 skills** (+1: supabase-postgres-roles), 23 gates (mantido); file-manifest 373→**375 files**. Stable API v1.0+ preservada cross-14-releases. PRR 30/30 mantido.
 
-**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30) + v1.21 (Multi-Tenant SaaS B2B) + v1.22 (DDIA Foundations) + v1.23 (Reforço RLS) + v1.24 (Column-Level Security) + **v1.25 (Custom Claims & RBAC)**. **8 suítes ativas no kit** + framework maduro. Defense-in-depth: **9 camadas** (Camada 9 = Auth Hooks Custom Claims). Cross-suite invocation pattern formalizado v1.21, enriquecido v1.23 (handoff cooperativo SQL), estendido v1.24 (column-level), **estendido v1.25 (RBAC via custom claims)**. **Total cross-suite handoffs cumulativos: 20** (12 RLS v1.23 + 5 column v1.24 + 3 RBAC v1.25). Convenção PT-BR mantida.
+**Stack acumulado:** v1.8 + v1.9 + v1.10 + v1.11 + v1.12 + v1.13-v1.20 + v1.21 + v1.22 + v1.23 (RLS) + v1.24 (Column-Level) + v1.25 (Custom Claims & RBAC) + **v1.26 (Postgres Roles)**. **8 suítes ativas no kit** + framework maduro. Defense-in-depth: **10 camadas** (Camada 10 = Postgres Roles Hierarchy). Cross-suite invocation pattern formalizado v1.21, enriquecido v1.23/v1.24/v1.25/v1.26 (handoff cooperativo SQL + column-level + RBAC + Postgres roles). **Total cross-suite handoffs cumulativos: 24** (12 RLS v1.23 + 5 column v1.24 + 3 RBAC v1.25 + 4 Roles v1.26). Trilha de segurança Supabase consolidada: **RLS (linha) + Column-Level (coluna) + Custom Claims (app access role) + Postgres Roles (system access role)**. Convenção PT-BR mantida.
 
-## Milestone Atual: v1.26 Postgres Roles
+## Próximo milestone: v1.27 (a definir)
+
+**Possíveis candidatos para v1.27:**
+- Supabase Vault (encryption at rest) — proteção em repouso para PII columns
+- Outros Auth Hooks (Send Email, Send SMS, MFA Verification, Password Verification)
+- MFA enforcement patterns (AAL2 obrigatório por role/permission)
+- Realtime authorization patterns avançados
+- Tech debt parqueado de v1.20-v1.26
+
+**Próximo passo:** `/novo-marco` para iniciar v1.27.
+
+## ~~Milestone Anterior: v1.26 Postgres Roles~~ (entregue 2026-05-11)
 
 **Objetivo:** Adicionar pattern canônico de **Postgres Roles management** à Suíte Supabase. Complementa as 3 trilhas anteriores (RLS row-level v1.23 + Column-Level v1.24 + Custom Claims RBAC v1.25) com a **fundação** que sustenta todas elas: roles Postgres que definem **system access** (custom service accounts, role hierarchy, INHERIT/NOINHERIT). Application access continua via RLS + Custom Claims; Postgres roles são para system-level access.
 
