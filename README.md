@@ -165,6 +165,272 @@ A production engineering layer derived from *Site Reliability Engineering: How G
 
 ---
 
+## Slash Commands Reference (89 commands)
+
+Comandos do kit são organizados em **workflow lifecycle** (brownfield planning canônico) + **8 suítes especializadas** (Supabase, Observability, SRE, Legacy, Multi-Tenant, DDIA, etc.) + **quick actions** + **utilities**.
+
+### Workflow Lifecycle (brownfield planning)
+
+O fluxo canônico de um projeto: bootstrap → milestone → phase → execute → audit → publish.
+
+| Comando | Objetivo |
+|---------|----------|
+| `/novo-projeto` | Inicializa novo projeto com coleta profunda de contexto e PROJECT.md |
+| `/novo-marco` | Inicia novo ciclo de milestone — atualiza PROJECT.md, encaminha para requisitos |
+| `/novo-workspace` | Cria workspace isolado com cópias de repos e .planning/ independente |
+| `/discutir-fase N` | Reúne contexto da fase por questionamento adaptativo antes do planejamento |
+| `/listar-hipoteses-fase N` | Mostra hipóteses do Claude sobre abordagem antes do planejamento |
+| `/planejar-fase N` | Cria plano detalhado da fase (PLAN.md) com loop de verificação |
+| `/pesquisar-fase N` | Pesquisa como implementar uma fase (standalone — geralmente use planejar) |
+| `/executar-fase N` | Executa todos os planos de uma fase com paralelização por ondas |
+| `/autonomo` | Executa todas as fases restantes autônomamente — discuss→plan→execute por fase |
+| `/auditar-marco` | Audita conclusão do milestone contra intenção original antes de arquivar |
+| `/concluir-marco` | Arquiva milestone concluído, cria tag git, prepara para próxima versão |
+| `/publicar` | Publica milestone — cria doc no Notion, abre PR no GitHub com link |
+| `/publicar-rapido` | Variante leve do publicar para hotfix/quick-task — sem ROADMAP dependency |
+| `/branch-pr` | Cria branch limpo para PR filtrando commits de .planning/ |
+
+### Phase Lifecycle (gerenciar fases)
+
+| Comando | Objetivo |
+|---------|----------|
+| `/adicionar-fase` | Adiciona fase ao final do milestone atual no roadmap |
+| `/inserir-fase` | Insere trabalho urgente como fase decimal (ex: 72.1) entre fases existentes |
+| `/remover-fase N` | Remove fase futura do roadmap e renumera subsequentes |
+| `/planejar-lacunas` | Cria fases para fechar lacunas identificadas pela auditoria de milestone |
+| `/validar-fase N` | Audita retroativamente e preenche lacunas de validação para fase concluída |
+| `/adicionar-testes N` | Gera testes para fase concluída com base em UAT + implementação |
+| `/auditar-uat` | Auditoria multi-fase de todos itens de UAT e verificação pendentes |
+| `/verificar-trabalho` | Valida funcionalidades construídas através de UAT conversacional |
+| `/pausar-trabalho` | Cria handoff de contexto ao pausar trabalho no meio de uma fase |
+| `/retomar-trabalho` | Retoma trabalho da sessão anterior com restauração completa de contexto |
+
+### Suite `/supabase` (v1.8 + v1.23-v1.26 — 4 camadas de segurança canônicas)
+
+Orquestrador `/supabase <subcomando>` com 14 subcomandos (sinônimos PT/EN). Toda a trilha de segurança Supabase canônica está implementada.
+
+| Subcomando | Objetivo | Cross-ref |
+|------------|----------|-----------|
+| `/supabase arquiteto` | Projeta schema + RLS + topologia realtime ANTES da implementação | v1.8 |
+| `/supabase migration` | Escreve migration SQL com 5 blocos obrigatórios + auto-chain hardener | v1.23 |
+| `/supabase rls` | Gera RLS policies granulares com GRANT + IS NOT NULL + views security_invoker | v1.23 |
+| `/supabase hardener` | Canonical materializer RLS — recebe draft via Task, verdicts GO/STRENGTHEN/REWRITE | v1.23 |
+| `/supabase column` | Column-Level privileges (REVOKE table-level + GRANT (col)) — PII/audit/billing | v1.24 |
+| `/supabase rbac` | Custom Claims via Auth Hook (enum + user_roles + auth hook + authorize() function) | v1.25 |
+| `/supabase role` | Postgres Roles (CREATE ROLE + INHERIT/NOINHERIT + GRANT/REVOKE) — system access | v1.26 |
+| `/supabase edge` | Escreve Deno Edge Functions com imports npm:/jsr: + env vars + EdgeRuntime |  |
+| `/supabase realtime` | Configura canais Realtime — broadcast com private:true + RLS sobre realtime.messages |  |
+| `/supabase auth` | Bootstrap Next.js v16 + Supabase Auth com @supabase/ssr + jwt-decode listener |  |
+| `/supabase storage` | Configura buckets (públicos vs privados) + signed URLs + RLS sobre storage.objects |  |
+| `/supabase rag` | Edge Function com embeddings + pgvector (HNSW/IVFFlat + RLS with permissions) |  |
+| `/supabase cron` | Pattern `pg_cron + pgmq + pg_net` (cron → pgmq → Edge Function) |  |
+| `/supabase check` | Valida SQL antes de apply (schema-checker — FKs/colunas/tabelas referenciadas) |  |
+
+### Suite `/observabilidade` (v1.9)
+
+| Comando | Objetivo |
+|---------|----------|
+| `/observabilidade <sub>` | Orquestrador — dispatcha para instrumenter, investigator, slo-engineer, burn-rate-forecaster, omm-auditor |
+| `/instrumentar-fase N` | Após `/planejar-fase`, gera INSTRUMENTATION.md por plano (spans + atributos canônicos) |
+| `/investigar-producao` | Core Analysis Loop guiado em incidente real — estado persistente em `.planning/investigations/` |
+| `/definir-slo` | Gera SLO.md + SQL para materializar SLI events em view/MV no Postgres |
+| `/burn-rate-status` | Tabela dual-window por SLO (fast 1h + slow 6h) — page/ticket/warn alerts |
+| `/auditar-observabilidade` | OMM-REPORT.md scored em 5 capacidades (resiliência/qualidade/complexidade/cadência/comportamento) |
+| `/auditar-observabilidade-cobertura` | X/N Edge Functions com 4 golden signals + Y/N com SLO + Z/N com burn alert |
+
+### Suite `/sre` (v1.10 + v1.11)
+
+| Comando | Objetivo |
+|---------|----------|
+| `/sre <sub>` | Orquestrador — dispatcha para golden-signals-instrumenter, toil-auditor, postmortem-writer, prr-conductor, etc. |
+| `/golden-signals` | Instrumenta serviço/Edge Function com 4 golden signals OTel (Latency/Traffic/Errors/Saturation) |
+| `/auditar-toil` | Identifica toil no projeto (6 critérios canônicos) + sugere automação via pg_cron |
+| `/auditar-cascading` | Audita código para 5 triggers de cascading failure (sem timeout, retry sem jitter, etc.) |
+| `/auditar-release` | Audita CI/CD para hermeticidade + reprodutibilidade + policy enforcement |
+| `/load-shedding` | Aplica patches de load shedding em Edge Function/handler HTTP (drop policy, deadline-aware) |
+| `/postmortem` | Postmortem blameless 9 seções (modo `--from-investigation` ou `--incident`) |
+| `/prr` | Production Readiness Review scored em 6 axes (System/Instrumentation/Emergency/Capacity/Change/Performance) |
+| `/risk-budget` | Error budget atual vs risk continuum (cap 3 SRE) — posiciona no continuum 99% → 99.999% |
+
+### Suite `/legacy` (v1.12 — Working Effectively with Legacy Code, Feathers 2004)
+
+| Comando | Objetivo |
+|---------|----------|
+| `/legacy <sub>` | Orquestrador — dispatcha para legacy-characterizer, seam-finder, refactor-safety-auditor |
+| `/caracterizar` | Gera characterization tests (cap 13 Feathers) — golden snapshots como oracle imutável |
+| `/caracterizar-prompt` | Characterization de prompts/tools LLM em produção — temperature=0 + seed fixo |
+| `/encontrar-seams` | Analisa código para identificar seams (object/link/preprocessing) — pré-requisito refactor |
+| `/auditar-refactor` | Gate canônico ANTES de refactor — veredito GO/BLOCK/WARN |
+| `/refactor-seguro` | Chain canônico — encontrar-seams → caracterizar → auditar-refactor → executar |
+| `/capturar-payloads` | Instrumenta Edge Function para captura via mcp__supabase__get_logs por N dias |
+| `/detectar-duplicacao` | Shotgun surgery — duplicação sintática (jscpd/regex) + semântica (embeddings) |
+| `/storytelling` | IA gera mental model de codebase desconhecido (story 5 frases + naked CRC) |
+
+### Suite `/multi-tenant` (v1.21) e `/dados-distribuidos` (v1.22)
+
+| Comando | Objetivo |
+|---------|----------|
+| `/multi-tenant <sub>` | Orquestrador B2B SaaS — 10 agents implementers (architect, rls, onboarding, invite, super-admin, audit-log, whatsapp, crm, lgpd, isolation-audit) |
+| `/dados-distribuidos <sub>` | Orquestrador DDIA Foundations — auditor-consistencia-isolamento, detector-tenant-quente, validador-evolucao-schema |
+
+### UI Phase (frontend design contract)
+
+| Comando | Objetivo |
+|---------|----------|
+| `/fase-ui N` | Gera contrato de design UI (UI-SPEC.md) para fases frontend |
+| `/revisar-ui N` | Auditoria visual retroativa de 6 pilares do código frontend implementado |
+
+### Backlog & Ideas
+
+| Comando | Objetivo |
+|---------|----------|
+| `/adicionar-backlog` | Adiciona ideia ao estacionamento de backlog (numeração 999.x) |
+| `/revisar-backlog` | Revisa e promove itens do backlog para milestone ativo |
+| `/plantar-ideia` | Captura ideia prospectiva com condições de gatilho — surge automaticamente no milestone certo |
+| `/nota` | Captura de ideias sem fricção. Adicionar, listar ou promover notas para todos |
+| `/adicionar-tarefa` | Captura ideia ou tarefa como todo a partir do contexto da conversa |
+| `/verificar-tarefas` | Lista todos pendentes e seleciona um para trabalhar |
+
+### Quick Actions & Routing
+
+| Comando | Objetivo |
+|---------|----------|
+| `/fazer "<task>"` | **Entrypoint canônico** — roteia texto livre para o comando correto. Use este na dúvida |
+| `/proximo` | Avança automaticamente para o próximo passo lógico no workflow |
+| `/progresso` | Verifica progresso do projeto, mostra contexto e roteia para próxima ação |
+| `/expresso` | Tarefa rápida com garantias framework (commits atômicos + state tracking) sem agents opcionais |
+| `/rapido` | Tarefa trivial inline — sem subagentes, sem overhead de planejamento |
+| `/autonomo` | Executa fases restantes autônomamente — discuss→plan→execute por fase |
+| `/depurar` | Depuração sistemática com estado persistente entre resets de contexto |
+| `/forense` | Investigação post-mortem de workflows com falha — analisa git + artefatos + estado |
+
+### Workspace & Workflows (paralelos)
+
+| Comando | Objetivo |
+|---------|----------|
+| `/fluxos-trabalho` | Gerencia fluxos paralelos — listar, criar, alternar, status, progresso, concluir, retomar |
+| `/listar-workspaces` | Lista workspaces framework ativos e seu status |
+| `/remover-workspace` | Remove workspace framework e limpa worktrees |
+| `/fio` | Gerencia threads de contexto persistentes para trabalho entre sessões |
+| `/gerenciador` | Central de comando interativa para gerenciar múltiplas fases em um terminal |
+
+### Utilities
+
+| Comando | Objetivo |
+|---------|----------|
+| `/ajuda` | Mostra comandos disponíveis e guia de uso |
+| `/atualizar` | Atualiza framework para versão mais recente com changelog |
+| `/configuracoes` | Configura toggles de workflow e perfil de modelo |
+| `/definir-perfil` | Altera perfil de modelo para agents framework (quality/balanced/budget/inherit) |
+| `/perfil-usuario` | Gera perfil comportamental do desenvolvedor (artefatos descobríveis pelo Claude) |
+| `/mapear-codebase` | Analisa base de código com agents paralelos para produzir docs em .planning/codebase/ |
+| `/relatorio-sessao` | Relatório da sessão com estimativas de tokens, resumo de trabalho e resultados |
+| `/estatisticas` | Estatísticas do projeto — fases, planos, requisitos, métricas git e timeline |
+| `/saude` | Diagnostica integridade do diretório de planejamento e opcionalmente repara |
+| `/sync-main` | Atualiza branch local com commits da main (pergunta qual priorizar em conflito) |
+| `/limpeza` | Arquiva diretórios de fase acumulados de milestones concluídos |
+| `/reaplicar-patches` | Reaplica modificações locais após atualização do framework |
+| `/revisar` | Solicita revisão entre IAs de planos de fase a partir de CLIs externas |
+| `/resumo-marco` | Resumo abrangente do projeto a partir dos artefatos do milestone |
+| `/setup-notion` | Cria estrutura de páginas Notion para novo projeto + gera `.claude/notion-config.json` |
+| `/entrar-discord` | Entrar na comunidade framework no Discord |
+
+---
+
+## Workflow exemplos
+
+### Exemplo 1: Ciclo completo de um milestone (brownfield)
+
+```bash
+# 1. iniciar milestone
+/novo-marco
+# → coleta objetivos, opcionalmente pesquisa (4 agents paralelos), define REQUIREMENTS.md,
+#   invoca roadmapper para criar ROADMAP.md, commita
+
+# 2. executar fase (manual passo-a-passo)
+/discutir-fase 124          # gather context via questionamento adaptativo
+/planejar-fase 124          # plan-checker → planner → PLAN.md
+/executar-fase 124          # executor com atomic commits + verifier
+
+# OU: executar todas as fases autônomamente
+/autonomo                   # discuss → plan → execute por fase + commit atômico
+
+# 3. auditar
+/auditar-marco              # verifica cobertura, integration entre phases, fluxos E2E
+
+# 4. concluir e publicar
+/concluir-marco             # archive .planning/milestones/v{X.Y}-* + tag git
+/publicar                   # Notion + PR GitHub com link Notion no body
+```
+
+### Exemplo 2: Trilha de segurança Supabase (v1.23-v1.26 cumulativos)
+
+```bash
+# 1. arquitetura inicial — projeta schema + RLS + Postgres roles upfront
+/supabase arquiteto "B2B SaaS com leads + audit log + invites + super-admin"
+
+# 2. migration com 5 blocos obrigatórios (CREATE TABLE + GRANTs + RLS + 4 policies + INDEX)
+/supabase migration "create_orgs_and_members"
+# → auto-chain cooperativo com supabase-rls-hardener (Detector 1-10)
+
+# 3. column-level para PII (v1.24)
+/supabase column "audit_log payload protected — só security_admin"
+
+# 4. RBAC via Custom Claims (v1.25)
+/supabase rbac "roles admin/moderator/user + 8 permissions"
+# → cria enum types + user_roles + auth hook + authorize() + RLS policies
+
+# 5. Custom Postgres role para service accounts (v1.26)
+/supabase role "platform_admin para super-admin operations"
+```
+
+### Exemplo 3: Investigação de incidente (Observability + SRE)
+
+```bash
+# 1. diagnóstico
+/investigar-producao        # Core Analysis Loop com estado persistente
+# → 4 fases: dados/hipótese/validação/root cause
+# → arquiva em .planning/investigations/<id>.md
+
+# 2. postmortem após fix
+/postmortem --from-investigation <id>
+# → blameless 9 seções (cap 15 livro Google SRE)
+
+# 3. ajustar SLO se necessário
+/definir-slo                # SLI event-based + SQL materialization
+/burn-rate-status           # tabela dual-window — page/ticket/warn
+
+# 4. PRR antes de scaled release
+/prr --service "checkout"   # scored em 6 axes
+```
+
+### Exemplo 4: Refactor seguro de código legado (v1.12)
+
+```bash
+# Chain canônico — bloqueia se gates falhares
+/refactor-seguro src/foo.ts
+# 1. encontrar-seams — identifica object/link/preprocessing seams (cap 25 Feathers)
+# 2. caracterizar — gera characterization tests (cap 13) cobrindo 5+ grupos de equivalência
+# 3. auditar-refactor — veredito GO/BLOCK/WARN baseado em coverage + mutation
+# 4. executor com safety net
+```
+
+### Exemplo 5: Quick action via roteamento canônico
+
+```bash
+# Texto livre — kit roteia para o comando certo
+/fazer "preciso adicionar uma tabela leads com phone email e org_id"
+# → roteia para /supabase migration (que auto-chain para hardener + RLS)
+
+/fazer "quero entender por que esse codebase está confuso"
+# → roteia para /storytelling ou /mapear-codebase
+
+/fazer "meu teste de produção tá flaky — não sei por que"
+# → roteia para /depurar (cria sessão persistente)
+```
+
+---
+
 ## Prerequisites
 
 - **Node.js ≥ 20** (uses native ESM, no transpiler)
