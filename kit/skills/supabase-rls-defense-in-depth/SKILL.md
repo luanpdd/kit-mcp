@@ -29,6 +29,7 @@ LLM carrega esta skill quando precisar desenhar **camadas de defesa** RLS além 
 6. **Camada 6 — Service role caveat** (DEFENSE-03) — entender que service_role bypassa RLS mas só no servidor; nunca expor ao cliente.
 7. **Camada 7 — Cooperative handoff via supabase-rls-hardener** (v1.23) — todo SQL gerado pelo kit passa pelo hardener canonical antes do output final. Verdicts GO/STRENGTHEN/REWRITE-com-confirmação. Princípio canônico: agents externos pensam/planejam; agents Supabase materializam/hardenam.
 8. **Camada 8 — Column-Level Privileges** (v1.24) — `GRANT/REVOKE (col1, col2) ON TABLE` para restringir colunas sensíveis (PII, audit payload, billing, tokens). Feature AVANÇADA — usar apenas quando RLS + dedicated role table não cobrem o caso. Cross-ref skill [`supabase-column-level-security`](../supabase-column-level-security/SKILL.md).
+9. **Camada 9 — Auth Hooks - Custom Claims** (v1.25) — `Custom Access Token Auth Hook` (função PG `custom_access_token_hook(event jsonb)`) injeta `user_role` no JWT durante geração do token. RLS policies consultam o claim direto via `auth.jwt() ->> 'user_role'` ou via `authorize()` function — zero-JOIN, type-safe via enum, composable. Alternativa moderna a dedicated role table com JOIN custoso em policies. Caveat JWT freshness (eventually consistent). Cross-ref skill [`supabase-custom-claims-rbac`](../supabase-custom-claims-rbac/SKILL.md).
 
 Razão: RLS é a primeira linha, mas humanos esquecem. Third-party tooling (Metabase, dbt, ferramentas BI conectadas via JDBC, scripts) bypassam toda a lógica da camada de aplicação — só RLS no banco protege. Defense in depth aplica princípio de **proteção sobreposta** para resiliência.
 
@@ -399,6 +400,7 @@ Use este checklist ao validar projetos Supabase em produção:
 - [ ] **GRANT explícito** antes de ENABLE RLS em todas tabelas — sem `grant select to authenticated`, queries falham antes mesmo da policy.
 - [ ] **Cooperative handoff** — qualquer agent/skill/command produzindo SQL passa pelo `supabase-rls-hardener` (v1.23) antes do output final.
 - [ ] **DEFENSE-06 (v1.24):** Column-Level Privileges em tabelas com PII/audit payload/billing/tokens — REVOKE table-level + GRANT column-level granular; clientes listam colunas explicitamente (não `select *`).
+- [ ] **DEFENSE-07 (v1.25):** RBAC via Custom Access Token Auth Hook — `user_role` injetado no JWT durante geração do token; RLS policies consultam claim via `authorize()` function ao invés de JOIN em user_roles; `supabase_auth_admin` tem GRANT EXECUTE no hook + GRANT ALL em user_roles; revogação de role força logout via `auth.admin.signOut()` para invalidação imediata.
 
 ## Cross-suite handoff cooperativo (v1.23)
 

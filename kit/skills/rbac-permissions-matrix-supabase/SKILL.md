@@ -222,6 +222,43 @@ create policy "members_update_role_with_permission"
   );
 ```
 
+## Mecanismo de delivery dos claims (v1.25 update)
+
+Os patterns acima usam **helper function PG STABLE** (`private.has_permission(action, resource, org_id)`) que faz JOIN em `role_permissions` table dentro de cada policy evaluation. Funciona bem para casos multi-tenant complexos (role depende de org context) mas adiciona JOIN custoso em policies hot.
+
+A partir de **v1.25**, kit-mcp adiciona alternativa moderna via **Custom Access Token Auth Hook** (skill [`supabase-custom-claims-rbac`](../supabase-custom-claims-rbac/SKILL.md)) que injeta `user_role` direto no JWT — RLS policies leem o claim via `authorize(permission)` sem JOIN.
+
+**Comparação canônica (v1.25):**
+
+| | Helper function STABLE (v1.21) | Custom Claim via Auth Hook (v1.25) |
+|---|---|---|
+| Performance | JOIN em role_permissions por query | Zero-JOIN — claim no JWT |
+| Multi-tenant context | ✅ `has_permission('update', 'members', org_id)` — context-aware | ❌ Claim é per-user, não per-org-context |
+| Mudança em real-time | ✅ Imediata (UPDATE em role_permissions reflete) | ⚠ Eventually consistent (TTL refresh 1h) |
+| Type safety | String permission `'update:members'` | Enum `app_permission` |
+| Setup complexity | Média (helper function + RLS) | Alta (auth hook + auth_admin grants + jwt-decode cliente) |
+
+**Recomendação canônica v1.25 para B2B multi-tenant:**
+
+**Combine ambos:**
+- **Custom claim** para role global (`super_admin`, `org_owner`) — zero-JOIN, fácil consulta cliente
+- **Helper function STABLE** para context-aware (`has_permission(action, resource, org_id)`) — quando role muda por org
+
+Exemplo de policy combinada:
+
+```sql
+create policy "members_select" on public.members for select
+to authenticated
+using (
+  -- claim no JWT (zero-JOIN, fast path)
+  (SELECT authorize('members:read'))
+  -- OU helper function PG (context-aware, slow path)
+  or private.has_permission('read', 'members', org_id)
+);
+```
+
+Pattern detalhado em [`supabase-custom-claims-rbac`](../supabase-custom-claims-rbac/SKILL.md) (v1.25) section "Cross-suite integration".
+
 ## Anti-patterns
 
 ### Anti-pattern 1: Permission string sem padrão

@@ -527,6 +527,32 @@ using (
 )
 ```
 
+## RBAC via Custom Claims + authorize() function (v1.25)
+
+A partir de v1.25, o pattern **canônico** de RBAC em Supabase é via **Custom Access Token Auth Hook** que injeta `user_role` no JWT durante geração do token. Em vez de policies fazendo JOIN custoso em `user_roles` table, a policy lê o claim direto via `auth.jwt() ->> 'user_role'` (ou via `authorize()` function que abstrai role → permission lookup).
+
+```sql
+-- Pattern v1.25 — RLS policy usando authorize() (claim do JWT consultado)
+create policy "Allow authorized delete access" on public.channels for delete
+to authenticated
+using ((SELECT authorize('channels.delete')));
+
+-- vs. pattern v1.21 — RLS policy usando helper function STABLE (JOIN em DB)
+create policy "Allow admin delete" on public.channels for delete
+to authenticated
+using ((SELECT private.has_role('admin')));
+```
+
+**Vantagens canônicas do pattern v1.25:**
+
+- **Performance:** claim no JWT é zero-JOIN; helper function STABLE faz query em user_roles table
+- **Composability:** `authorize(permission)` abstrai role → permission; trocar quem tem permission = UPDATE em role_permissions (sem alterar policies)
+- **Type safety:** `app_permission` enum garante consistência cross-policy
+
+**Caveat JWT freshness:** mudanças em `user_roles` só refletem no JWT após refresh (TTL 1h). Para revogação imediata, force logout via `auth.admin.signOut(userId)`. Em multi-tenant complexo (role por org), **combine** custom claim (role global) + helper function PG (role context-aware) — claim sozinho não cobre per-org context.
+
+Padrão completo (7 passos + anti-patterns + caveats) em [`supabase-custom-claims-rbac`](../supabase-custom-claims-rbac/SKILL.md) (v1.25).
+
 ## Combining RLS with Column-Level Privileges (v1.24)
 
 RLS row-level e column-level privileges são **camadas complementares**:

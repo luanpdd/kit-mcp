@@ -160,6 +160,53 @@ end;
 $$;
 ```
 
+### Pattern Custom Access Token Auth Hook (v1.25)
+
+Functions invocadas como **Auth Hooks** (ex: Custom Access Token) precisam permissions específicos para `supabase_auth_admin` role + REVOKE de roles públicos. Pattern canônico:
+
+```sql
+-- 1. função hook (stable, language plpgsql, modifica claims do JWT)
+create or replace function public.custom_access_token_hook(event jsonb)
+returns jsonb
+language plpgsql
+stable
+as $$
+  declare
+    claims jsonb;
+    user_role public.app_role;
+  begin
+    select role into user_role from public.user_roles
+    where user_id = (event->>'user_id')::uuid;
+
+    claims := event->'claims';
+    if user_role is not null then
+      claims := jsonb_set(claims, '{user_role}', to_jsonb(user_role));
+    else
+      claims := jsonb_set(claims, '{user_role}', 'null');
+    end if;
+    event := jsonb_set(event, '{claims}', claims);
+    return event;
+  end;
+$$;
+
+-- 2. permissions canônicos para supabase_auth_admin (6 GRANTs/REVOKEs)
+grant usage on schema public to supabase_auth_admin;
+grant execute on function public.custom_access_token_hook to supabase_auth_admin;
+revoke execute on function public.custom_access_token_hook from authenticated, anon, public;
+grant all on table public.user_roles to supabase_auth_admin;
+revoke all on table public.user_roles from authenticated, anon, public;
+
+create policy "Allow auth admin to read user roles" on public.user_roles
+  as permissive for select to supabase_auth_admin using (true);
+```
+
+**Decisões canônicas:**
+- `stable` (não `volatile`) — hook não modifica DB, apenas lê user_roles
+- **NÃO** usa `security definer` — hook roda com privilégios do `supabase_auth_admin` (que é o caller); GRANT EXECUTE necessário
+- **REVOKE FROM authenticated/anon/public** — sem isso, qualquer cliente pode chamar o hook diretamente (abuse)
+
+Padrão completo (RBAC end-to-end) em [`supabase-custom-claims-rbac`](../supabase-custom-claims-rbac/SKILL.md) (v1.25).
+
 ## Anti-patterns
 
 ### Anti-pattern 1: `SECURITY DEFINER` + sem `set search_path` + sem schema qualifier
