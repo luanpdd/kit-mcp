@@ -1,5 +1,22 @@
 # MILESTONES.md — Histórico de releases
 
+## v1.23 Reforço RLS Supabase + Handoff Cooperativo SQL (Shipped: 2026-05-11)
+
+**Phases completed:** 7 phases (124-130), 42 REQs covered (100%), 12 atomic commits
+
+**Key accomplishments:**
+
+- Incorporados 100% da documentação oficial Supabase Row Level Security na skill `supabase-rls-policies` — GRANTs antes de ENABLE RLS, padrão `auth.uid() IS NOT NULL AND ...` (anti silent-fail anônimo), views com `security_invoker=true` (Postgres 15+), diferença `anon` Postgres role vs anonymous Auth user, performance recommendations (minimize joins/filtros redundantes/security definer cache), `raw_app_meta_data` vs `raw_user_meta_data` + JWT freshness + cookie 4096 bytes, defense in depth narrative; anti-patterns expandidos 4→7.
+- Skill `supabase-migrations` ganhou template canônico v1.23 com 5 blocos obrigatórios para CREATE TABLE: CREATE TABLE → GRANTs por role → ENABLE RLS → 4 policies granulares com IS NOT NULL → INDEX. Pattern força hardening desde a primeira migration.
+- **Skill nova `supabase-rls-defense-in-depth`** documentando 6 camadas de defesa em profundidade (policy + event trigger `rls_auto_enable` + GRANT explícito + bypass controlado + views security_invoker + service_role caveat), com 7-item checklist + auditoria queries SQL para detectar gaps em produção.
+- **Agent novo `supabase-rls-hardener`** — canonical materializer com verdicts construtivos **GO** (passa direto), **STRENGTHEN** (ajusta com diff explícito mantendo intent), **REWRITE** (anti-pattern crítico, requer confirmação obrigatória do caller se user_facing_caller=true). Invocável cross-suite por 12 agents callers documentados (8 v1.21 + 1 v1.22 + 3 framework core).
+- **Princípio canônico v1.23 estabelecido:** agents não-Supabase pensam/planejam; agents Supabase materializam/hardenam; ninguém descarta upstream. Pattern de handoff cooperativo via `Task(subagent_type=supabase-rls-hardener)` aplicado em 12 cross-suite handoffs: 8 implementers v1.21 (multi-tenant-rls-writer, audit-log-implementer, crm-pipeline-implementer, org-onboarding-implementer, invite-flow-implementer, super-admin-implementer, evolution-go-integrator, lgpd-compliance-auditor), 1 auditor v1.22 (auditor-consistencia-isolamento — Detector 7 valida migrations passaram pelo hardener), 3 framework core (planner injeta tarefa final SQL, executor invoca ANTES de aplicar, debugger valida fix proposto).
+- Agents Supabase v1.8 existentes atualizados: `supabase-rls-writer` emite GRANTs + IS NOT NULL opcional via input `include_is_not_null_check` + gera views `security_invoker=true` quando aplicável; `supabase-migration-writer` recebe draft via `Task()` upstream context, auto-chain cooperativo para hardener em CREATE TABLE, devolve SQL + nota de divergências quando intent conflita; command `/supabase` documentado como **serviço de materialização** (nunca bloqueia upstream) com subcomando novo `hardener` para dispatch direto.
+- Glossário compartilhado `_shared-supabase/glossary.md` ganhou 6 termos novos com tag `(v1.23)`: defense-in-depth, hardener, cooperative-handoff, event-trigger-rls-auto-enable, bypassrls, security_invoker — cross-refs ativos para skill defense-in-depth e agent hardener.
+- AUTOGEN-COUNTS regen: 60→**61 agents** (+1: supabase-rls-hardener), 89 commands (mantido), 67→**68 skills** (+1: supabase-rls-defense-in-depth), 23 gates (mantido); file-manifest 367→**369 files** hashed. Stable API v1.0+ preservada cross-11-releases (v1.13→v1.23). PRR 30/30 mantido (content-only milestone). Próximo marco parqueado: v1.24 Segurança em Nível de Coluna (Column-Level Security).
+
+---
+
 ## v1.21 Suíte Multi-Tenant SaaS B2B (Shipped: 2026-05-10)
 
 **Phases completed:** 11 phases, 11 plans, 0 tasks

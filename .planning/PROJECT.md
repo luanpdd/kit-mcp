@@ -1,15 +1,35 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-10 — milestone v1.23 (Reforço RLS Supabase + Auto-Redirect SQL/Postgres) iniciado.
+> Última atualização: 2026-05-11 — milestone v1.23 (Reforço RLS Supabase + Handoff Cooperativo SQL) entregue.
 
 ## Estado Atual
 
-**v1.22.0 — Suíte DDIA Foundations** **entregue** 2026-05-10 (Phases 117-123, 7 phases, 60 REQs, content-only milestone). 8ª suíte adicionada ao kit-mcp — `/dados-distribuidos` + 3 agents + 7 skills + glossário compartilhado, derivada de *Designing Data-Intensive Applications* (Kleppmann 2017). Cobre capítulos 4 (Encoding/Evolution), 5 (Replication), 6 (Partitioning), 7 (Transactions), 8 (Distributed Systems Traps), 9 (Consistency/Consensus), 11 (Stream Processing). 12 cross-suite patches em skills/agents v1.8 + v1.11 + v1.21. **Convenção nova:** PT-BR para naming de skills/agents/commands a partir de v1.22. AUTOGEN-COUNTS: 57→60 agents, 88→89 commands, 60→67 skills, 23 gates (mantido); file-manifest 355→367 files. Stable API v1.0+ preservada. PRR 30/30 mantido (content-only).
+**v1.23.0 — Reforço RLS Supabase + Handoff Cooperativo SQL** **entregue** 2026-05-11 (Phases 124-130, 7 phases, 42 REQs, content-only milestone). Incorporou 100% da documentação oficial Supabase Row Level Security na Suíte Supabase v1.8 e estabeleceu **princípio canônico de handoff cooperativo SQL**: agents não-Supabase pensam/planejam; agents Supabase materializam/hardenam; ninguém descarta upstream. Skill nova `supabase-rls-defense-in-depth` (6 camadas) + agent novo `supabase-rls-hardener` (verdicts construtivos GO/STRENGTHEN/REWRITE-com-confirmação) + 12 cross-suite handoffs documentados (8 v1.21 + 1 v1.22 + 3 framework core). AUTOGEN-COUNTS: 60→**61 agents** (+1: supabase-rls-hardener), 89 commands (mantido), 67→**68 skills** (+1: supabase-rls-defense-in-depth), 23 gates (mantido); file-manifest 367→**369 files**. Stable API v1.0+ preservada. PRR 30/30 mantido (content-only).
 
-**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30) + v1.21 (Multi-Tenant SaaS B2B) + **v1.22 (DDIA Foundations)**. **8 suítes ativas no kit** + framework eat-your-own-dog-food maduro (golden signals + dual-window SLOs + RUNBOOK 9 cenários + mutation testing baseline). Cross-suite invocation pattern formalizado em v1.21 + convenção PT-BR a partir de v1.22.
+**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30) + v1.21 (Multi-Tenant SaaS B2B) + v1.22 (DDIA Foundations) + **v1.23 (Reforço RLS Supabase)**. **8 suítes ativas no kit** + framework eat-your-own-dog-food maduro (golden signals + dual-window SLOs + RUNBOOK 9 cenários + mutation testing baseline). Cross-suite invocation pattern formalizado em v1.21, herdado em v1.22, **enriquecido em v1.23 com semântica cooperativa explícita** (handoff cooperativo, não BLOCK rígido). Convenção PT-BR a partir de v1.22 mantida.
 
-## Milestone Atual: v1.23 Reforço RLS Supabase + Handoff Cooperativo SQL
+## Próximo milestone: v1.24 Segurança em Nível de Coluna (Column-Level Security)
+
+**Objetivo previsto:** Adicionar camada de Column-Level Security (CLS) à Suíte Supabase — complementa RLS (linha) com privilégios granulares por coluna. Skill nova `supabase-column-level-security` + agent novo `supabase-column-privileges-writer` + cross-suite handoff cooperativo column-level seguindo princípio canônico v1.23.
+
+**Material-fonte previsto:** documentação oficial Postgres Column-Level Privileges + Supabase guide.
+
+**Tech debt parqueado para v1.24+** (carry-over de v1.20 + v1.21 + v1.22 + v1.23):
+- Phase 100 carry-over: cli/index.js extract helpers para 86→90 coverage ratchet
+- Phase 101 carry-over: completar mutation baseline 5 files restantes + CI mutation gate threshold ~55%
+- Phase 105 carry-over: p99 latency monitoring + M1 cold-start CLI sub-200ms
+- v1.21 deferred: TanStack Start/Expo/SolidStart/SvelteKit/Nuxt + Hono/Express/Fastify integrations
+- v1.21 deferred: WhatsApp template management, CRM AI scoring, multi-region deployment
+- v1.22 deferred: CRDTs (mergeable counters, OR-Sets) para colaborativo realtime
+- v1.22 deferred: batch processing patterns (DDIA Ch 10 — pgmq cobre maioria dos casos)
+- v1.22 deferred: multi-region active-active deployment Supabase
+- v1.22 deferred: tooling para visualização event flow (CDC pipeline diagram)
+- v1.23 deferred: RLS testing framework (pgTAP integration); migração automática policies existentes não-hardenadas; UI dashboard hardening status; burn rate alerting integrado com hardener; telemetry cooperative handoff
+
+**Próximo passo:** `/novo-marco` para iniciar v1.24.
+
+## ~~Milestone Anterior: v1.23 Reforço RLS Supabase + Handoff Cooperativo SQL~~ (entregue 2026-05-11)
 
 **Objetivo:** Garantir que TODO SQL/Postgres/DDL/banco de dados gerado pelo kit passe pela trilha de segurança da Suíte Supabase via **handoff cooperativo** — agents externos (multi-tenant, debugger, planner, executor, etc.) planejam/sugerem estrutura SQL; agents Supabase materializam o código final hardenado preservando intent upstream. Incorpora 100% do conteúdo da documentação oficial RLS da Supabase.
 
