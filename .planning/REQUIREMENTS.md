@@ -104,4 +104,17 @@
 
 ## Rastreabilidade
 
-(Preenchida pelo roadmap após `/novo-marco` step 10)
+| Categoria | REQs | Phase | Artefato |
+|-----------|------|-------|----------|
+| BRANCH-01..05 | 5 REQs | 149 | Skill nova `supabase-branching-workflow` |
+| CFG-01..05 | 5 REQs | 150 | Skill nova `supabase-config-toml-remotes` |
+| CI-01..08 | 8 REQs | 151 | Skill nova `supabase-ci-cd-github-actions` |
+| TEST-01..04 | 4 REQs | 152 | Skill nova `supabase-pgtap-testing` |
+| REPAIR-01..05 | 5 REQs | 153 | Skill nova `supabase-migration-repair` |
+| ARCH-01..05 + CICD-01..05 | 10 REQs | 154 | Agents novos `supabase-branching-architect` + `supabase-cicd-pipeline-implementer` |
+| XS-01..03 + REL-01..05 | 8 REQs | 155 | Cross-suite enrichment (3 agents v1.x) + Release artifacts |
+| **Total** | **45 REQs** | **7 phases (149-155)** | **45 mapeados (100%)** |
+
+**Cobertura:** 45 REQs total, 45 mapeados para 7 phases (149-155), 0 não-mapeados.
+
+**Dependências:** Phases 149-153 (skills) são fundação independente e podem executar em paralelo em sub-ondas. Phase 154 (agents novos) depende das 5 skills (cross-refs ativos). Phase 155 (cross-suite + release) depende de Phase 154 (agents novos referenciados + AUTOGEN-COUNTS finais).
