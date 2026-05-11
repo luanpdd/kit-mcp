@@ -1,15 +1,25 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-11 — milestone v1.24 (Segurança em Nível de Coluna) iniciado.
+> Última atualização: 2026-05-11 — milestone v1.24 (Segurança em Nível de Coluna) entregue.
 
 ## Estado Atual
 
-**v1.23.0 — Reforço RLS Supabase + Handoff Cooperativo SQL** **entregue** 2026-05-11 (Phases 124-130, 7 phases, 42 REQs, content-only milestone). Incorporou 100% da documentação oficial Supabase Row Level Security na Suíte Supabase v1.8 e estabeleceu **princípio canônico de handoff cooperativo SQL**: agents não-Supabase pensam/planejam; agents Supabase materializam/hardenam; ninguém descarta upstream. Skill nova `supabase-rls-defense-in-depth` (6 camadas) + agent novo `supabase-rls-hardener` (verdicts construtivos GO/STRENGTHEN/REWRITE-com-confirmação) + 12 cross-suite handoffs documentados (8 v1.21 + 1 v1.22 + 3 framework core). AUTOGEN-COUNTS: 60→**61 agents** (+1: supabase-rls-hardener), 89 commands (mantido), 67→**68 skills** (+1: supabase-rls-defense-in-depth), 23 gates (mantido); file-manifest 367→**369 files**. Stable API v1.0+ preservada. PRR 30/30 mantido (content-only).
+**v1.24.0 — Segurança em Nível de Coluna (Column-Level Security)** **entregue** 2026-05-11 (Phases 131-136, 6 phases, 26 REQs, content-only milestone). Adicionou **Camada 8** de defense-in-depth (column-level privileges) à Suíte Supabase complementando RLS row-level de v1.23. Skill nova `supabase-column-level-security` (4 patterns canônicos + 4 anti-patterns + dedicated role table como alternativa preferida) + agent novo `supabase-column-privileges-writer` (canonical materializer paralelo ao rls-hardener) + 5 cross-suite handoffs column-level (audit-log, lgpd, crm, multi-tenant-rls, invite). Princípio canônico herdado de v1.23 mantido. AUTOGEN-COUNTS: 61→**62 agents** (+1: supabase-column-privileges-writer), 89 commands (mantido), 68→**69 skills** (+1: supabase-column-level-security), 23 gates (mantido); file-manifest 369→**371 files**. Stable API v1.0+ preservada. PRR 30/30 mantido (content-only).
 
-**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30) + v1.21 (Multi-Tenant SaaS B2B) + v1.22 (DDIA Foundations) + **v1.23 (Reforço RLS Supabase)**. **8 suítes ativas no kit** + framework eat-your-own-dog-food maduro (golden signals + dual-window SLOs + RUNBOOK 9 cenários + mutation testing baseline). Cross-suite invocation pattern formalizado em v1.21, herdado em v1.22, **enriquecido em v1.23 com semântica cooperativa explícita** (handoff cooperativo, não BLOCK rígido). Convenção PT-BR a partir de v1.22 mantida.
+**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30) + v1.21 (Multi-Tenant SaaS B2B) + v1.22 (DDIA Foundations) + v1.23 (Reforço RLS Supabase) + **v1.24 (Column-Level Security)**. **8 suítes ativas no kit** + framework eat-your-own-dog-food maduro. Cross-suite invocation pattern formalizado em v1.21, herdado em v1.22, enriquecido em v1.23 com semântica cooperativa explícita, **estendido em v1.24 para column-level handoff cooperativo**. Convenção PT-BR mantida.
 
-## Milestone Atual: v1.24 Segurança em Nível de Coluna (Column-Level Security)
+## Próximo milestone: v1.25 (a definir)
+
+**Possíveis candidatos para v1.25:**
+- Supabase Vault (encryption at rest) — proteção em repouso para PII columns; complementa column-level (proteção em uso)
+- Dynamic column masking via views — alternativa runtime ao REVOKE/GRANT estático
+- Audit log de column privilege changes (pg_audit integration) — rastreabilidade de mudanças em GRANT/REVOKE
+- Tech debt parqueado de v1.20-v1.24 (carry-over)
+
+**Próximo passo:** `/novo-marco` para iniciar v1.25.
+
+## ~~Milestone Anterior: v1.24 Segurança em Nível de Coluna (Column-Level Security)~~ (entregue 2026-05-11)
 
 **Objetivo:** Adicionar camada de Column-Level Security (CLS) à Suíte Supabase — complementa RLS (linha) com privilégios granulares por coluna via `GRANT/REVOKE (col1, col2) ON TABLE`. Estabelece handoff cooperativo para agents que produzem CREATE TABLE com PII (audit-log, CRM, LGPD, multi-tenant) — column-level privileges fazem parte do template materializado pelos agents Supabase.
 
