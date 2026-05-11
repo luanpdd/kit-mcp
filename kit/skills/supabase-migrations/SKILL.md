@@ -1,6 +1,6 @@
 ---
 name: supabase-migrations
-description: Use ao criar arquivos de migration Supabase — naming YYYYMMDDHHmmss_short.sql, header de metadados, RLS obrigatório em toda nova tabela, granular policies.
+description: Use ao criar arquivos de migration Supabase — naming YYYYMMDDHHmmss_short.sql, header de metadados, GRANT antes de ENABLE RLS, RLS obrigatório em toda nova tabela, granular policies, indices em colunas RLS. Template canônico v1.23 com 5 blocos obrigatórios para CREATE TABLE.
 ---
 
 # Supabase — Migrations
@@ -21,25 +21,94 @@ LLM carrega esta skill quando criar/editar arquivos em `supabase/migrations/`. T
 - **Header de metadados** no topo de cada migration (block comment) descrevendo Migration / Created / Purpose / Affects.
 - **lowercase em todo SQL** (alinhado com `supabase-postgres-style`).
 - **Comentários copiosos** em comandos destrutivos: `drop table`, `drop column`, `alter table ... drop column`, `truncate`, `delete from` em massa. Comentário explica o porquê + impacto.
+- **`GRANT` antes de `ENABLE RLS`** (v1.23) — sempre conceda privilégios necessários aos roles `anon`/`authenticated`/`service_role` ANTES de habilitar RLS. Sem GRANT, mesmo policies "permissive" falham porque o role não tem permissão de tabela.
 - **`RLS` obrigatório em toda nova tabela** — `alter table public.<name> enable row level security;` no mesmo arquivo da criação.
 - **`granular policies`** — uma `for select`, uma `for insert`, uma `for update`, uma `for delete`. **Nunca** `for all`.
 - **`(select auth.uid())`** sempre wrapped (REGRA #1 de RLS).
+- **`IS NOT NULL AND` em policies de auth** (v1.23) — `(select auth.uid()) is not null and (select auth.uid()) = user_id` para evitar silent-fail em usuários não-logados.
 - **Index nas colunas referenciadas por RLS:** `create index on public.<table> (user_id);` no mesmo arquivo.
 - Idempotência onde possível: `create table if not exists`, `create index if not exists`. Migrations rodam em ordem mas tooling pode re-executar.
 - Migrations são **append-only**. Para reverter, criar nova migration que desfaz — nunca editar migration já aplicada.
 
+## Template canônico v1.23 — CREATE TABLE com 5 blocos obrigatórios
+
+Toda migration que cria tabela em schema exposto (`public`) deve conter os 5 blocos abaixo em ordem. Nenhum bloco é opcional. Bloco ausente = migration BLOCK pelo `supabase-rls-hardener` (v1.23).
+
+```sql
+/*
+  Migration: create_<table_name>
+  Created: <YYYY-MM-DD>
+  Purpose: <one-line description>
+  Affects: public.<table> (new), public.<table> policies (new — 4), public.<table> index (new)
+*/
+
+-- BLOCO 1: CREATE TABLE
+create table if not exists public.<table> (
+  id uuid primary key default gen_random_uuid(),
+  user_id uuid not null references auth.users (id) on delete cascade,
+  -- ... outras colunas
+  created_at timestamptz not null default now(),
+  updated_at timestamptz not null default now()
+);
+
+-- BLOCO 2: GRANTs por role (ANTES de ENABLE RLS — v1.23)
+grant select on public.<table> to anon;
+grant select, insert, update, delete on public.<table> to authenticated;
+grant select, insert, update, delete on public.<table> to service_role;
+
+-- BLOCO 3: ENABLE RLS
+alter table public.<table> enable row level security;
+
+-- BLOCO 4: 4 policies granulares (uma por operação)
+create policy "<table>_select_own"
+  on public.<table> for select to authenticated
+  using (
+    (select auth.uid()) is not null
+    and (select auth.uid()) = user_id
+  );
+
+create policy "<table>_insert_own"
+  on public.<table> for insert to authenticated
+  with check (
+    (select auth.uid()) is not null
+    and (select auth.uid()) = user_id
+  );
+
+create policy "<table>_update_own"
+  on public.<table> for update to authenticated
+  using (
+    (select auth.uid()) is not null
+    and (select auth.uid()) = user_id
+  )
+  with check (
+    (select auth.uid()) is not null
+    and (select auth.uid()) = user_id
+  );
+
+create policy "<table>_delete_own"
+  on public.<table> for delete to authenticated
+  using (
+    (select auth.uid()) is not null
+    and (select auth.uid()) = user_id
+  );
+
+-- BLOCO 5: Index obrigatório em colunas referenciadas pelas policies
+create index if not exists <table>_user_id_idx on public.<table> (user_id);
+```
+
 ## Patterns canônicos
 
-### Criar tabela com RLS + policies granulares + index
+### Criar tabela com 5 blocos obrigatórios (v1.23) — example concreto
 
 ```sql
 /*
   Migration: create_tasks
   Created: 2026-05-06
-  Purpose: Cria tabela tasks com RLS habilitado e policies granulares por operação.
-  Affects: public.tasks (new), public.tasks policies (new — 4 policies)
+  Purpose: Cria tabela tasks com GRANT + RLS habilitado + policies granulares por operação + index.
+  Affects: public.tasks (new), public.tasks policies (new — 4 policies), public.tasks index (new)
 */
 
+-- BLOCO 1: CREATE TABLE
 create table if not exists public.tasks (
   id uuid primary key default gen_random_uuid(),
   user_id uuid not null references auth.users (id) on delete cascade,
@@ -49,27 +118,48 @@ create table if not exists public.tasks (
   updated_at timestamptz not null default now()
 );
 
+-- BLOCO 2: GRANTs por role (v1.23 — antes de ENABLE RLS)
+grant select on public.tasks to anon;
+grant select, insert, update, delete on public.tasks to authenticated;
+grant select, insert, update, delete on public.tasks to service_role;
+
+-- BLOCO 3: ENABLE RLS
 alter table public.tasks enable row level security;
 
--- granular policies: uma por operação por role
+-- BLOCO 4: granular policies (uma por operação) com IS NOT NULL anti silent-fail
 create policy "users_select_own_tasks"
   on public.tasks for select to authenticated
-  using ((select auth.uid()) = user_id);
+  using (
+    (select auth.uid()) is not null
+    and (select auth.uid()) = user_id
+  );
 
 create policy "users_insert_own_tasks"
   on public.tasks for insert to authenticated
-  with check ((select auth.uid()) = user_id);
+  with check (
+    (select auth.uid()) is not null
+    and (select auth.uid()) = user_id
+  );
 
 create policy "users_update_own_tasks"
   on public.tasks for update to authenticated
-  using ((select auth.uid()) = user_id)
-  with check ((select auth.uid()) = user_id);
+  using (
+    (select auth.uid()) is not null
+    and (select auth.uid()) = user_id
+  )
+  with check (
+    (select auth.uid()) is not null
+    and (select auth.uid()) = user_id
+  );
 
 create policy "users_delete_own_tasks"
   on public.tasks for delete to authenticated
-  using ((select auth.uid()) = user_id);
+  using (
+    (select auth.uid()) is not null
+    and (select auth.uid()) = user_id
+  );
 
--- index obrigatório nas colunas usadas pela policy
+-- BLOCO 5: index obrigatório nas colunas usadas pela policy
 create index if not exists tasks_user_id_idx on public.tasks (user_id);
 ```
 
