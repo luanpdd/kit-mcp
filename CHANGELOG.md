@@ -6,6 +6,51 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.24.0] — 2026-05-11 — Segurança em Nível de Coluna (Column-Level Security)
+
+Adiciona camada de Column-Level Security (CLS) à Suíte Supabase — complementa RLS row-level (v1.23) com privilégios granulares por coluna via `GRANT/REVOKE (col1, col2) ON TABLE`. Estabelece **Camada 8** de defense-in-depth + handoff cooperativo column-level via novo agent `supabase-column-privileges-writer` para 5 agents v1.21 com PII real.
+
+### Princípio canônico (herdado de v1.23)
+
+Agents não-Supabase **pensam/planejam**. Agents Supabase **materializam/hardenam**. Nenhum lado descarta upstream. Pattern column-level seguindo handoff cooperativo via `Task()`.
+
+### ⚠ Caveat embutido
+
+Column-level privileges é **feature AVANÇADA**. Para maioria dos casos, RLS + dedicated role table é preferido (recomendação oficial Supabase). Skills/agents marcam explicitamente — usar apenas em PII real (LGPD/GDPR), audit log payload sanitization, billing data restrito, tokens raw em invites, ou third-party BI tooling acessando DB direto.
+
+### Adicionado
+- **Skill nova:** `supabase-column-level-security` — patterns canônicos GRANT/REVOKE column-level, table-level vs column-level distinção, wildcard `*` restriction caveat, considerações cross-operation, integração com RLS, dedicated role table pattern (recomendado pela doc), Studio dashboard reference, 4 patterns concretos (UPDATE restricted, SELECT PII, audit log protected, token raw service-role-only), 4 anti-patterns
+- **Agent novo:** `supabase-column-privileges-writer` — canonical materializer column-level. Recebe spec (table + colunas sensíveis + roles permitidos) via `Task()` upstream context + intent original. Verdicts construtivos GO/STRENGTHEN/REWRITE-com-confirmação. Paralelo ao `supabase-rls-hardener` (v1.23). Invocável cross-suite por 6 agents callers documentados (5 v1.21 + 1 v1.23 hardener via Detector 8).
+- **Subcomando novo:** `/supabase column` (sinônimos: `coluna`, `col-priv`) — dispatch direto ao agent canonical materializer
+- **Glossário (+5 termos):** column-level privileges, table-level privileges, wildcard restriction, dedicated role table pattern, column privilege auditing
+
+### Patches em skills existentes (3 artefatos)
+- `supabase-rls-policies`: section nova "Combining RLS with Column-Level Privileges (v1.24)" — quando combinar + caveats + pattern SQL combinado
+- `supabase-migrations`: template canônico v1.24 com BLOCO 6 (OPCIONAL) — column-level privileges quando colunas sensíveis declaradas
+- `supabase-rls-defense-in-depth`: Camada 8 (column-level) + checklist defense-in-depth 7 → 8 itens + DEFENSE-06 section + auditoria query SQL
+
+### Patches em agents Supabase (2 artefatos)
+- `supabase-rls-hardener` (v1.23): Detector 8 (column-level privileges check) — flagra tabelas com PII sem column-level; chain cooperativo para `supabase-column-privileges-writer` quando gap detectado; comportamento OPT-IN (só ativado quando PII detectado via keyword matching)
+- `/supabase` command: row novo `column` na tabela de subcomandos + section dedicada com aviso "Feature AVANÇADA" + input format `<sensitive_columns>` + `<allowed_roles>`
+
+### Cross-suite handoff cooperativo column-level (5 agents v1.21)
+Cada agent ganhou section "Cooperative handoff column-level (v1.24 — CROSS-NN)" + Python pseudo-code Task() customizado:
+- **audit-log-implementer (CROSS-11):** `audit_log.payload` (jsonb) com PII em events login/member_invited — legível só por security_admin + service_role
+- **lgpd-compliance-auditor (CROSS-12):** `dsr_requests.subject_email/phone/address/metadata` — DSR + erasure por coluna; dpo_role + service_role
+- **crm-pipeline-implementer (CROSS-13):** `leads.phone/email/notes` — LGPD PII; owner (RLS) + lead_manager role (column-level); caveat RLS-vs-column distinção
+- **multi-tenant-rls-writer (CROSS-14):** column-level em hierarquia org/dept; caveat sobre Postgres role vs RLS dinâmica
+- **invite-flow-implementer (CROSS-15):** `org_invites.token_raw` — segredo único, apenas service_role; ressalva sobre Camada 9 (não armazenar segredos)
+
+### Métricas
+- AUTOGEN-COUNTS: 61→**62 agents** (+1: supabase-column-privileges-writer), 89 commands (mantido — subcomando `column` interno), 68→**69 skills** (+1: supabase-column-level-security), 23 gates (mantido)
+- file-manifest: 369→**371 files** hashed
+- Stable API v1.0+ preservada (zero alteração em src/core/)
+- PRR 30/30 mantido (content-only milestone)
+- 6 phases (131-136), 26 REQs cobertos 100% (COL-01..14, HARDEN-07..08, CMD-03..04, CROSS-11..15, DOC-01..05)
+
+### Próximo marco
+v1.25 (a definir) — possíveis candidatos: Supabase Vault (encryption at rest), dynamic column masking via views, audit log de column privilege changes (pg_audit), tech debt parqueado de v1.20-v1.24.
+
 ## [1.23.0] — 2026-05-11 — Reforço RLS Supabase + Handoff Cooperativo SQL
 
 Incorpora 100% da documentação oficial Supabase Row Level Security na Suíte Supabase v1.8 e introduz **handoff cooperativo SQL** — pattern onde agents externos (multi-tenant, debugger, planner, executor, etc.) planejam/sugerem estrutura SQL via `Task()` e agents Supabase materializam o output final hardenado preservando intent upstream. Todo SQL gerado pelo kit passa pela trilha de segurança da Suíte Supabase sem desperdiçar tokens de planejamento upstream.
