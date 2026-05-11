@@ -1,4 +1,12 @@
-# ROADMAP — kit-mcp v1.23 Reforço RLS Supabase + Handoff Cooperativo SQL
+# ROADMAP — kit-mcp
+
+> Roadmap consolidado por milestone. Cada milestone arquivado em `.planning/milestones/v<X.Y>-ROADMAP.md`.
+
+## Em andamento
+
+## v1.23 — Reforço RLS Supabase + Handoff Cooperativo SQL (Phases 124–130)
+
+> Gerado: 2026-05-10 | 7 phases | 1 skill + 1 agent + 5 patches + 10 cross-suite handoffs + 5 doc updates | 42 REQs (cobertura 100%)
 
 **Criado:** 2026-05-10 via `/novo-marco v1.23` → roadmapper
 **Milestone:** v1.23 (continuação numérica de v1.22 que terminou em Phase 123)
@@ -16,7 +24,7 @@ v1.23 incorpora 100% da documentação oficial Supabase Row Level Security e int
 
 ## Fases (7)
 
-### Phase 124 — Fundação RLS: Skill `supabase-rls-policies` + `supabase-migrations` patches
+### Phase 124: Fundação RLS — Skill `supabase-rls-policies` + `supabase-migrations` patches
 
 **Objetivo:** Incorporar 100% da doc oficial Supabase RLS na skill `supabase-rls-policies` (7 patches editoriais) e atualizar skill `supabase-migrations` com template canônico que inclui GRANT + ALTER ENABLE RLS + indices + 4 policies granulares como bloco obrigatório em CREATE TABLE. Pure content update sem deps.
 
@@ -40,7 +48,7 @@ v1.23 incorpora 100% da documentação oficial Supabase Row Level Security e int
 
 ---
 
-### Phase 125 — Skill nova `supabase-rls-defense-in-depth` + glossário parcial
+### Phase 125: Skill nova `supabase-rls-defense-in-depth` + glossário parcial
 
 **Objetivo:** Criar skill nova `supabase-rls-defense-in-depth` documentando os 5 patterns de defense in depth (event trigger `rls_auto_enable()`, `BYPASSRLS` role privilege, service_role caveat, security definer functions, views `security_invoker=true`). Standalone — não modifica skills existentes. Atualização parcial do glossário compartilhado `_shared-supabase/glossary.md` com termos defense-in-depth/hardener/cooperative-handoff/event-trigger-rls-auto-enable/bypassrls/security_invoker.
 
@@ -62,7 +70,7 @@ v1.23 incorpora 100% da documentação oficial Supabase Row Level Security e int
 
 ---
 
-### Phase 126 — Agent novo `supabase-rls-hardener` (canonical materializer)
+### Phase 126: Agent novo `supabase-rls-hardener` (canonical materializer)
 
 **Objetivo:** Criar agent novo `supabase-rls-hardener` que recebe draft/plano SQL via `Task()` upstream context + intent original e produz SQL final hardenado preservando intent. Verdicts GO/STRENGTHEN/REWRITE-com-confirmação. Invocável cross-suite por agents v1.21/v1.22/framework core. Valida instalação de event trigger `rls_auto_enable` em projetos novos.
 
@@ -84,7 +92,7 @@ v1.23 incorpora 100% da documentação oficial Supabase Row Level Security e int
 
 ---
 
-### Phase 127 — Patches agents Supabase existentes (writer + migration-writer + command)
+### Phase 127: Patches agents Supabase existentes (writer + migration-writer + command)
 
 **Objetivo:** Atualizar agents Supabase v1.8 existentes para emitir output hardenado: `supabase-rls-writer` emite GRANTs antes de ENABLE RLS + IS NOT NULL opcional + views security_invoker quando aplicável; `supabase-migration-writer` recebe draft via `Task()` upstream context + auto-chain cooperativo para hardener em CREATE TABLE + devolve SQL + nota de divergências; command `/supabase migration` exige RLS auto-injetada no output via handoff cooperativo.
 
@@ -109,7 +117,7 @@ v1.23 incorpora 100% da documentação oficial Supabase Row Level Security e int
 
 ---
 
-### Phase 128 — Patches cross-suite v1.21 (handoff cooperativo em 8 implementers)
+### Phase 128: Patches cross-suite v1.21 (handoff cooperativo em 8 implementers)
 
 **Objetivo:** Atualizar 8 agents implementers v1.21 (multi-tenant-rls-writer, audit-log-implementer, crm-pipeline-implementer, org-onboarding-implementer, invite-flow-implementer, super-admin-implementer, evolution-go-integrator, lgpd-compliance-auditor) com handoff cooperativo obrigatório — drafts SQL passam via `Task()` para `supabase-rls-hardener` antes de devolver output final. Cada agent ganha bloco "Cooperative handoff" documentando pattern.
 
@@ -132,7 +140,7 @@ v1.23 incorpora 100% da documentação oficial Supabase Row Level Security e int
 
 ---
 
-### Phase 129 — Patches cross-suite v1.22 + framework core (auditor + planner/executor/debugger)
+### Phase 129: Patches cross-suite v1.22 + framework core (auditor + planner/executor/debugger)
 
 **Objetivo:** Atualizar `auditor-consistencia-isolamento` (v1.22) com check de que migrations recentes passaram pelo `supabase-rls-hardener` (audit field em output) + atualizar framework core (`planner`, `executor`, `debugger`) para detectar SQL no plan/output e fazer handoff cooperativo para Supabase via `Task(subagent_type=supabase-rls-hardener)`.
 
@@ -149,7 +157,7 @@ v1.23 incorpora 100% da documentação oficial Supabase Row Level Security e int
 
 ---
 
-### Phase 130 — Release artifacts (AUTOGEN-COUNTS regen + file-manifest + CHANGELOG + glossário finalizado + MILESTONES)
+### Phase 130: Release artifacts (AUTOGEN-COUNTS regen + file-manifest + CHANGELOG + glossário finalizado + MILESTONES)
 
 **Objetivo:** Regenerar AUTOGEN-COUNTS no README (60→61 agents, 67→68 skills); regenerar file-manifest.json com novos artefatos; escrever CHANGELOG entry v1.23 documentando 9 entregáveis + princípio handoff cooperativo; finalizar glossário `_shared-supabase/glossary.md` (DOC-04 completo); atualizar MILESTONES.md pós-`/concluir-marco`; atualizar PROJECT.md/STATE.md refletindo v1.23 entregue.
 
