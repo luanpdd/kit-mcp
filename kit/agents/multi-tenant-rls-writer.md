@@ -302,10 +302,36 @@ Constraints: tabela {table_name} tem coluna(s) sensível(eis) {sensitive_cols} q
 
 **Caveat hierarquia:** column-level é Postgres role-level (não muda baseado em RLS row context). Para casos onde acesso depende de hierarquia *dinâmica* (membership ativa em dept específico), prefira RLS policy + dedicated role table (mais flexível). Use column-level apenas para casos estáticos com role Postgres separado.
 
+## Cooperative handoff RBAC via Custom Claims (v1.25 — CROSS-16)
+
+Para RBAC em B2B multi-tenant, **combine** Custom Access Token Auth Hook (claim global para role) com helper functions PG STABLE (context-aware per-org). Pattern v1.25 é zero-JOIN para role global, helper function continua para per-org context. Aplique handoff cooperativo:
+
+```python
+Task(subagent_type="supabase-rbac-implementer", prompt=f"""
+<upstream_intent>
+Source agent: multi-tenant-rls-writer
+Original goal: implementar RBAC híbrido (claim global + helper function per-org) para B2B multi-tenant
+Constraints: roles globais (super_admin, billing_admin) via custom claim; roles per-org (org_admin, org_member) via helper function STABLE; combinar em policies via OR
+</upstream_intent>
+
+<roles>super_admin, billing_admin, support</roles>
+<permissions_matrix>
+super_admin: [orgs.*, users.*, audit.read]
+billing_admin: [billing.*, subscriptions.read]
+support: [users.read, support_tickets.*]
+</permissions_matrix>
+<multi_tenant>true</multi_tenant>
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+Hardener processa verdict; output combina custom claim (zero-JOIN para super_admin) + helper functions PG existentes (per-org context). Princípio canônico v1.23 (herdado): nenhum lado descarta upstream.
+
 ## Ver também
 
 - [supabase-rls-hardener](./supabase-rls-hardener.md) — canonical handoff target v1.23 (verdicts GO/STRENGTHEN/REWRITE)
 - [supabase-column-privileges-writer](./supabase-column-privileges-writer.md) — canonical handoff target v1.24 (column-level hierarquia)
+- [supabase-rbac-implementer](./supabase-rbac-implementer.md) — canonical handoff target v1.25 (Custom Claims + Auth Hook)
 - [supabase-rls-writer](./supabase-rls-writer.md) — agent base v1.8 que herda anti-pitfalls
 - [supabase-rls-policies](../skills/supabase-rls-policies/SKILL.md) — base de conhecimento canônica v1.8
 - [multi-tenant-rls-hierarchy](../skills/multi-tenant-rls-hierarchy/SKILL.md) — base de conhecimento desta agent

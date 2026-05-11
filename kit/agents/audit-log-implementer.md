@@ -216,10 +216,62 @@ Constraints: payload jsonb tem PII em events de login (IP, UA) + member_invited 
 
 **Princípio canônico v1.23 (herdado em v1.24):** agents não-Supabase pensam/planejam; agents Supabase materializam/hardenam.
 
+## Cooperative handoff RBAC via Custom Claims (v1.25 — CROSS-18)
+
+Mudanças em roles (INSERT/UPDATE/DELETE em `public.user_roles`) devem gerar audit log automaticamente — pattern canônico v1.25 via trigger Postgres que dispara `audit_log` event quando role muda. Aplique handoff cooperativo:
+
+```python
+Task(subagent_type="supabase-rbac-implementer", prompt=f"""
+<upstream_intent>
+Source agent: audit-log-implementer
+Original goal: instalar audit trigger em user_roles table para registrar mudanças de role (event taxonomy: 'role_assigned', 'role_revoked')
+Constraints: trigger AFTER INSERT/UPDATE/DELETE em public.user_roles dispara INSERT em audit_log com event_type, user_id, role, actor_id (auth.uid()), occurred_at; PII sanitization em payload (Camada 8 v1.24 column-level já aplicada)
+</upstream_intent>
+
+<roles>{detected_from_user_roles_table}</roles>
+<permissions_matrix>{role_change_audit_permissions}</permissions_matrix>
+<multi_tenant>{multi_tenant_flag}</multi_tenant>
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+**Trigger canônico (output esperado do rbac-implementer):**
+
+```sql
+create or replace function public.audit_role_change()
+returns trigger language plpgsql security definer set search_path = '' as $$
+begin
+  if (tg_op = 'INSERT') then
+    insert into public.audit_log (event_type, user_id, payload, actor_id, occurred_at)
+    values ('role_assigned', new.user_id,
+            jsonb_build_object('role', new.role),
+            auth.uid(), now());
+  elsif (tg_op = 'DELETE') then
+    insert into public.audit_log (event_type, user_id, payload, actor_id, occurred_at)
+    values ('role_revoked', old.user_id,
+            jsonb_build_object('role', old.role),
+            auth.uid(), now());
+  end if;
+  return coalesce(new, old);
+end; $$;
+
+create trigger user_roles_audit
+  after insert or update or delete on public.user_roles
+  for each row execute function public.audit_role_change();
+```
+
+**Eventos canônicos adicionados (event taxonomy v1.25):**
+- `role_assigned` (action: INSERT em user_roles)
+- `role_revoked` (action: DELETE em user_roles)
+- `role_updated` (action: UPDATE — raro, usualmente DELETE+INSERT)
+
+Cross-ref skill `audit-log-multi-tenant` event taxonomy + skill `supabase-custom-claims-rbac` v1.25.
+
 ## Ver também
 
 - [supabase-rls-hardener](./supabase-rls-hardener.md) — canonical handoff target v1.23 (validation append-only)
 - [supabase-column-privileges-writer](./supabase-column-privileges-writer.md) — canonical handoff target v1.24 (column-level PII sanitization)
+- [supabase-rbac-implementer](./supabase-rbac-implementer.md) — canonical handoff target v1.25 (Custom Claims + audit trigger)
 - [audit-log-multi-tenant](../skills/audit-log-multi-tenant/SKILL.md) — base de conhecimento (DDL + regras)
 - [supabase-cron-queues](../skills/supabase-cron-queues/SKILL.md) — pattern pg_cron (cross-suite)
 - [supabase-migration-writer](./supabase-migration-writer.md) — agent invocado para SQL final

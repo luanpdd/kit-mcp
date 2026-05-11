@@ -191,9 +191,50 @@ Constraints: cross-tenant RLS PERMISSIVE via private.is_super_admin (STABLE); TT
 
 Hardener valida BYPASSRLS / PERMISSIVE pattern (Camada 4 de defense-in-depth), SECURITY DEFINER functions em schema private, audit trigger obrigatório. **NUNCA descarte intent upstream silenciosamente**.
 
+## Cooperative handoff RBAC via Custom Claims (v1.25 — CROSS-17)
+
+`super_admin: bool` (v1.21) é atualmente armazenado em `app_metadata` setado via service_role. A partir de v1.25, o pattern recomendado é **migrar `super_admin` para custom claim via Custom Access Token Auth Hook** — mais consistente com outros roles do sistema, type-safe via enum, RLS policies usam `authorize('platform.super_admin')` ao invés de `auth.jwt() ->> 'app_metadata' ->> 'super_admin'`.
+
+```python
+Task(subagent_type="supabase-rbac-implementer", prompt=f"""
+<upstream_intent>
+Source agent: super-admin-implementer
+Original goal: migrar super_admin de app_metadata para custom claim via Custom Access Token Auth Hook
+Constraints: backwards compat com policies existentes que checam app_metadata; auth hook lê de user_roles table; migration de mutação app_metadata → INSERT em user_roles; TTL 30min impersonation continua via separate claim
+</upstream_intent>
+
+<roles>super_admin, platform_admin, support_admin</roles>
+<permissions_matrix>
+super_admin: [orgs.*, users.*, billing.*, impersonate.start, impersonate.stop, audit.read]
+platform_admin: [orgs.read, users.read, billing.read]
+support_admin: [orgs.read, users.read, audit.read]
+</permissions_matrix>
+<multi_tenant>false</multi_tenant>  # super_admin é cross-tenant global
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+**Caveat de migração:** durante transição, policies podem precisar checar AMBOS app_metadata (legacy) e custom claim (v1.25):
+
+```sql
+-- policy compatível durante migração
+create policy "super_admin_cross_tenant" on public.orgs for select
+to authenticated
+using (
+  -- legacy v1.21 (app_metadata)
+  ((auth.jwt() ->> 'app_metadata') ::jsonb ->> 'super_admin')::boolean is true
+  OR
+  -- v1.25 (custom claim via auth hook)
+  (SELECT authorize('platform.super_admin'))
+);
+```
+
+Após migração 100% completa, remover legacy check.
+
 ## Ver também
 
 - [supabase-rls-hardener](./supabase-rls-hardener.md) — canonical handoff target v1.23 (BYPASSRLS pattern validation)
+- [supabase-rbac-implementer](./supabase-rbac-implementer.md) — canonical handoff target v1.25 (Custom Claims migration)
 - [super-admin-platform-pattern](../skills/super-admin-platform-pattern/SKILL.md) — base de conhecimento
 - [audit-log-multi-tenant](../skills/audit-log-multi-tenant/SKILL.md) — Phase 109 (BLOCKER pré-requisito)
 - [multi-tenant-rls-hierarchy](../skills/multi-tenant-rls-hierarchy/SKILL.md) — PERMISSIVE policy pattern + private.is_super_admin
