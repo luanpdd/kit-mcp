@@ -104,21 +104,67 @@ Deferidos para milestones posteriores além de v1.24, rastreados mas não no roa
 
 ## Rastreabilidade
 
-Quais fases cobrem quais requisitos. Atualizado durante a criação do roadmap.
-
-_(será preenchido pelo roadmapper após Phase mapping)_
+Quais fases cobrem quais requisitos. Preenchido por roadmapper em 2026-05-10.
 
 | Requisito | Fase | Status |
 |-----------|------|--------|
-| RLS-01 | TBD | Pending |
-| RLS-02 | TBD | Pending |
-| ... | ... | ... |
+| RLS-01 | 124 | Pending |
+| RLS-02 | 124 | Pending |
+| RLS-03 | 124 | Pending |
+| RLS-04 | 124 | Pending |
+| RLS-05 | 124 | Pending |
+| RLS-06 | 124 | Pending |
+| RLS-07 | 124 | Pending |
+| RLS-08 | 127 | Pending |
+| RLS-09 | 127 | Pending |
+| RLS-10 | 127 | Pending |
+| MIGR-01 | 124 | Pending |
+| MIGR-02 | 127 | Pending |
+| MIGR-03 | 127 | Pending |
+| MIGR-04 | 127 | Pending |
+| CMD-01 | 127 | Pending |
+| CMD-02 | 127 | Pending |
+| DEFENSE-01 | 125 | Pending |
+| DEFENSE-02 | 125 | Pending |
+| DEFENSE-03 | 125 | Pending |
+| DEFENSE-04 | 125 | Pending |
+| DEFENSE-05 | 125 | Pending |
+| HARDEN-01 | 126 | Pending |
+| HARDEN-02 | 126 | Pending |
+| HARDEN-03 | 126 | Pending |
+| HARDEN-04 | 126 | Pending |
+| HARDEN-05 | 126 | Pending |
+| HARDEN-06 | 126 | Pending |
+| CROSS-01 | 128 | Pending |
+| CROSS-02 | 128 | Pending |
+| CROSS-03 | 128 | Pending |
+| CROSS-04 | 128 | Pending |
+| CROSS-05 | 128 | Pending |
+| CROSS-06 | 128 | Pending |
+| CROSS-07 | 128 | Pending |
+| CROSS-08 | 128 | Pending |
+| CROSS-09 | 129 | Pending |
+| CROSS-10 | 129 | Pending |
+| DOC-01 | 130 | Pending |
+| DOC-02 | 130 | Pending |
+| DOC-03 | 130 | Pending |
+| DOC-04 | 125 (inicia) + 130 (finaliza) | Pending |
+| DOC-05 | 130 | Pending |
 
 **Cobertura:**
 - Requisitos v1.23: **42** total
-- Mapeados para fases: _será preenchido pelo roadmapper_
-- Não mapeados: 0 (target)
+- Mapeados para fases: **42/42 (100%)**
+- Não mapeados: **0**
+
+**Distribuição por phase:**
+- Phase 124 — 8 REQs (RLS-01..07, MIGR-01)
+- Phase 125 — 6 REQs (DEFENSE-01..05, DOC-04 parcial)
+- Phase 126 — 6 REQs (HARDEN-01..06)
+- Phase 127 — 8 REQs (RLS-08..10, MIGR-02..04, CMD-01..02)
+- Phase 128 — 8 REQs (CROSS-01..08)
+- Phase 129 — 2 REQs (CROSS-09..10)
+- Phase 130 — 5 REQs (DOC-01..03, DOC-04 finaliza, DOC-05)
 
 ---
 *Requisitos definidos: 2026-05-10*
-*Última atualização: 2026-05-10 após `/novo-marco v1.23`*
+*Última atualização: 2026-05-10 após roadmapper preencher rastreabilidade (42/42 mapeados)*
