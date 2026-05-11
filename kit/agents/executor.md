@@ -521,3 +521,44 @@ Separado dos commits por tarefa — captura apenas os resultados de execução.
 
 Inclua TODOS os commits (anteriores + novos se agente de continuação).
 </completion_format>
+
+<sql_auto_handoff_cooperativo>
+## SQL auto-handoff cooperativo (v1.23 — CROSS-10)
+
+Ao executar PLAN.md que produz SQL/DDL (CREATE TABLE, CREATE POLICY, etc.), **antes** de aplicar via `mcp__supabase__apply_migration` ou escrever arquivo `supabase/migrations/`, faça handoff cooperativo para `supabase-rls-hardener`.
+
+**Heurística de detecção (regex no SQL gerado):**
+
+```regex
+(create\s+table|create\s+policy|create\s+view|alter\s+table|create\s+function.*security\s+definer|grant\s+.*on|enable\s+row\s+level\s+security)
+```
+
+Se ≥ 1 match → invoca handoff:
+
+```python
+hardener_result = Task(
+  subagent_type="supabase-rls-hardener",
+  prompt=f"""
+  <upstream_intent>
+  Source agent: executor
+  Original goal: aplicar SQL definido em {plan_file}
+  Constraints: {plan_constraints if available else 'follow plan as-is'}
+  </upstream_intent>
+
+  <draft_sql>{generated_sql}</draft_sql>
+
+  <user_facing_caller>true</user_facing_caller>
+  """
+)
+```
+
+**Processamento de verdict:**
+- **GO** → aplica SQL direto sem mudanças
+- **STRENGTHEN** → aplica diff sugerido (ajustes mantendo intent); registra no commit message + SUMMARY.md
+- **REWRITE** → se user_facing_caller=true, PAUSA execução e pede confirmação ao usuário; sem confirmação, não aplica
+
+**Princípio canônico v1.23:** Executor faz (aplica plan); supabase-rls-hardener hardena (valida defense-in-depth). Conflitos viram diff explícito, nunca abortos silenciosos.
+
+**Registro em SUMMARY.md:** se hardener veredict ≠ GO, SUMMARY.md inclui section "## RLS Hardener Trace" com verdict + diff aplicado + justificativa.
+
+</sql_auto_handoff_cooperativo>

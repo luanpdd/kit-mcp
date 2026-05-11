@@ -368,6 +368,37 @@ Quando este agent detecta problema, **propõe fix mas NÃO escreve**. Delega via
 - Histogram `audit.consistency.duration_ms` (latência total da auditoria)
 - Cada finding fica registrado em `obs.events` com `audit_run_id` para rastreabilidade
 
+## Validação de RLS hardener cooperativo (v1.23 — CROSS-09)
+
+Para cada migration recente analisada pelos 6 detectores, este agent adicionalmente valida que a migration **passou pelo `supabase-rls-hardener`** antes de ser aplicada — Camada 7 de defense-in-depth + auditoria cross-suite.
+
+**Detector adicional (D7 — hardener bypass):** consulta git log + procura por commits de migration que NÃO incluem trace de handoff cooperativo:
+
+```bash
+# Detectar migrations sem hardener trace
+git log --oneline --all -- supabase/migrations/*.sql | while read commit msg; do
+  if ! git show $commit -- supabase/migrations/ | grep -q "supabase-rls-hardener\|HARDENER OK\|verdict: GO"; then
+    echo "$commit  $msg  ⚠ MIGRATION SEM TRACE DE HARDENER"
+  fi
+done
+```
+
+**Output enriquecido com campo `hardener_passed`:**
+
+```markdown
+## Detector 7 — Migration sem hardener cooperativo (v1.23)
+
+| Migration | Hardener | Verdict | Risk |
+|-----------|----------|---------|------|
+| 20260510120000_create_orders.sql | ✅ passed | STRENGTHEN | low |
+| 20260510130000_legacy_table.sql | ❌ bypass | n/a | **P1** |
+| 20260510140000_add_org_id.sql | ✅ passed | GO | low |
+```
+
+Migrations com `hardener_passed: false` são P1 (high severity) — recomendação é re-rodar via `Task(subagent_type=supabase-rls-hardener, prompt=<old_sql>)` retroativamente e aplicar fix-up migration.
+
+**Princípio canônico v1.23:** Este agent **não escreve fix** — apenas detecta gap e delega para `supabase-rls-hardener` (handoff cooperativo) que produz SQL ajustado preservando intent original.
+
 ## Ver também
 
 - [`postgres-isolamento-concorrencia`](../skills/postgres-isolamento-concorrencia/SKILL.md) (v1.22) — base para Detectores 1, 2, 5 (FOR UPDATE, SERIALIZABLE, advisory locks)
@@ -378,3 +409,5 @@ Quando este agent detecta problema, **propõe fix mas NÃO escreve**. Delega via
 - [`supabase-migration-writer`](./supabase-migration-writer.md) (v1.8) — destino do cross-suite handoff (escreve migration corrigida)
 - [`supabase-edge-fn-writer`](./supabase-edge-fn-writer.md) (v1.8) — destino do cross-suite handoff (escreve Edge Function corrigida)
 - [`multi-tenant-isolation-auditor`](./multi-tenant-isolation-auditor.md) (v1.21) — agent irmão que audita gaps de RLS (complementar — RLS é defesa em depth, este agent foca em race conditions)
+- [`supabase-rls-hardener`](./supabase-rls-hardener.md) (v1.23) — canonical handoff target; Detector 7 valida que migrations passaram por este agent
+- [`supabase-rls-defense-in-depth`](../skills/supabase-rls-defense-in-depth/SKILL.md) (v1.23) — 6 camadas defense-in-depth referenciadas em Detector 7

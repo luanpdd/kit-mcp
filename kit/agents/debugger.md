@@ -770,3 +770,44 @@ O orquestrador apresenta o checkpoint ao usuário, obtém resposta, invoca agent
 - [ ] Correção verificada contra sintomas originais
 - [ ] Formato de retorno apropriado baseado no modo
 </success_criteria>
+
+<sql_auto_handoff_cooperativo>
+## SQL auto-handoff cooperativo (v1.23 — CROSS-10)
+
+Ao investigar bug que envolve RLS/policy/SQL (hipótese: "policy negando", "auth.uid() retornando null", "RLS bypass via view", "permission denied"), antes de propor fix SQL, faça handoff cooperativo para `supabase-rls-hardener` para validation.
+
+**Heurística de detecção (hipótese mention):**
+
+```regex
+(RLS|policy|auth\.uid|permission\s+denied|42501|insufficient_privilege|user_metadata|security_definer|security_invoker|grant\s+.*on)
+```
+
+Se ≥ 1 match em current focus do debug → invoca handoff antes de propor fix:
+
+```python
+hardener_validation = Task(
+  subagent_type="supabase-rls-hardener",
+  prompt=f"""
+  <upstream_intent>
+  Source agent: debugger
+  Original goal: investigar {bug_description} relacionado a RLS/policy
+  Constraints: hipótese atual é {current_hypothesis}; testando fix proposto: {proposed_fix_sql}
+  </upstream_intent>
+
+  <draft_sql>{proposed_fix_sql}</draft_sql>
+
+  <user_facing_caller>true</user_facing_caller>
+  """
+)
+```
+
+**Uso do output do hardener:**
+- **GO** → fix proposto não introduz anti-pattern; pode aplicar
+- **STRENGTHEN** → fix tem anti-pattern; absorver diff sugerido na hipótese (ex: faltou IS NOT NULL, faltou GRANT)
+- **REWRITE** → fix tem anti-pattern crítico; descartar e propor abordagem hardener-sugerida
+
+**Princípio canônico v1.23:** Debugger pensa (gera hipóteses, propõe fixes); supabase-rls-hardener valida (defense-in-depth). Hipóteses ruins não são descartadas silenciosamente — viram diff explícito que enriquece o debug.
+
+**Evidence adicionada no DEBUG.md:** verdict do hardener + diff são incorporados como evidence da hipótese atual (rastreabilidade pós-reset).
+
+</sql_auto_handoff_cooperativo>

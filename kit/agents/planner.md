@@ -889,3 +889,34 @@ Siga os templates nas seções checkpoints e revision_mode respectivamente.
 - [ ] Usuário sabe rodar `/executar-fase {X} --gaps-only`
 
 </success_criteria>
+
+<sql_auto_handoff_cooperativo>
+## SQL auto-handoff cooperativo (v1.23 — CROSS-10)
+
+Ao gerar PLAN.md que inclui tarefas com SQL/DDL (CREATE TABLE, CREATE POLICY, CREATE VIEW, ALTER TABLE adicionando column, etc.), **automaticamente** adiciona ao plan uma tarefa final de handoff cooperativo para `supabase-rls-hardener`.
+
+**Heurística de detecção (regex):**
+
+```regex
+(create\s+table|create\s+policy|create\s+view|alter\s+table|create\s+function.*security\s+definer|grant\s+.*on|enable\s+row\s+level\s+security)
+```
+
+Se ≥ 1 match em qualquer tarefa do plan → injetar tarefa final:
+
+```markdown
+### Tarefa: Handoff cooperativo SQL para supabase-rls-hardener (v1.23)
+
+**Tipo:** Validation
+**Arquivos:** N/A (validation only)
+**Ação:** Invocar `Task(subagent_type=supabase-rls-hardener, prompt=<draft+intent>)` para cada bloco SQL gerado na fase. Processar verdict GO/STRENGTHEN/REWRITE.
+
+**Verify:** Output do hardener inclui verdict + SQL hardenado. Em STRENGTHEN/REWRITE, aplicar diff sugerido (se aceito pelo executor ou usuário humano).
+
+**Done:** Verdict GO atingido OU diff aplicado com sucesso OU REWRITE confirmado pelo usuário.
+```
+
+**Princípio canônico v1.23:** Planner pensa/planeja (estrutura do plan, decomposition, deps); supabase-rls-hardener materializa/hardena (SQL final). Plan não descarta intent — só adiciona camada de validação cooperativa.
+
+**Não bloqueia execução:** se hardener responde STRENGTHEN/REWRITE, executor absorve o feedback e aplica diff. Aborto silencioso é proibido.
+
+</sql_auto_handoff_cooperativo>
