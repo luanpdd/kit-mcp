@@ -1,7 +1,7 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-11 — milestone v1.26 (Postgres Roles) entregue.
+> Última atualização: 2026-05-11 — milestone v1.27 (Supabase Branching & CI/CD Workflow) iniciado.
 
 ## Estado Atual
 
@@ -9,16 +9,59 @@
 
 **Stack acumulado:** v1.8 + v1.9 + v1.10 + v1.11 + v1.12 + v1.13-v1.20 + v1.21 + v1.22 + v1.23 (RLS) + v1.24 (Column-Level) + v1.25 (Custom Claims & RBAC) + **v1.26 (Postgres Roles)**. **8 suítes ativas no kit** + framework maduro. Defense-in-depth: **10 camadas** (Camada 10 = Postgres Roles Hierarchy). Cross-suite invocation pattern formalizado v1.21, enriquecido v1.23/v1.24/v1.25/v1.26 (handoff cooperativo SQL + column-level + RBAC + Postgres roles). **Total cross-suite handoffs cumulativos: 24** (12 RLS v1.23 + 5 column v1.24 + 3 RBAC v1.25 + 4 Roles v1.26). Trilha de segurança Supabase consolidada: **RLS (linha) + Column-Level (coluna) + Custom Claims (app access role) + Postgres Roles (system access role)**. Convenção PT-BR mantida.
 
-## Próximo milestone: v1.27 (a definir)
+## Milestone Atual: v1.27 Supabase Branching & CI/CD Workflow
 
-**Possíveis candidatos para v1.27:**
-- Supabase Vault (encryption at rest) — proteção em repouso para PII columns
-- Outros Auth Hooks (Send Email, Send SMS, MFA Verification, Password Verification)
-- MFA enforcement patterns (AAL2 obrigatório por role/permission)
-- Realtime authorization patterns avançados
-- Tech debt parqueado de v1.20-v1.26
+**Objetivo:** Adicionar pattern canônico de **branching workflow + CI/CD GitHub Actions** à Suíte Supabase. Profissionaliza o fluxo de deploy substituindo "push direto na main" por preview branches + pipelines automatizadas — abrindo a **9ª trilha de maturidade** do kit (após defense-in-depth completo em v1.23-v1.26). Complementa as 4 trilhas de segurança (RLS+Column+Claims+Roles) com **deployment maturity**.
 
-**Próximo passo:** `/novo-marco` para iniciar v1.27.
+**Princípio canônico (herdado v1.23, estendido v1.24/v1.25/v1.26):** Agents não-Supabase pensam/planejam. Agents Supabase materializam/hardenam. Nenhum lado descarta upstream. Para branching, novos agents `supabase-branching-architect` (projeta strategy) e `supabase-cicd-pipeline-implementer` (materializa workflows) são canonical handoff targets.
+
+**Pattern canônico v1.27 (da doc oficial):**
+
+1. **Branching workflow** — preview vs persistent, deploy DAG 7 steps (clone→pull→health→configure→migrate→seed→deploy), dataless by design (proteção PII), config.toml `[remotes]` block
+2. **GitHub integration** — autorizar, working directory, automatic branching, deploy to production toggle, required check enforcement
+3. **CI/CD GitHub Actions canônicos** — 7 workflows pre-prontos: `ci.yml` (verify types + smoke), `staging.yml`/`production.yml` (db push on merge), `generate-types.yml` (schema.gen.ts committed), `database-tests.yml` (pgTAP), `functions-tests.yml` (deno), `backup.yml` (3-dump pattern periódico), `notify-failure.yaml`
+4. **Recovery patterns** — `supabase migration list/repair --status applied|reverted`, rollback via delete+reopen preview, schema drift handling após git rebase
+5. **Secrets per branch** — env() vs encrypted: syntax; dotenvx encrypted fields canônicos (auth.email.smtp.pass, auth.jwt_secret, auth.external.*.secret, edge_runtime.secrets.*)
+6. **Testing pattern** — pgTAP database tests + `supabase test db` + Deno Edge Function tests com `deno test --allow-all`
+7. **Anti-patterns canônicos** — backup em repo público (warning 2× na doc), schema changes direto no remote bypassing migration history, concurrent `db push` from different machines, "update branch" sobrescreve all edge functions (perda silenciosa), Branching Compute Hours fora do Spend Cap (custo invisível), timestamps wrong order após rebase
+
+**Funcionalidades alvo (7 entregáveis, todos aditivos, zero superfície de API quebrada):**
+
+1. **Skill nova `supabase-branching-workflow`** — preview vs persistent, deploy DAG 7 steps, GitHub integration setup + dashboard alpha caveats (custom roles não capturados, merge só p/ main, edge functions sobrescritas no update), custo Branching Compute Hours, 4 anti-patterns canônicos
+
+2. **Skill nova `supabase-config-toml-remotes`** — `[remotes]` block referencing project_id, branch-specific configuration (db.pool_size, api.max_rows, db.seed.sql_paths), secrets management per branch (CLI direct vs dotenvx), encrypted fields canônicos da doc oficial (lista completa de 6 grupos)
+
+3. **Skill nova `supabase-ci-cd-github-actions`** — 7 workflows canônicos pre-prontos da doc oficial: ci/staging/production/generate-types/database-tests/functions-tests/backup/notify-failure. Inclui pattern de `git diff --ignore-space-at-eol --exit-code` para verify schema.gen.ts committed, warning "never backup to public repo" (2×), cron midnight diário com auto-commit via `stefanzweifel/git-auto-commit-action`
+
+4. **Skill nova `supabase-pgtap-testing`** — pgTAP database tests via `supabase test db`, Edge Function tests via `deno test --allow-all`, integração com `legacy-characterizer` existente (cross-ref Feathers suite), gap testing nunca coberto no kit
+
+5. **Skill nova `supabase-migration-repair`** — `supabase migration list` (diagnose), `migration repair --status applied|reverted` (corrige tracking table sem aplicar SQL), rollback via delete+reopen preview (equivalente a `supabase db reset` local), schema drift handling após rebase (rename timestamps), permission denied troubleshooting (graphql schema grant, custom_role para postgres)
+
+6. **Agent novo `supabase-branching-architect`** — projeta estratégia ANTES do setup: GitHub integration vs Dashboard alpha (recomendação canônica: GitHub), persistent (staging/QA) vs ephemeral (preview), seed strategy (seed.sql vs custom ORM via wait-for-check action), secret strategy (CLI direct vs dotenvx). Alerta custo Branching Compute Hours (fora do Spend Cap). Produz `BRANCHING-DESIGN.md`. Cross-suite delega para `supabase-architect`
+
+7. **Agent novo `supabase-cicd-pipeline-implementer`** — materializa os 7 workflows .github/workflows/ a partir do BRANCHING-DESIGN.md, configura secrets GitHub Actions (SUPABASE_ACCESS_TOKEN, PRODUCTION_*, STAGING_*, SUPABASE_DB_URL). Cross-suite handoff para `supabase-migration-writer` (migrations referenciadas pelos workflows) + `release-pipeline-auditor` (audit hermeticidade do pipeline gerado)
+
+**Cross-suite enrichment (3 agents v1.x):**
+- `supabase-architect` (v1.8): seção upfront sobre branching strategy decision; menciona Branching Compute custo
+- `supabase-migration-writer` (v1.23): alerta sobre concurrent `db push` from different machines + timestamp order após rebase
+- `release-pipeline-auditor` (v1.10): incluir branching workflow validation no audit (required check, secrets stored, no migration in main without preview merge)
+
+**Release artifacts:** AUTOGEN-COUNTS regen (64→66 agents, 71→76 skills), file-manifest, CHANGELOG entry v1.27, glossário compartilhado +N termos novos (branching workflow, preview branch, persistent branch, deploy DAG, [remotes] block, dotenvx encrypted, pgTAP, migration repair, schema drift, Branching Compute Hours), package.json bump 1.26.0→1.27.0
+
+**Decisões de stack:**
+- Zero deps novas no kit-mcp (skills/agents são content; workflows YAML são templates para projetos consumidores)
+- Conteúdo PT-BR alinhado v1.22-v1.26. Code blocks YAML/SQL EN com comentários PT-BR
+- Roadmap começa em **Phase 149** (continuação de v1.26 que terminou em 148)
+- **Caveat:** branching workflow é para **deployment maturity** (CI/CD + preview environments); para segurança de dados use trilha v1.23-v1.26 (RLS+Column+Claims+Roles). v1.27 é ortogonal — pipeline ≠ authz
+
+**Decisões abertas para `/discutir-fase`:**
+- GitHub integration vs Dashboard alpha? (recomendação canônica: GitHub)
+- Persistent staging + features ephemeral, ou tudo ephemeral?
+- Adotar dotenvx para encrypted secrets?
+- pgTAP upfront ou backlog?
+- Backup automation cron midnight diário com auto-commit no repo?
+
+**Próximo passo após v1.27:** v1.28 (a definir — candidatos: Supabase Vault encryption-at-rest, Backup & Recovery dedicado, outros Auth Hooks, MFA enforcement, Terraform).
 
 ## ~~Milestone Anterior: v1.26 Postgres Roles~~ (entregue 2026-05-11)
 

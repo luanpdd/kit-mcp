@@ -1,9 +1,9 @@
 ---
 state_version: 1.0
-milestone: none
-milestone_name: "—"
-status: "v1.26 entregue, aguardando próximo milestone (v1.27 a definir)"
-last_updated: "2026-05-11T22:00:00.000Z"
+milestone: v1.27
+milestone_name: "Supabase Branching & CI/CD Workflow"
+status: "v1.27 iniciado, definindo requisitos"
+last_updated: "2026-05-11T22:30:00.000Z"
 progress:
   total_phases: 0
   completed_phases: 0
@@ -15,14 +15,18 @@ progress:
 
 ## Posição Atual
 
-Fase: — (nenhum milestone ativo)
+Fase: Não iniciada (definindo requisitos)
 Plano: —
-Status: v1.26.0 entregue — working tree limpo após `/concluir-marco v1.26`. Pronto para `/novo-marco` v1.27.
-Última atividade: 2026-05-11 — `/concluir-marco v1.26` (6 phases archived → milestones/v1.26-phases/, package.json 1.25.0→1.26.0, tag v1.26.0)
+Status: Definindo requisitos
+Última atividade: 2026-05-11 — Milestone v1.27 iniciado via `/novo-marco`
 
 ## Milestone ativo
 
-_Nenhum_ — v1.26 entregue. Use `/novo-marco` para iniciar v1.27.
+**v1.27 — Supabase Branching & CI/CD Workflow** (iniciando)
+
+7 entregáveis: 5 skills novas (branching-workflow, config-toml-remotes, ci-cd-github-actions, pgtap-testing, migration-repair) + 2 agents novos (branching-architect, cicd-pipeline-implementer) + cross-suite enrichment em 3 agents v1.x.
+
+Roadmap começa em Phase 149.
 
 ## Contexto Acumulado (dos milestones v1.23 + v1.24 + v1.25 + v1.26 entregues)
 
