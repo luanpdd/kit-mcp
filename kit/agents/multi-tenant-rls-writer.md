@@ -252,8 +252,29 @@ NOTAS
 - super_admin actions emitem evento `super_admin_action` em `audit_logs` (Phase 109)
 - Counter `rls.deny.count{tenant_id, policy}` (cross-ref [`four-golden-signals`](../skills/four-golden-signals/SKILL.md))
 
+## Cooperative handoff to supabase-rls-hardener (v1.23)
+
+Após gerar policies RLS hierárquicas, faça handoff cooperativo para `supabase-rls-hardener` validar defense-in-depth:
+
+```python
+Task(subagent_type="supabase-rls-hardener", prompt=f"""
+<upstream_intent>
+Source agent: multi-tenant-rls-writer
+Original goal: gerar policies RLS hierárquicas org→dept→role→permission para {table_name}
+Constraints: helper functions já existem em schema private (is_member_of, has_role, has_permission, is_super_admin); STABLE; partial index em organization_members
+</upstream_intent>
+
+<draft_sql>{generated_policies_sql}</draft_sql>
+
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+Hardener processa verdict GO/STRENGTHEN/REWRITE-com-confirmação. **NUNCA descarte intent upstream silenciosamente** — conflitos viram diff explícito. Princípio canônico v1.23: agents não-Supabase pensam/planejam; agents Supabase materializam/hardenam; ninguém descarta o outro.
+
 ## Ver também
 
+- [supabase-rls-hardener](./supabase-rls-hardener.md) — canonical handoff target v1.23 (verdicts GO/STRENGTHEN/REWRITE)
 - [supabase-rls-writer](./supabase-rls-writer.md) — agent base v1.8 que herda anti-pitfalls
 - [supabase-rls-policies](../skills/supabase-rls-policies/SKILL.md) — base de conhecimento canônica v1.8
 - [multi-tenant-rls-hierarchy](../skills/multi-tenant-rls-hierarchy/SKILL.md) — base de conhecimento desta agent

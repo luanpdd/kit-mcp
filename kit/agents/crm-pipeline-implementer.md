@@ -157,8 +157,29 @@ END;
 $$ LANGUAGE plpgsql;
 ```
 
+## Cooperative handoff to supabase-rls-hardener (v1.23)
+
+Após gerar CREATE TABLE leads (6 stages canônicos) + tabela lead_stage_transitions + trigger BEFORE UPDATE validate_lead_stage_transition + trigger AFTER UPDATE audit_lead_ownership_change, faça handoff cooperativo:
+
+```python
+Task(subagent_type="supabase-rls-hardener", prompt=f"""
+<upstream_intent>
+Source agent: crm-pipeline-implementer
+Original goal: implementar CRM lead pipeline com 6 stages canônicos para {org_context}
+Constraints: lead dedup (unique org_id,phone) + (unique org_id,email); state machine via trigger BEFORE UPDATE (não só CHECK constraint); ownership transfer com notification; integration WhatsApp lookup contact_phone
+</upstream_intent>
+
+<draft_sql>{generated_leads_sql}</draft_sql>
+
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+Hardener valida policies por org_id, GRANTs corretos, trigger SECURITY DEFINER em schema private (se aplicável). **NUNCA descarte intent upstream silenciosamente**.
+
 ## Ver também
 
+- [supabase-rls-hardener](./supabase-rls-hardener.md) — canonical handoff target v1.23
 - [crm-lead-pipeline-patterns](../skills/crm-lead-pipeline-patterns/SKILL.md) — base de conhecimento
 - [evolution-go-integrator](./evolution-go-integrator.md) — Phase 112 (cross-phase handoff)
 - [supabase-migration-writer](./supabase-migration-writer.md) — invoked via Task() para SQL

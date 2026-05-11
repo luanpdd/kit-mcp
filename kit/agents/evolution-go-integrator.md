@@ -168,8 +168,29 @@ EVOLUTION-GO-INTEGRATOR · output integrado
 - Counter `whatsapp.send.rate_limited{org_id}` por 131056 hit
 - Alarme se `whatsapp.send.rate_limited > baseline` → review queue/throttle
 
+## Cooperative handoff to supabase-rls-hardener (v1.23)
+
+Após gerar webhook handler + idempotency unique constraint + rate limit pgmq, faça handoff cooperativo para SQL bloco:
+
+```python
+Task(subagent_type="supabase-rls-hardener", prompt=f"""
+<upstream_intent>
+Source agent: evolution-go-integrator
+Original goal: integrar WhatsApp (Evolution Go ou Meta Cloud API) com Supabase B2B multi-tenant para {org_context}
+Constraints: webhook URL path /functions/v1/whatsapp/{org_id}/webhook (tenant_id ANTES do parse); HMAC-SHA256 (Meta) ou API key + IP whitelist (Evolution Go); idempotência unique(org_id, message_id); rate limit Meta 80msg/s via pgmq queue
+</upstream_intent>
+
+<draft_sql>{generated_webhook_sql}</draft_sql>
+
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+Hardener valida tenant isolation (org_id em todas policies), HMAC validation ANTES do parse, idempotency constraint correto. **NUNCA descarte intent upstream silenciosamente**.
+
 ## Ver também
 
+- [supabase-rls-hardener](./supabase-rls-hardener.md) — canonical handoff target v1.23
 - [evolution-go-whatsapp-integration](../skills/evolution-go-whatsapp-integration/SKILL.md) — base de conhecimento
 - [whatsapp-conversation-state-machine](../skills/whatsapp-conversation-state-machine/SKILL.md) — sibling skill
 - [supabase-edge-fn-writer](./supabase-edge-fn-writer.md) — invoked para Edge Functions (cross-suite)

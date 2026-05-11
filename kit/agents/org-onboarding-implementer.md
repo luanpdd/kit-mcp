@@ -192,8 +192,29 @@ Onboarding é hot path crítico — emite eventos canônicos:
 3. **Counter:** `signup.org_created.count` (skill [`four-golden-signals`](../skills/four-golden-signals/SKILL.md))
 4. **Histogram:** `signup.duration_ms` (latência total signup → dashboard)
 
+## Cooperative handoff to supabase-rls-hardener (v1.23)
+
+Após gerar migration atômica (org + members em 1 trx) + Edge Function setup wizard async, faça handoff cooperativo para SQL bloco:
+
+```python
+Task(subagent_type="supabase-rls-hardener", prompt=f"""
+<upstream_intent>
+Source agent: org-onboarding-implementer
+Original goal: signup → criar org → primeiro admin → setup wizard para nova org
+Constraints: atomicidade (org + first_member em 1 trx); slug imutável + único cross-tenant (uniqueness constraint); RLS desde dia 1; first admin sem invite (admin direto via signup)
+</upstream_intent>
+
+<draft_sql>{generated_signup_migration_sql}</draft_sql>
+
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+Hardener valida que RLS está ativo já na primeira migration, GRANTs corretos para anon (durante signup) e authenticated (pós-login). **NUNCA descarte intent upstream silenciosamente**.
+
 ## Ver também
 
+- [supabase-rls-hardener](./supabase-rls-hardener.md) — canonical handoff target v1.23
 - [org-onboarding-flow](../skills/org-onboarding-flow/SKILL.md) — base de conhecimento (regras + patterns + anti-patterns)
 - [b2b-saas-architecture](../skills/b2b-saas-architecture/SKILL.md) — schema canônico (Phase 106)
 - [supabase-migration-writer](./supabase-migration-writer.md) — invoked via Task() para SQL

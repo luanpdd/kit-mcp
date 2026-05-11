@@ -171,8 +171,29 @@ SUPER-ADMIN-IMPLEMENTER · output integrado
 - Alarme se >5 impersonations/dia per super_admin → review necessário
 - Alarme se delete_org > 1/semana → suspeita
 
+## Cooperative handoff to supabase-rls-hardener (v1.23)
+
+Após gerar cross-tenant RLS PERMISSIVE + Edge Function impersonate + RPC super_admin_delete_org com dupla confirmação, faça handoff cooperativo para SQL bloco:
+
+```python
+Task(subagent_type="supabase-rls-hardener", prompt=f"""
+<upstream_intent>
+Source agent: super-admin-implementer
+Original goal: implementar super-admin platform com impersonation + cross-tenant view
+Constraints: cross-tenant RLS PERMISSIVE via private.is_super_admin (STABLE); TTL 30min impersonation + reason obrigatório; banner React visual; dupla confirmação para delete_org; audit_log obrigatório (Phase 109 BLOCKER ADMIN-03)
+</upstream_intent>
+
+<draft_sql>{generated_super_admin_sql}</draft_sql>
+
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+Hardener valida BYPASSRLS / PERMISSIVE pattern (Camada 4 de defense-in-depth), SECURITY DEFINER functions em schema private, audit trigger obrigatório. **NUNCA descarte intent upstream silenciosamente**.
+
 ## Ver também
 
+- [supabase-rls-hardener](./supabase-rls-hardener.md) — canonical handoff target v1.23 (BYPASSRLS pattern validation)
 - [super-admin-platform-pattern](../skills/super-admin-platform-pattern/SKILL.md) — base de conhecimento
 - [audit-log-multi-tenant](../skills/audit-log-multi-tenant/SKILL.md) — Phase 109 (BLOCKER pré-requisito)
 - [multi-tenant-rls-hierarchy](../skills/multi-tenant-rls-hierarchy/SKILL.md) — PERMISSIVE policy pattern + private.is_super_admin

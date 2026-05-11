@@ -197,8 +197,29 @@ Se ausente OU regions diferentes de `gru1` / `sa-east-1` → P2 informacional.
 - Counter `lgpd.audit.gaps.found{severity}` por execução
 - Histogram `lgpd.audit.duration_ms`
 
+## Cooperative handoff to supabase-rls-hardener (v1.23)
+
+Após gerar DSR table + Art. 18 right workflows + erasure via anonymization, faça handoff cooperativo para SQL bloco:
+
+```python
+Task(subagent_type="supabase-rls-hardener", prompt=f"""
+<upstream_intent>
+Source agent: lgpd-compliance-auditor
+Original goal: implementar LGPD compliance per-tenant (9 direitos Art. 18) para {org_context}
+Constraints: DSR SLA 15 dias (Art. 19) com alert pg_cron D-3; consent default opt-out (Art. 8 §5); erasure via anonymization (UUID preserved + PII NULL/hash); cross-border config (gru1 Vercel + sa-east-1 Supabase); PII sanitization em audit_logs (cross-ref Phase 109)
+</upstream_intent>
+
+<draft_sql>{generated_dsr_sql}</draft_sql>
+
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+Hardener valida pseudonymization correto, retention policies via pg_cron, PII sanitization em audit_logs. **NUNCA descarte intent upstream silenciosamente**.
+
 ## Ver também
 
+- [supabase-rls-hardener](./supabase-rls-hardener.md) — canonical handoff target v1.23
 - [lgpd-multi-tenant-compliance](../skills/lgpd-multi-tenant-compliance/SKILL.md) — base de conhecimento
 - [audit-log-multi-tenant](../skills/audit-log-multi-tenant/SKILL.md) — Phase 109, PII sanitization + legal_hold
 - [multi-tenant-isolation-auditor](./multi-tenant-isolation-auditor.md) — agent sibling padrão de audit

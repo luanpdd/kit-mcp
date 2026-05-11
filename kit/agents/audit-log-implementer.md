@@ -165,8 +165,29 @@ AUDIT-LOG-IMPLEMENTER · output integrado
 - Histogram `audit.log.payload_size_bytes` (detectar payload bloat)
 - Alarme se `audit.log.events.count{event_type=super_admin_action}` > baseline → suspeita de comprometimento
 
+## Cooperative handoff to supabase-rls-hardener (v1.23)
+
+Após gerar CREATE TABLE audit_log + REVOKE DELETE/UPDATE + helper function `private.audit_log` + retention scheduler pg_cron, faça handoff cooperativo:
+
+```python
+Task(subagent_type="supabase-rls-hardener", prompt=f"""
+<upstream_intent>
+Source agent: audit-log-implementer
+Original goal: implementar audit log multi-tenant append-only para {org_context}
+Constraints: REVOKE DELETE/UPDATE obrigatório (append-only); helper function private.audit_log com PII hashing; retention pg_cron 3 tiers (30d/90d/365d); legal_hold flag para LGPD
+</upstream_intent>
+
+<draft_sql>{generated_audit_log_sql}</draft_sql>
+
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+Hardener valida que append-only é blindado (sem policy de DELETE/UPDATE), GRANTs corretos, RLS ativa. **NUNCA descarte intent upstream silenciosamente**.
+
 ## Ver também
 
+- [supabase-rls-hardener](./supabase-rls-hardener.md) — canonical handoff target v1.23 (validation append-only)
 - [audit-log-multi-tenant](../skills/audit-log-multi-tenant/SKILL.md) — base de conhecimento (DDL + regras)
 - [supabase-cron-queues](../skills/supabase-cron-queues/SKILL.md) — pattern pg_cron (cross-suite)
 - [supabase-migration-writer](./supabase-migration-writer.md) — agent invocado para SQL final

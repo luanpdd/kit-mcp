@@ -128,8 +128,29 @@ INVITE-FLOW-IMPLEMENTER · output integrado
 - Histogram `invite.accept_latency_ms` (tempo entre create e accept)
 - Alarme se `invite.created.count > bulk_limit_per_hour` por org → suspeita de abuso
 
+## Cooperative handoff to supabase-rls-hardener (v1.23)
+
+Após gerar CREATE TABLE org_invites + RPC create_invite/accept_invite + cron expire pending, faça handoff cooperativo para SQL bloco:
+
+```python
+Task(subagent_type="supabase-rls-hardener", prompt=f"""
+<upstream_intent>
+Source agent: invite-flow-implementer
+Original goal: implementar invite flow B2B com token-based para {org_context}
+Constraints: token SHA-256 (raw enviado por email, hash no banco); TTL 7d single-use; state machine 5 estados (pending→accepted|rejected|cancelled|expired); email-lock obrigatório; idempotência via FOR UPDATE em transação
+</upstream_intent>
+
+<draft_sql>{generated_invites_sql}</draft_sql>
+
+<user_facing_caller>true</user_facing_caller>
+""")
+```
+
+Hardener valida token security (hash apenas no DB), RPC com SECURITY DEFINER em schema private, RLS por org_id. **NUNCA descarte intent upstream silenciosamente**.
+
 ## Ver também
 
+- [supabase-rls-hardener](./supabase-rls-hardener.md) — canonical handoff target v1.23
 - [member-invite-flow](../skills/member-invite-flow/SKILL.md) — base de conhecimento
 - [supabase-migration-writer](./supabase-migration-writer.md) — invoked via Task() para SQL
 - [supabase-edge-fn-writer](./supabase-edge-fn-writer.md) — invoked via Task() para Edge Function
