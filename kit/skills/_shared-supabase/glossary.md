@@ -21,6 +21,12 @@
 | **authenticated** | Role para usuário autenticado. RLS aplicado normalmente. |
 | **public** | Role default — equivale a anon + authenticated juntos. Evite — sempre use `to authenticated` ou `to anon` explícito. |
 | **AAL** | Authentication Assurance Level. `aal1` = senha apenas; `aal2` = senha + 2FA. Verifica via `(auth.jwt()->>'aal')::text`. |
+| **defense-in-depth** (v1.23) | Defesa em profundidade — múltiplas camadas independentes de proteção RLS (policy + event trigger + GRANT explícito + bypass controlado + views security_invoker + service_role caveat). Princípio canônico contra esquecimento humano + third-party tooling. |
+| **hardener** (v1.23) | Agent `supabase-rls-hardener` (canônico v1.23) — recebe draft SQL via `Task()` upstream context + intent original e produz SQL final hardenado preservando intent. Verdicts: **GO** (já bom), **STRENGTHEN** (ajusta com diff), **REWRITE** (anti-pattern crítico, requer confirmação). NUNCA descarta upstream silenciosamente. |
+| **cooperative-handoff** (v1.23) | Pattern de handoff entre agents do kit em que agents externos (multi-tenant, debugger, planner, etc.) planejam/sugerem SQL via draft, e agents Supabase materializam o output final hardenado preservando intent upstream. Substitui pattern "BLOCK rígido" — não descarta tokens já gastos. |
+| **event-trigger-rls-auto-enable** (v1.23) | Event trigger Postgres (`rls_auto_enable`) registrado em `ddl_command_end` que ativa RLS automaticamente em `CREATE TABLE` em schemas configurados (`public` por default). Defense-in-depth contra esquecimento humano. Skill: `supabase-rls-defense-in-depth`. |
+| **bypassrls** (v1.23) | Privilégio Postgres `alter role <name> with bypassrls` que permite role bypass total de RLS sempre. Use para roles internos (`postgres`, custom admin role para scripts/cron). NUNCA conceda a role que recebe requisições de cliente. Alternativa Postgres-native ao service_role API key. |
+| **security_invoker** (v1.23) | Atributo de view em Postgres 15+ (`with (security_invoker = true)`) — faz a view respeitar RLS do role chamador, não do criador. Default views são `security_definer` e **bypassam** RLS — defense-in-depth Camada 5. |
 
 ### Database e Schema
 
