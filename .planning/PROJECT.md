@@ -1,15 +1,25 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-11 — milestone v1.25 (Custom Claims & RBAC via Auth Hooks) iniciado.
+> Última atualização: 2026-05-11 — milestone v1.25 (Custom Claims & RBAC via Auth Hooks) entregue.
 
 ## Estado Atual
 
-**v1.24.0 — Segurança em Nível de Coluna (Column-Level Security)** **entregue** 2026-05-11 (Phases 131-136, 6 phases, 26 REQs, content-only milestone). Adicionou **Camada 8** de defense-in-depth (column-level privileges) à Suíte Supabase complementando RLS row-level de v1.23. Skill nova `supabase-column-level-security` (4 patterns canônicos + 4 anti-patterns + dedicated role table como alternativa preferida) + agent novo `supabase-column-privileges-writer` (canonical materializer paralelo ao rls-hardener) + 5 cross-suite handoffs column-level (audit-log, lgpd, crm, multi-tenant-rls, invite). Princípio canônico herdado de v1.23 mantido. AUTOGEN-COUNTS: 61→**62 agents** (+1: supabase-column-privileges-writer), 89 commands (mantido), 68→**69 skills** (+1: supabase-column-level-security), 23 gates (mantido); file-manifest 369→**371 files**. Stable API v1.0+ preservada. PRR 30/30 mantido (content-only).
+**v1.25.0 — Custom Claims & RBAC via Auth Hooks** **entregue** 2026-05-11 (Phases 137-142, 6 phases, 32 REQs, content-only milestone). Adicionou **Camada 9** de defense-in-depth (Auth Hooks - Custom Claims) à Suíte Supabase complementando RLS row-level (v1.23) + column-level (v1.24). Skill nova `supabase-custom-claims-rbac` (7 passos canônicos + 5 anti-patterns + caveat JWT freshness) + agent novo `supabase-rbac-implementer` (canonical materializer Custom Access Token Auth Hook) + 3 cross-suite handoffs RBAC (multi-tenant-rls-writer, super-admin-implementer, audit-log-implementer). Princípio canônico v1.23 herdado. AUTOGEN-COUNTS: 62→**63 agents** (+1: supabase-rbac-implementer), 89 commands (mantido), 69→**70 skills** (+1: supabase-custom-claims-rbac), 23 gates (mantido); file-manifest 371→**373 files**. Stable API v1.0+ preservada cross-13-releases. PRR 30/30 mantido.
 
-**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30) + v1.21 (Multi-Tenant SaaS B2B) + v1.22 (DDIA Foundations) + v1.23 (Reforço RLS Supabase) + **v1.24 (Column-Level Security)**. **8 suítes ativas no kit** + framework eat-your-own-dog-food maduro. Cross-suite invocation pattern formalizado em v1.21, herdado em v1.22, enriquecido em v1.23 com semântica cooperativa explícita, **estendido em v1.24 para column-level handoff cooperativo**. Convenção PT-BR mantida.
+**Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30) + v1.21 (Multi-Tenant SaaS B2B) + v1.22 (DDIA Foundations) + v1.23 (Reforço RLS) + v1.24 (Column-Level Security) + **v1.25 (Custom Claims & RBAC)**. **8 suítes ativas no kit** + framework maduro. Defense-in-depth: **9 camadas** (Camada 9 = Auth Hooks Custom Claims). Cross-suite invocation pattern formalizado v1.21, enriquecido v1.23 (handoff cooperativo SQL), estendido v1.24 (column-level), **estendido v1.25 (RBAC via custom claims)**. **Total cross-suite handoffs cumulativos: 20** (12 RLS v1.23 + 5 column v1.24 + 3 RBAC v1.25). Convenção PT-BR mantida.
 
-## Milestone Atual: v1.25 Custom Claims & RBAC via Auth Hooks
+## Próximo milestone: v1.26 (a definir)
+
+**Possíveis candidatos para v1.26:**
+- Outros Auth Hooks (Send Email, Send SMS, MFA Verification, Password Verification, etc.) — completar a suíte de hooks além do Custom Access Token (v1.25)
+- Supabase Vault (encryption at rest) — proteção em repouso para PII
+- MFA enforcement patterns (AAL2 obrigatório por role/permission)
+- Tech debt parqueado de v1.20-v1.25
+
+**Próximo passo:** `/novo-marco` para iniciar v1.26.
+
+## ~~Milestone Anterior: v1.25 Custom Claims & RBAC via Auth Hooks~~ (entregue 2026-05-11)
 
 **Objetivo:** Adicionar pattern canônico de **Custom Claims via Custom Access Token Auth Hook** para Role-Based Access Control (RBAC) na Suíte Supabase. Complementa v1.23 (RLS row-level) + v1.24 (column-level) com **claims customizados no JWT** que evitam JOINs custosos em policies — `user_role` é incluído no token na geração e consultado direto via `auth.jwt()->>'user_role'` nas policies.
 

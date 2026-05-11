@@ -1,5 +1,25 @@
 # MILESTONES.md — Histórico de releases
 
+## v1.25 Custom Claims & RBAC via Auth Hooks (Shipped: 2026-05-11)
+
+**Phases completed:** 6 phases (137-142), 32 REQs covered (100%), 7 atomic commits
+
+**Key accomplishments:**
+
+- **Skill nova `supabase-custom-claims-rbac`** documenta 100% da doc oficial Supabase Custom Claims & RBAC via Custom Access Token Auth Hook — 7 passos canônicos (enum types `app_role`/`app_permission`, tabelas `user_roles`+`role_permissions`, função `custom_access_token_hook(event jsonb)`, 6 GRANTs/REVOKEs para `supabase_auth_admin`, habilitar hook Dashboard/config.toml, função `authorize(permission)` com `security definer + set search_path = '' + stable`, RLS policies usando `(SELECT authorize('permission'))`) + 5 anti-patterns + client decoder (jwt-decode + onAuthStateChange) + comparação 3 mecanismos de delivery (app_metadata vs helper function STABLE vs custom claims via auth hook).
+- **Agent novo `supabase-rbac-implementer`** — canonical materializer paralelo ao `supabase-rls-hardener` (v1.23) e `supabase-column-privileges-writer` (v1.24). Recebe spec (roles + permissions matrix + multi_tenant flag) via `Task()` upstream context + intent original. Materializa setup completo (7 passos SQL canônicos + client decoder snippet). Verdicts construtivos GO/STRENGTHEN/REWRITE-com-confirmação. Invocável cross-suite por 5 agents callers (multi-tenant-rls-writer, super-admin-implementer, audit-log-implementer, supabase-rls-hardener Detector 9, supabase-auth-bootstrapper).
+- **Camada 9 (Auth Hooks Custom Claims) adicionada ao defense-in-depth** — checklist atualizado de 8 para 9 itens; DEFENSE-07 dedicated section. Pattern v1.25 é zero-JOIN para role global vs helper function STABLE (v1.21) com JOIN custoso por query.
+- **Subcomando novo `/supabase rbac`** (sinônimos: `roles`, `permissions`, `claims`) dispatcheando para `supabase-rbac-implementer`. Section dedicada no command com aviso pattern recomendado v1.25 + caveat JWT freshness.
+- **Agent `supabase-rls-hardener` (v1.23) ganha Detector 9** — flagra projects com user_roles table mas sem auth hook configurado via query `pg_proc` + `has_function_privilege`; chain cooperativo para `supabase-rbac-implementer` quando gap detectado; comportamento OPT-IN.
+- **Agent `supabase-auth-bootstrapper` (v1.8) ganha Custom Claims & RBAC integration (v1.25)** — jwt-decode dependency + listener com decoder em `client.ts` + helper `getUserRole()` em `server.ts` + handoff cooperativo para `supabase-rbac-implementer` quando caller sinaliza `enable_rbac=true` ou detecta `user_roles` table.
+- **Cross-suite handoff cooperativo RBAC (3 agents v1.21):** multi-tenant-rls-writer (RBAC híbrido — claim global + helper function per-org), super-admin-implementer (migração `super_admin: bool` de app_metadata para custom claim via auth hook com compat policy combinada durante transição), audit-log-implementer (audit trigger em user_roles com event taxonomy 'role_assigned'/'role_revoked'/'role_updated' AFTER INSERT/UPDATE/DELETE).
+- **Princípio canônico (herdado v1.23):** agents não-Supabase pensam/planejam; agents Supabase materializam/hardenam; ninguém descarta upstream. Aplicado em 3 cross-suite handoffs RBAC (adiciona aos 12 RLS v1.23 + 5 column-level v1.24 = **20 cross-suite handoffs cumulativos**). Caveat JWT freshness documentado (mudanças em user_roles refletem após token refresh TTL 1h; force logout via `auth.admin.signOut()` para revogação imediata).
+- Patches em 4 skills existentes: `supabase-rls-policies` (section "RBAC via Custom Claims + authorize() function"), `supabase-rls-defense-in-depth` (Camada 9 + DEFENSE-07), `supabase-database-functions` (pattern Custom Access Token Auth Hook + 6 GRANTs/REVOKEs canônicos), `rbac-permissions-matrix-supabase` v1.21 (tabela comparativa + recomendação combinar claim global + helper function per-org).
+- Glossário compartilhado `_shared-supabase/glossary.md` ganhou 8 termos novos com tag `(v1.25)`: custom claims, Custom Access Token Auth Hook, JWT user_role claim, authorize() function, supabase_auth_admin role, app_role enum, app_permission enum, jwt-decode client pattern.
+- AUTOGEN-COUNTS regen: 62→**63 agents** (+1: supabase-rbac-implementer), 89 commands (mantido), 69→**70 skills** (+1: supabase-custom-claims-rbac), 23 gates (mantido); file-manifest 371→**373 files**. Stable API v1.0+ preservada cross-13-releases (v1.13→v1.25). PRR 30/30 mantido (content-only milestone). Defense-in-depth camadas: 8 → 9.
+
+---
+
 ## v1.24 Segurança em Nível de Coluna (Column-Level Security) (Shipped: 2026-05-11)
 
 **Phases completed:** 6 phases (131-136), 26 REQs covered (100%), 7 atomic commits
