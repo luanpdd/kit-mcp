@@ -24,7 +24,7 @@ Inspired by [vinilana/dotcontext](https://github.com/vinilana/dotcontext) — se
 ---
 
 <!-- AUTOGEN-COUNTS-START -->
-**Bundled workflow:** 60 agents · 89 commands · 67 skills · 23 gates
+**Bundled workflow:** 61 agents · 89 commands · 68 skills · 23 gates
 <!-- AUTOGEN-COUNTS-END -->
 
 ## What ships in the box

@@ -6,6 +6,54 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.23.0] — 2026-05-11 — Reforço RLS Supabase + Handoff Cooperativo SQL
+
+Incorpora 100% da documentação oficial Supabase Row Level Security na Suíte Supabase v1.8 e introduz **handoff cooperativo SQL** — pattern onde agents externos (multi-tenant, debugger, planner, executor, etc.) planejam/sugerem estrutura SQL via `Task()` e agents Supabase materializam o output final hardenado preservando intent upstream. Todo SQL gerado pelo kit passa pela trilha de segurança da Suíte Supabase sem desperdiçar tokens de planejamento upstream.
+
+### Princípio canônico v1.23
+
+Agents não-Supabase **pensam/planejam**. Agents Supabase **materializam/hardenam**. Nenhum lado descarta o outro — quando há conflito de patterns, agent Supabase explica e propõe alternativa via diff, nunca reescreve silenciosamente.
+
+### Adicionado
+- **Skill nova:** `supabase-rls-defense-in-depth` — 6 camadas defense-in-depth (policy + event trigger rls_auto_enable + GRANT explícito + bypass controlado + views security_invoker + service_role caveat), 7-item checklist para review em produção
+- **Agent novo:** `supabase-rls-hardener` — canonical materializer. Recebe draft SQL via `Task()` upstream context + intent original. Verdicts construtivos GO/STRENGTHEN/REWRITE-com-confirmação. Invocável cross-suite por 12 agents callers documentados (8 v1.21 + 1 v1.22 + 3 framework core).
+- **Subcomando novo:** `/supabase hardener` — dispatch direto ao agent canonical materializer
+- **Glossário (+6 termos):** defense-in-depth, hardener, cooperative-handoff, event-trigger-rls-auto-enable, bypassrls, security_invoker
+
+### Skill `supabase-rls-policies` reforçada (100% da doc oficial)
+- GRANTs antes de ENABLE RLS (sem isso, query falha "permission denied" antes de policy avaliar)
+- Padrão `auth.uid() IS NOT NULL AND ...` (anti silent-fail anônimo) — REGRA #3
+- Views com `security_invoker=true` (Postgres 15+) — patternização do bypass default
+- Diferença `anon` Postgres role vs anonymous Auth user (claim `is_anonymous`)
+- Performance: minimize joins (IN ao invés de JOIN), filtros redundantes client-side, security definer functions com cache via `(select)`
+- `raw_app_meta_data` vs `raw_user_meta_data` + JWT freshness caveat + cookie 4096 bytes
+- Defense in depth narrative — RLS como camada vs third-party tooling
+- Anti-patterns expandidos: 4 → 7 (adicionados #5 GRANT ausente, #6 view sem security_invoker, #7 null silent-fail)
+
+### Skill `supabase-migrations` atualizada
+- Template canônico v1.23 com 5 blocos obrigatórios para CREATE TABLE: CREATE TABLE → GRANTs → ENABLE RLS → 4 policies granulares → INDEX
+- Frontmatter description expandida com pattern v1.23
+
+### Agents Supabase patchados (3 artefatos, 8 REQs)
+- `supabase-rls-writer`: emite GRANTs antes de ENABLE RLS, IS NOT NULL opcional via input `include_is_not_null_check` (default true), gera views com `security_invoker=true` quando aplicável, aceita `upstream_intent` para handoff cooperativo
+- `supabase-migration-writer`: recebe draft via `Task()` upstream context; em CREATE TABLE faz auto-chain cooperativo para `supabase-rls-hardener`; devolve SQL + nota de divergências quando intent upstream conflita
+- `/supabase` command: documentado como **serviço de materialização** — nunca bloqueia upstream; subcomando `migration` exige RLS auto-injetada via hardener
+
+### Cross-suite handoff cooperativo (10 agents patcheados)
+- **8 v1.21 implementers:** multi-tenant-rls-writer, audit-log-implementer, crm-pipeline-implementer, org-onboarding-implementer, invite-flow-implementer, super-admin-implementer, evolution-go-integrator, lgpd-compliance-auditor — cada um ganhou section "Cooperative handoff to supabase-rls-hardener (v1.23)" com pattern Task() customizado + constraints específicos do domínio
+- **1 v1.22 auditor:** auditor-consistencia-isolamento — adicionou Detector 7 (Camada 7 defense-in-depth) que audita migrations recentes para detectar gap de hardener cooperativo
+- **3 framework core:** planner, executor, debugger — detectam SQL no plan/output/hipótese via regex heurística e fazem handoff cooperativo via `Task(subagent_type=supabase-rls-hardener)`
+
+### Métricas
+- AUTOGEN-COUNTS: 60→**61 agents** (+1: supabase-rls-hardener), 89 commands (mantido), 67→**68 skills** (+1: supabase-rls-defense-in-depth), 23 gates (mantido)
+- file-manifest: 367→**369 files** hashed
+- Stable API v1.0+ preservada (zero alteração em src/core/)
+- PRR 30/30 mantido (content-only milestone)
+- 7 phases (124-130), 42 REQs cobertos 100% (RLS-01..10, MIGR-01..04, CMD-01..02, DEFENSE-01..05, HARDEN-01..06, CROSS-01..10, DOC-01..05)
+
+### Próximo marco parqueado (v1.24)
+Segurança em Nível de Coluna (Column-Level Security) — skill `supabase-column-level-security`, agent `supabase-column-privileges-writer`, cross-suite handoff cooperativo column-level.
+
 ## [1.22.0] — 2026-05-10 — Suíte DDIA Foundations
 
 8ª suíte do kit, derivada de *Designing Data-Intensive Applications* (Kleppmann, 2017). Fecha gaps de consistência, partitioning, isolation, distributed systems traps e event streams nas suítes Supabase v1.8 + Multi-Tenant v1.21.
