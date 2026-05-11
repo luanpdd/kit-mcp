@@ -1,7 +1,7 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-11 — milestone v1.24 (Segurança em Nível de Coluna) entregue.
+> Última atualização: 2026-05-11 — milestone v1.25 (Custom Claims & RBAC via Auth Hooks) iniciado.
 
 ## Estado Atual
 
@@ -9,15 +9,62 @@
 
 **Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30) + v1.21 (Multi-Tenant SaaS B2B) + v1.22 (DDIA Foundations) + v1.23 (Reforço RLS Supabase) + **v1.24 (Column-Level Security)**. **8 suítes ativas no kit** + framework eat-your-own-dog-food maduro. Cross-suite invocation pattern formalizado em v1.21, herdado em v1.22, enriquecido em v1.23 com semântica cooperativa explícita, **estendido em v1.24 para column-level handoff cooperativo**. Convenção PT-BR mantida.
 
-## Próximo milestone: v1.25 (a definir)
+## Milestone Atual: v1.25 Custom Claims & RBAC via Auth Hooks
 
-**Possíveis candidatos para v1.25:**
-- Supabase Vault (encryption at rest) — proteção em repouso para PII columns; complementa column-level (proteção em uso)
-- Dynamic column masking via views — alternativa runtime ao REVOKE/GRANT estático
-- Audit log de column privilege changes (pg_audit integration) — rastreabilidade de mudanças em GRANT/REVOKE
-- Tech debt parqueado de v1.20-v1.24 (carry-over)
+**Objetivo:** Adicionar pattern canônico de **Custom Claims via Custom Access Token Auth Hook** para Role-Based Access Control (RBAC) na Suíte Supabase. Complementa v1.23 (RLS row-level) + v1.24 (column-level) com **claims customizados no JWT** que evitam JOINs custosos em policies — `user_role` é incluído no token na geração e consultado direto via `auth.jwt()->>'user_role'` nas policies.
 
-**Próximo passo:** `/novo-marco` para iniciar v1.25.
+**Princípio canônico (herdado de v1.23, estendido v1.24):** Agents não-Supabase pensam/planejam. Agents Supabase materializam/hardenam. Nenhum lado descarta o outro. Para custom claims, novo agent `supabase-rbac-implementer` é canonical handoff target — recebe spec (roles + permissions matrix) e materializa setup completo (enum types + tables + auth hook + authorize function + RLS policies + client decoder).
+
+**Pattern canônico v1.25 (da doc oficial):**
+
+1. **Enum types** — `app_role` ('admin', 'moderator', ...) e `app_permission` ('channels.delete', 'messages.delete', ...)
+2. **Tables** — `user_roles` (user_id → role) e `role_permissions` (role → permission)
+3. **Custom Access Token Auth Hook** — função `public.custom_access_token_hook(event jsonb)` que adiciona `user_role` ao JWT antes do token ser issued
+4. **Permissions especiais** — `supabase_auth_admin` precisa de GRANT EXECUTE no hook + GRANT ALL na user_roles + RLS policy permitindo read
+5. **`authorize()` function** — `security definer` que lê `auth.jwt() ->> 'user_role'` e checa permission em role_permissions
+6. **RLS policies usando authorize** — `using ((SELECT authorize('channels.delete')))`
+7. **Client-side decoder** — `jwt-decode` no `onAuthStateChange` para acessar custom claims no front-end
+
+**Funcionalidades alvo (6 entregáveis, todos aditivos, zero superfície de API quebrada):**
+
+1. **Skill nova `supabase-custom-claims-rbac`** — pattern canônico completo (7 passos da doc), permissions canônicos para `supabase_auth_admin`, anti-patterns (esquecer GRANT, hardcoded role em policy, JWT freshness caveat), client-side decoder pattern + onAuthStateChange listener
+
+2. **Patches em skills existentes (4 artefatos):**
+   - `supabase-rls-policies`: section "RBAC via Custom Claims + authorize() function" — combinar RLS row-level com claim check
+   - `supabase-rls-defense-in-depth`: Camada 9 (Auth Hooks - Custom Claims) — alternativa moderna a dedicated role table com JOIN
+   - `supabase-database-functions`: pattern Custom Access Token Auth Hook + supabase_auth_admin GRANTs canônicos
+   - `rbac-permissions-matrix-supabase` (v1.21): atualizar com auth hook como mecanismo de delivery dos claims (era helper function PG STABLE)
+
+3. **Agent novo `supabase-rbac-implementer`** — recebe spec (roles + permissions matrix) via Task() upstream context + intent. Materializa setup completo: enum types + 2 tables + auth hook function + supabase_auth_admin grants + authorize() function + RLS policies template + client decoder snippet. Verdicts GO/STRENGTHEN/REWRITE-com-confirmação.
+
+4. **Patches em agents Supabase (3 artefatos):**
+   - `supabase-rls-hardener` (v1.23): Detector 9 (RBAC via custom claims check) — flagra projects com user_roles table mas sem auth hook instalado; chain cooperativo para `supabase-rbac-implementer`
+   - `supabase-auth-bootstrapper` (v1.8): incluir setup de auth hook + jwt-decode no bootstrap Next.js v16 + auth listener pattern
+   - `/supabase` command: subcomando novo `rbac` (sinônimos: `roles`, `permissions`, `claims`) dispatcheando para `supabase-rbac-implementer`
+
+5. **Cross-suite handoff cooperativo (3 agents v1.21):**
+   - `multi-tenant-rls-writer` (v1.21) — usa custom claims como alternativa moderna a helper functions PG; cross-ref para `supabase-rbac-implementer`
+   - `super-admin-implementer` (v1.21) — `super_admin: bool` pode migrar de `app_metadata` para custom claim via auth hook (mais consistente com pattern v1.25)
+   - `audit-log-implementer` (v1.21) — eventos de mudança de role registrados via auth hook trigger
+
+6. **Release artifacts:** AUTOGEN-COUNTS regen (62→63 agents, 69→70 skills), file-manifest, CHANGELOG entry v1.25, glossário compartilhado +8 termos novos (custom claims, Custom Access Token Auth Hook, JWT user_role claim, authorize() function, supabase_auth_admin role, app_role enum, app_permission enum, jwt-decode client pattern), package.json bump 1.24.0→1.25.0
+
+**Decisões de stack:**
+- Zero deps novas. Apenas conteúdo de kit (markdown). Stable API v1.0+ preservada — só adições.
+- Material-fonte: documentação oficial Supabase Custom Claims & RBAC (Custom Access Token Auth Hook) fornecida no prompt do milestone (cobertura 100%).
+- Conteúdo PT-BR (alinhado v1.22-v1.24). Code blocks SQL/JS EN com comentários PT-BR.
+- Roadmap começa em **Phase 137** (continuação de v1.24 que terminou em 136).
+- Convenção PT-BR + handoff cooperativo herdados de v1.22-v1.24.
+- **Caveat embutido:** JWT freshness — mudanças em user_roles só refletem após token refresh; auth hook delivery via JWT é eventually consistent.
+
+**Beneficiários principais:**
+- Suíte Supabase v1.8 — `supabase-auth-bootstrapper` ganha custom claims setup; `supabase-rls-policies` ganha pattern authorize()
+- Suíte Multi-Tenant v1.21 — `rbac-permissions-matrix-supabase` ganha auth hook como mecanismo canônico; `super-admin-implementer` pode migrar para custom claim
+- Suíte SRE v1.10 — `prr-conductor` Axe 1 (System Architecture) opcionalmente consulta auth hook setup
+
+**Contrato preservado:** Quem usa kit-mcp em produção não percebe nada além de novos artefatos disponíveis ao sincronizar. CI permanece verde. Stable API v1.0+ inalterada.
+
+**Próximo passo após v1.25:** v1.26 (a definir) — candidatos: Supabase Vault (encryption at rest), MFA enforcement patterns, dynamic column masking, tech debt parqueado.
 
 ## ~~Milestone Anterior: v1.24 Segurança em Nível de Coluna (Column-Level Security)~~ (entregue 2026-05-11)
 
