@@ -6,6 +6,54 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.26.0] — 2026-05-11 — Postgres Roles
+
+Adiciona pattern canônico de **Postgres Roles management** à Suíte Supabase. Complementa RLS row-level (v1.23) + Column-Level (v1.24) + Custom Claims RBAC (v1.25) com a fundação que sustenta as 3 trilhas: roles Postgres para **system access** (cron jobs, BI tools, ETL, admin scripts). Estabelece **Camada 10** de defense-in-depth.
+
+### Princípio canônico (herdado v1.23-v1.25, estendido v1.26)
+
+Agents não-Supabase pensam/planejam. Agents Supabase materializam/hardenam. Nenhum lado descarta upstream.
+
+### Distinção canônica
+- **Application access** (RLS + Custom Claims): end-users vendo linhas/colunas baseado em `auth.uid()` e `auth.jwt()->>'user_role'`
+- **System access** (Postgres Roles): service accounts internos com permissions específicos
+
+### Adicionado
+- **Skill nova:** `supabase-postgres-roles` — distinção roles vs users, CREATE ROLE syntax (group vs user com LOGIN PASSWORD), password best practices + percent-encoding caveat (tabela de encoding), GRANT/REVOKE patterns, role hierarchy (INHERIT/NOINHERIT) com examples multi-level, **10 predefined Supabase roles documentados** (postgres, anon, authenticator, authenticated, service_role, supabase_auth_admin, supabase_storage_admin, supabase_etl_admin, dashboard_user, supabase_admin), 4 patterns canônicos (CREATE ROLE básico, GRANT/REVOKE, hierarchy, custom service accounts), 5 anti-patterns, pg_stat_statements audit por role
+- **Agent novo:** `supabase-roles-implementer` — canonical materializer. Recebe spec (custom roles + hierarchy + GRANT matrix) via `Task()` upstream context + intent original. Materializa CREATE ROLE + INHERIT/NOINHERIT + GRANT/REVOKE per schema/table/function + password security check (12+ chars, percent-encoding warning). Verdicts construtivos GO/STRENGTHEN/REWRITE-com-confirmação. REWRITE se caller pede role para application access (sugere RLS + Custom Claims). Paralelo aos 3 hardeners (rls-hardener v1.23, column-privileges-writer v1.24, rbac-implementer v1.25).
+- **Subcomando novo:** `/supabase role` (sinônimos: `papel`, `roles-pg`) — dispatch direto. **System access apenas** — para application access, use `/supabase rbac` (v1.25).
+- **Glossário (+8 termos):** Postgres roles, INHERIT/NOINHERIT, LOGIN PASSWORD, GRANT/REVOKE syntax, role hierarchy, predefined Supabase roles, role switching authenticator, percent-encoding password
+
+### Patches em skills existentes (5 artefatos)
+- `supabase-rls-policies`: section "Postgres Roles vs RLS — quando usar qual (v1.26)" com tabela comparativa system access vs application access
+- `supabase-rls-defense-in-depth`: Camada 10 (Postgres Roles Hierarchy) + DEFENSE-08 no checklist (era 9 itens → 10 itens)
+- `supabase-database-functions`: section "GRANT EXECUTE por role hierarchy (v1.26)" + pattern com schema privado
+- `supabase-migrations`: BLOCO 7 OPCIONAL (CREATE ROLE para custom service accounts)
+- `supabase-custom-claims-rbac` (v1.25): section "Postgres Roles vs Custom Claims — distinção canônica (v1.26)" com tabela comparativa
+
+### Patches em agents Supabase (3 artefatos)
+- `supabase-rls-hardener` (v1.23): C10 no checklist defense-in-depth + section "HARDEN-11 (v1.26): Detector 10 — Postgres Roles Audit" com query SQL + chain cooperativo para `supabase-roles-implementer`
+- `supabase-architect` (v1.8): section "5.1 Postgres Roles (v1.26 — ARCH-PATCH-01)" — prompt upfront sobre custom service accounts no design phase
+- `/supabase` command: row novo `role` + section dedicada com aviso "system access apenas" + cross-ref para `/supabase rbac` (application access)
+
+### Cross-suite handoff cooperativo Postgres Roles (4 agents v1.21)
+- **audit-log-implementer (CROSS-19):** role `security_admin` — group role com BYPASSRLS para acesso payload PII via SET ROLE
+- **lgpd-compliance-auditor (CROSS-20):** role `dpo_role` — user role com LOGIN PASSWORD, BYPASSRLS, DSR + erasure operations (Art. 18)
+- **crm-pipeline-implementer (CROSS-21):** role `lead_manager` — group role SEM BYPASSRLS (respeita org boundary), PII columns leads via SET ROLE
+- **super-admin-implementer (CROSS-22):** role `platform_admin` — user role com LOGIN PASSWORD, BYPASSRLS, separado de service_role para audit trail granular em pg_stat_statements
+
+### Métricas
+- AUTOGEN-COUNTS: 63→**64 agents** (+1: supabase-roles-implementer), 89 commands (mantido — subcomando `role` interno), 70→**71 skills** (+1: supabase-postgres-roles), 23 gates (mantido)
+- file-manifest: 373→**375 files** hashed
+- Stable API v1.0+ preservada (zero alteração em src/core/)
+- PRR 30/30 mantido (content-only milestone)
+- 6 phases (143-148), 34 REQs cobertos 100%
+- Defense-in-depth camadas: 9 → **10** (Camada 10 = Postgres Roles Hierarchy)
+- **Total cross-suite handoffs cumulativos:** 24 (12 RLS v1.23 + 5 column v1.24 + 3 RBAC v1.25 + 4 Roles v1.26)
+
+### Próximo marco
+v1.27 (a definir) — candidatos: Supabase Vault (encryption at rest), outros Auth Hooks, MFA enforcement patterns, tech debt parqueado.
+
 ## [1.25.0] — 2026-05-11 — Custom Claims & RBAC via Auth Hooks
 
 Adiciona pattern canônico de **Custom Claims via Custom Access Token Auth Hook** para Role-Based Access Control (RBAC). Complementa v1.23 (RLS row-level) + v1.24 (column-level) com **Camada 9** de defense-in-depth: `user_role` injetado no JWT durante geração do token via auth hook, evitando JOINs custosos em policies — RLS lê claim direto via `authorize()` function.
