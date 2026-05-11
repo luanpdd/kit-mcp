@@ -94,6 +94,14 @@ create policy "<table>_delete_own"
 
 -- BLOCO 5: Index obrigatório em colunas referenciadas pelas policies
 create index if not exists <table>_user_id_idx on public.<table> (user_id);
+
+-- BLOCO 6 (v1.24, OPCIONAL): Column-Level Privileges
+-- ⚠ Adicionar APENAS se há colunas sensíveis (PII, billing, audit payload, tokens raw)
+-- Para casos comuns, prefira RLS + dedicated role table (skill supabase-column-level-security)
+-- Exemplo: tabela posts com coluna admin_notes visível apenas para service_role
+-- revoke select on table public.<table> from authenticated;
+-- grant select (id, user_id, title, content, created_at) on table public.<table> to authenticated;
+-- (service_role mantém acesso total — não precisa GRANT extra)
 ```
 
 ## Patterns canônicos
@@ -161,6 +169,10 @@ create policy "users_delete_own_tasks"
 
 -- BLOCO 5: index obrigatório nas colunas usadas pela policy
 create index if not exists tasks_user_id_idx on public.tasks (user_id);
+
+-- BLOCO 6 (v1.24, OPCIONAL): Column-Level Privileges
+-- Não aplicável neste exemplo — tasks não tem colunas sensíveis
+-- Ver skill supabase-column-level-security para casos com PII / audit log / billing
 ```
 
 ### Adicionar coluna a tabela existente

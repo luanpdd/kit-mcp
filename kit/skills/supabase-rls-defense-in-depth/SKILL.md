@@ -27,6 +27,8 @@ LLM carrega esta skill quando precisar desenhar **camadas de defesa** RLS além 
 4. **Camada 4 — Bypass controlado** — `BYPASSRLS` role, `security definer` functions em schema `private` (DEFENSE-02, DEFENSE-04). Nunca em schema exposto.
 5. **Camada 5 — Views com `security_invoker=true`** (DEFENSE-05, Postgres 15+) — views respeitam RLS do role chamador, não do criador.
 6. **Camada 6 — Service role caveat** (DEFENSE-03) — entender que service_role bypassa RLS mas só no servidor; nunca expor ao cliente.
+7. **Camada 7 — Cooperative handoff via supabase-rls-hardener** (v1.23) — todo SQL gerado pelo kit passa pelo hardener canonical antes do output final. Verdicts GO/STRENGTHEN/REWRITE-com-confirmação. Princípio canônico: agents externos pensam/planejam; agents Supabase materializam/hardenam.
+8. **Camada 8 — Column-Level Privileges** (v1.24) — `GRANT/REVOKE (col1, col2) ON TABLE` para restringir colunas sensíveis (PII, audit payload, billing, tokens). Feature AVANÇADA — usar apenas quando RLS + dedicated role table não cobrem o caso. Cross-ref skill [`supabase-column-level-security`](../supabase-column-level-security/SKILL.md).
 
 Razão: RLS é a primeira linha, mas humanos esquecem. Third-party tooling (Metabase, dbt, ferramentas BI conectadas via JDBC, scripts) bypassam toda a lógica da camada de aplicação — só RLS no banco protege. Defense in depth aplica princípio de **proteção sobreposta** para resiliência.
 
@@ -323,17 +325,80 @@ where schemaname = 'public'
   );
 ```
 
-## Resumo — checklist defense-in-depth
+## DEFENSE-06 (v1.24): Column-Level Privileges para PII/audit/billing/tokens
+
+Em tabelas com colunas sensíveis (PII em compliance LGPD/GDPR, audit log payload, billing data, tokens raw), aplique column-level privileges como **Camada 8** de defense-in-depth.
+
+### Quando aplicar
+
+Use o checklist da skill [`supabase-column-level-security`](../supabase-column-level-security/SKILL.md):
+
+- **PII compliance:** SSN, CPF, salary, medical info
+- **Audit log sanitization:** `audit_log.payload` jsonb (legível só por security_admin role)
+- **Billing data:** `credit_card_token`, `bank_account`
+- **Tokens raw:** `org_invites.token_raw` (apenas service_role pós-create)
+
+### Pattern canônico
+
+```sql
+-- 1. REVOKE table-level (perde acesso a TODAS colunas)
+revoke select on table public.audit_log from authenticated;
+
+-- 2. GRANT column-level apenas em colunas não-sensíveis
+grant select (id, event_type, user_id, org_id, occurred_at)
+  on table public.audit_log to authenticated;
+
+-- 3. service_role ou security_admin role mantém acesso total
+grant select on table public.audit_log to service_role;
+```
+
+### Caveat crítico — Wildcard `*` restriction
+
+Com column privileges, **`SELECT *` falha** — clientes devem listar colunas explicitamente:
+
+```js
+// ❌ FALHA — wildcard expansion bate em colunas sem permission
+const { data } = supabase.from('audit_log').select()
+
+// ✅ OK — colunas explicitamente listadas
+const { data } = supabase.from('audit_log').select('id, event_type, user_id, org_id, occurred_at')
+```
+
+### Auditoria — detectar tabelas com PII sem column-level
+
+```sql
+-- detectar colunas potencialmente sensíveis sem column-level GRANT/REVOKE
+select c.table_schema, c.table_name, c.column_name, c.data_type
+from information_schema.columns c
+where c.table_schema = 'public'
+  and (
+    c.column_name ilike any (array[
+      '%email%', '%phone%', '%ssn%', '%cpf%', '%token%',
+      '%password%', '%credit_card%', '%bank_account%', '%salary%'
+    ])
+  )
+  and not exists (
+    select 1 from information_schema.column_privileges p
+    where p.table_schema = c.table_schema
+      and p.table_name = c.table_name
+      and p.column_name = c.column_name
+  );
+```
+
+Cross-ref auditoria sistemática em agent [`supabase-rls-hardener`](../../agents/supabase-rls-hardener.md) Detector 8 (v1.24) — invoca [`supabase-column-privileges-writer`](../../agents/supabase-column-privileges-writer.md) cooperativamente quando detecta gap.
+
+## Resumo — checklist defense-in-depth (8 itens, v1.24)
 
 Use este checklist ao validar projetos Supabase em produção:
 
-- [ ] **DEFENSE-01:** Event trigger `rls_auto_enable` instalado em `ddl_command_end` cobrindo `CREATE TABLE` em schema `public` (auditar com query "tabelas sem RLS" acima).
+- [ ] **DEFENSE-01:** Event trigger `rls_auto_enable` instalado em `ddl_command_end` cobrindo `CREATE TABLE` em schema `public`.
 - [ ] **DEFENSE-02:** Roles admin internos usam `BYPASSRLS` privilege ao invés de service_role API key em scripts/cron jobs.
 - [ ] **DEFENSE-03:** Edge Functions cross-tenant usam admin client separado (`persistSession: false`) ao invés de service_role com sessão user ativa.
 - [ ] **DEFENSE-04:** Lógica admin/cross-tenant encapsulada em funções `SECURITY DEFINER` em schema `private` (não-exposto), com `SET search_path = ''` + input validation + audit log.
 - [ ] **DEFENSE-05:** Views em Postgres 15+ usam `with (security_invoker = true)`; em versões anteriores, revoke acesso de `anon`/`authenticated` ou mover para schema privado.
 - [ ] **GRANT explícito** antes de ENABLE RLS em todas tabelas — sem `grant select to authenticated`, queries falham antes mesmo da policy.
 - [ ] **Cooperative handoff** — qualquer agent/skill/command produzindo SQL passa pelo `supabase-rls-hardener` (v1.23) antes do output final.
+- [ ] **DEFENSE-06 (v1.24):** Column-Level Privileges em tabelas com PII/audit payload/billing/tokens — REVOKE table-level + GRANT column-level granular; clientes listam colunas explicitamente (não `select *`).
 
 ## Cross-suite handoff cooperativo (v1.23)
 

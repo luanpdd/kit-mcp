@@ -527,6 +527,48 @@ using (
 )
 ```
 
+## Combining RLS with Column-Level Privileges (v1.24)
+
+RLS row-level e column-level privileges são **camadas complementares**:
+
+- **RLS** filtra **quais linhas** o role vê/modifica
+- **Column privileges** filtra **quais colunas** o role pode acessar dentro da linha
+
+Combinação canônica: RLS + column-level (Camada 8 de defense-in-depth, skill `supabase-rls-defense-in-depth` v1.24).
+
+```sql
+-- 1. RLS row-level — user só vê próprias posts
+create policy "users_select_own_posts"
+  on public.posts for select to authenticated
+  using ((select auth.uid()) is not null and (select auth.uid()) = user_id);
+
+-- 2. Column-level — mesmo nas próprias posts, user não vê coluna sensível (ex: admin_notes)
+revoke select on table public.posts from authenticated;
+grant select (id, user_id, title, content, created_at) on table public.posts to authenticated;
+
+-- 3. service_role / admin_role vê tudo (incluindo admin_notes)
+grant select on table public.posts to service_role;
+
+-- Cliente DEVE listar colunas explicitamente:
+-- ❌ supabase.from('posts').select()       — FALHA (wildcard expansion → admin_notes)
+-- ✅ supabase.from('posts').select('id, user_id, title, content, created_at')
+```
+
+**Quando combinar:**
+
+- Compliance LGPD/GDPR onde algumas colunas (PII) precisam restrição extra além do RLS
+- Audit log com payload sanitizado — RLS filtra por org, column priv filtra payload
+- Billing data — RLS filtra por owner, column priv filtra credit_card_token
+
+**Quando NÃO combinar:**
+
+- Caso comum (admin/user roles) — use dedicated role table (skill [`supabase-column-level-security`](../supabase-column-level-security/SKILL.md)) ao invés
+- Tabelas sem PII real — overhead sem benefício
+
+**Caveat crítico:** com column privileges, **todo SELECT deve listar colunas explicitamente** — `SELECT *` falha. Atualize SDK calls + queries SQL ad-hoc + ferramentas BI conectadas.
+
+Padrão completo + 4 patterns canônicos em [`supabase-column-level-security`](../supabase-column-level-security/SKILL.md) (v1.24).
+
 ## Bypassing RLS — quando e como
 
 3 mecanismos canônicos para bypass de RLS:
