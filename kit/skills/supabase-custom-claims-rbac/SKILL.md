@@ -422,6 +422,38 @@ $$;
 
 **Certo:** mantenha hook simples — query single table (user_roles), aggregate se necessário, sem JOINs. Se precisa de info complexa, materialize em coluna de user_roles (denormalize).
 
+## Postgres Roles vs Custom Claims — distinção canônica (v1.26)
+
+**Custom Claims** (v1.25) e **Postgres Roles** (v1.26) são conceitos **complementares**, não substitutos:
+
+| | Custom Claims (v1.25) | Postgres Roles (v1.26) |
+|---|---|---|
+| Tipo de access | Application access (end-users) | System access (service accounts) |
+| Identidade | JWT claim `user_role` | Postgres login |
+| Quem usa | End-users via PostgREST | Cron jobs, BI tools, ETL, admin scripts |
+| Granularidade | Per-permission via `authorize()` | Per schema/table/function/column |
+| Dinamicidade | Eventually consistent (TTL refresh) | Estática (alterações via SQL DDL) |
+| Exemplo | "User admin pode deletar messages" | "Cron job pode SELECT em todas tabelas para backup" |
+
+**Combine quando ambos aplicam:**
+
+- End-user com role `admin` (via custom claim) acessa endpoint que invoca função `private.org_analytics()` com SECURITY DEFINER (que tem GRANT EXECUTE apenas para Postgres role `analytics_reader`)
+- Service account `metabase_reader` (Postgres role) acessa view `public.user_active_tasks` com `security_invoker=true` (que respeita RLS via auth.jwt() — mas auth.jwt() é null para Postgres role login, então policies precisam considerar service_role bypass)
+
+**NÃO use Postgres roles para application access:**
+
+- ❌ Criar role Postgres `app_admin` para gerenciar quem é admin no app
+- ❌ Criar role Postgres por end-user
+- ✅ Use RLS + Custom Claims via auth hook (pattern v1.25)
+
+**NÃO use Custom Claims para system access:**
+
+- ❌ Service account cron job autenticando via JWT customizado
+- ❌ BI tool authenticando via auth hook
+- ✅ Use Postgres role dedicado (pattern v1.26)
+
+Padrão completo de Postgres roles em [`supabase-postgres-roles`](../supabase-postgres-roles/SKILL.md) (v1.26).
+
 ## Cross-suite integration (v1.25)
 
 Esta skill é base para o agent novo `supabase-rbac-implementer` (Phase 139) — recebe spec (roles + permissions matrix) via `Task()` e materializa setup completo. Pattern de handoff cooperativo herdado de v1.23/v1.24.

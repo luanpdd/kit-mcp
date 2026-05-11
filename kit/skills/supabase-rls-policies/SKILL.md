@@ -527,6 +527,26 @@ using (
 )
 ```
 
+## Postgres Roles vs RLS — quando usar qual (v1.26)
+
+Postgres roles e RLS são **conceitos complementares**:
+
+| | Postgres Roles | RLS |
+|---|---|---|
+| Escopo | System access (service accounts, cron, BI) | Application access (end-users) |
+| Identidade | Login Postgres (`SET ROLE`) | JWT (`auth.uid()`) |
+| Granularidade | Per schema/table/function | Per linha + coluna |
+| Audit | pg_stat_statements por role | RLS denial logs |
+| Use case | "Cron job pode SELECT em todas tabs" | "User vê apenas próprias rows" |
+
+**Princípio canônico v1.26:**
+
+- **Para end-users:** RLS + Custom Claims (v1.25) — NÃO criar role Postgres por user
+- **Para service accounts:** Postgres roles dedicados (NÃO usar service_role API key sempre)
+- **Para column-level access:** Postgres roles + column-level GRANTs (skill `supabase-column-level-security` v1.24)
+
+Padrão completo de Postgres roles em [`supabase-postgres-roles`](../supabase-postgres-roles/SKILL.md) (v1.26).
+
 ## RBAC via Custom Claims + authorize() function (v1.25)
 
 A partir de v1.25, o pattern **canônico** de RBAC em Supabase é via **Custom Access Token Auth Hook** que injeta `user_role` no JWT durante geração do token. Em vez de policies fazendo JOIN custoso em `user_roles` table, a policy lê o claim direto via `auth.jwt() ->> 'user_role'` (ou via `authorize()` function que abstrai role → permission lookup).

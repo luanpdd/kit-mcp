@@ -160,6 +160,44 @@ end;
 $$;
 ```
 
+### GRANT EXECUTE por role hierarchy (v1.26)
+
+Quando você cria função PG que será chamada por múltiplos service accounts, use role hierarchy + GRANT EXECUTE para gerenciar permissions:
+
+```sql
+-- group role para read-only services
+create role "readers_group" noinherit;
+
+-- service accounts individuais inheritam de readers_group
+create role "metabase_reader" with login password '<secret>';
+grant readers_group to metabase_reader;
+
+create role "analytics_reader" with login password '<secret>';
+grant readers_group to analytics_reader;
+
+-- conceder EXECUTE em função canônica para o group
+grant execute on function public.get_org_metrics(uuid) to readers_group;
+-- agora metabase_reader e analytics_reader podem executar via inheritance
+```
+
+**Pattern com schema privado:**
+
+```sql
+-- função sensitive em schema private (não exposta via API)
+create function private.expensive_aggregation(org_id uuid)
+returns table(metric text, value bigint)
+language plpgsql security definer set search_path = ''
+as $$ ... $$;
+
+-- revoke default
+revoke execute on function private.expensive_aggregation(uuid) from public;
+
+-- conceder apenas para custom role
+grant execute on function private.expensive_aggregation(uuid) to readers_group;
+```
+
+Cross-ref completo de Postgres roles em [`supabase-postgres-roles`](../supabase-postgres-roles/SKILL.md) (v1.26).
+
 ### Pattern Custom Access Token Auth Hook (v1.25)
 
 Functions invocadas como **Auth Hooks** (ex: Custom Access Token) precisam permissions específicos para `supabase_auth_admin` role + REVOKE de roles públicos. Pattern canônico:

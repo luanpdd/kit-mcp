@@ -102,6 +102,16 @@ create index if not exists <table>_user_id_idx on public.<table> (user_id);
 -- revoke select on table public.<table> from authenticated;
 -- grant select (id, user_id, title, content, created_at) on table public.<table> to authenticated;
 -- (service_role mantém acesso total — não precisa GRANT extra)
+
+-- BLOCO 7 (v1.26, OPCIONAL): CREATE ROLE para custom service accounts
+-- ⚠ Adicionar APENAS se há service accounts internos (cron jobs, BI tools, ETL, admin scripts)
+-- Para application access (end-users), prefira RLS + Custom Claims (skill supabase-custom-claims-rbac v1.25)
+-- Exemplo: role dedicado para cron job de cleanup
+-- create role "cron_cleanup_role" noinherit;
+-- alter role "cron_cleanup_role" with bypassrls;
+-- grant usage on schema public to cron_cleanup_role;
+-- grant delete on public.<table> to cron_cleanup_role;
+-- comment on role "cron_cleanup_role" is 'Service account para cron job de cleanup. Owner: team@company.com';
 ```
 
 ## Patterns canônicos
