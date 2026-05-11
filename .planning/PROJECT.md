@@ -1,7 +1,7 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-11 — milestone v1.25 (Custom Claims & RBAC via Auth Hooks) entregue.
+> Última atualização: 2026-05-11 — milestone v1.26 (Postgres Roles) iniciado.
 
 ## Estado Atual
 
@@ -9,15 +9,43 @@
 
 **Stack acumulado:** v1.8 (Supabase) + v1.9 (Observabilidade) + v1.10 (SRE Engagement) + v1.11 (SRE Resilience) + v1.12 (Legacy Code Mastery) + v1.13-v1.20 (Hardening + Suítes auto-aplicadas + PRR 30/30) + v1.21 (Multi-Tenant SaaS B2B) + v1.22 (DDIA Foundations) + v1.23 (Reforço RLS) + v1.24 (Column-Level Security) + **v1.25 (Custom Claims & RBAC)**. **8 suítes ativas no kit** + framework maduro. Defense-in-depth: **9 camadas** (Camada 9 = Auth Hooks Custom Claims). Cross-suite invocation pattern formalizado v1.21, enriquecido v1.23 (handoff cooperativo SQL), estendido v1.24 (column-level), **estendido v1.25 (RBAC via custom claims)**. **Total cross-suite handoffs cumulativos: 20** (12 RLS v1.23 + 5 column v1.24 + 3 RBAC v1.25). Convenção PT-BR mantida.
 
-## Próximo milestone: v1.26 (a definir)
+## Milestone Atual: v1.26 Postgres Roles
 
-**Possíveis candidatos para v1.26:**
-- Outros Auth Hooks (Send Email, Send SMS, MFA Verification, Password Verification, etc.) — completar a suíte de hooks além do Custom Access Token (v1.25)
-- Supabase Vault (encryption at rest) — proteção em repouso para PII
-- MFA enforcement patterns (AAL2 obrigatório por role/permission)
-- Tech debt parqueado de v1.20-v1.25
+**Objetivo:** Adicionar pattern canônico de **Postgres Roles management** à Suíte Supabase. Complementa as 3 trilhas anteriores (RLS row-level v1.23 + Column-Level v1.24 + Custom Claims RBAC v1.25) com a **fundação** que sustenta todas elas: roles Postgres que definem **system access** (custom service accounts, role hierarchy, INHERIT/NOINHERIT). Application access continua via RLS + Custom Claims; Postgres roles são para system-level access.
 
-**Próximo passo:** `/novo-marco` para iniciar v1.26.
+**Princípio canônico (herdado v1.23, estendido v1.24/v1.25/v1.26):** Agents não-Supabase pensam/planejam. Agents Supabase materializam/hardenam. Nenhum lado descarta upstream. Para Postgres roles, novo agent `supabase-roles-implementer` é canonical handoff target.
+
+**Distinção canônica (da doc oficial):**
+- **Application access** (RLS + Custom Claims): users vendo linhas/colunas baseado em `auth.uid()` e `auth.jwt()->>'user_role'`
+- **System access** (Postgres Roles): service accounts internos com permissions específicos (cron jobs, BI tools, ETL, admin scripts)
+
+**10 Predefined Supabase Roles documentados (não criar; documentar):** `postgres`, `anon`, `authenticator`, `authenticated`, `service_role`, `supabase_auth_admin`, `supabase_storage_admin`, `supabase_etl_admin`, `dashboard_user`, `supabase_admin`.
+
+**Quando criar custom role (recomendação canônica v1.26):**
+- Service accounts internos (cron jobs, BI tools, ETL) — não usar service_role API key
+- Roles administrativos com BYPASSRLS (`security_admin`, `dpo_role`, `lead_manager`, `platform_admin`)
+- Roles para column-level GRANTs específicos (cross-ref v1.24)
+
+**Funcionalidades alvo (6 entregáveis):**
+
+1. **Skill nova `supabase-postgres-roles`** — roles vs users, CREATE ROLE, password best practices + percent-encoding, GRANT/REVOKE, role hierarchy (INHERIT/NOINHERIT), 10 predefined Supabase roles documentados, quando criar custom role, anti-patterns
+
+2. **Patches em skills existentes (5 artefatos):** `supabase-rls-policies` (section roles vs RLS), `supabase-rls-defense-in-depth` (Camada 10 roles hierarchy), `supabase-database-functions` (expandir GRANT EXECUTE), `supabase-migrations` (BLOCO 7 opcional CREATE ROLE), `supabase-custom-claims-rbac` v1.25 (cross-ref distinção)
+
+3. **Agent novo `supabase-roles-implementer`** — recebe spec via Task(), materializa CREATE ROLE + hierarchy + GRANT/REVOKE + password security; verdicts GO/STRENGTHEN/REWRITE
+
+4. **Patches em agents Supabase (3 artefatos):** `supabase-rls-hardener` (Detector 10 roles audit), `supabase-architect` (prompt upfront), `/supabase` command (subcomando `role` / `papel`)
+
+5. **Cross-suite handoff (4 agents v1.21):** audit-log → `security_admin`, lgpd → `dpo_role`, crm → `lead_manager`, super-admin → `platform_admin`
+
+6. **Release artifacts:** AUTOGEN-COUNTS regen (63→64 agents, 70→71 skills), file-manifest, CHANGELOG, glossário +8 termos, package.json bump 1.25.0→1.26.0
+
+**Decisões de stack:**
+- Zero deps novas. Conteúdo PT-BR alinhado v1.22-v1.25. Code blocks SQL EN com comentários PT-BR.
+- Roadmap começa em **Phase 143** (continuação de v1.25 que terminou em 142).
+- **Caveat:** Postgres roles são para **system access**; para application access use RLS + Custom Claims. Não criar custom roles para "admin vs user" (use dedicated role table + custom claim v1.25).
+
+**Próximo passo após v1.26:** v1.27 (a definir).
 
 ## ~~Milestone Anterior: v1.25 Custom Claims & RBAC via Auth Hooks~~ (entregue 2026-05-11)
 
