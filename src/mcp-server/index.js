@@ -424,4 +424,15 @@ export async function startStdio() {
   // the boot path, where it's invisible behind IDE startup. See skill
   // production-readiness-review (Performance axe) for the rationale.
   listKit(BUNDLED_KIT_ROOT).catch(() => {});
+
+  // Phase 157 (v1.28): sidecar UI auto-spawn ON by default. Resolves the
+  // "kit-mcp has no terminal feedback" pain — operators can now see live
+  // tool calls in a browser without needing to set autoSpawn: true per tool.
+  // Escape hatch: KIT_MCP_NO_UI=1 (CI, headless, opt-out). Fire-and-forget:
+  // sidecar failure must never block the MCP transport (spec requires clean
+  // stdout). Errors are swallowed silently — kit doctor will surface them.
+  if (process.env.KIT_MCP_NO_UI !== '1' && process.env.KIT_MCP_NO_UI !== 'true') {
+    const projectRoot = process.cwd();
+    ensureSidecar({ projectRoot, openBrowserOnSpawn: false }).catch(() => {});
+  }
 }
