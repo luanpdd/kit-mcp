@@ -670,6 +670,30 @@ async function runDoctorChecks(projectRoot) {
     }
   } catch { /* tmpdir scan is best-effort */ }
 
+  // 8. (v1.28) log dir writable — required for kit logs
+  try {
+    const dir = logDir();
+    fs.mkdirSync(dir, { recursive: true });
+    const probe = path.join(dir, `.doctor-probe-${process.pid}`);
+    fs.writeFileSync(probe, '', 'utf8');
+    fs.unlinkSync(probe);
+    const files = listLogs();
+    checks.push({ label: 'log dir', status: 'pass',
+      detail: `${dir} writable (${files.length} log file${files.length === 1 ? '' : 's'})` });
+  } catch (err) {
+    checks.push({ label: 'log dir', status: 'fail',
+      detail: `${logDir()} not writable: ${err.message}`,
+      fix: 'check permissions or set KIT_MCP_LOG_DIR to a writable path' });
+  }
+
+  // 9. (v1.28) sidecar auto-spawn config — informational
+  const noUi = process.env.KIT_MCP_NO_UI === '1' || process.env.KIT_MCP_NO_UI === 'true';
+  checks.push({ label: 'sidecar auto-spawn', status: noUi ? 'warn' : 'pass',
+    detail: noUi
+      ? 'KIT_MCP_NO_UI=1 — sidecar will NOT auto-start on MCP boot'
+      : 'enabled (default) — sidecar starts when MCP server boots',
+    fix: noUi ? 'unset KIT_MCP_NO_UI if you want live tool-call visibility' : undefined });
+
   return checks;
 }
 
