@@ -23,6 +23,64 @@ Inspired by [vinilana/dotcontext](https://github.com/vinilana/dotcontext) — se
 
 ---
 
+## How kit-mcp works (mental model)
+
+There are **two completely different surfaces** with similar names. Understanding the split eliminates 90% of "is it working?" confusion.
+
+### Flow A — `kit sync` / `kit install` — the **projector** (offline, one-shot)
+
+Reads `kit/` from the npm package and **writes markdown files** into your IDE's native layout. Terminates and exits. Claude Code (or Cursor, Codex, etc.) reads those files **from disk** when it starts — `kit-mcp` does not need to be running for skills/agents to be discoverable.
+
+```
+┌─────────────┐  kit sync     ┌──────────────────┐
+│ kit/        │ ──────────▶   │ .claude/agents/  │  Claude Code
+│ (npm pkg)   │  (one-shot)   │ .claude/skills/  │  reads markdown
+│  agents/    │               │ .claude/commands/│  on startup
+│  skills/    │               └──────────────────┘
+│  commands/  │
+└─────────────┘  Other targets: .cursor/, AGENTS.md, GEMINI.md, …
+```
+
+### Flow B — `kit-mcp` — the **MCP server** (long-running, stdio)
+
+A JSON-RPC server over stdin/stdout exposing 7 tools (`kit`, `sync`, `gates`, `forensics`, `install`, `metrics-snapshot`, `reverse-sync`). Your IDE connects via `.mcp.json`. Lives as long as the IDE keeps it spawned.
+
+```
+┌──────────────┐  spawns        ┌──────────────────┐
+│ Claude Code  │ ────────────▶  │ kit-mcp (stdio)  │
+│  (IDE host)  │  stdin/stdout  │  7 tools         │
+│              │ ◀────────────  │  JSON-RPC        │
+└──────────────┘  JSON-RPC      └──────────────────┘
+                                         │
+                                         ├─▶ ~/.kit-mcp/logs/*.log  (Flow B telemetry)
+                                         └─▶ Sidecar UI (auto-spawn) ← optional
+```
+
+### When do I use what?
+
+| Action                                | Flow | Command                          | When to run                             | Who consumes the result        |
+|---------------------------------------|------|----------------------------------|-----------------------------------------|--------------------------------|
+| First-time install into an IDE        | A    | `kit install claude-code`        | Once per IDE per project                | Markdown files in IDE layout   |
+| Refresh kit content after npm update  | A    | `kit sync claude-code`           | After `npm i -g @luanpdd/kit-mcp@latest`| Same as above (overwrites)     |
+| Let Claude Code call kit tools live   | B    | configured via `.mcp.json`       | Auto-spawned by IDE on session start    | Claude Code agent tools        |
+| Diagnose why something feels broken   | B    | `kit doctor` (v1.28+)            | Whenever flow B looks silent            | Human reading terminal         |
+| See live tool calls / debug           | B    | `kit logs --tail` (v1.28+)       | While IDE session is running            | Human reading terminal         |
+
+### Why no terminal output when I run `kit-mcp`?
+
+Not a bug. **The MCP spec forbids printing to stdout outside JSON-RPC** — any stray write breaks the protocol. So when you launch `kit-mcp` directly, the terminal looks frozen but the server is healthy and waiting for an IDE to connect over stdin.
+
+To see what's happening:
+
+- `kit logs --tail` — every tool invocation is appended to `~/.kit-mcp/logs/kit-mcp-YYYY-MM-DD.log` (JSONL)
+- `kit doctor` — health check that exercises spawn, sync state, and IDE compatibility
+- Sidecar UI — auto-spawns at `http://localhost:7878` showing tool calls live (set `KIT_MCP_NO_UI=1` to disable)
+- `kit mcp --inspect` (v1.28+) — dev TUI that mirrors every request/response
+
+If you want raw verification right now: `echo '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' | npx @luanpdd/kit-mcp` returns the tool list — proof the server speaks.
+
+---
+
 <!-- AUTOGEN-COUNTS-START -->
 **Bundled workflow:** 66 agents · 89 commands · 76 skills · 23 gates
 <!-- AUTOGEN-COUNTS-END -->
