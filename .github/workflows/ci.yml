@@ -186,17 +186,24 @@ jobs:
           # known node:test quirk on coverage runs). We tolerate non-zero exit
           # as long as the "all files" footer is present and parseable. The
           # threshold check below is the real gate.
-          set +e
+          # Disable -e + pipefail for the whole step so a SIGPIPE in any
+          # downstream pipe (grep | head | awk | tr) doesn't silently abort.
+          # We track failures explicitly via $? and exit at the end.
+          set +e +o pipefail
+
           node --experimental-test-coverage --test test/unit/*.test.js > coverage.txt 2>&1
           NODE_EXIT=$?
-          set -e
-          # Parse "all files" footer row. Field 2 (after split on '|') is line %.
-          LINE_COV=$(grep "^ℹ all files" coverage.txt | head -1 | awk -F'|' '{print $2}' | tr -d ' %')
+
+          # Parse "all files" footer row using awk only (single process, no pipes).
+          # Format: "ℹ all files                 |  81.51 |    78.52 |   76.32 |"
+          LINE_COV=$(awk -F'|' '/^ℹ all files/ { gsub(/[ %]/, "", $2); print $2; exit }' coverage.txt)
+
           if [ -z "$LINE_COV" ]; then
             echo "::error::could not parse line coverage from coverage.txt (node exit=$NODE_EXIT)"
             tail -80 coverage.txt
             exit 1
           fi
+
           if [ "$NODE_EXIT" -ne 0 ]; then
             echo "::warning::node coverage run exited $NODE_EXIT but report was generated; tolerating since Tests step is the source of truth"
           fi
