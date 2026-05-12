@@ -1,6 +1,6 @@
 {
-  "version": "1.26.0",
-  "timestamp": "2026-05-11T07:14:54.974Z",
+  "version": "1.28.0",
+  "timestamp": "2026-05-12T11:42:48.828Z",
   "files": {
     "COMANDOS.md": "d24ec61a6ec35db314cc5f2ae287bfb927b794789c8f1d558c55862f5e6534b2",
     "COMPATIBILITY.md": "794e336a87045cdf0161785b9a7a0975a49abbd80bdd816b8852251fcc8126ca",
@@ -307,7 +307,7 @@
     "skills/_shared-multi-tenant/glossary.md": "1e040a36025489859312430771dde13bde9c62098fcd100440a82a2bb4d22b6a",
     "skills/_shared-observability/glossary.md": "ec3892c226af03299c0875e36fd0170cc9f801b02df52a2e0ec5c7468229912a",
     "skills/_shared-sre/glossary.md": "55a052c7d2292622150ed1cbb5aa0d675c332287b00ee4e3dd84900f9cf0ec84",
-    "skills/_shared-supabase/glossary.md": "24a794d195bdcf7ee6a5cc5c81b0ca93e3c8470afee6965fb104d9490072c450",
+    "skills/_shared-supabase/glossary.md": "5896a4d44c1027aff3ef5d6484dc4789ddd2332921ea8bea3dd7ed4b6443c7a0",
     "skills/ai-prompt-characterization/SKILL.md": "1a8114296c754e2018b1c1fd428c364f8de4485fedd5df78d3afcb33c3fef1a4",
     "skills/armadilhas-sistemas-distribuidos/SKILL.md": "fd33913c41a03f37eaa5fbc2aa3c33321397daa98a505ccb5f2d692dd8a00d5a",
     "skills/audit-log-multi-tenant/SKILL.md": "877871e609008ec04c805c3f1c6de494c80adc838285eae119a23355a13bbe48",
