@@ -32,6 +32,7 @@ import { installMcp, listInstallTargets } from './install.js';
 import { ensureSidecar } from '../ui/auto-spawn.js';
 import { wrapProgressForUi } from '../ui/wrapper.js';
 import { incrementInvocation, recordLatency, snapshot as metricsSnapshot, persistSnapshot } from '../core/metrics.js';
+import { logEvent } from '../core/logger.js';
 
 const TOOLS = [
   {
@@ -384,18 +385,43 @@ export async function createServer() {
     // being ready. Date.now() is sub-millisecond-cheap and aligns with the bucket
     // granularity we report (50/100/250/500ms thresholds in CONTEXT.md).
     const start = Date.now();
+    const argsSize = args ? JSON.stringify(args).length : 0;
     try {
       const result = await handler(args ?? {});
-      recordLatency(name, Date.now() - start);
+      const duration = Date.now() - start;
+      recordLatency(name, duration);
       incrementInvocation(name, 'ok');
+      // Phase 158 (v1.28): JSONL log per tool call → ~/.kit-mcp/logs/*.log.
+      // Fire-and-forget; never blocks the handler.
+      try {
+        logEvent({
+          tool: name,
+          action: args?.action,
+          args_size: argsSize,
+          result_size: result ? JSON.stringify(result).length : 0,
+          duration_ms: duration,
+          status: 'ok',
+        });
+      } catch { /* swallow */ }
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     } catch (e) {
       // OBS-18: still record latency on the error path — half the value of a
       // latency histogram is catching tail-latency-then-fail patterns. Status
       // 'error' covers any thrown exception, including Phase 79.01 gates guard
       // and the validateProjectRoot rejection (Phase 83.01).
-      recordLatency(name, Date.now() - start);
+      const duration = Date.now() - start;
+      recordLatency(name, duration);
       incrementInvocation(name, 'error');
+      try {
+        logEvent({
+          tool: name,
+          action: args?.action,
+          args_size: argsSize,
+          duration_ms: duration,
+          status: 'error',
+          error_type: e?.code || e?.name || 'Error',
+        });
+      } catch { /* swallow */ }
       // SEC-14-06: full stack stays in stderr for operator debug; client envelope is sanitized.
       // sanitizeMcpError redacts secrets/paths from e.message, preserves e.code (Phase 83
       // EMANIFESTMISMATCH invariant), and emits NO stack field.

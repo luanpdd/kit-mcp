@@ -27,6 +27,7 @@ import { collectFailures, summarizeByAgent, writeLearnings } from '../core/failu
 import { reflect } from '../core/reflect.js';
 import { listReplays, loadReplay } from '../core/replays.js';
 import { installMcp, listInstallTargets } from '../mcp-server/install.js';
+import { listLogs, tailLogs, logDir, currentLogPath } from '../core/logger.js';
 import * as render from './render.js';
 import { c, icons, spinner, progress, select, confirm } from '../core/ui.js';
 import { readLock, lockPathFor } from '../ui/lockfile.js';
@@ -738,5 +739,49 @@ function renderUiStatusFallback(v) {
     '',
   ].join('\n');
 }
+
+// --- logs (Phase 158, v1.28: tail kit-mcp tool-call log) ---
+program.command('logs')
+  .description('Tail JSONL logs of MCP tool invocations (~/.kit-mcp/logs/).')
+  .option('--tail <n>', 'show last N lines (default 50)', '50')
+  .option('--follow', 'keep streaming new events as they arrive')
+  .option('--path', 'print the current log file path and exit')
+  .action(async (opts) => {
+    if (opts.path) {
+      process.stdout.write(`${currentLogPath()}\n`);
+      return;
+    }
+    const lines = parseInt(opts.tail, 10) || 50;
+    const files = listLogs();
+    if (files.length === 0) {
+      process.stderr.write(`${c.yellow(icons.warn)} no logs yet at ${logDir()}\n`);
+      process.stderr.write(`${c.dim('logs are appended when the MCP server handles a tool call')}\n`);
+      process.exit(0);
+    }
+    const isJson = program.opts().json;
+    const render = (raw) => {
+      if (isJson) { process.stdout.write(raw + '\n'); return; }
+      try {
+        const ev = JSON.parse(raw);
+        const t = ev.ts ? ev.ts.replace('T', ' ').replace('Z', '') : '?';
+        const status = ev.status === 'ok' ? c.green(icons.check) : c.red(icons.cross);
+        const tool = c.bold(ev.tool || '?');
+        const action = ev.action ? c.dim(`[${ev.action}]`) : '';
+        const dur = ev.duration_ms !== undefined ? c.cyan(`${ev.duration_ms}ms`) : '';
+        const err = ev.error_type ? c.red(` (${ev.error_type})`) : '';
+        process.stdout.write(`${c.dim(t)}  ${status} ${tool} ${action} ${dur}${err}\n`);
+      } catch {
+        process.stdout.write(raw + '\n');
+      }
+    };
+
+    const t = tailLogs({ lines, follow: !!opts.follow, onLine: render });
+    if (opts.follow) {
+      process.stdout.write(`${c.dim(`-- following ${currentLogPath()} (Ctrl-C to stop) --`)}\n`);
+      process.on('SIGINT', () => { t.stop(); process.exit(0); });
+      // keep process alive
+      await new Promise(() => {});
+    }
+  });
 
 program.parseAsync(process.argv);
