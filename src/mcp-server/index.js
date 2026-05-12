@@ -34,6 +34,7 @@ import { wrapProgressForUi } from '../ui/wrapper.js';
 import { incrementInvocation, recordLatency, snapshot as metricsSnapshot, persistSnapshot } from '../core/metrics.js';
 import { logEvent } from '../core/logger.js';
 import { notify, isNotifyEnabled } from '../core/notify.js';
+import { attachRootsCapability, fetchRoots } from './roots.js';
 
 const TOOLS = [
   {
@@ -365,8 +366,19 @@ function slimTerse(x) {
 export async function createServer() {
   const server = new Server(
     { name: 'kit-mcp', version: PKG_VERSION },
-    { capabilities: { tools: {} } }
+    {
+      // Phase 166 (v1.29): declare client-side capabilities we want to consume.
+      // `roots` lets us learn projectRoot from the host instead of guessing
+      // from process.cwd(). `listChanged: true` means we'll handle the
+      // notifications/roots/list_changed event to refresh our cache.
+      capabilities: { tools: {} },
+      enforceStrictCapabilities: false,
+    }
   );
+
+  // Register notification handlers before connect. The roots/list REQUEST
+  // is sent from server to client after `initialized` (kicked off in startStdio).
+  attachRootsCapability(server);
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
 
@@ -456,6 +468,13 @@ export async function startStdio() {
   const server = await createServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
+
+  // Phase 166 (v1.29): fetch workspace roots from the client right after
+  // connection. Fire-and-forget — the request will either succeed (host
+  // supports roots) or fail silently (older host, or no workspace yet).
+  // The cached result is available via getPrimaryProjectRoot() from
+  // ./roots.js for any subsequent tool dispatch that needs the project dir.
+  fetchRoots(server).catch(() => { /* swallow — fallback to cwd */ });
 
   // SRE-20-02 (Phase 105): pre-warm the kit cache to push MCP dispatch p95
   // below 100ms. Without this, the very first tools/call against `kit` pays
