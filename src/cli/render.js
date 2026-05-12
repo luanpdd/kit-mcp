@@ -85,6 +85,13 @@ export function renderSyncInstall(result) {
     if (counts[cap] !== undefined) rows.push([cap, counts[cap]]);
   }
   const visibleTotal = Object.values(counts).reduce((a, b) => a + b, 0);
+  // Phase 160 (v1.28): append diff tally row if cli attached one.
+  if (result._tally) {
+    const w = result._tally.written;
+    const s = result._tally.skipped;
+    rows.push(['new / updated', w]);
+    rows.push(['unchanged', s]);
+  }
   return summary({
     title: `Synced kit → ${result.target}${result.dryRun ? ' (dry-run)' : ''}`,
     rows,

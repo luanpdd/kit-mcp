@@ -218,14 +218,28 @@ sync.command('install [target]')
   .option('--project-root <path>')
   .option('--mode <mode>', 'reference | copy', 'reference')
   .option('--dry-run')
+  .option('--quiet', 'Suppress per-file progress; keep final summary')
   .action(async (target, opts) => {
     if (!target) target = await pickTarget(listTargets(), 'Which IDE do you want to sync the kit into?');
-    const result = await withProgress(
-      `Syncing kit → ${target}`,
-      300,
-      (onProgress) => syncTo(target, { projectRoot: opts.projectRoot, mode: opts.mode, dryRun: opts.dryRun, onProgress }),
-      { tool: 'sync.install', projectRoot: opts.projectRoot },
-    );
+    // Phase 160 (v1.28): count written vs skipped so the post-sync summary
+    // can render "X new/updated, Y unchanged".
+    const tally = { written: 0, skipped: 0 };
+    const wrapOnProgress = (orig) => (ev) => {
+      if (ev?.skipped) tally.skipped += 1;
+      else tally.written += 1;
+      if (orig) orig(ev);
+    };
+    const runSync = (onProgress) => syncTo(target, {
+      projectRoot: opts.projectRoot,
+      mode: opts.mode,
+      dryRun: opts.dryRun,
+      onProgress: wrapOnProgress(opts.quiet ? null : onProgress),
+    });
+    const result = opts.quiet
+      ? await runSync()
+      : await withProgress(`Syncing kit → ${target}`, 300, runSync,
+          { tool: 'sync.install', projectRoot: opts.projectRoot });
+    result._tally = tally; // surfaced by renderSyncInstall (v1.28)
     out(result, render.renderSyncInstall);
   });
 sync.command('remove <target>')
