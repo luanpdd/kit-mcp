@@ -394,14 +394,22 @@ export async function createServer() {
       // Phase 158 (v1.28): JSONL log per tool call → ~/.kit-mcp/logs/*.log.
       // Fire-and-forget; never blocks the handler.
       try {
-        logEvent({
+        const ev = {
           tool: name,
           action: args?.action,
           args_size: argsSize,
           result_size: result ? JSON.stringify(result).length : 0,
           duration_ms: duration,
           status: 'ok',
-        });
+        };
+        // Phase 163 (v1.28): when KIT_MCP_INSPECT=1, also capture raw args/result
+        // so `kit inspect` can render full request/response live. Off by default
+        // because payloads can be large and may contain user paths.
+        if (process.env.KIT_MCP_INSPECT === '1' || process.env.KIT_MCP_INSPECT === 'true') {
+          ev.args = args ?? null;
+          ev.result = result ?? null;
+        }
+        logEvent(ev);
       } catch { /* swallow */ }
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     } catch (e) {

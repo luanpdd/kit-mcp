@@ -908,6 +908,48 @@ program.command('init')
     }
   });
 
+// --- inspect (Phase 163, v1.28: live TUI mirror of MCP request/response) ---
+program.command('inspect')
+  .description('Live request/response mirror — pretty-print MCP tool calls as they happen.')
+  .option('--tail <n>', 'show last N events (default 20)', '20')
+  .action(async (opts) => {
+    const lines = parseInt(opts.tail, 10) || 20;
+    if (process.env.KIT_MCP_INSPECT !== '1' && process.env.KIT_MCP_INSPECT !== 'true') {
+      process.stderr.write(`${c.yellow(icons.warn)} verbose payload capture is OFF\n`);
+      process.stderr.write(`${c.dim('set KIT_MCP_INSPECT=1 in the env where kit-mcp runs to capture args/result')}\n`);
+      process.stderr.write(`${c.dim('(events are still tailed; just without payloads)')}\n\n`);
+    }
+
+    const render = (raw) => {
+      try {
+        const ev = JSON.parse(raw);
+        const t = ev.ts ? ev.ts.replace('T', ' ').replace('Z', '') : '?';
+        const status = ev.status === 'ok' ? c.green('●') : c.red('●');
+        const tool = c.bold(ev.tool || '?');
+        const action = ev.action ? c.cyan(ev.action) : '';
+        const dur = ev.duration_ms !== undefined ? c.dim(`(${ev.duration_ms}ms)`) : '';
+        process.stdout.write(`\n${status} ${c.dim(t)}  ${tool} ${action} ${dur}\n`);
+        if (ev.args !== undefined) {
+          process.stdout.write(`  ${c.dim('req:')}  ${JSON.stringify(ev.args)}\n`);
+        }
+        if (ev.result !== undefined && ev.result !== null) {
+          const pretty = JSON.stringify(ev.result);
+          process.stdout.write(`  ${c.dim('res:')}  ${pretty.length > 200 ? pretty.slice(0, 200) + '…' : pretty}\n`);
+        }
+        if (ev.error_type) {
+          process.stdout.write(`  ${c.red('err:')}  ${ev.error_type}\n`);
+        }
+      } catch {
+        process.stdout.write(raw + '\n');
+      }
+    };
+
+    const t = tailLogs({ lines, follow: true, onLine: render });
+    process.stdout.write(`${c.dim(`-- inspecting ${currentLogPath()} (Ctrl-C to stop) --`)}\n`);
+    process.on('SIGINT', () => { t.stop(); process.exit(0); });
+    await new Promise(() => {});
+  });
+
 // --- logs (Phase 158, v1.28: tail kit-mcp tool-call log) ---
 program.command('logs')
   .description('Tail JSONL logs of MCP tool invocations (~/.kit-mcp/logs/).')
