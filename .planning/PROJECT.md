@@ -1,22 +1,49 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-11 — milestone v1.27 (Supabase Branching & CI/CD Workflow) entregue.
+> Última atualização: 2026-05-12 — milestone v1.28 (UX & Onboarding) iniciado.
 
 ## Estado Atual
 
+**v1.28.0 — UX & Onboarding — kit-mcp developer experience** **iniciado** 2026-05-12. Primeiro milestone **não-conteúdo** desde v1.20 — foco em fluxo de uso do MCP server: feedback visual do servidor stdio, onboarding interativo, observabilidade local (logs/doctor/status), inspector dev, replay debug. Resposta a dores reais reportadas: "rodo `kit-mcp` e não tenho feedback no terminal", "não entendo a diferença entre o servidor MCP e o sync de skills".
+
+## Milestone Atual: v1.28 UX & Onboarding
+
+**Objetivo:** Eliminar opacidade do servidor MCP stdio e reduzir tempo-até-primeiro-uso (TTFU) de novos consumidores do kit-mcp, expondo observabilidade local e onboarding guiado sem violar a spec MCP (stdout limpo).
+
+**Funcionalidades alvo (10 fases — Wave 1 + Wave 2 + Wave 3):**
+
+| Fase | Entregável | Wave | Effort |
+|---|---|---|---|
+| 156 | README com diagrama claro de 2 fluxos (projeção offline vs servidor live) + tabela "quando uso o quê" | 1 | XS |
+| 157 | Sidecar UI auto-spawn ON por padrão (`KIT_MCP_NO_UI=1` para desligar) — reusa `src/ui/auto-spawn.js` | 1 | S |
+| 158 | Log file rotativo `~/.kit-mcp/logs/` + `kit logs --tail` (tipo `vercel logs`) | 1 | S |
+| 159 | `kit doctor` — verifica server alcançável, `.claude/` projetado, file-manifest match, versão IDE | 1 | M |
+| 160 | `kit sync` com progress bar real (ora/listr2) + diff sumário (X new, Y updated, Z unchanged) | 2 | S |
+| 161 | `kit init` onboarding interativo — pergunta IDE, install + sync + doctor, mostra confirmação | 2 | M |
+| 162 | `kit status` — chama `metrics-snapshot` e renderiza p50/p95/error_rate última hora | 2 | S |
+| 163 | `kit mcp --inspect` — TUI dev mode mostrando request/response live (MCP Inspector embutido) | 3 | M |
+| 164 | Notification on tool call (opt-in OS-level via node-notifier) — confirma chamadas em dev | 3 | S |
+| 165 | `kit replay <id>` — reexecuta tool call localmente fora do Claude para debug (reusa `core/replays.js`) | 3 | M |
+
+**Decisões de stack:**
+- Zero deps novas críticas — listr2/ora/node-notifier opcionais via peerDeps
+- Stable API v1.0+ preservada (sem breaking changes em tools MCP)
+- Conteúdo PT-BR alinhado v1.22-v1.27
+- Roadmap começa em **Phase 156** (continuação de v1.27 que terminou em 155)
+- **Princípio:** UX additions não tocam protocolo MCP stdio — stdout permanece JSON-RPC puro; toda telemetria vai para sidecar HTTP/log files/stderr
+
+**Decisões abertas para `/discutir-fase`:**
+- Sidecar UI: porta default 7878 ou random? Lockfile-based discovery já existe.
+- Log retention default: 7 dias ou unlimited com cap em MB?
+- `kit init` aceita non-interactive flag para CI?
+- TUI inspect usa blessed, ink, ou raw ANSI?
+
+**Próximo passo após v1.28:** v1.29 (a definir — candidatos remanescentes de v1.27 backlog: Supabase Vault, Backup & Recovery, outros Auth Hooks).
+
+## ~~Milestone Anterior: v1.27 Supabase Branching & CI/CD Workflow~~ (entregue 2026-05-11)
+
 **v1.27.0 — Supabase Branching & CI/CD Workflow** **entregue** 2026-05-11 (Phases 149-155, 7 phases, 45 REQs, 20 atomic commits, content-only milestone). Adicionou **9ª trilha de maturidade** (deployment maturity) — ortogonal às 4 trilhas de segurança Supabase (RLS v1.23 + Column-Level v1.24 + Custom Claims v1.25 + Postgres Roles v1.26). 5 skills novas + 2 agents novos + 3 cross-suite enrichments. 27 cross-suite handoffs cumulativos. AUTOGEN-COUNTS: 64→**66 agents**, 89 commands (mantido), 71→**76 skills**, 23 gates (mantido); file-manifest 375→**382 files**. Stable API v1.0+ preservada cross-**15 releases** (v1.13→v1.27). PRR 30/30 mantido. Defense-in-depth: 10 camadas mantidas (v1.27 ortogonal).
-
-## Próximo milestone: v1.28 (a definir)
-
-**Possíveis candidatos:**
-- Supabase Vault (encryption at rest) — proteção em repouso para PII columns
-- Backup & Recovery dedicado (RTO/RPO, PITR, restore drills)
-- Outros Auth Hooks (Send Email, Send SMS, MFA Verification, Password Verification, Before User Created)
-- MFA enforcement patterns (AAL2 obrigatório)
-- Terraform provider (alternativa IaC)
-
-**Próximo passo:** `/novo-marco` para iniciar v1.28.
 
 ## ~~Milestone Anterior: v1.27 Supabase Branching & CI/CD Workflow~~ (entregue 2026-05-11)
 

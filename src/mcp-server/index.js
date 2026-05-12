@@ -32,6 +32,8 @@ import { installMcp, listInstallTargets } from './install.js';
 import { ensureSidecar } from '../ui/auto-spawn.js';
 import { wrapProgressForUi } from '../ui/wrapper.js';
 import { incrementInvocation, recordLatency, snapshot as metricsSnapshot, persistSnapshot } from '../core/metrics.js';
+import { logEvent } from '../core/logger.js';
+import { notify, isNotifyEnabled } from '../core/notify.js';
 
 const TOOLS = [
   {
@@ -384,18 +386,58 @@ export async function createServer() {
     // being ready. Date.now() is sub-millisecond-cheap and aligns with the bucket
     // granularity we report (50/100/250/500ms thresholds in CONTEXT.md).
     const start = Date.now();
+    const argsSize = args ? JSON.stringify(args).length : 0;
     try {
       const result = await handler(args ?? {});
-      recordLatency(name, Date.now() - start);
+      const duration = Date.now() - start;
+      recordLatency(name, duration);
       incrementInvocation(name, 'ok');
+      // Phase 158 (v1.28): JSONL log per tool call → ~/.kit-mcp/logs/*.log.
+      // Fire-and-forget; never blocks the handler.
+      try {
+        const ev = {
+          tool: name,
+          action: args?.action,
+          args_size: argsSize,
+          result_size: result ? JSON.stringify(result).length : 0,
+          duration_ms: duration,
+          status: 'ok',
+        };
+        // Phase 163 (v1.28): when KIT_MCP_INSPECT=1, also capture raw args/result
+        // so `kit inspect` can render full request/response live. Off by default
+        // because payloads can be large and may contain user paths.
+        if (process.env.KIT_MCP_INSPECT === '1' || process.env.KIT_MCP_INSPECT === 'true') {
+          ev.args = args ?? null;
+          ev.result = result ?? null;
+        }
+        logEvent(ev);
+      } catch { /* swallow */ }
+      // Phase 164 (v1.28): opt-in OS notification on success path.
+      if (isNotifyEnabled()) {
+        try { notify({ title: `kit-mcp ${name}`, body: `${args?.action ?? ''} ok (${duration}ms)` }); } catch { /* swallow */ }
+      }
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     } catch (e) {
       // OBS-18: still record latency on the error path — half the value of a
       // latency histogram is catching tail-latency-then-fail patterns. Status
       // 'error' covers any thrown exception, including Phase 79.01 gates guard
       // and the validateProjectRoot rejection (Phase 83.01).
-      recordLatency(name, Date.now() - start);
+      const duration = Date.now() - start;
+      recordLatency(name, duration);
       incrementInvocation(name, 'error');
+      try {
+        logEvent({
+          tool: name,
+          action: args?.action,
+          args_size: argsSize,
+          duration_ms: duration,
+          status: 'error',
+          error_type: e?.code || e?.name || 'Error',
+        });
+      } catch { /* swallow */ }
+      if (isNotifyEnabled()) {
+        try { notify({ title: `kit-mcp ${name} (error)`, body: e?.code || e?.name || 'Error' }); } catch { /* swallow */ }
+      }
       // SEC-14-06: full stack stays in stderr for operator debug; client envelope is sanitized.
       // sanitizeMcpError redacts secrets/paths from e.message, preserves e.code (Phase 83
       // EMANIFESTMISMATCH invariant), and emits NO stack field.
@@ -424,4 +466,15 @@ export async function startStdio() {
   // the boot path, where it's invisible behind IDE startup. See skill
   // production-readiness-review (Performance axe) for the rationale.
   listKit(BUNDLED_KIT_ROOT).catch(() => {});
+
+  // Phase 157 (v1.28): sidecar UI auto-spawn ON by default. Resolves the
+  // "kit-mcp has no terminal feedback" pain — operators can now see live
+  // tool calls in a browser without needing to set autoSpawn: true per tool.
+  // Escape hatch: KIT_MCP_NO_UI=1 (CI, headless, opt-out). Fire-and-forget:
+  // sidecar failure must never block the MCP transport (spec requires clean
+  // stdout). Errors are swallowed silently — kit doctor will surface them.
+  if (process.env.KIT_MCP_NO_UI !== '1' && process.env.KIT_MCP_NO_UI !== 'true') {
+    const projectRoot = process.cwd();
+    ensureSidecar({ projectRoot, openBrowserOnSpawn: false }).catch(() => {});
+  }
 }
