@@ -195,8 +195,11 @@ jobs:
           NODE_EXIT=$?
 
           # Parse "all files" footer row using awk only (single process, no pipes).
-          # Format: "ℹ all files                 |  81.51 |    78.52 |   76.32 |"
-          LINE_COV=$(awk -F'|' '/^ℹ all files/ { gsub(/[ %]/, "", $2); print $2; exit }' coverage.txt)
+          # The node:test reporter prefixes summary lines with either:
+          #   "ℹ all files ..." (TTY/spec reporter)
+          #   "# all files ..." (TAP reporter — what GitHub Actions runners produce)
+          # We accept both. Match on " all files " preceded by a single marker char.
+          LINE_COV=$(awk -F'|' '/^(ℹ|#) all files/ { gsub(/[ %]/, "", $2); print $2; exit }' coverage.txt)
 
           if [ -z "$LINE_COV" ]; then
             echo "::error::could not parse line coverage from coverage.txt (node exit=$NODE_EXIT)"
