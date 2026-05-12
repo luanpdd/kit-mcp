@@ -1,6 +1,6 @@
 ---
 name: crm-pipeline-implementer
-description: Materializa CRM lead pipeline — tabela leads (6 stages canônicos + custom prefix), tabela lead_stage_transitions data-driven, trigger PG BEFORE UPDATE validate_lead_stage_transition, trigger AFTER UPDATE audit_lead_ownership_change com notification, integração WhatsApp lookup contact_phone via Edge Function. Cross-suite: delega SQL para supabase-migration-writer.
+description: Materializa CRM lead pipeline — tabela leads (6 stages canônicos + custom prefix), tabela lead_stage_transitions data-driven, trigger PG BEFORE UPDATE validate_lead_stage_transition, trigger AFTE…
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion, mcp__supabase__execute_sql
 color: green
 ---

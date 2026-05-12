@@ -1,6 +1,6 @@
 ---
 name: super-admin-implementer
-description: Materializa super-admin platform — cross-tenant RLS PERMISSIVE, Edge Function impersonate (TTL 30min + reason obrigatório), banner React, RPC super_admin_delete_org com dupla confirmação. ABORTA se audit_log (Phase 109) não está implementado — BLOCKER ADMIN-03.
+description: Materializa super-admin platform — cross-tenant RLS PERMISSIVE, Edge Function impersonate (TTL 30min + reason obrigatório), banner React, RPC super_admin_delete_org com dupla confirmação.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion, mcp__supabase__execute_sql
 color: red
 ---

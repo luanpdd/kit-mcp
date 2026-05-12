@@ -1,6 +1,6 @@
 ---
 name: supabase-branching-architect
-description: Projeta estratégia branching Supabase ANTES do setup técnico. Coleta 4 decisões canônicas via AskUserQuestion (GitHub integration vs Dashboard alpha [default GitHub], persistent vs ephemeral mix, seed strategy seed.sql vs custom ORM, secret strategy CLI direct vs dotenvx). Produz BRANCHING-DESIGN.md com custo estimado Branching Compute Hours. Cross-suite handoff para supabase-architect (v1.8). Verdicts GO/STRENGTHEN/REWRITE-com-confirmação (princípio canônico v1.23). v1.27 incorpora 100% da doc oficial.
+description: Projeta estratégia branching Supabase ANTES do setup técnico. Coleta 4 decisões canônicas via AskUserQuestion (GitHub integration vs Dashboard alpha [default GitHub], persistent vs ephemeral mix…
 tools: Read, Write, Bash, AskUserQuestion, Task
 color: blue
 ---

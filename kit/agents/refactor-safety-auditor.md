@@ -1,6 +1,6 @@
 ---
 name: refactor-safety-auditor
-description: Audita arquivo alvo de refactor ANTES da execução — coleta evidências (line count, contrato externo, coverage, mutation testing, characterization existente) e produz veredito GO/BLOCK/WARN com caminho recomendado.
+description: Audita arquivo alvo de refactor ANTES da execução — coleta evidências (line count, contrato externo, coverage, mutation testing, characterization existente) e produz veredito GO/BLOCK/WARN com ca…
 tools: Read, Bash, Grep, Glob
 color: red
 ---

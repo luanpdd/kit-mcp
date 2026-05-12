@@ -1,6 +1,6 @@
 ---
 name: supabase
-description: Orquestrador da Suíte Supabase — serviço de materialização (v1.23) que recebe planejamento/draft SQL de qualquer agent ou user e devolve código hardenado pronto. NUNCA bloqueia upstream — handoff cooperativo via Task(). Subcomandos arquiteto, migration, rls, hardener, edge, realtime, auth, storage, rag, cron, check com sinônimos PT/EN.
+description: Orquestrador da Suíte Supabase — serviço de materialização (v1.23) que recebe planejamento/draft SQL de qualquer agent ou user e devolve código hardenado pronto. NUNCA bloqueia upstream…
 argument-hint: "<subcomando> [args...]"
 allowed-tools:
   - Read

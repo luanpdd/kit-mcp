@@ -1,6 +1,6 @@
 ---
 name: evolution-go-integrator
-description: Materializa integração WhatsApp (Evolution Go ou Meta Cloud API) em Supabase B2B multi-tenant — webhook handler com tenant identification via URL path, HMAC-SHA256 timing-safe (Meta) ou API key + IP whitelist (Evolution Go), idempotency unique constraint, rate limit Meta 80msg/s via pgmq queue. Cross-suite delega Edge Function code para supabase-edge-fn-writer.
+description: Materializa integração WhatsApp (Evolution Go ou Meta Cloud API) em Supabase B2B multi-tenant…
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion, mcp__supabase__execute_sql
 color: green
 ---

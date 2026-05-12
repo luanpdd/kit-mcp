@@ -1,6 +1,6 @@
 ---
 name: invite-flow-implementer
-description: Materializa invite flow B2B — tabela org_invites + RPC create_invite (token raw retornado) + RPC accept_invite (idempotente via FOR UPDATE) + cron expire pending. Cross-suite delega SQL para supabase-migration-writer + Edge Function envio email para supabase-edge-fn-writer.
+description: Materializa invite flow B2B — tabela org_invites + RPC create_invite (token raw retornado) + RPC accept_invite (idempotente via FOR UPDATE) + cron expire pending.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion, mcp__supabase__execute_sql
 color: green
 ---

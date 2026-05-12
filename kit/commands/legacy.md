@@ -1,6 +1,6 @@
 ---
 name: legacy
-description: Orquestrador da Suíte Legacy Code (Feathers) — dispatch para agents (legacy-characterizer, seam-finder, refactor-safety-auditor) com sinônimos PT/EN. 4ª suíte da família após /supabase, /observabilidade, /sre.
+description: Orquestrador da Suíte Legacy Code (Feathers) — dispatch para agents (legacy-characterizer, seam-finder, refactor-safety-auditor) com sinônimos PT/EN.
 argument-hint: "<subcomando> [args...]"
 allowed-tools:
   - Read

@@ -1,6 +1,6 @@
 ---
 name: legacy-characterizer
-description: Gera characterization tests (cap 13 Feathers) para código legado — captura comportamento atual como golden snapshots, aplica grupos de equivalência canônicos, valida cobertura behavioral via mutation testing. Pré-condição para refactor seguro.
+description: Gera characterization tests (cap 13 Feathers) para código legado — captura comportamento atual como golden snapshots, aplica grupos de equivalência canônicos, valida cobertura behavioral via muta…
 tools: Read, Write, Edit, Bash, Grep, Glob
 color: cyan
 ---

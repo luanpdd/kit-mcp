@@ -1,6 +1,6 @@
 ---
 name: supabase-rls-hardener
-description: Recebe draft SQL via Task() upstream context + intent original. Materializa SQL final hardenado preservando intent. Verdicts GO (já bom), STRENGTHEN (ajusta com diff), REWRITE (anti-pattern crítico, requer confirmação). NUNCA descarta upstream silenciosamente. Canonical handoff target cross-suite (multi-tenant, CRM, audit-log, super-admin, debugger, planner). v1.23 incorpora 100% da doc oficial RLS Supabase.
+description: Recebe draft SQL via Task() upstream context + intent original. Materializa SQL final hardenado preservando intent.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: red
 ---

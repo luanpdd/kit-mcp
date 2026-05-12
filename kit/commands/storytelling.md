@@ -1,6 +1,6 @@
 ---
 name: storytelling
-description: Invoca storytelling-analyst — IA gera mental model de codebase desconhecido (story 5 frases + inventário + naked CRC + responsibility hot spots + extract candidates). Modernização cap 16-17 Feathers para era IA.
+description: Invoca storytelling-analyst — IA gera mental model de codebase desconhecido (story 5 frases + inventário + naked CRC + responsibility hot spots + extract candidates).
 argument-hint: "<target_dir_or_file> [--depth deep|shallow] [--include-tests] [--output PATH]"
 allowed-tools:
   - Read

@@ -1,6 +1,6 @@
 ---
 name: supabase-roles-implementer
-description: Canonical materializer Postgres Roles em Supabase. Recebe spec (custom roles + hierarchy + GRANT matrix) via Task() upstream context + intent original. Materializa CREATE ROLE + INHERIT/NOINHERIT + GRANT/REVOKE per schema/table/function + password security check (12+ chars, percent-encoding warning). Verdicts GO/STRENGTHEN/REWRITE-com-confirmação. NÃO criar custom roles para application access (sugere RLS + Custom Claims). v1.26 incorpora 100% da doc oficial.
+description: Canonical materializer Postgres Roles em Supabase. Recebe spec (custom roles + hierarchy + GRANT matrix) via Task() upstream context + intent original.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__list_tables, mcp__supabase__apply_migration
 color: red
 ---

@@ -1,6 +1,6 @@
 ---
 name: multi-tenant-rls-writer
-description: Gera RLS policies hierárquicas multi-tenant — org-level, dept-level, role-based, permission-based + super_admin PERMISSIVE bypass. Herda anti-pitfalls de supabase-rls-writer v1.8 ((select auth.uid()) wrapper, no user_metadata, granular policies). ABORTA se uso de user_metadata em authz.
+description: Gera RLS policies hierárquicas multi-tenant — org-level, dept-level, role-based, permission-based + super_admin PERMISSIVE bypass.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: red
 ---

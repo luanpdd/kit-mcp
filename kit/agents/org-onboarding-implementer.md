@@ -1,6 +1,6 @@
 ---
 name: org-onboarding-implementer
-description: Implementa fluxo signup → criar org → primeiro admin → setup wizard. Gera migration SQL atômica (org + members em 1 trx) + Edge Function setup wizard async. Cross-suite invocation: delega SQL para supabase-migration-writer + Edge Function para supabase-edge-fn-writer.
+description: Implementa fluxo signup → criar org → primeiro admin → setup wizard. Gera migration SQL atômica (org + members em 1 trx) + Edge Function setup wizard async.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion
 color: green
 ---
