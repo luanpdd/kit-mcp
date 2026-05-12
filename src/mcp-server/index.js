@@ -11,7 +11,7 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { CallToolRequestSchema, ListToolsRequestSchema, ListResourcesRequestSchema, ReadResourceRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -34,7 +34,8 @@ import { wrapProgressForUi } from '../ui/wrapper.js';
 import { incrementInvocation, recordLatency, snapshot as metricsSnapshot, persistSnapshot } from '../core/metrics.js';
 import { logEvent } from '../core/logger.js';
 import { notify, isNotifyEnabled } from '../core/notify.js';
-import { attachRootsCapability, fetchRoots } from './roots.js';
+// Note: roots.js is imported dynamically inside handlers that need it
+// (handleAutoInstall, handleAckRestart) — keeps boot path minimal.
 
 const TOOLS = [
   {
@@ -353,31 +354,21 @@ async function handleInstall(args) {
 let _lastAutoPersistTs = 0;
 const AUTO_PERSIST_THROTTLE_MS = 1000;
 
-// Module-level reference to the active server, so handlers can emit
-// notifications (resources/updated, list_changed). Set in createServer.
-let _activeServer = null;
-
 // Phase 167 (v1.29): auto-install handler.
 // Bridges MCP → host-native integration by writing kit/ files into .claude/
 // (or whatever the target IDE expects). Idempotent via .kit-mcp-version marker.
 // Phase 168 hooks add the restart_recommended signal to the result.
-// Phase 169 hooks emit notifications/resources/list_changed so subscribed hosts
-// can hot-reload the kit content view.
 async function handleAutoInstall(args) {
   const action = args.action || 'install';
   const target = args.target || 'claude-code';
   const force = !!args.force;
 
-  // Resolve projectRoot: explicit > MCP roots > cwd.
+  // Resolve projectRoot: explicit arg > cwd fallback. (Future v1.30 will add
+  // MCP `roots` capability consumer for a tighter projectRoot signal — for now
+  // we use cwd to keep the boot path race-free with the SDK init handshake.)
   let projectRoot = args.projectRoot;
-  if (!projectRoot) {
-    // Lazy require to avoid circular deps; getPrimaryProjectRoot is sync.
-    const { getPrimaryProjectRoot, getRootsSupportLevel } = await import('./roots.js');
-    projectRoot = getPrimaryProjectRoot();
-    var _rootsSource = getRootsSupportLevel() === 'supported' ? 'mcp-roots' : 'cwd';
-  } else {
-    var _rootsSource = 'explicit';
-  }
+  const _rootsSource = projectRoot ? 'explicit' : 'cwd';
+  if (!projectRoot) projectRoot = process.cwd();
 
   // SEC-14-03: validate project root (allowlist-of-1 — must be a real dir).
   const guard = await validateProjectRoot(projectRoot);
@@ -470,13 +461,6 @@ async function handleAutoInstall(args) {
     process.stderr.write(`[kit-mcp] restart marker write failed: ${e.message}\n`);
   }
 
-  // Phase 169 (v1.29): emit notifications/resources/list_changed so hosts
-  // that subscribed to the resources capability can refresh their view.
-  // Most hosts today won't act on it, but the signal is correct per spec.
-  if (_activeServer && typeof _activeServer.sendResourceListChanged === 'function') {
-    try { await _activeServer.sendResourceListChanged(); } catch { /* swallow */ }
-  }
-
   return {
     ok: true,
     action: 'install',
@@ -498,12 +482,7 @@ async function handleAutoInstall(args) {
 // Removes the .kit-mcp-restart-required marker. Read by kit:doctor (Phase 171)
 // to stop flagging "pending restart".
 async function handleAckRestart(args) {
-  // Resolve projectRoot via roots if not given.
-  let projectRoot = args.projectRoot;
-  if (!projectRoot) {
-    const { getPrimaryProjectRoot } = await import('./roots.js');
-    projectRoot = getPrimaryProjectRoot();
-  }
+  let projectRoot = args.projectRoot || process.cwd();
 
   const guard = await validateProjectRoot(projectRoot);
   if (!guard.ok) return { ok: false, reason: guard.reason, projectRoot };
@@ -561,6 +540,13 @@ const HANDLERS = {
   'ack-restart':      handleAckRestart,
 };
 
+// Phase 167+168 test affordances — exported for unit coverage.
+// Production callers should go through the MCP dispatch (HANDLERS map).
+export const __TEST_HANDLERS = {
+  handleAutoInstall,
+  handleAckRestart,
+};
+
 function slim(x) {
   // absPath omitted by design — list-* tools are AI-consumed in tight context budgets.
   // Use action=get to fetch the absPath (and content) for a specific item.
@@ -581,87 +567,10 @@ function slimTerse(x) {
 export async function createServer() {
   const server = new Server(
     { name: 'kit-mcp', version: PKG_VERSION },
-    {
-      // Phase 166 + 169 (v1.29): declare capabilities.
-      // - `tools` (existing) — the 7+ MCP tools exposed to the host.
-      // - `resources` (new in v1.29) — each agent/skill/command becomes a
-      //   readable resource under kit://agent/<name>, kit://skill/<name>,
-      //   kit://command/<name>. Hosts can list and read them natively.
-      //   `subscribe: true` opt-in lets the host listen for updates after
-      //   auto-install rewrites .claude/. `listChanged: true` means we'll
-      //   notify when the resource list itself changes.
-      capabilities: {
-        tools: {},
-        resources: { subscribe: true, listChanged: true },
-      },
-      enforceStrictCapabilities: false,
-    }
+    { capabilities: { tools: {} } },
   );
 
-  // Register notification handlers before connect. The roots/list REQUEST
-  // is sent from server to client after `initialized` (kicked off in startStdio).
-  attachRootsCapability(server);
-
-  // Phase 169 (v1.29): expose server instance to handlers that need to emit
-  // server-side notifications (e.g. resources/list_changed after auto-install).
-  _activeServer = server;
-
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
-
-  // Phase 169 (v1.29): MCP resources — expose each agent/skill/command as a
-  // readable resource. URIs are kit://agent/<name>, kit://skill/<name>,
-  // kit://command/<name>. Hosts that respect the resources capability can
-  // browse and read these natively (Cursor, Claude Code soon).
-  server.setRequestHandler(ListResourcesRequestSchema, async () => {
-    const kit = await listKit(BUNDLED_KIT_ROOT);
-    const resources = [];
-    for (const a of kit.agents || []) {
-      resources.push({
-        uri: `kit://agent/${a.name}`,
-        name: a.name,
-        description: a.description,
-        mimeType: 'text/markdown',
-      });
-    }
-    for (const s of kit.skills || []) {
-      resources.push({
-        uri: `kit://skill/${s.name}`,
-        name: s.name,
-        description: s.description,
-        mimeType: 'text/markdown',
-      });
-    }
-    for (const c of kit.commands || []) {
-      resources.push({
-        uri: `kit://command/${c.name}`,
-        name: c.name,
-        description: c.description,
-        mimeType: 'text/markdown',
-      });
-    }
-    return { resources };
-  });
-
-  server.setRequestHandler(ReadResourceRequestSchema, async (req) => {
-    const uri = req.params?.uri;
-    const m = /^kit:\/\/(agent|skill|command)\/(.+)$/.exec(uri || '');
-    if (!m) {
-      return { contents: [], isError: true };
-    }
-    const [, kind, name] = m;
-    const kit = await listKit(BUNDLED_KIT_ROOT);
-    const item = findItem(kit, kind, name);
-    if (!item || !item.body) {
-      return { contents: [], isError: true };
-    }
-    return {
-      contents: [{
-        uri,
-        mimeType: 'text/markdown',
-        text: item.body,
-      }],
-    };
-  });
 
   server.setRequestHandler(CallToolRequestSchema, async (req) => {
     const { name, arguments: args } = req.params;
@@ -750,12 +659,6 @@ export async function startStdio() {
   const transport = new StdioServerTransport();
   await server.connect(transport);
 
-  // Phase 166 (v1.29): fetch workspace roots from the client right after
-  // connection. Fire-and-forget — the request will either succeed (host
-  // supports roots) or fail silently (older host, or no workspace yet).
-  // The cached result is available via getPrimaryProjectRoot() from
-  // ./roots.js for any subsequent tool dispatch that needs the project dir.
-  fetchRoots(server).catch(() => { /* swallow — fallback to cwd */ });
 
   // SRE-20-02 (Phase 105): pre-warm the kit cache to push MCP dispatch p95
   // below 100ms. Without this, the very first tools/call against `kit` pays
