@@ -778,6 +778,59 @@ function renderUiStatusFallback(v) {
   ].join('\n');
 }
 
+// --- status (Phase 162, v1.28: live metrics snapshot + log file path) ---
+program.command('status')
+  .description('Show MCP server metrics (p50/p95/p99/error rate) + log file path.')
+  .option('--project-root <path>', 'Default: cwd')
+  .action(async (opts) => {
+    const { snapshot, loadSnapshots } = await import('../core/metrics.js');
+    const projectRoot = opts.projectRoot || process.cwd();
+    const live = snapshot(); // current-process metrics (only useful when called from inside the MCP process)
+    const persisted = await loadSnapshots(projectRoot, 60 * 60 * 1000).catch(() => []); // last hour
+
+    if (program.opts().json) {
+      out({ live, persistedCount: persisted.length, latest: persisted[persisted.length - 1] || null, logPath: currentLogPath() }, () => '');
+      return;
+    }
+
+    process.stdout.write(`\n${c.bold('kit-mcp status')}\n\n`);
+
+    // Sidecar
+    const lock = readLock(projectRoot);
+    process.stdout.write(`${c.bold('sidecar:')}  ${lock ? c.green(`running on port ${lock.port}`) : c.dim('not running')}\n`);
+
+    // Log file
+    const files = listLogs();
+    process.stdout.write(`${c.bold('log:')}      ${currentLogPath()}\n`);
+    process.stdout.write(`           ${c.dim(`${files.length} file(s) in ${logDir()}`)}\n`);
+
+    // Latency from latest persisted snapshot (last hour window)
+    const latest = persisted[persisted.length - 1];
+    const lat = latest?.latency || live.latency || {};
+    const tools = Object.keys(lat);
+    process.stdout.write(`\n${c.bold('latency (last hour, or current process):')}\n`);
+    if (tools.length === 0) {
+      process.stdout.write(`  ${c.dim('no samples yet')}\n`);
+    } else {
+      const w = Math.max(...tools.map((t) => t.length));
+      for (const t of tools) {
+        const s = lat[t];
+        process.stdout.write(`  ${t.padEnd(w)}  p50 ${c.cyan(s.p50 + 'ms').padEnd(20)} p95 ${c.cyan(s.p95 + 'ms').padEnd(20)} p99 ${c.cyan(s.p99 + 'ms').padEnd(20)} n=${s.count}\n`);
+      }
+    }
+
+    // Error rate from counters
+    const counters = latest?.counters || live.counters || {};
+    let okTotal = 0, errTotal = 0;
+    for (const [k, v] of Object.entries(counters)) {
+      if (k.endsWith(':ok')) okTotal += v;
+      if (k.endsWith(':error')) errTotal += v;
+    }
+    const total = okTotal + errTotal;
+    const rate = total === 0 ? 0 : (errTotal / total) * 100;
+    process.stdout.write(`\n${c.bold('errors:')}   ${errTotal}/${total} (${rate.toFixed(2)}%)\n\n`);
+  });
+
 // --- init (Phase 161, v1.28: guided onboarding — install + sync + doctor) ---
 program.command('init')
   .description('Onboard: register kit-mcp into an IDE, sync the kit, run doctor.')
