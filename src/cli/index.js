@@ -778,6 +778,83 @@ function renderUiStatusFallback(v) {
   ].join('\n');
 }
 
+// --- init (Phase 161, v1.28: guided onboarding — install + sync + doctor) ---
+program.command('init')
+  .description('Onboard: register kit-mcp into an IDE, sync the kit, run doctor.')
+  .option('--ide <id>', 'Skip the IDE picker (e.g. claude-code, cursor, codex)')
+  .option('--project-root <path>', 'Default: cwd')
+  .option('--non-interactive', 'Fail fast if --ide is missing instead of prompting')
+  .option('--mode <mode>', 'sync mode: reference | copy', 'reference')
+  .action(async (opts) => {
+    const projectRoot = opts.projectRoot || process.cwd();
+    const targets = listInstallTargets();
+    const targetIds = targets.map(t => t.id);
+
+    let ide = opts.ide;
+    if (!ide) {
+      if (opts.nonInteractive) {
+        process.stderr.write(`${c.red(icons.cross)} --non-interactive requires --ide=<${targetIds.join('|')}>\n`);
+        process.exit(2);
+      }
+      ide = await pickTarget(targets, 'Which IDE should kit-mcp register with?');
+    }
+    if (!targetIds.includes(ide)) {
+      process.stderr.write(`${c.red(icons.cross)} unknown IDE "${ide}" — valid: ${targetIds.join(', ')}\n`);
+      process.exit(2);
+    }
+
+    process.stdout.write(`\n${c.bold('kit init')} → ${ide}\n\n`);
+
+    // 1. Register MCP server in IDE config
+    process.stdout.write(`${c.cyan('1/3')} registering MCP server...\n`);
+    try {
+      const r = await installMcp(ide, { projectRoot });
+      process.stdout.write(`     ${c.green(icons.check)} ${r.path || 'config updated'}\n`);
+    } catch (e) {
+      process.stdout.write(`     ${c.red(icons.cross)} ${e.message}\n`);
+      process.exit(1);
+    }
+
+    // 2. Sync kit content
+    process.stdout.write(`\n${c.cyan('2/3')} syncing kit content...\n`);
+    const tally = { written: 0, skipped: 0 };
+    try {
+      const r = await syncTo(ide, {
+        projectRoot,
+        mode: opts.mode,
+        onProgress: (ev) => { if (ev?.skipped) tally.skipped += 1; else tally.written += 1; },
+      });
+      const total = (r.written || []).length;
+      process.stdout.write(`     ${c.green(icons.check)} ${total} files (${tally.written} new/updated, ${tally.skipped} unchanged)\n`);
+    } catch (e) {
+      process.stdout.write(`     ${c.red(icons.cross)} ${e.message}\n`);
+      process.exit(1);
+    }
+
+    // 3. Doctor
+    process.stdout.write(`\n${c.cyan('3/3')} running diagnostic...\n`);
+    const checks = await runDoctorChecks(projectRoot);
+    const failed = checks.filter(c => c.status === 'fail').length;
+    const warned = checks.filter(c => c.status === 'warn').length;
+    const passed = checks.length - failed - warned;
+    process.stdout.write(`     ${failed === 0 ? c.green(icons.check) : c.red(icons.cross)} `
+      + `${passed} pass · ${warned} warn · ${failed} fail\n`);
+
+    // 4. Final confirmation
+    try {
+      const kit = await listKit();
+      process.stdout.write(`\n${c.green(icons.check)} ${c.bold(ide)} now sees `
+        + `${c.cyan(kit.skills.length)} skills, `
+        + `${c.cyan(kit.agents.length)} agents, `
+        + `${c.cyan(kit.commands.length)} commands\n\n`);
+    } catch { /* non-fatal */ }
+
+    if (failed > 0) {
+      process.stdout.write(`${c.yellow(icons.warn)} doctor reported failures — run ${c.cyan('kit doctor')} for details\n`);
+      process.exit(1);
+    }
+  });
+
 // --- logs (Phase 158, v1.28: tail kit-mcp tool-call log) ---
 program.command('logs')
   .description('Tail JSONL logs of MCP tool invocations (~/.kit-mcp/logs/).')
