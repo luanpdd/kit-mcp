@@ -708,6 +708,39 @@ async function runDoctorChecks(projectRoot) {
       : 'enabled (default) — sidecar starts when MCP server boots',
     fix: noUi ? 'unset KIT_MCP_NO_UI if you want live tool-call visibility' : undefined });
 
+  // 10. (v1.29) auto-install drift check — is .claude/.kit-mcp-version aligned
+  // with the running kit-mcp package version?
+  try {
+    const versionMarker = path.join(projectRoot, '.claude', '.kit-mcp-version');
+    const restartMarker = path.join(projectRoot, '.claude', '.kit-mcp-restart-required');
+    let installedVersion = null;
+    try { installedVersion = fs.readFileSync(versionMarker, 'utf8').trim(); } catch { /* not installed */ }
+    const currentVersion = readPkgVersion();
+
+    if (!installedVersion) {
+      checks.push({ label: 'auto-install', status: 'warn',
+        detail: '.claude/.kit-mcp-version not found — kit not auto-installed in this project',
+        fix: 'call kit:auto-install MCP tool, or run: kit init' });
+    } else if (installedVersion !== currentVersion) {
+      checks.push({ label: 'auto-install', status: 'warn',
+        detail: `kit installed v${installedVersion}, MCP server is v${currentVersion}`,
+        fix: 'call kit:auto-install (idempotent) or rerun: kit sync claude-code' });
+    } else {
+      checks.push({ label: 'auto-install', status: 'pass',
+        detail: `v${installedVersion} (in sync)` });
+    }
+
+    if (fs.existsSync(restartMarker)) {
+      let payload = {};
+      try { payload = JSON.parse(fs.readFileSync(restartMarker, 'utf8')); } catch { /* malformed */ }
+      checks.push({ label: 'restart pending', status: 'warn',
+        detail: payload.reason
+          ? `${payload.reason} (written ${payload.writtenAt || 'unknown'})`
+          : 'restart marker present — IDE not yet reloaded since last auto-install',
+        fix: 'restart your IDE session, then call kit:ack-restart MCP tool (or just close/reopen)' });
+    }
+  } catch { /* .claude/ check is best-effort */ }
+
   return checks;
 }
 

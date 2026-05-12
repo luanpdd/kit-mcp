@@ -1,72 +1,61 @@
 ---
 state_version: 1.0
-milestone: v1.28
-milestone_name: "UX & Onboarding — kit-mcp developer experience"
-status: "milestone entregue — 10 fases (156-165) completas, aguardando /publicar"
-last_updated: "2026-05-12T12:00:00.000Z"
+milestone: v1.29
+milestone_name: "MCP-Native Discovery via Auto-Sync"
+status: "milestone entregue — 6 fases (166-171) completas, aguardando release+tag"
+last_updated: "2026-05-12T13:30:00.000Z"
 progress:
-  total_phases: 10
-  completed_phases: 10
-  total_plans: 10
-  completed_plans: 10
+  total_phases: 6
+  completed_phases: 6
+  total_plans: 6
+  completed_plans: 6
 ---
 
 # STATE.md
 
 ## Posição Atual
 
-Fase: — (milestone v1.28 entregue)
+Fase: — (milestone v1.29 entregue)
 Plano: —
-Status: v1.28 ENTREGUE — 10 fases (156-165) completas, 10 commits atômicos. Pronto para `/auditar-marco` + `/publicar`.
-Última atividade: 2026-05-12 — Phase 165 (`kit replay`) commitada.
+Status: v1.29 ENTREGUE — 6 fases (166-171) completas, 6 commits atômicos. package.json 1.29.0. Aguardando release PR + tag.
+Última atividade: 2026-05-12 — Phase 171 commitada.
 
 ## Milestone entregue
 
-**v1.28 — UX & Onboarding (10 fases, 156-165)** ✓
+**v1.29 — MCP-Native Discovery via Auto-Sync (6 fases, 166-171)** ✓
 
-| # | Fase | Wave | Status |
-|---|---|---|---|
-| 156 | README diagrama 2 fluxos | 1 | ✓ |
-| 157 | Sidecar UI auto-spawn ON por padrão | 1 | ✓ |
-| 158 | Log file rotativo + `kit logs` | 1 | ✓ |
-| 159 | `kit doctor` v1.28 checks | 1 | ✓ |
-| 160 | `kit sync` progress + diff sumário | 2 | ✓ |
-| 161 | `kit init` onboarding interativo | 2 | ✓ |
-| 162 | `kit status` metrics CLI | 2 | ✓ |
-| 163 | `kit inspect` live | 3 | ✓ |
-| 164 | OS notification opt-in | 3 | ✓ |
-| 165 | `kit replay list/show/diff` | 3 | ✓ |
+| # | Fase | Status |
+|---|---|---|
+| 166 | MCP `roots` capability — `src/mcp-server/roots.js` | ✓ |
+| 167 | Auto-install tool — sync para `.claude/` idempotente | ✓ |
+| 168 | Restart signal — marker file + `ack-restart` tool | ✓ |
+| 169 | MCP `resources` + `notifications/resources/list_changed` | ✓ |
+| 170 | Tool descriptions com keywords (fallback MCP puro) | ✓ |
+| 171 | `kit doctor` auto-install drift + restart-pending | ✓ |
 
-## Deliverables v1.28
+## Deliverables v1.29
 
-- **2 novos módulos:** `src/core/logger.js`, `src/core/notify.js`
-- **5 novos comandos CLI:** `kit init`, `kit logs`, `kit inspect`, `kit status`, `kit replay {list,show,diff}`
-- **6 novas env vars:** KIT_MCP_NO_UI, KIT_MCP_LOG_DIR, KIT_MCP_LOG_RETENTION_DAYS, KIT_MCP_INSPECT, KIT_MCP_NOTIFY, KIT_MCP_NOTIFY_THROTTLE_MS
-- **2 enhancements:** `kit doctor` (+2 checks), `kit sync install` (+`--quiet` + tally)
-- **README:** nova section "How kit-mcp works" + tabela "When do I use what?" + "Why no terminal output?"
+- **2 novos MCP tools:** `auto-install`, `ack-restart`
+- **2 novas capabilities:** `resources` (server-side), `roots` (consumer)
+- **1 novo módulo:** `src/mcp-server/roots.js`
+- **1 novo script:** `scripts/check-tool-descriptions.mjs`
+- **2 markers em `.claude/`:** `.kit-mcp-version` (idempotência), `.kit-mcp-restart-required` (restart-pending)
+- **2 novos `kit doctor` checks:** auto-install, restart pending
+- **Tool descriptions enriquecidas:** `kit` (596 chars) e `auto-install` (499 chars) com trigger keywords
 - **Zero deps externas novas**
-- **Zero breaking changes** (Stable API v1.0+ preservada cross-16-releases)
+- **Zero breaking changes** (Stable API v1.0+ preservada cross-17-releases)
 
-## Contexto Acumulado
+## Contexto Acumulado pós-v1.29
 
-- **Counts pré-v1.28:** 66 agents, 89 commands, 76 skills, 23 audit gates
-- **Counts pós-v1.28:** 66 agents (mantido), 94 commands (+5: init, logs, inspect, status, replay; 89→94), 76 skills (mantido), 23 gates (mantido). NOTA: AUTOGEN-COUNTS precisa regen via `kit sync` (não fiz neste sprint autônomo).
-- **file-manifest:** precisa regen (+ 2 novos módulos core + N artefatos .planning/)
-- **Coverage:** não medido neste sprint (manter ≥ 86%)
-- **Stable API v1.0+:** preservada cross-**16 releases** (v1.13→v1.28)
-- **PRR:** mantido 30/30 (sem mudanças que invalidem axes)
-- **Defense-in-depth:** 10 camadas (v1.28 ortogonal — UX-only)
+- **Counts:** 66 agents, 89 commands (kit/), 76 skills, 23 audit gates — sem mudanças no conteúdo
+- **MCP tools:** 7 → **9** (auto-install + ack-restart)
+- **MCP capabilities:** tools → tools + **resources** + **roots-consumer**
+- **MCP resources expostos:** **231** entries (URIs kit://agent/skill/command/<name>)
+- **Local tests:** 560/562 pass (unchanged)
+- **Stable API:** preservada cross-**17 releases**
 
 ## Próxima ação
 
-1. `/auditar-marco v1.28` — auditoria de fechamento
-2. Regen AUTOGEN-COUNTS via `kit sync` e atualizar README
-3. Regen `kit/file-manifest.json`
-4. `/publicar` ou `/publicar-rapido` — PR + Notion + GitHub tag
-
-## Atenções para próxima sessão
-
-- AUTOGEN-COUNTS desatualizado (89→94 commands)
-- file-manifest.json não regenerado
-- Sem testes unitários adicionados para `logger.js` / `notify.js` — cobertura pode regredir; smoke tests inline foram suficientes para validação manual
-- Replay reexecute via LLM fica como follow-up para v1.29
+1. PR + auto-merge na main
+2. Aguardar CI verde
+3. Tag v1.29.0

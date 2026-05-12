@@ -1,98 +1,74 @@
-# REQUIREMENTS.md — v1.28 UX & Onboarding
+# REQUIREMENTS.md — v1.29 MCP-Native Discovery via Auto-Sync
 
-> Milestone: v1.28 — UX & Onboarding (kit-mcp developer experience)
+> Milestone: v1.29 — MCP-Native Discovery via Auto-Sync
 > Generated: 2026-05-12
 
 ## Objetivo
 
-Eliminar opacidade do servidor MCP stdio e reduzir tempo-até-primeiro-uso (TTFU) de novos consumidores do kit-mcp, expondo observabilidade local e onboarding guiado **sem violar a spec MCP** (stdout limpo, sem prints fora do JSON-RPC).
+Resolver o gap entre "modo MCP puro" e "modo sync manual" — kit-mcp auto-configura `.claude/agents/`, `.claude/skills/`, `.claude/commands/` no primeiro contato com o host. Resultado: na próxima sessão o usuário tem `subagent_type` real, skills com auto-trigger nativo e slash-commands sem rodar `kit sync` na CLI.
 
 ## Princípios
 
-- **P1 — Spec MCP intocável.** Servidor stdio nunca escreve em stdout fora do protocolo JSON-RPC. Toda telemetria visível vai para sidecar HTTP, log files ou stderr.
-- **P2 — Zero breaking changes.** Stable API v1.0+ (15 releases) preservada. Comportamentos novos são aditivos ou opt-out, nunca opt-in para fluxos existentes.
-- **P3 — Sem deps novas críticas.** node-notifier/listr2/ora opcionais ou implementadas inline minimal.
-- **P4 — Cross-platform.** Windows/macOS/Linux paridade. Sem fork de fluxo por OS.
-- **P5 — Observabilidade local-first.** Logs/metrics ficam no disco do usuário; zero telemetria remota implícita.
+- **P1 — Spec MCP intocável.** Apenas usar capabilities oficiais do protocolo (`roots`, `notifications`). Nada de extensões custom além do payload do retorno do tool.
+- **P2 — Idempotência.** Reconnect não reescreve se `.claude/` já está em sync com a versão do kit em uso.
+- **P3 — Permission gate honesto.** Primeira escrita em `.claude/` gera prompt do host. Não contornar.
+- **P4 — Fallback gracioso.** Se host não declara `roots` ou `.claude/` não é gravável → fallback para modo MCP puro com aviso claro via tool result.
+- **P5 — Stable API v1.0+ preservada.** Schema dos 7 tools existentes inalterado. Apenas adições opcionais em retornos.
+- **P6 — Sem side effects no boot do MCP.** Auto-sync acontece em resposta à primeira tool call relevante (ou via tool dedicado), não no `startStdio()`.
 
 ## Requisitos por fase
 
-### Fase 156 — README diagrama 2 fluxos (Wave 1, XS)
+### Fase 166 — MCP `roots` capability (S)
 
-- **REQ-156-01** README.md ganha section "How kit-mcp works" com diagrama ASCII/mermaid de 2 fluxos: (a) `kit sync` offline projetor → arquivos em `.claude/`; (b) `kit-mcp` stdio server → tools live.
-- **REQ-156-02** Tabela "quando uso o quê" com 5 colunas: ação | fluxo | comando | quando rodar | quem consome.
-- **REQ-156-03** Section "Why no terminal output?" explicando spec MCP stdio + ponteiros para `kit doctor`, `kit logs`, sidecar UI.
+- **REQ-166-01** Servidor declara `roots` capability no handshake.
+- **REQ-166-02** Servidor envia `roots/list` request para o cliente após `initialized` notification.
+- **REQ-166-03** Servidor cacheia roots recebidos em memória; expõe via helper `getProjectRoots()` em `src/mcp-server/index.js`.
+- **REQ-166-04** Tratar ausência de roots (host não suporta) silenciosamente — fallback para `process.cwd()`.
+- **REQ-166-05** Listener para `notifications/roots/list_changed` (cliente sinaliza mudança de workspace) — atualiza cache.
 
-### Fase 157 — Sidecar UI auto-spawn por padrão (Wave 1, S)
+### Fase 167 — Auto-sync no boot (M)
 
-- **REQ-157-01** Servidor MCP, no startup, invoca `ensureSidecar()` por padrão (sem necessidade de `autoSpawn: true` por tool call).
-- **REQ-157-02** Variável de ambiente `KIT_MCP_NO_UI=1` desabilita o auto-spawn (escape hatch para CI/headless).
-- **REQ-157-03** Sidecar exibe lista live de tools sendo chamadas (timestamp + tool + args sumarizados + duration).
-- **REQ-157-04** Lockfile-based discovery existente preservado — múltiplos kit-mcp servers compartilham 1 sidecar.
+- **REQ-167-01** Novo tool `kit:auto-install` que dispara sync para `.claude/agents/`, `.claude/skills/`, `.claude/commands/` no projectRoot detectado.
+- **REQ-167-02** Idempotente: lê `.claude/.kit-mcp-version` (marker file) e compara com `package.json` version. Skip se igual.
+- **REQ-167-03** Permission gate: primeira chamada para criar diretório/escrever arquivo gera permission prompt no host. Se negado, retorna `{ ok: false, reason: 'permission_denied' }`.
+- **REQ-167-04** Sync writes `.claude/.kit-mcp-version` com a versão atual após sucesso.
+- **REQ-167-05** Output do tool inclui: `{ written, skipped, version, projectRoot, restart_recommended: true }`.
+- **REQ-167-06** Sub-action `kit:auto-install action=check` — sem efeitos colaterais, só reporta drift. Útil para `kit doctor`.
 
-### Fase 158 — Log file rotativo (Wave 1, S)
+### Fase 168 — Restart signal (S)
 
-- **REQ-158-01** Toda invocação de tool MCP loga em `~/.kit-mcp/logs/kit-mcp-YYYY-MM-DD.log` (JSONL, 1 evento por linha).
-- **REQ-158-02** Rotação automática: arquivo por dia, retention 7 dias por default (configurável via `KIT_MCP_LOG_RETENTION_DAYS`).
-- **REQ-158-03** Comando `kit logs [--tail N] [--follow]` espelha tipo `vercel logs` lendo do file.
-- **REQ-158-04** Campos canônicos: `ts`, `tool`, `action`, `args_size`, `result_size`, `duration_ms`, `error_type` (se houver), `pid`.
+- **REQ-168-01** Todo tool result do MCP que escreveu em `.claude/` inclui campo `_kit_action: "session_restart_recommended"` com `reason` legível.
+- **REQ-168-02** Marker file `.claude/.kit-mcp-restart-required` é criado/atualizado após auto-sync. Permite que `kit doctor` detecte "instalado mas não recarregado".
+- **REQ-168-03** Marker é removido por outro tool `kit:ack-restart` que o host (ou usuário via CLI) chama após restart.
+- **REQ-168-04** README ganha section "Após primeira instalação" explicando o flow esperado.
 
-### Fase 159 — `kit doctor` (Wave 1, M)
+### Fase 169 — MCP `notifications/resources/updated` (M)
 
-- **REQ-159-01** Comando `kit doctor` retorna exit 0 se tudo OK, 1 se há issues.
-- **REQ-159-02** Verifica: (a) servidor MCP iniciável (spawn rápido), (b) `.claude/` projetado e file-manifest match, (c) versão IDE host compatível, (d) sidecar alcançável, (e) log dir writable.
-- **REQ-159-03** Output estruturado: section por check com ✓/✗ + remediation hint.
-- **REQ-159-04** Suporta `--json` para integração CI.
+- **REQ-169-01** Quando `.claude/` é atualizado pelo auto-sync, servidor emite `notifications/resources/updated` para cada arquivo afetado.
+- **REQ-169-02** Cada agent/skill/command vira um `resource` no servidor (`kit://agent/<name>`, `kit://skill/<name>`, `kit://command/<name>`).
+- **REQ-169-03** `resources/list` retorna o índice; `resources/read` retorna o markdown completo.
+- **REQ-169-04** Hosts que respeitam `resources/updated` recebem hot-reload (Claude Code atual não respeita ainda, mas spec está pronta).
 
-### Fase 160 — `kit sync` progress bar (Wave 2, S)
+### Fase 170 — Tool descriptions com keywords (XS)
 
-- **REQ-160-01** `kit sync` mostra progress por arquivo escrito (não só sumário final).
-- **REQ-160-02** Diff sumário ao final: `X new, Y updated, Z unchanged, W removed`.
-- **REQ-160-03** `--quiet` flag suprime progress (mantém sumário final).
-- **REQ-160-04** Implementação minimal sem dep externa (ora opcional).
+- **REQ-170-01** Descrição do tool `kit` é enriquecida com lista de keywords de trigger: "Supabase, RLS, multi-tenant, agent, skill, characterization tests, observability, SLO, refactor, legacy code, …".
+- **REQ-170-02** Garantir que descrição cabe em < 1024 chars (limite de alguns hosts).
+- **REQ-170-03** Mesma melhoria aplicada nos outros 6 tools onde fizer sentido (`gates`, `forensics`, `metrics-snapshot`).
+- **REQ-170-04** Modo MCP puro (sem `.claude/`) fica mais usável — Claude reconhece quando rotear via `kit get`.
 
-### Fase 161 — `kit init` onboarding (Wave 2, M)
+### Fase 171 — `kit doctor` sync drift check (S)
 
-- **REQ-161-01** Comando interativo `kit init` detecta IDE, roda install + sync + doctor em sequência.
-- **REQ-161-02** Output final: "✓ Claude Code agora vê N skills, M agents, K commands" com counts reais.
-- **REQ-161-03** Flag `--non-interactive --ide=claude-code` para uso em CI/scripts.
-- **REQ-161-04** Re-rodar `kit init` é idempotente (não duplica arquivos, não quebra config).
-
-### Fase 162 — `kit status` (Wave 2, S)
-
-- **REQ-162-01** Comando `kit status` chama `metrics-snapshot` tool e renderiza p50/p95/p99/error_rate última hora.
-- **REQ-162-02** Mostra também: sidecar status, log file path, last tool call timestamp.
-- **REQ-162-03** Flag `--json` para integração.
-- **REQ-162-04** Reusa `src/core/metrics.js` sem duplicar lógica.
-
-### Fase 163 — `kit mcp --inspect` TUI (Wave 3, M)
-
-- **REQ-163-01** Modo dev `kit mcp --inspect` abre TUI mostrando cada request/response live (entrando/saindo do servidor stdio).
-- **REQ-163-02** Wrapping não-invasivo: spawn server real, pipe stdin/stdout, decora com TUI.
-- **REQ-163-03** Filtros: por tool, por status (ok/error), search por arg.
-- **REQ-163-04** Não substitui stdio do server real (Claude Code continua falando direto com o server; inspect é mirror).
-
-### Fase 164 — Notification on tool call (Wave 3, S)
-
-- **REQ-164-01** Opt-in via flag `--notify` ou env `KIT_MCP_NOTIFY=1`.
-- **REQ-164-02** OS-level notification (node-notifier opcional) ao receber tool call em dev.
-- **REQ-164-03** Throttle: máximo 1 notification a cada 5s para evitar flood.
-- **REQ-164-04** Funciona cross-platform; degrada silenciosamente se OS não suporta.
-
-### Fase 165 — `kit replay <id>` (Wave 3, M)
-
-- **REQ-165-01** Reusa `src/core/replays.js` existente — `kit replay <id>` reexecuta a tool call gravada localmente.
-- **REQ-165-02** Output: diff entre resultado original e atual (regression detection).
-- **REQ-165-03** Flag `--dry-run` apenas mostra payload sem executar.
-- **REQ-165-04** Lista replays disponíveis via `kit replay list`.
+- **REQ-171-01** Novo check em `runDoctorChecks`: compara `.claude/.kit-mcp-version` com `package.json` version.
+- **REQ-171-02** Se drift detectado: `warn` com fix "rerun `kit auto-install` ou `kit sync claude-code`".
+- **REQ-171-03** Se `.kit-mcp-restart-required` presente: `warn` "restart Claude Code para integração nativa".
+- **REQ-171-04** Check funcional via `kit doctor --json` (integração CI/script).
 
 ## Cross-cutting
 
-- **REQ-XC-01** Atualizar `kit/COMANDOS.md` documentando os 7 comandos novos (`logs`, `doctor`, `init`, `status`, `replay`, e flags novas em `mcp`/`sync`).
-- **REQ-XC-02** Atualizar AUTOGEN-COUNTS após cada fase que adiciona comando.
-- **REQ-XC-03** CHANGELOG entry v1.28 listando todas as mudanças por wave.
-- **REQ-XC-04** package.json bump 1.27.0 → 1.28.0.
-- **REQ-XC-05** Coverage não regride abaixo de 86%.
-- **REQ-XC-06** PRR mantém 30/30.
+- **REQ-XC-01** Atualizar CHANGELOG entry v1.29 listando todas as fases.
+- **REQ-XC-02** Atualizar README — section "O que a comunidade precisa saber" deve refletir o novo flow (auto-sync no first contact).
+- **REQ-XC-03** Stable API v1.0+ preservada (16 → 17 releases).
+- **REQ-XC-04** package.json bump 1.28.0 → 1.29.0.
+- **REQ-XC-05** Smoke tests: cobertura ≥ 86% mantida.
 
-## Total: 40 REQs (39 por fase + 6 cross-cutting agrupados)
+## Total: 25 REQs (6 fases × ~4 REQs cada + 5 cross-cutting)

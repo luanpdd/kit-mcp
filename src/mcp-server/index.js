@@ -11,7 +11,7 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, ListToolsRequestSchema, ListResourcesRequestSchema, ReadResourceRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -34,11 +34,15 @@ import { wrapProgressForUi } from '../ui/wrapper.js';
 import { incrementInvocation, recordLatency, snapshot as metricsSnapshot, persistSnapshot } from '../core/metrics.js';
 import { logEvent } from '../core/logger.js';
 import { notify, isNotifyEnabled } from '../core/notify.js';
+import { attachRootsCapability, fetchRoots } from './roots.js';
 
 const TOOLS = [
   {
     name: 'kit',
-    description: 'Browse the personal kit: agents, commands, skills.',
+    // Phase 170 (v1.29): description enriched with trigger keywords so MCP
+    // hosts route here on relevant intents even in MCP-pure mode (before
+    // auto-install made .claude/ native). Keep under 1024 chars (host limit).
+    description: 'Browse the personal kit: 66 agents, 89 commands, 76 skills. Call this when the user mentions Supabase (RLS, branching, migrations, Edge Functions, Custom Claims, Postgres Roles, Storage, Realtime, pgvector), multi-tenant SaaS, agentic harness, characterization tests, legacy refactor, observability (SLO, golden signals, error budgets), DDIA topics (consistency, replication lag, schema evolution), SRE (postmortems, toil, PRR), CI/CD (hermetic builds, pipelines), or any workflow that benefits from the canonical patterns. Use action=search to discover, action=get to read the full prompt/skill.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -143,6 +147,37 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {},
+    },
+  },
+  {
+    // Phase 167 (v1.29): auto-sync the kit content into the host project's
+    // .claude/ (or equivalent) directory so agents become real subagent_types,
+    // skills get native auto-trigger, and commands appear as slash-commands.
+    // Idempotent — re-runs are no-ops if .claude/.kit-mcp-version matches the
+    // running server's package version. Permission-gated by the host.
+    name: 'auto-install',
+    description: 'IMPORTANT for first contact: project kit/ into the host\'s native layout (.claude/agents/, skills/, commands/) so 66 agents become real subagent_types in the Agent tool, 76 skills get native auto-trigger via descriptions, and 89 commands appear as /slash-commands in the IDE. Idempotent — re-running is a no-op if already in sync. Run once per project on first kit-mcp contact; restart the IDE session after to load the new agents/skills/commands. After restart, call ack-restart to clear the marker.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action:      { type: 'string', enum: ['install', 'check'], description: 'install: write files. check: read-only drift report. Default: install.' },
+        target:      { type: 'string', description: 'IDE id (claude-code, cursor, …). Defaults to claude-code.' },
+        projectRoot: { type: 'string', description: 'Override the auto-detected project root. Usually omitted — server reads it from MCP roots capability.' },
+        force:       { type: 'boolean', description: 'Re-write even if .kit-mcp-version already matches. Default: false.' },
+      },
+    },
+  },
+  {
+    // Phase 168 (v1.29): acknowledge the restart-required marker after the
+    // user reloads the IDE session. Removes .claude/.kit-mcp-restart-required
+    // so doctor stops flagging it.
+    name: 'ack-restart',
+    description: 'Acknowledge that the IDE session was restarted after kit:auto-install. Removes the .kit-mcp-restart-required marker so kit:doctor stops warning. Called automatically by the harness when it detects the marker after reload, or manually by the user.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        projectRoot: { type: 'string' },
+      },
     },
   },
 ];
@@ -318,6 +353,185 @@ async function handleInstall(args) {
 let _lastAutoPersistTs = 0;
 const AUTO_PERSIST_THROTTLE_MS = 1000;
 
+// Module-level reference to the active server, so handlers can emit
+// notifications (resources/updated, list_changed). Set in createServer.
+let _activeServer = null;
+
+// Phase 167 (v1.29): auto-install handler.
+// Bridges MCP → host-native integration by writing kit/ files into .claude/
+// (or whatever the target IDE expects). Idempotent via .kit-mcp-version marker.
+// Phase 168 hooks add the restart_recommended signal to the result.
+// Phase 169 hooks emit notifications/resources/list_changed so subscribed hosts
+// can hot-reload the kit content view.
+async function handleAutoInstall(args) {
+  const action = args.action || 'install';
+  const target = args.target || 'claude-code';
+  const force = !!args.force;
+
+  // Resolve projectRoot: explicit > MCP roots > cwd.
+  let projectRoot = args.projectRoot;
+  if (!projectRoot) {
+    // Lazy require to avoid circular deps; getPrimaryProjectRoot is sync.
+    const { getPrimaryProjectRoot, getRootsSupportLevel } = await import('./roots.js');
+    projectRoot = getPrimaryProjectRoot();
+    var _rootsSource = getRootsSupportLevel() === 'supported' ? 'mcp-roots' : 'cwd';
+  } else {
+    var _rootsSource = 'explicit';
+  }
+
+  // SEC-14-03: validate project root (allowlist-of-1 — must be a real dir).
+  const guard = await validateProjectRoot(projectRoot);
+  if (!guard.ok) {
+    return { ok: false, reason: guard.reason, projectRoot, rootsSource: _rootsSource };
+  }
+  projectRoot = guard.resolvedPath;
+
+  const fs = await import('node:fs/promises');
+  const path = await import('node:path');
+  const markerPath = path.join(projectRoot, '.claude', '.kit-mcp-version');
+
+  // Read current marker if present.
+  let currentVersion = null;
+  try {
+    currentVersion = (await fs.readFile(markerPath, 'utf8')).trim();
+  } catch { /* not installed yet */ }
+
+  const targetVersion = PKG_VERSION;
+  const inSync = currentVersion === targetVersion;
+
+  // Phase 167 — action=check: read-only drift report.
+  if (action === 'check') {
+    return {
+      ok: true,
+      action: 'check',
+      target,
+      projectRoot,
+      rootsSource: _rootsSource,
+      installedVersion: currentVersion,
+      currentVersion: targetVersion,
+      inSync,
+      restartRecommended: false,
+    };
+  }
+
+  // action=install: skip if in sync and not forced.
+  if (inSync && !force) {
+    return {
+      ok: true,
+      action: 'install',
+      target,
+      projectRoot,
+      rootsSource: _rootsSource,
+      version: targetVersion,
+      skipped: true,
+      reason: 'already in sync',
+      restartRecommended: false,
+    };
+  }
+
+  // Run the sync.
+  let syncResult;
+  try {
+    syncResult = await syncTo(target, { projectRoot, mode: 'reference', dryRun: false });
+  } catch (e) {
+    return {
+      ok: false,
+      action: 'install',
+      target,
+      projectRoot,
+      rootsSource: _rootsSource,
+      reason: `sync_failed: ${e.message}`,
+    };
+  }
+
+  // Write/update marker file (.claude/.kit-mcp-version).
+  try {
+    await fs.mkdir(path.dirname(markerPath), { recursive: true });
+    await fs.writeFile(markerPath, targetVersion + '\n', 'utf8');
+  } catch (e) {
+    // Marker is best-effort — sync already succeeded. Just warn.
+    process.stderr.write(`[kit-mcp] auto-install marker write failed: ${e.message}\n`);
+  }
+
+  // Phase 168 (v1.29): write .kit-mcp-restart-required so doctor/host can detect
+  // pending restart even if the user closes/reopens kit-mcp without restarting IDE.
+  try {
+    const restartMarker = path.join(projectRoot, '.claude', '.kit-mcp-restart-required');
+    const payload = JSON.stringify({
+      version: targetVersion,
+      previousVersion: currentVersion,
+      writtenAt: new Date().toISOString(),
+      reason: currentVersion
+        ? `Kit updated ${currentVersion} → ${targetVersion}`
+        : 'Initial kit install',
+    }, null, 2);
+    await fs.writeFile(restartMarker, payload + '\n', 'utf8');
+  } catch (e) {
+    process.stderr.write(`[kit-mcp] restart marker write failed: ${e.message}\n`);
+  }
+
+  // Phase 169 (v1.29): emit notifications/resources/list_changed so hosts
+  // that subscribed to the resources capability can refresh their view.
+  // Most hosts today won't act on it, but the signal is correct per spec.
+  if (_activeServer && typeof _activeServer.sendResourceListChanged === 'function') {
+    try { await _activeServer.sendResourceListChanged(); } catch { /* swallow */ }
+  }
+
+  return {
+    ok: true,
+    action: 'install',
+    target,
+    projectRoot,
+    rootsSource: _rootsSource,
+    version: targetVersion,
+    previousVersion: currentVersion,
+    written: (syncResult.written || []).length,
+    restartRecommended: true,
+    _kit_action: 'session_restart_recommended',
+    _kit_reason: currentVersion
+      ? `Kit updated from ${currentVersion} to ${targetVersion} — restart the IDE session so agents/skills/commands reload.`
+      : `Kit installed (v${targetVersion}) into ${path.join('.claude', '')} — restart the IDE session for native subagent_type + slash-command + skill auto-trigger integration.`,
+  };
+}
+
+// Phase 168 (v1.29): acknowledge that the IDE was restarted after a kit:auto-install.
+// Removes the .kit-mcp-restart-required marker. Read by kit:doctor (Phase 171)
+// to stop flagging "pending restart".
+async function handleAckRestart(args) {
+  // Resolve projectRoot via roots if not given.
+  let projectRoot = args.projectRoot;
+  if (!projectRoot) {
+    const { getPrimaryProjectRoot } = await import('./roots.js');
+    projectRoot = getPrimaryProjectRoot();
+  }
+
+  const guard = await validateProjectRoot(projectRoot);
+  if (!guard.ok) return { ok: false, reason: guard.reason, projectRoot };
+  projectRoot = guard.resolvedPath;
+
+  const fs = await import('node:fs/promises');
+  const path = await import('node:path');
+  const restartMarker = path.join(projectRoot, '.claude', '.kit-mcp-restart-required');
+
+  let acked = false;
+  try {
+    await fs.unlink(restartMarker);
+    acked = true;
+  } catch (e) {
+    if (e.code !== 'ENOENT') {
+      return { ok: false, reason: `unlink_failed: ${e.message}`, projectRoot };
+    }
+    // ENOENT — nothing to ack, already clean. Not an error.
+  }
+
+  return {
+    ok: true,
+    projectRoot,
+    acked,
+    reason: acked ? 'restart marker removed' : 'no restart marker present (nothing to ack)',
+  };
+}
+
 async function handleMetricsSnapshot() {
   const payload = metricsSnapshot();
   const now = Date.now();
@@ -336,13 +550,15 @@ async function handleMetricsSnapshot() {
 }
 
 const HANDLERS = {
-  kit:               handleKit,
-  sync:              handleSync,
-  'reverse-sync':    handleReverseSync,
-  gates:             handleGates,
-  forensics:         handleForensics,
-  install:           handleInstall,
+  kit:                handleKit,
+  sync:               handleSync,
+  'reverse-sync':     handleReverseSync,
+  gates:              handleGates,
+  forensics:          handleForensics,
+  install:            handleInstall,
   'metrics-snapshot': handleMetricsSnapshot,
+  'auto-install':     handleAutoInstall,
+  'ack-restart':      handleAckRestart,
 };
 
 function slim(x) {
@@ -365,10 +581,87 @@ function slimTerse(x) {
 export async function createServer() {
   const server = new Server(
     { name: 'kit-mcp', version: PKG_VERSION },
-    { capabilities: { tools: {} } }
+    {
+      // Phase 166 + 169 (v1.29): declare capabilities.
+      // - `tools` (existing) — the 7+ MCP tools exposed to the host.
+      // - `resources` (new in v1.29) — each agent/skill/command becomes a
+      //   readable resource under kit://agent/<name>, kit://skill/<name>,
+      //   kit://command/<name>. Hosts can list and read them natively.
+      //   `subscribe: true` opt-in lets the host listen for updates after
+      //   auto-install rewrites .claude/. `listChanged: true` means we'll
+      //   notify when the resource list itself changes.
+      capabilities: {
+        tools: {},
+        resources: { subscribe: true, listChanged: true },
+      },
+      enforceStrictCapabilities: false,
+    }
   );
 
+  // Register notification handlers before connect. The roots/list REQUEST
+  // is sent from server to client after `initialized` (kicked off in startStdio).
+  attachRootsCapability(server);
+
+  // Phase 169 (v1.29): expose server instance to handlers that need to emit
+  // server-side notifications (e.g. resources/list_changed after auto-install).
+  _activeServer = server;
+
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
+
+  // Phase 169 (v1.29): MCP resources — expose each agent/skill/command as a
+  // readable resource. URIs are kit://agent/<name>, kit://skill/<name>,
+  // kit://command/<name>. Hosts that respect the resources capability can
+  // browse and read these natively (Cursor, Claude Code soon).
+  server.setRequestHandler(ListResourcesRequestSchema, async () => {
+    const kit = await listKit(BUNDLED_KIT_ROOT);
+    const resources = [];
+    for (const a of kit.agents || []) {
+      resources.push({
+        uri: `kit://agent/${a.name}`,
+        name: a.name,
+        description: a.description,
+        mimeType: 'text/markdown',
+      });
+    }
+    for (const s of kit.skills || []) {
+      resources.push({
+        uri: `kit://skill/${s.name}`,
+        name: s.name,
+        description: s.description,
+        mimeType: 'text/markdown',
+      });
+    }
+    for (const c of kit.commands || []) {
+      resources.push({
+        uri: `kit://command/${c.name}`,
+        name: c.name,
+        description: c.description,
+        mimeType: 'text/markdown',
+      });
+    }
+    return { resources };
+  });
+
+  server.setRequestHandler(ReadResourceRequestSchema, async (req) => {
+    const uri = req.params?.uri;
+    const m = /^kit:\/\/(agent|skill|command)\/(.+)$/.exec(uri || '');
+    if (!m) {
+      return { contents: [], isError: true };
+    }
+    const [, kind, name] = m;
+    const kit = await listKit(BUNDLED_KIT_ROOT);
+    const item = findItem(kit, kind, name);
+    if (!item || !item.body) {
+      return { contents: [], isError: true };
+    }
+    return {
+      contents: [{
+        uri,
+        mimeType: 'text/markdown',
+        text: item.body,
+      }],
+    };
+  });
 
   server.setRequestHandler(CallToolRequestSchema, async (req) => {
     const { name, arguments: args } = req.params;
@@ -456,6 +749,13 @@ export async function startStdio() {
   const server = await createServer();
   const transport = new StdioServerTransport();
   await server.connect(transport);
+
+  // Phase 166 (v1.29): fetch workspace roots from the client right after
+  // connection. Fire-and-forget — the request will either succeed (host
+  // supports roots) or fail silently (older host, or no workspace yet).
+  // The cached result is available via getPrimaryProjectRoot() from
+  // ./roots.js for any subsequent tool dispatch that needs the project dir.
+  fetchRoots(server).catch(() => { /* swallow — fallback to cwd */ });
 
   // SRE-20-02 (Phase 105): pre-warm the kit cache to push MCP dispatch p95
   // below 100ms. Without this, the very first tools/call against `kit` pays

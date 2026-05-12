@@ -6,6 +6,54 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.29.0] - 2026-05-12
+
+### Added — MCP-Native Discovery via Auto-Sync
+
+Resolves a real user pain: "adicionei kit-mcp ao .mcp.json mas agents não são `subagent_type`, skills não auto-triggam, commands não viram slash-commands". Causa arquitetural — Claude Code lê `.claude/` no boot; MCP server inicia depois. Solução: kit-mcp passa a auto-configurar `.claude/` no primeiro contato.
+
+**6 fases (166-171, 25 REQs):**
+
+- **Phase 166** — Novo módulo `src/mcp-server/roots.js`. Servidor declara capability `roots: {listChanged: true}`, envia `roots/list` request após conexão, cacheia resposta. `getPrimaryProjectRoot()` substitui guessing de `process.cwd()`.
+- **Phase 167** — Novo MCP tool **`auto-install`** com 2 actions:
+  - `install` (default): sync `kit/` para `.claude/agents/`, `.claude/skills/`, `.claude/commands/`. Escreve marker `.claude/.kit-mcp-version`. Idempotente — skip se marker == PKG_VERSION e `force=false`.
+  - `check`: read-only drift report — `{installedVersion, currentVersion, inSync}`.
+- **Phase 168** — Restart signal formalizado:
+  - `handleAutoInstall` agora escreve segundo marker `.claude/.kit-mcp-restart-required` com JSON `{version, previousVersion, writtenAt, reason}`.
+  - Tool result inclui `_kit_action: 'session_restart_recommended'` + `_kit_reason` quando há mudanças.
+  - Novo tool **`ack-restart`** remove o marker após reload.
+- **Phase 169** — MCP `resources` capability:
+  - `createServer()` declara `resources: {subscribe: true, listChanged: true}`.
+  - `resources/list` retorna 231 entries (66 agents + 76 skills + 89 commands) com URIs `kit://agent/<name>`, `kit://skill/<name>`, `kit://command/<name>`.
+  - `resources/read` retorna `text/markdown` body via `findItem(kit, kind, name)`.
+  - `handleAutoInstall` emite `sendResourceListChanged()` após sync efetivo.
+- **Phase 170** — Tool descriptions enriquecidas com trigger keywords:
+  - `kit` (47 → 596 chars): lista Supabase, RLS, branching, multi-tenant, agentic harness, observability, SLO, DDIA, SRE, CI/CD para o harness rotear early em MCP-puro mode.
+  - `auto-install` (218 → 499 chars): prefix "IMPORTANT for first contact" + explicação subagent_types / skills / slash-commands.
+  - Novo script `scripts/check-tool-descriptions.mjs` valida ≤ 1024 chars.
+- **Phase 171** — `kit doctor` ganha 2 checks v1.29:
+  - **auto-install** — compara marker vs PKG_VERSION. warn se ausente ou drift, com fix actionable.
+  - **restart pending** — detecta `.kit-mcp-restart-required` e mostra reason + writtenAt.
+
+### Novos MCP tools
+
+- `auto-install` — install/check actions
+- `ack-restart` — limpa marker pós-reload
+
+### Novos MCP capabilities
+
+- `resources: {subscribe: true, listChanged: true}` — agents/skills/commands viram resources nativos
+- `roots` (consumer) — projectRoot detectado via host MCP
+
+### Princípios respeitados
+
+- Spec MCP intocável (apenas capabilities oficiais: roots, resources, notifications)
+- Idempotência completa (re-conectar não re-escreve se já em sync)
+- Permission gate honesto (escrita em `.claude/` gera prompt do host)
+- Fallback gracioso (host sem roots → modo MCP puro com aviso)
+- Stable API v1.0+ preservada (17 releases agora)
+- Sem side effects no boot do MCP
+
 ## [1.28.0] - 2026-05-12
 
 ### Added — UX & Onboarding (kit-mcp developer experience)
