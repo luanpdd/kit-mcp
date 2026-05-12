@@ -1,6 +1,6 @@
 ---
 name: auditar-cascading
-description: Invoca cascading-failures-auditor — audita código de serviço para 5 triggers de cascade (sem timeout, retry sem jitter, sem circuit breaker, sem deadline propagation, queue unbounded); gera CASCA…
+description: Invoca cascading-failures-auditor — audita código de serviço para 5 triggers de cascade (sem timeout, retry sem jitter, sem circuit breaker, sem deadline propagation, queue unbounded); ger…
 argument-hint: "[target_path] [--dimensions ...] [--severity P0|P1|P2|all]"
 allowed-tools:
   - Read

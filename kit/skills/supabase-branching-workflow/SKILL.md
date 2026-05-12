@@ -1,6 +1,6 @@
 ---
 name: supabase-branching-workflow
-description: Use ao adotar Supabase Branching — preview vs persistent branches, deploy DAG 7 steps (clone→pull→health→configure→migrate→seed→deploy), GitHub integration setup, Dashboard alpha caveats, custo B…
+description: Use ao adotar Supabase Branching — preview vs persistent branches, deploy DAG 7 steps (clone→pull→health→configure→migrate→seed→deploy), GitHub integration setup, Dashboard alpha…
 ---
 
 # Supabase — Branching Workflow

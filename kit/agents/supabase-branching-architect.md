@@ -1,6 +1,6 @@
 ---
 name: supabase-branching-architect
-description: Projeta estratégia branching Supabase ANTES do setup técnico. Coleta 4 decisões canônicas via AskUserQuestion (GitHub integration vs Dashboard alpha [default GitHub], persistent vs ephemeral mix…
+description: Projeta estratégia branching Supabase ANTES do setup técnico. Coleta 4 decisões canônicas via AskUserQuestion (GitHub integration vs Dashboard alpha [default GitHub], persistent vs ephemer…
 tools: Read, Write, Bash, AskUserQuestion, Task
 color: blue
 ---

@@ -1,6 +1,6 @@
 ---
 name: detectar-duplicacao
-description: Invoca shotgun-surgery-detector — detecta duplicação sintática (jscpd/regex) + semântica (embeddings) cross-codebase, prioriza por size × frequency × extract feasibility. Modernização cap 21 Feathers.
+description: Invoca shotgun-surgery-detector — detecta duplicação sintática (jscpd/regex) + semântica (embeddings) cross-codebase, prioriza por size × frequency × extract feasibility.
 argument-hint: "<root_dir> [--threshold 0.85] [--min-cluster-size 3] [--mode syntactic|semantic|both] [--provider openai|pgvector|auto]"
 allowed-tools:
   - Read

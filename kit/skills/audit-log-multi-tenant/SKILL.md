@@ -1,6 +1,6 @@
 ---
 name: audit-log-multi-tenant
-description: Use ao implementar audit log em B2B SaaS multi-tenant Supabase — tabela append-only (REVOKE DELETE/UPDATE), 7 event types canônicos, retention pg_cron 3 tiers (30d/90d/365d), legal_hold flag para…
+description: Use ao implementar audit log em B2B SaaS multi-tenant Supabase…
 ---
 
 # Audit Log Multi-Tenant — Compliance + Forensics
