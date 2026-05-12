@@ -908,6 +908,90 @@ program.command('init')
     }
   });
 
+// --- replay (Phase 165, v1.28: inspect recorded agent Task() payloads) ---
+const replay = program.command('replay').description('List or inspect recorded agent replays.');
+
+replay.command('list')
+  .description('List replays in <project-root>/.planning/replays/')
+  .option('--project-root <path>', 'Default: cwd')
+  .action(async (opts) => {
+    const projectRoot = opts.projectRoot || process.cwd();
+    const items = await listReplays({ projectRoot });
+    if (program.opts().json) {
+      out(items, () => '');
+      return;
+    }
+    if (items.length === 0) {
+      process.stderr.write(`${c.yellow(icons.warn)} no replays at ${path.join(projectRoot, '.planning', 'replays')}\n`);
+      return;
+    }
+    process.stdout.write(`\n${c.bold(items.length + ' replay(s)')}\n\n`);
+    for (const r of items) {
+      process.stdout.write(`  ${c.cyan(r.id)}\n`);
+      process.stdout.write(`    agent: ${c.bold(r.agent || '?')}  phase: ${r.phase || '?'}  plan: ${r.plan || '?'}\n`);
+      process.stdout.write(`    ${c.dim(r.recorded_at || '?')}\n\n`);
+    }
+  });
+
+replay.command('show <id>')
+  .description('Show the full recorded payload for a replay id.')
+  .option('--project-root <path>', 'Default: cwd')
+  .action(async (id, opts) => {
+    const projectRoot = opts.projectRoot || process.cwd();
+    try {
+      const r = await loadReplay(id, { projectRoot });
+      if (program.opts().json) {
+        out(r, () => '');
+        return;
+      }
+      process.stdout.write(`\n${c.bold(r.id)}\n`);
+      process.stdout.write(`${c.dim('recorded:')} ${r.recorded_at}\n`);
+      process.stdout.write(`${c.dim('agent:')}    ${c.bold(r.agent || '?')}\n`);
+      process.stdout.write(`${c.dim('phase:')}    ${r.phase || '?'}\n`);
+      process.stdout.write(`${c.dim('plan:')}     ${r.plan || '?'}\n`);
+      if (r.outcome) {
+        process.stdout.write(`${c.dim('outcome:')}  ${JSON.stringify(r.outcome)}\n`);
+      }
+      process.stdout.write(`\n${c.bold('payload:')}\n`);
+      const { id: _id, recorded_at: _rec, agent: _a, phase: _p, plan: _pl, outcome: _o, ...rest } = r;
+      process.stdout.write(JSON.stringify(rest, null, 2) + '\n');
+    } catch (e) {
+      process.stderr.write(`${c.red(icons.cross)} replay "${id}" not found: ${e.message}\n`);
+      process.exit(1);
+    }
+  });
+
+replay.command('diff <id>')
+  .description('Compare a replay payload against its most recent re-record (if any).')
+  .option('--project-root <path>', 'Default: cwd')
+  .action(async (id, opts) => {
+    const projectRoot = opts.projectRoot || process.cwd();
+    try {
+      const target = await loadReplay(id, { projectRoot });
+      const all = await listReplays({ projectRoot });
+      // Find newest replay with same agent that isn't the target itself.
+      const candidate = all.find((r) => r.id !== id && r.agent === target.agent);
+      if (!candidate) {
+        process.stdout.write(`${c.yellow(icons.warn)} no peer replay for agent "${target.agent}" — nothing to diff\n`);
+        return;
+      }
+      const newer = await loadReplay(candidate.id, { projectRoot });
+      const a = JSON.stringify(target, null, 2).split('\n');
+      const b = JSON.stringify(newer, null, 2).split('\n');
+      process.stdout.write(`\n${c.bold(`diff ${id}  ↔  ${candidate.id}`)}\n\n`);
+      const max = Math.max(a.length, b.length);
+      for (let i = 0; i < max; i++) {
+        if (a[i] !== b[i]) {
+          if (a[i] !== undefined) process.stdout.write(c.red('-') + ' ' + a[i] + '\n');
+          if (b[i] !== undefined) process.stdout.write(c.green('+') + ' ' + b[i] + '\n');
+        }
+      }
+    } catch (e) {
+      process.stderr.write(`${c.red(icons.cross)} ${e.message}\n`);
+      process.exit(1);
+    }
+  });
+
 // --- inspect (Phase 163, v1.28: live TUI mirror of MCP request/response) ---
 program.command('inspect')
   .description('Live request/response mirror — pretty-print MCP tool calls as they happen.')
