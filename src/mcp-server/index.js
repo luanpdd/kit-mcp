@@ -146,6 +146,24 @@ const TOOLS = [
       properties: {},
     },
   },
+  {
+    // Phase 167 (v1.29): auto-sync the kit content into the host project's
+    // .claude/ (or equivalent) directory so agents become real subagent_types,
+    // skills get native auto-trigger, and commands appear as slash-commands.
+    // Idempotent — re-runs are no-ops if .claude/.kit-mcp-version matches the
+    // running server's package version. Permission-gated by the host.
+    name: 'auto-install',
+    description: 'Project kit/ into the host\'s native layout (.claude/agents/, skills/, commands/) so agents become real subagent_types and commands become native slash-commands. Idempotent. Run once per project; restart the IDE session after.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action:      { type: 'string', enum: ['install', 'check'], description: 'install: write files. check: read-only drift report. Default: install.' },
+        target:      { type: 'string', description: 'IDE id (claude-code, cursor, …). Defaults to claude-code.' },
+        projectRoot: { type: 'string', description: 'Override the auto-detected project root. Usually omitted — server reads it from MCP roots capability.' },
+        force:       { type: 'boolean', description: 'Re-write even if .kit-mcp-version already matches. Default: false.' },
+      },
+    },
+  },
 ];
 
 // DRIFT-13-03: read version from package.json at module load (NOT inside
@@ -319,6 +337,117 @@ async function handleInstall(args) {
 let _lastAutoPersistTs = 0;
 const AUTO_PERSIST_THROTTLE_MS = 1000;
 
+// Phase 167 (v1.29): auto-install handler.
+// Bridges MCP → host-native integration by writing kit/ files into .claude/
+// (or whatever the target IDE expects). Idempotent via .kit-mcp-version marker.
+// Phase 168 hooks add the restart_recommended signal to the result.
+async function handleAutoInstall(args) {
+  const action = args.action || 'install';
+  const target = args.target || 'claude-code';
+  const force = !!args.force;
+
+  // Resolve projectRoot: explicit > MCP roots > cwd.
+  let projectRoot = args.projectRoot;
+  if (!projectRoot) {
+    // Lazy require to avoid circular deps; getPrimaryProjectRoot is sync.
+    const { getPrimaryProjectRoot, getRootsSupportLevel } = await import('./roots.js');
+    projectRoot = getPrimaryProjectRoot();
+    var _rootsSource = getRootsSupportLevel() === 'supported' ? 'mcp-roots' : 'cwd';
+  } else {
+    var _rootsSource = 'explicit';
+  }
+
+  // SEC-14-03: validate project root (allowlist-of-1 — must be a real dir).
+  const guard = await validateProjectRoot(projectRoot);
+  if (!guard.ok) {
+    return { ok: false, reason: guard.reason, projectRoot, rootsSource: _rootsSource };
+  }
+  projectRoot = guard.resolvedPath;
+
+  const fs = await import('node:fs/promises');
+  const path = await import('node:path');
+  const markerPath = path.join(projectRoot, '.claude', '.kit-mcp-version');
+
+  // Read current marker if present.
+  let currentVersion = null;
+  try {
+    currentVersion = (await fs.readFile(markerPath, 'utf8')).trim();
+  } catch { /* not installed yet */ }
+
+  const targetVersion = PKG_VERSION;
+  const inSync = currentVersion === targetVersion;
+
+  // Phase 167 — action=check: read-only drift report.
+  if (action === 'check') {
+    return {
+      ok: true,
+      action: 'check',
+      target,
+      projectRoot,
+      rootsSource: _rootsSource,
+      installedVersion: currentVersion,
+      currentVersion: targetVersion,
+      inSync,
+      restartRecommended: false,
+    };
+  }
+
+  // action=install: skip if in sync and not forced.
+  if (inSync && !force) {
+    return {
+      ok: true,
+      action: 'install',
+      target,
+      projectRoot,
+      rootsSource: _rootsSource,
+      version: targetVersion,
+      skipped: true,
+      reason: 'already in sync',
+      restartRecommended: false,
+    };
+  }
+
+  // Run the sync.
+  let syncResult;
+  try {
+    syncResult = await syncTo(target, { projectRoot, mode: 'reference', dryRun: false });
+  } catch (e) {
+    return {
+      ok: false,
+      action: 'install',
+      target,
+      projectRoot,
+      rootsSource: _rootsSource,
+      reason: `sync_failed: ${e.message}`,
+    };
+  }
+
+  // Write/update marker file (.claude/.kit-mcp-version).
+  try {
+    await fs.mkdir(path.dirname(markerPath), { recursive: true });
+    await fs.writeFile(markerPath, targetVersion + '\n', 'utf8');
+  } catch (e) {
+    // Marker is best-effort — sync already succeeded. Just warn.
+    process.stderr.write(`[kit-mcp] auto-install marker write failed: ${e.message}\n`);
+  }
+
+  return {
+    ok: true,
+    action: 'install',
+    target,
+    projectRoot,
+    rootsSource: _rootsSource,
+    version: targetVersion,
+    previousVersion: currentVersion,
+    written: (syncResult.written || []).length,
+    restartRecommended: true,
+    _kit_action: 'session_restart_recommended',
+    _kit_reason: currentVersion
+      ? `Kit updated from ${currentVersion} to ${targetVersion} — restart the IDE session so agents/skills/commands reload.`
+      : `Kit installed (v${targetVersion}) into ${path.join('.claude', '')} — restart the IDE session for native subagent_type + slash-command + skill auto-trigger integration.`,
+  };
+}
+
 async function handleMetricsSnapshot() {
   const payload = metricsSnapshot();
   const now = Date.now();
@@ -337,13 +466,14 @@ async function handleMetricsSnapshot() {
 }
 
 const HANDLERS = {
-  kit:               handleKit,
-  sync:              handleSync,
-  'reverse-sync':    handleReverseSync,
-  gates:             handleGates,
-  forensics:         handleForensics,
-  install:           handleInstall,
+  kit:                handleKit,
+  sync:               handleSync,
+  'reverse-sync':     handleReverseSync,
+  gates:              handleGates,
+  forensics:          handleForensics,
+  install:            handleInstall,
   'metrics-snapshot': handleMetricsSnapshot,
+  'auto-install':     handleAutoInstall,
 };
 
 function slim(x) {
