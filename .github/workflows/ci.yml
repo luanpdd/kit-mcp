@@ -178,17 +178,27 @@ jobs:
           # `--experimental-test-coverage` writes the coverage report to stdout
           # via the reporter; tests' own console output goes to the report too.
           # Capture all output; tests must still pass (handled by Tests step above).
-          node --experimental-test-coverage --test test/unit/*.test.js > coverage.txt 2>&1 || {
-            echo "::error::coverage run failed — see coverage.txt"
-            tail -50 coverage.txt
-            exit 1
-          }
+          #
+          # The Tests step above is the source of truth for "tests pass".
+          # Here we only care if the coverage REPORT was generated and meets
+          # the threshold. Some Linux/Node22 combos exit non-zero AFTER printing
+          # the full report (orphan child processes from auto-spawn paths,
+          # known node:test quirk on coverage runs). We tolerate non-zero exit
+          # as long as the "all files" footer is present and parseable. The
+          # threshold check below is the real gate.
+          set +e
+          node --experimental-test-coverage --test test/unit/*.test.js > coverage.txt 2>&1
+          NODE_EXIT=$?
+          set -e
           # Parse "all files" footer row. Field 2 (after split on '|') is line %.
           LINE_COV=$(grep "^ℹ all files" coverage.txt | head -1 | awk -F'|' '{print $2}' | tr -d ' %')
           if [ -z "$LINE_COV" ]; then
-            echo "::error::could not parse line coverage from coverage.txt"
-            grep -E "all files|line %" coverage.txt | head -10
+            echo "::error::could not parse line coverage from coverage.txt (node exit=$NODE_EXIT)"
+            tail -80 coverage.txt
             exit 1
+          fi
+          if [ "$NODE_EXIT" -ne 0 ]; then
+            echo "::warning::node coverage run exited $NODE_EXIT but report was generated; tolerating since Tests step is the source of truth"
           fi
           echo "Line coverage: $LINE_COV% (threshold: $THRESHOLD%)"
           # Integer compare on the whole part (strip decimals). Bash can't do

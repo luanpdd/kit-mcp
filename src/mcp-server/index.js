@@ -473,7 +473,17 @@ export async function startStdio() {
   // Escape hatch: KIT_MCP_NO_UI=1 (CI, headless, opt-out). Fire-and-forget:
   // sidecar failure must never block the MCP transport (spec requires clean
   // stdout). Errors are swallowed silently — kit doctor will surface them.
-  if (process.env.KIT_MCP_NO_UI !== '1' && process.env.KIT_MCP_NO_UI !== 'true') {
+  //
+  // Skip when running under node --test (or coverage) to avoid leaking detached
+  // child processes that hold the event loop and cause non-zero exits. Same
+  // for CI=true (GitHub Actions, etc.) — sidecar is interactive and meaningless
+  // there. End users running locally still get the default-on behavior.
+  const isTestRun = (process.execArgv || []).some(
+    (a) => a === '--test' || a === '--experimental-test-coverage',
+  ) || process.env.NODE_TEST_CONTEXT !== undefined;
+  const noUi = process.env.KIT_MCP_NO_UI === '1' || process.env.KIT_MCP_NO_UI === 'true';
+  const isCi = process.env.CI === 'true' || process.env.CI === '1';
+  if (!noUi && !isTestRun && !isCi) {
     const projectRoot = process.cwd();
     ensureSidecar({ projectRoot, openBrowserOnSpawn: false }).catch(() => {});
   }
