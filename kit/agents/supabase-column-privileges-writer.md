@@ -1,6 +1,6 @@
 ---
 name: supabase-column-privileges-writer
-description: Canonical materializer column-level privileges Supabase. Recebe spec (table + colunas sensíveis + roles permitidos) via Task() upstream context + intent original. Produz REVOKE table-level + GRANT column-level SQL preservando intent. Verdicts GO/STRENGTHEN/REWRITE-com-confirmação. Paralelo ao supabase-rls-hardener v1.23. NUNCA descarta upstream silenciosamente. Feature AVANÇADA — usa apenas com PII real ou compliance LGPD/GDPR. v1.24 incorpora 100% da doc oficial.
+description: Canonical materializer column-level privileges Supabase. Recebe spec (table + colunas sensíveis + roles permitidos) via Task() upstream context + intent original.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: red
 ---

@@ -1,6 +1,6 @@
 ---
 name: consistencia-leitura-replica
-description: Use ao usar Supabase read replicas via Supavisor (porta 6543) ou ao combinar Realtime broadcast + leitura DB — 3 problemas canônicos DDIA Ch 5 (read-after-write inconsistente, leituras não-monotônicas, prefixo causal violado), 3 soluções para Supabase (leitura no líder após escrita, sticky session por user_id, detecção stale via pg_last_wal_replay_lsn), padrão "ler o próprio broadcast" para evitar re-fetch após broadcast.
+description: Use ao usar Supabase read replicas via Supavisor (porta 6543) ou ao combinar Realtime broadcast + leitura DB…
 ---
 
 # Consistência Leitura Réplica — Supabase + Supavisor + Realtime

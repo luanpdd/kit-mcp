@@ -1,6 +1,6 @@
 ---
 name: auditar-release
-description: Invoca release-pipeline-auditor — audita CI/CD para hermeticidade (lockfile + frozen-install + image SHA + sem network), reprodutibilidade (versions pinned), policy enforcement (branch protection, signed commits, CODEOWNERS). Cap 8 livro Google SRE.
+description: Invoca release-pipeline-auditor — audita CI/CD para hermeticidade (lockfile + frozen-install + image SHA + sem network), reprodutibilidade (versions pinned), policy enforcement (branch protection…
 argument-hint: "[--dimensions hermeticidade,reprodutibilidade,policy-enforcement] [--gh-repo OWNER/REPO]"
 allowed-tools:
   - Read

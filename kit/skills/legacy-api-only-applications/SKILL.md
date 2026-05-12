@@ -1,6 +1,6 @@
 ---
 name: legacy-api-only-applications
-description: Use ao escrever ou refatorar código que é maioritariamente wrapper de API externa (cap 15 Feathers + Supabase Edge Functions). Adapter / anti-corruption layer canônico — interface mínima testável + adapter para API real.
+description: Use ao escrever ou refatorar código que é maioritariamente wrapper de API externa (cap 15 Feathers + Supabase Edge Functions). Adapter / anti-corruption layer canônico…
 ---
 
 # Legacy — API-Only Applications

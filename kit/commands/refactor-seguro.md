@@ -1,6 +1,6 @@
 ---
 name: refactor-seguro
-description: Orquestrador de refactor seguro — chain canônico encontrar-seams → caracterizar → auditar-refactor → executar. Suporta modos --mode=full|sprout|safe-extract|override. Substitui edit-and-pray por cover-and-modify.
+description: Orquestrador de refactor seguro — chain canônico encontrar-seams → caracterizar → auditar-refactor → executar. Suporta modos --mode=full|sprout|safe-extract|override.
 argument-hint: "<target_file> [--mode full|sprout|safe-extract|override] [--ticket REQ-N] [--reason \"...\"] [--skip-seams] [--skip-characterize]"
 allowed-tools:
   - Read

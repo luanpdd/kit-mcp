@@ -1,6 +1,6 @@
 ---
 name: load-shedding
-description: Invoca load-shedding-instrumenter — aplica patches de load shedding em Edge Function/handler HTTP (concurrency limit, queue bound + drop policy, deadline-aware, server-side rate limit, slow start). Cap 22 livro Google SRE.
+description: Invoca load-shedding-instrumenter — aplica patches de load shedding em Edge Function/handler HTTP (concurrency limit, queue bound + drop policy, deadline-aware, server-side rate limit, slow start…
 argument-hint: "<target_path> [--max-concurrent N] [--queue-max-size N] [--patterns ...]"
 allowed-tools:
   - Read

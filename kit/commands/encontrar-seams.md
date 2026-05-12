@@ -1,6 +1,6 @@
 ---
 name: encontrar-seams
-description: Invoca seam-finder — analisa código para identificar seams (object/link/preprocessing) e recomenda técnica do cap 25 Feathers para quebrar dependências bloqueantes. Pré-requisito quando deps externas impedem characterization.
+description: Invoca seam-finder — analisa código para identificar seams (object/link/preprocessing) e recomenda técnica do cap 25 Feathers para quebrar dependências bloqueantes.
 argument-hint: "<target_file> [--symbol <name>] [--prefer object|link|preprocessing] [--output PATH]"
 allowed-tools:
   - Read

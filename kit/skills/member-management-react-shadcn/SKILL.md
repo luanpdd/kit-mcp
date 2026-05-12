@@ -1,6 +1,6 @@
 ---
 name: member-management-react-shadcn
-description: Use ao implementar UI de member management em B2B SaaS multi-tenant React + shadcn/ui — DataTable TanStack v8 para listar members com filtros, Dialog + Form para invite, Select para role assignment, DropdownMenu para ações por row, Avatar para identidade visual, Command palette para search. Composição canônica para painel admin.
+description: Use ao implementar UI de member management em B2B SaaS multi-tenant React + shadcn/ui…
 ---
 
 # Member Management — React + shadcn/ui

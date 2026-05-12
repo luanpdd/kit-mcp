@@ -1,6 +1,6 @@
 ---
 name: supabase-cicd-pipeline-implementer
-description: Canonical materializer pipeline CI/CD Supabase. Recebe BRANCHING-DESIGN.md de supabase-branching-architect (v1.27) ou user direto + materializa 7-8 workflows GitHub Actions canônicos (ci.yml, staging.yml, production.yml, generate-types.yml, database-tests.yml, functions-tests.yml, backup.yml com WARNING never to public repo 2×, notify-failure.yaml) + SECRETS-CHECKLIST.md com 6 secrets. Cross-suite handoff para supabase-migration-writer (v1.23) e release-pipeline-auditor (v1.10). Verdicts GO/STRENGTHEN/REWRITE-com-confirmação (princípio canônico v1.23). v1.27 incorpora 100% da doc oficial.
+description: Canonical materializer pipeline CI/CD Supabase. Recebe BRANCHING-DESIGN.md de supabase-branching-architect (v1.27) ou user direto + materializa 7-8 workflows GitHub Actions canônicos (ci.yml, sta…
 tools: Read, Write, Edit, Bash, Task, AskUserQuestion
 color: yellow
 ---

@@ -1,6 +1,6 @@
 ---
 name: multi-tenant-isolation-auditor
-description: Audita gaps de isolamento cross-tenant em projeto Supabase B2B — detecta tabelas sem RLS, policies sem private.has_permission, helpers VOLATILE, JOINs cross-tenant, super_admin sem audit, partial indexes ausentes. Produz ISOLATION-AUDIT.md scored com severity P0/P1/P2.
+description: Audita gaps de isolamento cross-tenant em projeto Supabase B2B — detecta tabelas sem RLS, policies sem private.has_permission, helpers VOLATILE, JOINs cross-tenant, super_admin sem audit, partial…
 tools: Read, Write, Bash, Grep, Glob, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: yellow
 ---

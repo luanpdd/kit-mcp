@@ -1,6 +1,6 @@
 ---
 name: escolha-modelo-consistencia
-description: Use ao desenhar feature distribuída em Supabase decidindo o modelo de consistência — árvore de decisão linearizabilidade (uniqueness constraint cross-tenant, slug global) vs causal (chat, comentários) vs eventual (feed social, métricas), uniqueness via single-leader Postgres (UNIQUE constraint nativo, app-level UPDATE+SELECT é race), análogos total order broadcast em Postgres (logical replication slots, posição WAL, pg_logical_emit_message), CAP/PACELC mapeado ao real, limitações 2PC + alternativas modernas (sagas, transactional outbox).
+description: Use ao desenhar feature distribuída em Supabase decidindo o modelo de consistência…
 ---
 
 # Escolha de Modelo de Consistência — Decision Tree + Patterns Postgres

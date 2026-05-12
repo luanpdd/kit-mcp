@@ -1,6 +1,6 @@
 ---
 name: supabase-rls-defense-in-depth
-description: Use ao desenhar defense-in-depth RLS em Supabase — event trigger rls_auto_enable (default projetos novos), BYPASSRLS role privilege, service_role caveat, security definer functions como bypass controlado, views security_invoker=true. Camada de proteção contra esquecimento humano e third-party tooling acessando DB diretamente. v1.23 incorpora a doc oficial RLS.
+description: Use ao desenhar defense-in-depth RLS em Supabase — event trigger rls_auto_enable (default projetos novos), BYPASSRLS role privilege, service_role caveat, security definer functions como bypass co…
 ---
 
 # Supabase — RLS Defense in Depth

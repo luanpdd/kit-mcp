@@ -1,6 +1,6 @@
 ---
 name: validador-evolucao-schema
-description: Recebe SQL de migration via stdin/argument, detecta 4 breaks canônicos de schema evolution (NOT NULL adicionado em coluna existente / column dropped / type narrowed varchar(255)→varchar(50) / default mudado em coluna em uso). Produz veredito GO/NO-GO/NEEDS-REVIEW com sugestão de migration segura (3-step) quando NO-GO. Invocável standalone OU automaticamente por supabase-migration-writer (v1.8) via cross-suite handoff.
+description: Recebe SQL de migration via stdin/argument, detecta 4 breaks canônicos de schema evolution (NOT NULL adicionado em coluna existente / column dropped / type narrowed varchar(255)→varchar(50) / def…
 tools: Read, Grep, Bash
 color: cyan
 ---

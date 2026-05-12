@@ -1,6 +1,6 @@
 ---
 name: evolution-go-whatsapp-integration
-description: Use ao integrar Evolution Go (whatsmeow) ou Meta Cloud API com Supabase B2B multi-tenant — webhook handler com tenant_id no URL path, HMAC-SHA256 (Meta) ou API key + IP whitelist (Evolution Go), idempotência via unique(org_id, message_id), rate limit Meta 80 msg/s, throttle Evolution Go 1 msg/s.
+description: Use ao integrar Evolution Go (whatsmeow) ou Meta Cloud API com Supabase B2B multi-tenant…
 ---
 
 # Evolution Go + WhatsApp — Integração Multi-Tenant Supabase

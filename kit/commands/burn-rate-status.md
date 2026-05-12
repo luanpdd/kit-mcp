@@ -1,6 +1,6 @@
 ---
 name: burn-rate-status
-description: Tabela de burn rate dual-window por SLO consumindo .planning/slos/*.yml + .planning/metrics/snapshots/. Calcula SLI atual, fast_burn (1h) + slow_burn (6h) independentes, ETA exhaustão e ação combinada (PAGE/TICKET/WARN/OK). Aplica skill burn-rate-alerting (fator 4× lookahead/baseline canônico Google SRE).
+description: Tabela de burn rate dual-window por SLO consumindo .planning/slos/*.yml + .planning/metrics/snapshots/.
 argument-hint: "[<slo_name>] [--fast-baseline 1h] [--slow-baseline 6h] [--format table|json]"
 allowed-tools:
   - Read

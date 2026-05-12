@@ -1,6 +1,6 @@
 ---
 name: ai-prompt-characterization
-description: Use ao modificar prompt/tool LLM em produção — characterization de generations com temperature=0 + seed fixo + sanitização específica. Modernização 2026 sem precedente em 2004 — prompts são código legacy também.
+description: Use ao modificar prompt/tool LLM em produção — characterization de generations com temperature=0 + seed fixo + sanitização específica. Modernização 2026 sem precedente em 2004…
 ---
 
 # AI Prompt Characterization (Modernização)

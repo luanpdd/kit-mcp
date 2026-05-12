@@ -1,6 +1,6 @@
 ---
 name: legacy-storytelling-naked-crc
-description: Use ao precisar entender codebase desconhecido antes de mudar (cap 16-17 Feathers) — telling the story + naked CRC sketches. Modernização 2026 — IA gera mental model em minutos vs horas de leitura manual.
+description: Use ao precisar entender codebase desconhecido antes de mudar (cap 16-17 Feathers) — telling the story + naked CRC sketches. Modernização 2026…
 ---
 
 # Legacy — Storytelling & Naked CRC

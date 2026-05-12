@@ -1,6 +1,6 @@
 ---
 name: multi-tenant-rls-hierarchy
-description: Use ao escrever RLS hierárquica multi-tenant (org→dept→role→permission→super-admin bypass) em Supabase. 4 helper functions PG canônicas em schema private (STABLE), policies compostas com PERMISSIVE para super_admin, herança dept→org via coalesce.
+description: Use ao escrever RLS hierárquica multi-tenant (org→dept→role→permission→super-admin bypass) em Supabase.
 ---
 
 # Multi-Tenant RLS Hierarchy — Helper Functions + Policies

@@ -1,6 +1,6 @@
 ---
 name: b2b-saas-architect
-description: Projeta arquitetura B2B SaaS multi-tenant ANTES da implementação — coleta hierarquia firm→department→leader→collaborator, RBAC granular, isolation strategy, JWT minimal. Produz B2B-DESIGN.md e delega para supabase-architect (cross-suite handoff). NÃO escreve código.
+description: Projeta arquitetura B2B SaaS multi-tenant ANTES da implementação — coleta hierarquia firm→department→leader→collaborator, RBAC granular, isolation strategy, JWT minimal.
 tools: Read, Write, Bash, Grep, Glob, AskUserQuestion, Task, mcp__supabase__list_tables
 color: blue
 ---

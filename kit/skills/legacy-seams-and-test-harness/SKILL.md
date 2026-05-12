@@ -1,6 +1,6 @@
 ---
 name: legacy-seams-and-test-harness
-description: Use ao identificar pontos de extensão (seams) em código não-testável e aplicar uma das ~24 dependency-breaking techniques (cap 25 Feathers) para colocar código sob test harness. Pré-requisito de characterization.
+description: Use ao identificar pontos de extensão (seams) em código não-testável e aplicar uma das ~24 dependency-breaking techniques (cap 25 Feathers) para colocar código sob test harness.
 ---
 
 # Legacy — Seams & Test Harness

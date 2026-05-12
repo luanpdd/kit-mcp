@@ -1,6 +1,6 @@
 ---
 name: org-onboarding-flow
-description: Use ao implementar fluxo signup → criar org → primeiro admin → setup wizard em B2B SaaS Supabase. Atomicidade na criação (org + first member em 1 trx). Slug imutável + redirect trail. Setup wizard separado (não bloqueia signup).
+description: Use ao implementar fluxo signup → criar org → primeiro admin → setup wizard em B2B SaaS Supabase. Atomicidade na criação (org + first member em 1 trx). Slug imutável + redirect trail.
 ---
 
 # Org Onboarding Flow — B2B SaaS Multi-Tenant

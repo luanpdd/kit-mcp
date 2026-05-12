@@ -1,6 +1,6 @@
 ---
 name: b2b-saas-architecture
-description: Use ao desenhar app B2B multi-tenant (org→department→leader→collaborator) com Supabase + React — Single Schema + org_id + RLS é default; JWT minimal (super_admin: bool); 7 tabelas canônicas; slug imutável.
+description: Use ao desenhar app B2B multi-tenant (org→department→leader→collaborator) com Supabase + React…
 ---
 
 # B2B SaaS Multi-Tenant — Arquitetura Canônica

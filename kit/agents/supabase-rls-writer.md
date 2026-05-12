@@ -1,6 +1,6 @@
 ---
 name: supabase-rls-writer
-description: Gera RLS policies para tabelas com GRANTs antes de ENABLE RLS (v1.23), indexing recomendado, (select auth.uid()) wrapper sempre, IS NOT NULL opcional (v1.23), granular por operação, views com security_invoker=true (v1.23). Recebe draft upstream via Task(). ABORTA se detecta user_metadata em autorização.
+description: Gera RLS policies para tabelas com GRANTs antes de ENABLE RLS (v1.23), indexing recomendado, (select auth.uid()) wrapper sempre, IS NOT NULL opcional (v1.23), granular por operação, views com sec…
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: red
 ---

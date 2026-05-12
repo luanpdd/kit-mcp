@@ -1,6 +1,6 @@
 ---
 name: auditar-refactor
-description: Invoca refactor-safety-auditor — gate canônico antes de qualquer refactor. Coleta evidências (linhas, contrato externo, coverage, mutation) e retorna veredito GO/BLOCK/WARN/GO-OVERRIDE. Bloqueia refactor de risco sem characterization.
+description: Invoca refactor-safety-auditor — gate canônico antes de qualquer refactor. Coleta evidências (linhas, contrato externo, coverage, mutation) e retorna veredito GO/BLOCK/WARN/GO-OVERRIDE.
 argument-hint: "<target_file> [--change-kind refactor|sprout|safe-extract|override] [--mode blocking|consultive] [--ticket REQ-N] [--reason \"...\"]"
 allowed-tools:
   - Read

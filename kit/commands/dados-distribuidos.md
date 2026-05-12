@@ -1,6 +1,6 @@
 ---
 name: dados-distribuidos
-description: Orquestrador da Suíte DDIA Foundations — dispatch para agents (auditor-consistencia-isolamento, detector-tenant-quente, validador-evolucao-schema) com sinônimos PT/EN (ddia, dados, consistencia, replicacao, streams).
+description: Orquestrador da Suíte DDIA Foundations — dispatch para agents (auditor-consistencia-isolamento, detector-tenant-quente, validador-evolucao-schema) com sinônimos PT/EN (ddia, dados, consistencia…
 argument-hint: "<subcomando> [args...]"
 allowed-tools:
   - Read

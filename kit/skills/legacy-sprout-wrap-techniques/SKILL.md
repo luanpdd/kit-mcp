@@ -1,6 +1,6 @@
 ---
 name: legacy-sprout-wrap-techniques
-description: Use ao adicionar comportamento a código legado SEM tempo para colocar tudo sob test harness — Sprout Method, Sprout Class, Wrap Method, Wrap Class (cap 6 Feathers). Atalho seguro quando characterization custa demais.
+description: Use ao adicionar comportamento a código legado SEM tempo para colocar tudo sob test harness — Sprout Method, Sprout Class, Wrap Method, Wrap Class (cap 6 Feathers).
 ---
 
 # Legacy — Sprout / Wrap Techniques

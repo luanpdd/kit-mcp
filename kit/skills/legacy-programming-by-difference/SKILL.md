@@ -1,6 +1,6 @@
 ---
 name: legacy-programming-by-difference
-description: Use ao adicionar comportamento variante a código legado via subclassing/composition (cap 8 Feathers) — ponte temporária quando refactor estrutural ainda não cabe. Modernização 2026 — feature flags + variants A/B como aplicação direta.
+description: Use ao adicionar comportamento variante a código legado via subclassing/composition (cap 8 Feathers) — ponte temporária quando refactor estrutural ainda não cabe. Modernização 2026…
 ---
 
 # Legacy — Programming by Difference

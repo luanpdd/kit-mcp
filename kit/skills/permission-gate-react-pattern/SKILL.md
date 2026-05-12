@@ -1,6 +1,6 @@
 ---
 name: permission-gate-react-pattern
-description: Use ao implementar permission gates React em B2B SaaS multi-tenant — CASL `@casl/ability` 6.8 + `@casl/react` 4.x para gates declarativos `<PermissionGate permission="leads:create">`, hook `usePermission(action, resource)`, anti-pattern explícito permission check só client (server-side enforcement obrigatório via RLS).
+description: "Use ao implementar permission gates React em B2B SaaS multi-tenant — CASL `@casl/ability` 6.8 + `@casl/react` 4.x para gates declarativos `<PermissionGate permission=\"leads:create\">`, hook `usePe…"
 ---
 
 # Permission Gate — React Pattern (CASL)

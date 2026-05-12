@@ -1,6 +1,6 @@
 ---
 name: postgres-isolamento-concorrencia
-description: Use ao escrever transação Postgres com risco de race condition — 6 tipos canônicos (dirty read, dirty write, read skew, lost update, write skew, phantom read), árvore de decisão para isolation level (READ COMMITTED default 95% / REPEATABLE READ MVCC / SERIALIZABLE SSI), 3 padrões prevenção lost update (SELECT FOR UPDATE, atomic UPDATE com WHERE conditions, advisory_xact_lock), prevenção write skew via FOR UPDATE em rows lidas OU exclusion constraint OU SERIALIZABLE.
+description: Use ao escrever transação Postgres com risco de race condition — 6 tipos canônicos (dirty read, dirty write, read skew, lost update, write skew, phantom read), árvore de decisão para isolation le…
 ---
 
 # Isolamento e Concorrência Postgres — 6 Race Conditions, Decision Tree, 3 Padrões para Lost Update

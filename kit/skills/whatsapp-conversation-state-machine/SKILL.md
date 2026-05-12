@@ -1,6 +1,6 @@
 ---
 name: whatsapp-conversation-state-machine
-description: Use ao modelar conversação WhatsApp como state machine xstate v5 + persistência em PG — estados conversation_started → opted_in → engaged → action_taken → closed, persiste estado em conversations table, integra com lead pipeline.
+description: Use ao modelar conversação WhatsApp como state machine xstate v5 + persistência em PG…
 ---
 
 # WhatsApp Conversation State Machine — xstate v5 + Postgres

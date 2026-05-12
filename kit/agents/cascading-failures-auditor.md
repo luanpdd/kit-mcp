@@ -1,6 +1,6 @@
 ---
 name: cascading-failures-auditor
-description: Audita código de serviço para triggers de cascading failure (sem timeout, retry sem jitter, sem circuit breaker, dependências sem health check, queue sem limite). Gera CASCADING-AUDIT.md priorizado P0/P1/P2.
+description: Audita código de serviço para triggers de cascading failure (sem timeout, retry sem jitter, sem circuit breaker, dependências sem health check, queue sem limite).
 tools: Read, Bash, Grep, Glob, Write
 color: red
 ---

@@ -1,6 +1,6 @@
 ---
 name: auditor-consistencia-isolamento
-description: Audita migrations + RPCs + Edge Functions Supabase em busca de 6 anti-patterns canônicos de race condition (SELECT-then-UPDATE sem FOR UPDATE = lost update vulnerable; trigger sem materializar predicate = write skew vulnerable; now()/clock_timestamp() em lógica de expiração = clock skew; UNIQUE check em nível de app = race; write cross-tenant sem lock = lost update; handler sem idempotência = duplicate processing). Produz AUDITORIA-CONSISTENCIA.md priorizado P0/P1/P2 com findings linkados a arquivo:linha + sugestão de fix referenciando skill canônica.
+description: Audita migrations + RPCs + Edge Functions Supabase em busca de 6 anti-patterns canônicos de race condition (SELECT-then-UPDATE sem FOR UPDATE = lost update vulnerable; trigger sem materializar pr…
 tools: Read, Grep, Glob, Bash, Write
 color: red
 ---

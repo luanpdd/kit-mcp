@@ -1,6 +1,6 @@
 ---
 name: auditar-observabilidade-cobertura
-description: Audita projeto Supabase mostrando X/N Edge Functions com 4 golden signals + Y/N com SLO + Z/N com burn alert + W/N com characterization tests. Top 5 críticas (por traffic 30d) sem cobertura. User-request explícito.
+description: Audita projeto Supabase mostrando X/N Edge Functions com 4 golden signals + Y/N com SLO + Z/N com burn alert + W/N com characterization tests. Top 5 críticas (por traffic 30d) sem cobertura.
 argument-hint: "[--traffic-window 30d] [--top-n 5] [--dimensions signals,slo,burn-alert,characterization] [--output PATH]"
 allowed-tools:
   - Read
