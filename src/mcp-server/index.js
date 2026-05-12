@@ -11,7 +11,7 @@
 
 import { Server } from '@modelcontextprotocol/sdk/server/index.js';
 import { StdioServerTransport } from '@modelcontextprotocol/sdk/server/stdio.js';
-import { CallToolRequestSchema, ListToolsRequestSchema } from '@modelcontextprotocol/sdk/types.js';
+import { CallToolRequestSchema, ListToolsRequestSchema, ListResourcesRequestSchema, ReadResourceRequestSchema } from '@modelcontextprotocol/sdk/types.js';
 
 import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
@@ -350,10 +350,16 @@ async function handleInstall(args) {
 let _lastAutoPersistTs = 0;
 const AUTO_PERSIST_THROTTLE_MS = 1000;
 
+// Module-level reference to the active server, so handlers can emit
+// notifications (resources/updated, list_changed). Set in createServer.
+let _activeServer = null;
+
 // Phase 167 (v1.29): auto-install handler.
 // Bridges MCP → host-native integration by writing kit/ files into .claude/
 // (or whatever the target IDE expects). Idempotent via .kit-mcp-version marker.
 // Phase 168 hooks add the restart_recommended signal to the result.
+// Phase 169 hooks emit notifications/resources/list_changed so subscribed hosts
+// can hot-reload the kit content view.
 async function handleAutoInstall(args) {
   const action = args.action || 'install';
   const target = args.target || 'claude-code';
@@ -461,6 +467,13 @@ async function handleAutoInstall(args) {
     process.stderr.write(`[kit-mcp] restart marker write failed: ${e.message}\n`);
   }
 
+  // Phase 169 (v1.29): emit notifications/resources/list_changed so hosts
+  // that subscribed to the resources capability can refresh their view.
+  // Most hosts today won't act on it, but the signal is correct per spec.
+  if (_activeServer && typeof _activeServer.sendResourceListChanged === 'function') {
+    try { await _activeServer.sendResourceListChanged(); } catch { /* swallow */ }
+  }
+
   return {
     ok: true,
     action: 'install',
@@ -566,11 +579,18 @@ export async function createServer() {
   const server = new Server(
     { name: 'kit-mcp', version: PKG_VERSION },
     {
-      // Phase 166 (v1.29): declare client-side capabilities we want to consume.
-      // `roots` lets us learn projectRoot from the host instead of guessing
-      // from process.cwd(). `listChanged: true` means we'll handle the
-      // notifications/roots/list_changed event to refresh our cache.
-      capabilities: { tools: {} },
+      // Phase 166 + 169 (v1.29): declare capabilities.
+      // - `tools` (existing) — the 7+ MCP tools exposed to the host.
+      // - `resources` (new in v1.29) — each agent/skill/command becomes a
+      //   readable resource under kit://agent/<name>, kit://skill/<name>,
+      //   kit://command/<name>. Hosts can list and read them natively.
+      //   `subscribe: true` opt-in lets the host listen for updates after
+      //   auto-install rewrites .claude/. `listChanged: true` means we'll
+      //   notify when the resource list itself changes.
+      capabilities: {
+        tools: {},
+        resources: { subscribe: true, listChanged: true },
+      },
       enforceStrictCapabilities: false,
     }
   );
@@ -579,7 +599,66 @@ export async function createServer() {
   // is sent from server to client after `initialized` (kicked off in startStdio).
   attachRootsCapability(server);
 
+  // Phase 169 (v1.29): expose server instance to handlers that need to emit
+  // server-side notifications (e.g. resources/list_changed after auto-install).
+  _activeServer = server;
+
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
+
+  // Phase 169 (v1.29): MCP resources — expose each agent/skill/command as a
+  // readable resource. URIs are kit://agent/<name>, kit://skill/<name>,
+  // kit://command/<name>. Hosts that respect the resources capability can
+  // browse and read these natively (Cursor, Claude Code soon).
+  server.setRequestHandler(ListResourcesRequestSchema, async () => {
+    const kit = await listKit(BUNDLED_KIT_ROOT);
+    const resources = [];
+    for (const a of kit.agents || []) {
+      resources.push({
+        uri: `kit://agent/${a.name}`,
+        name: a.name,
+        description: a.description,
+        mimeType: 'text/markdown',
+      });
+    }
+    for (const s of kit.skills || []) {
+      resources.push({
+        uri: `kit://skill/${s.name}`,
+        name: s.name,
+        description: s.description,
+        mimeType: 'text/markdown',
+      });
+    }
+    for (const c of kit.commands || []) {
+      resources.push({
+        uri: `kit://command/${c.name}`,
+        name: c.name,
+        description: c.description,
+        mimeType: 'text/markdown',
+      });
+    }
+    return { resources };
+  });
+
+  server.setRequestHandler(ReadResourceRequestSchema, async (req) => {
+    const uri = req.params?.uri;
+    const m = /^kit:\/\/(agent|skill|command)\/(.+)$/.exec(uri || '');
+    if (!m) {
+      return { contents: [], isError: true };
+    }
+    const [, kind, name] = m;
+    const kit = await listKit(BUNDLED_KIT_ROOT);
+    const item = findItem(kit, kind, name);
+    if (!item || !item.body) {
+      return { contents: [], isError: true };
+    }
+    return {
+      contents: [{
+        uri,
+        mimeType: 'text/markdown',
+        text: item.body,
+      }],
+    };
+  });
 
   server.setRequestHandler(CallToolRequestSchema, async (req) => {
     const { name, arguments: args } = req.params;
