@@ -164,6 +164,19 @@ const TOOLS = [
       },
     },
   },
+  {
+    // Phase 168 (v1.29): acknowledge the restart-required marker after the
+    // user reloads the IDE session. Removes .claude/.kit-mcp-restart-required
+    // so doctor stops flagging it.
+    name: 'ack-restart',
+    description: 'Acknowledge that the IDE session was restarted after kit:auto-install. Removes the .kit-mcp-restart-required marker so kit:doctor stops warning. Called automatically by the harness when it detects the marker after reload, or manually by the user.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        projectRoot: { type: 'string' },
+      },
+    },
+  },
 ];
 
 // DRIFT-13-03: read version from package.json at module load (NOT inside
@@ -431,6 +444,23 @@ async function handleAutoInstall(args) {
     process.stderr.write(`[kit-mcp] auto-install marker write failed: ${e.message}\n`);
   }
 
+  // Phase 168 (v1.29): write .kit-mcp-restart-required so doctor/host can detect
+  // pending restart even if the user closes/reopens kit-mcp without restarting IDE.
+  try {
+    const restartMarker = path.join(projectRoot, '.claude', '.kit-mcp-restart-required');
+    const payload = JSON.stringify({
+      version: targetVersion,
+      previousVersion: currentVersion,
+      writtenAt: new Date().toISOString(),
+      reason: currentVersion
+        ? `Kit updated ${currentVersion} → ${targetVersion}`
+        : 'Initial kit install',
+    }, null, 2);
+    await fs.writeFile(restartMarker, payload + '\n', 'utf8');
+  } catch (e) {
+    process.stderr.write(`[kit-mcp] restart marker write failed: ${e.message}\n`);
+  }
+
   return {
     ok: true,
     action: 'install',
@@ -445,6 +475,44 @@ async function handleAutoInstall(args) {
     _kit_reason: currentVersion
       ? `Kit updated from ${currentVersion} to ${targetVersion} — restart the IDE session so agents/skills/commands reload.`
       : `Kit installed (v${targetVersion}) into ${path.join('.claude', '')} — restart the IDE session for native subagent_type + slash-command + skill auto-trigger integration.`,
+  };
+}
+
+// Phase 168 (v1.29): acknowledge that the IDE was restarted after a kit:auto-install.
+// Removes the .kit-mcp-restart-required marker. Read by kit:doctor (Phase 171)
+// to stop flagging "pending restart".
+async function handleAckRestart(args) {
+  // Resolve projectRoot via roots if not given.
+  let projectRoot = args.projectRoot;
+  if (!projectRoot) {
+    const { getPrimaryProjectRoot } = await import('./roots.js');
+    projectRoot = getPrimaryProjectRoot();
+  }
+
+  const guard = await validateProjectRoot(projectRoot);
+  if (!guard.ok) return { ok: false, reason: guard.reason, projectRoot };
+  projectRoot = guard.resolvedPath;
+
+  const fs = await import('node:fs/promises');
+  const path = await import('node:path');
+  const restartMarker = path.join(projectRoot, '.claude', '.kit-mcp-restart-required');
+
+  let acked = false;
+  try {
+    await fs.unlink(restartMarker);
+    acked = true;
+  } catch (e) {
+    if (e.code !== 'ENOENT') {
+      return { ok: false, reason: `unlink_failed: ${e.message}`, projectRoot };
+    }
+    // ENOENT — nothing to ack, already clean. Not an error.
+  }
+
+  return {
+    ok: true,
+    projectRoot,
+    acked,
+    reason: acked ? 'restart marker removed' : 'no restart marker present (nothing to ack)',
   };
 }
 
@@ -474,6 +542,7 @@ const HANDLERS = {
   install:            handleInstall,
   'metrics-snapshot': handleMetricsSnapshot,
   'auto-install':     handleAutoInstall,
+  'ack-restart':      handleAckRestart,
 };
 
 function slim(x) {
