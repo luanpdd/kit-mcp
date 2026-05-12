@@ -1,13 +1,52 @@
 # PROJECT.md — kit-mcp
 
 > Bootstrap inicial em 2026-05-03 a partir do histórico de releases. Contexto consolidado da sessão de restauração + fix-up + 0.5.0.
-> Última atualização: 2026-05-12 — milestone v1.28 (UX & Onboarding) iniciado.
+> Última atualização: 2026-05-12 — milestone v1.29 (MCP-Native Discovery via Auto-Sync) iniciado.
 
 ## Estado Atual
 
-**v1.28.0 — UX & Onboarding — kit-mcp developer experience** **iniciado** 2026-05-12. Primeiro milestone **não-conteúdo** desde v1.20 — foco em fluxo de uso do MCP server: feedback visual do servidor stdio, onboarding interativo, observabilidade local (logs/doctor/status), inspector dev, replay debug. Resposta a dores reais reportadas: "rodo `kit-mcp` e não tenho feedback no terminal", "não entendo a diferença entre o servidor MCP e o sync de skills".
+**v1.28.0 — UX & Onboarding** **entregue** 2026-05-12 (Phases 156-165, 7 PRs, 6 causas de CI fixadas, tag publicada). Próximo milestone v1.29 inicia agora.
 
-## Milestone Atual: v1.28 UX & Onboarding
+## Milestone Atual: v1.29 MCP-Native Discovery via Auto-Sync
+
+**Objetivo:** Resolver o gap arquitetural entre "MCP puro" e "modo sync" — kit-mcp passa a auto-configurar `.claude/agents/`, `.claude/skills/`, `.claude/commands/` no primeiro contato, fazendo `subagent_type` real, skills auto-trigger e slash-commands nativos funcionarem **sem comando manual do usuário**.
+
+**Dor reportada:** ao adicionar kit-mcp ao `.mcp.json`, o usuário esperava integração nativa imediata. Hoje precisa rodar `kit sync` manualmente — caso contrário Claude apenas le os prompts via `kit get`, sem isolamento de contexto, sem auto-trigger, sem `subagent_type` real.
+
+**Funcionalidades alvo (6 fases, 166-171):**
+
+| Fase | Entregável | Effort |
+|---|---|---|
+| 166 | MCP `roots` capability — consumir projectRoot declarado pelo host | S |
+| 167 | Auto-sync no boot (idempotente + permission gate) | M |
+| 168 | Restart signal — `_kit_action: session_restart_recommended` + marker file | S |
+| 169 | MCP `notifications/resources/updated` ao detectar mudança no kit | M |
+| 170 | Tool descriptions com keywords explícitas (fallback MCP puro) | XS |
+| 171 | `kit doctor` check "is `.claude/` sync'd with current kit version" | S |
+
+**Princípios:**
+
+- **Spec MCP intocável** — apenas adiciona capabilities oficiais (`roots`, `notifications`), nada custom além do payload do tool
+- **Idempotência** — re-conectar não re-escreve se `.claude/` já está sync com a versão atual do kit
+- **Permission gate honesto** — primeira escrita em `.claude/` gera prompt do host; não tenta contornar
+- **Fallback gracioso** — se host não suporta `roots` ou `.claude/` não é gravável, modo MCP puro continua funcional com aviso claro
+- **Stable API v1.0+ preservada** — schema dos 7 tools existentes inalterado
+
+**Resultado esperado:**
+
+Depois da Sessão 1 (primeiro contato), Sessão 2 em diante o usuário tem:
+- 66 agents como `subagent_type` reais no `Agent` tool
+- 76 skills carregadas e participando do auto-trigger nativo
+- 89 commands disponíveis como slash-commands `/comando` no IDE
+- MCP server continua expondo `kit`, `gates`, `forensics`, `metrics-snapshot` para introspecção e observabilidade
+
+**Decisões abertas:**
+
+- Auto-sync silent vs com confirmação prompt explícita?
+- Versionar `.claude/kit-version` para detectar drift entre sessões?
+- Notification de "kit atualizou no npm, faça pull" — onde encaixar?
+
+## ~~Milestone Anterior: v1.28 UX & Onboarding~~ (entregue 2026-05-12)
 
 **Objetivo:** Eliminar opacidade do servidor MCP stdio e reduzir tempo-até-primeiro-uso (TTFU) de novos consumidores do kit-mcp, expondo observabilidade local e onboarding guiado sem violar a spec MCP (stdout limpo).
 
