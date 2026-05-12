@@ -4,11 +4,47 @@
 
 ## Em andamento
 
-_Nenhum_ — v1.27 entregue. Use `/novo-marco` para iniciar v1.28.
+### v1.28 — UX & Onboarding (kit-mcp developer experience)
 
-## Próximo milestone: v1.28 (a definir)
+**Iniciado:** 2026-05-12. **Modo execução:** totalmente autônomo. **10 fases, 40 REQs.**
 
-Candidatos:
+**Objetivo:** Eliminar opacidade do servidor MCP stdio e reduzir TTFU. Adições UX-only, zero breaking changes na Stable API v1.0+.
+
+#### Wave 1 — Visibilidade imediata (resolve dor reportada)
+
+| # | Fase | Effort | Plans | Status |
+|---|---|---|---|---|
+| 156 | README diagrama 2 fluxos + tabela "quando uso o quê" | XS | 1 | pending |
+| 157 | Sidecar UI auto-spawn ON por padrão (`KIT_MCP_NO_UI=1` escape) | S | 1 | pending |
+| 158 | Log file rotativo `~/.kit-mcp/logs/` + `kit logs --tail` | S | 2 | pending |
+| 159 | `kit doctor` — health check completo | M | 2 | pending |
+
+#### Wave 2 — Onboarding fluido
+
+| # | Fase | Effort | Plans | Status |
+|---|---|---|---|---|
+| 160 | `kit sync` progress bar + diff sumário | S | 1 | pending |
+| 161 | `kit init` onboarding interativo | M | 2 | pending |
+| 162 | `kit status` — metrics-snapshot CLI | S | 1 | pending |
+
+#### Wave 3 — Power user dev tools
+
+| # | Fase | Effort | Plans | Status |
+|---|---|---|---|---|
+| 163 | `kit mcp --inspect` TUI dev mode (request/response live) | M | 2 | pending |
+| 164 | Notification on tool call (opt-in, throttled) | S | 1 | pending |
+| 165 | `kit replay <id>` — reexecutar tool call para debug | M | 2 | pending |
+
+**Princípios de execução:**
+- P1 — Spec MCP intocável (stdout JSON-RPC puro)
+- P2 — Zero breaking changes (Stable API v1.0+)
+- P3 — Sem deps novas críticas
+- P4 — Cross-platform (Windows/macOS/Linux paridade)
+- P5 — Observabilidade local-first (zero telemetria remota implícita)
+
+## Próximo milestone: v1.29 (a definir — backlog v1.27)
+
+Candidatos remanescentes:
 - Supabase Vault (encryption at rest) — proteção em repouso para PII columns
 - Backup & Recovery dedicado (RTO/RPO, PITR, restore drills)
 - Outros Auth Hooks (Send Email, Send SMS, MFA Verification, Password Verification, Before User Created)
@@ -30,4 +66,4 @@ Candidatos:
 - **v1.13 → v1.19** (2026-05-09): 7 releases, 21 phases
 
 ---
-*Atualizado: 2026-05-11 após `/concluir-marco v1.27`*
+*Atualizado: 2026-05-12 — `/novo-marco v1.28` iniciado*
