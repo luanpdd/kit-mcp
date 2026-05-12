@@ -39,7 +39,10 @@ import { attachRootsCapability, fetchRoots } from './roots.js';
 const TOOLS = [
   {
     name: 'kit',
-    description: 'Browse the personal kit: agents, commands, skills.',
+    // Phase 170 (v1.29): description enriched with trigger keywords so MCP
+    // hosts route here on relevant intents even in MCP-pure mode (before
+    // auto-install made .claude/ native). Keep under 1024 chars (host limit).
+    description: 'Browse the personal kit: 66 agents, 89 commands, 76 skills. Call this when the user mentions Supabase (RLS, branching, migrations, Edge Functions, Custom Claims, Postgres Roles, Storage, Realtime, pgvector), multi-tenant SaaS, agentic harness, characterization tests, legacy refactor, observability (SLO, golden signals, error budgets), DDIA topics (consistency, replication lag, schema evolution), SRE (postmortems, toil, PRR), CI/CD (hermetic builds, pipelines), or any workflow that benefits from the canonical patterns. Use action=search to discover, action=get to read the full prompt/skill.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -153,7 +156,7 @@ const TOOLS = [
     // Idempotent — re-runs are no-ops if .claude/.kit-mcp-version matches the
     // running server's package version. Permission-gated by the host.
     name: 'auto-install',
-    description: 'Project kit/ into the host\'s native layout (.claude/agents/, skills/, commands/) so agents become real subagent_types and commands become native slash-commands. Idempotent. Run once per project; restart the IDE session after.',
+    description: 'IMPORTANT for first contact: project kit/ into the host\'s native layout (.claude/agents/, skills/, commands/) so 66 agents become real subagent_types in the Agent tool, 76 skills get native auto-trigger via descriptions, and 89 commands appear as /slash-commands in the IDE. Idempotent — re-running is a no-op if already in sync. Run once per project on first kit-mcp contact; restart the IDE session after to load the new agents/skills/commands. After restart, call ack-restart to clear the marker.',
     inputSchema: {
       type: 'object',
       properties: {
