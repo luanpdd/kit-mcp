@@ -6,6 +6,43 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.28.0] - 2026-05-12
+
+### Added — UX & Onboarding (kit-mcp developer experience)
+
+First non-content milestone since v1.20. Eliminates MCP stdio server opacity and reduces TTFU. **Zero breaking changes** to Stable API v1.0+ (preserved across 16 releases now).
+
+**Wave 1 — Visibilidade imediata:**
+- **Phase 156** — README ganha section "How kit-mcp works" com diagrama ASCII de 2 fluxos (offline projector vs live stdio server), tabela "When do I use what?", e subsection "Why no terminal output when I run kit-mcp?" explicando a spec MCP.
+- **Phase 157** — Sidecar UI auto-spawn ON por padrão no `startStdio()`. Escape hatch `KIT_MCP_NO_UI=1`. Browser NÃO abre automaticamente (intrusivo).
+- **Phase 158** — Novo módulo `src/core/logger.js`: JSONL append-only em `~/.kit-mcp/logs/kit-mcp-YYYY-MM-DD.log`, rotação diária, retention configurável (`KIT_MCP_LOG_RETENTION_DAYS`, default 7). MCP handler agora loga cada tool call. Novo CLI `kit logs [--tail N] [--follow] [--path]`.
+- **Phase 159** — `kit doctor` ganha checks 8 e 9 (log dir writable + sidecar auto-spawn config).
+
+**Wave 2 — Onboarding fluido:**
+- **Phase 160** — `kit sync install` ganha `--quiet` flag e diff summary "new/updated" + "unchanged" no resumo final via `result._tally`.
+- **Phase 161** — Novo `kit init` orquestra install + sync + doctor com output final "✓ <ide> now sees N skills, M agents, K commands". Suporta `--non-interactive --ide=<id>` para CI.
+- **Phase 162** — Novo `kit status` mostra sidecar status, log file path, p50/p95/p99 por tool última hora, error rate. Reusa `core/metrics.js`.
+
+**Wave 3 — Power user dev tools:**
+- **Phase 163** — Novo `kit inspect` faz pretty-print live de tool calls. Verbose payload capture opt-in via `KIT_MCP_INSPECT=1`.
+- **Phase 164** — Novo módulo `src/core/notify.js` cross-platform (osascript/notify-send/PowerShell) com throttle 5s. Opt-in via `KIT_MCP_NOTIFY=1`. Zero deps externas.
+- **Phase 165** — Novo `kit replay {list,show,diff}` reusa `src/core/replays.js`. Inspect-only nesta versão; reexecute via LLM fica para v1.29.
+
+### Novas variáveis de ambiente
+- `KIT_MCP_NO_UI=1`, `KIT_MCP_LOG_DIR`, `KIT_MCP_LOG_RETENTION_DAYS`, `KIT_MCP_INSPECT=1`, `KIT_MCP_NOTIFY=1`, `KIT_MCP_NOTIFY_THROTTLE_MS`
+
+### Novos comandos CLI
+`kit init`, `kit logs`, `kit inspect`, `kit status`, `kit replay {list,show,diff}` — 5 comandos novos (1 grupo com 3 sub).
+
+### Novos módulos
+`src/core/logger.js`, `src/core/notify.js` — zero deps externas.
+
+### Princípios respeitados
+- Spec MCP intocável (stdout JSON-RPC puro)
+- Stable API v1.0+ preservada (16 releases)
+- Cross-platform (Windows/macOS/Linux paridade)
+- Zero deps críticas novas
+
 ## [1.27.0] - 2026-05-11
 
 ### Added — Supabase Branching & CI/CD Workflow (9ª trilha de maturidade)
