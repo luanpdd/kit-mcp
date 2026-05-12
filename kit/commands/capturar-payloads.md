@@ -1,6 +1,6 @@
 ---
 name: capturar-payloads
-description: Invoca payload-capture-instrumenter — instrumenta Edge Function Supabase para captura via mcp__supabase__get_logs por N dias, sanitiza PII, gera fixtures para legacy-characterizer. Modernização 2026.
+description: Invoca payload-capture-instrumenter — instrumenta Edge Function Supabase para captura via mcp__supabase__get_logs por N dias, sanitiza PII, gera fixtures para legacy-characterizer.
 argument-hint: "<edge_function_path> [--days N] [--max-payloads N] [--mode instrument|drain|full] [--sanitize-keys k1,k2,...]"
 allowed-tools:
   - Read

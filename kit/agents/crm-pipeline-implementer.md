@@ -1,6 +1,6 @@
 ---
 name: crm-pipeline-implementer
-description: Materializa CRM lead pipeline — tabela leads (6 stages canônicos + custom prefix), tabela lead_stage_transitions data-driven, trigger PG BEFORE UPDATE validate_lead_stage_transition, trigger AFTE…
+description: Materializa CRM lead pipeline — tabela leads (6 stages canônicos + custom prefix), tabela lead_stage_transitions data-driven, trigger PG BEFORE UPDATE validate_lead_stage_transition, trigge…
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion, mcp__supabase__execute_sql
 color: green
 ---

@@ -14,19 +14,40 @@
 import { promises as fs } from 'node:fs';
 import path from 'node:path';
 
-const MAX = 200;
-const TARGET = 195;
+// IMPORTANT: the CI gate uses bash ${#var} which counts BYTES, not chars.
+// UTF-8 multibyte glyphs (→ … — é ô) inflate, so we cap by BYTE length.
+const MAX_BYTES = 200;
+const TARGET_BYTES = 195;
 const DIRS = ['kit/agents', 'kit/commands'];
 const SKILLS_DIR = 'kit/skills';
 
+function byteLen(s) {
+  return Buffer.byteLength(s, 'utf8');
+}
+
 function truncate(raw) {
-  let cut = raw.slice(0, TARGET);
-  // Prefer last sentence-like boundary after char 80
+  // Shrink by removing tail chars until UTF-8 byte length ≤ TARGET_BYTES.
+  // We work in chars but verify by byteLen, so we never split a multi-byte
+  // codepoint.
+  let cut = raw;
+  while (byteLen(cut) > TARGET_BYTES && cut.length > 0) {
+    cut = cut.slice(0, -1);
+  }
+  // Prefer last sentence-like boundary (only if it still fits the budget).
   const candidates = [cut.lastIndexOf('. '), cut.lastIndexOf('… '), cut.lastIndexOf('— ')];
   const boundary = Math.max(...candidates);
-  if (boundary > 80) cut = raw.slice(0, boundary + 1);
+  if (boundary > 60) {
+    const trimmed = cut.slice(0, boundary + 1);
+    if (byteLen(trimmed) <= TARGET_BYTES) cut = trimmed;
+  }
   cut = cut.trim().replace(/[,;:—\s]+$/, '');
-  if (!/[.!?…]$/.test(cut)) cut += '…';
+  if (!/[.!?…]$/.test(cut)) {
+    // Add ellipsis only if it still fits; otherwise truncate one more char.
+    while (byteLen(cut + '…') > TARGET_BYTES && cut.length > 0) {
+      cut = cut.slice(0, -1);
+    }
+    cut += '…';
+  }
   return cut;
 }
 
@@ -39,15 +60,20 @@ function quoteYaml(s) {
 
 async function processFile(full) {
   let content = await fs.readFile(full, 'utf8');
-  const fm = content.match(/^---\n([\s\S]*?)\n---/);
+  // Accept both LF and CRLF line endings (Windows-checked-out files).
+  const fm = content.match(/^---\r?\n([\s\S]*?)\r?\n---/);
   if (!fm) return false;
-  const dm = fm[1].match(/^description:\s*(.+)$/m);
+  const dm = fm[1].match(/^description:\s*(.+?)\r?$/m);
   if (!dm) return false;
   let raw = dm[1].trim();
   let quoteChar = '';
   const qm = raw.match(/^(['"])(.*)\1$/);
   if (qm) { quoteChar = qm[1]; raw = qm[2]; }
-  if (raw.length <= MAX) return false;
+  // The gate uses BYTE length (bash ${#}), so check bytes not chars.
+  // We also include surrounding quotes in the count if quoteChar set, since
+  // awk in the gate captures the raw line value including quotes.
+  const effectiveLen = quoteChar ? byteLen(raw) + 2 : byteLen(raw);
+  if (effectiveLen <= MAX_BYTES) return false;
   const cut = truncate(raw);
   let serialized;
   if (quoteChar) {

@@ -1,6 +1,6 @@
 ---
 name: supabase-config-toml-remotes
-description: Use ao configurar Supabase para branching — `[remotes.<name>]` block + branch-specific overrides + secrets per-branch (NÃO herdam) + dotenvx pattern (.env.keys + .env.preview encrypted) + 6 grupo…
+description: Use ao configurar Supabase para branching — `[remotes.<name>]` block + branch-specific overrides + secrets per-branch (NÃO herdam) + dotenvx pattern (.env.keys + .env.preview encrypted) + 6…
 ---
 
 # Supabase — Config TOML & Remotes
