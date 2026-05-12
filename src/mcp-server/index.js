@@ -33,6 +33,7 @@ import { ensureSidecar } from '../ui/auto-spawn.js';
 import { wrapProgressForUi } from '../ui/wrapper.js';
 import { incrementInvocation, recordLatency, snapshot as metricsSnapshot, persistSnapshot } from '../core/metrics.js';
 import { logEvent } from '../core/logger.js';
+import { notify, isNotifyEnabled } from '../core/notify.js';
 
 const TOOLS = [
   {
@@ -411,6 +412,10 @@ export async function createServer() {
         }
         logEvent(ev);
       } catch { /* swallow */ }
+      // Phase 164 (v1.28): opt-in OS notification on success path.
+      if (isNotifyEnabled()) {
+        try { notify({ title: `kit-mcp ${name}`, body: `${args?.action ?? ''} ok (${duration}ms)` }); } catch { /* swallow */ }
+      }
       return { content: [{ type: 'text', text: JSON.stringify(result, null, 2) }] };
     } catch (e) {
       // OBS-18: still record latency on the error path — half the value of a
@@ -430,6 +435,9 @@ export async function createServer() {
           error_type: e?.code || e?.name || 'Error',
         });
       } catch { /* swallow */ }
+      if (isNotifyEnabled()) {
+        try { notify({ title: `kit-mcp ${name} (error)`, body: e?.code || e?.name || 'Error' }); } catch { /* swallow */ }
+      }
       // SEC-14-06: full stack stays in stderr for operator debug; client envelope is sanitized.
       // sanitizeMcpError redacts secrets/paths from e.message, preserves e.code (Phase 83
       // EMANIFESTMISMATCH invariant), and emits NO stack field.
