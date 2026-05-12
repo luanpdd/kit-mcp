@@ -1,6 +1,6 @@
 ---
 name: evolucao-schema-compativel
-description: Use ao escrever migration Postgres ou versionar contrato API Edge Function — padrão 3-passos (adicionar nullable → backfill em batches → impor NOT NULL), análogos Avro/Protobuf de schema evolution para Postgres (rename via view, alargamento seguro, mudança de default em coluna em uso), rolling upgrade client-side com JWT/session compat.
+description: Use ao escrever migration Postgres ou versionar contrato API Edge Function — padrão 3-passos (adicionar nullable → backfill em batches → impor NOT NULL), análogos Avro/Protobuf de schema evolutio…
 ---
 
 # Evolução de Schema Compatível — Padrão 3-Passos + Rolling Upgrade

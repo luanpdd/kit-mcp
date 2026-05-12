@@ -1,6 +1,6 @@
 ---
 name: armadilhas-sistemas-distribuidos
-description: Use ao desenhar lógica que depende de relógio (expiração, TTL, ordenação por timestamp) ou distributed lock em Supabase — perigos clock skew (now() vs clock_timestamp() vs transaction_timestamp() semantics), fencing tokens canônicos para distributed locks (pg_advisory_xact_lock + sequence monotônico), GC pause / process pause + impacto split-brain, falhas parciais (timeout-based detection é falaciosa, phi accrual failure detector), modelos sistema (byzantine vs crash-stop vs crash-recovery — Supabase = crash-recovery).
+description: Use ao desenhar lógica que depende de relógio (expiração, TTL, ordenação por timestamp) ou distributed lock em Supabase…
 ---
 
 # Armadilhas de Sistemas Distribuídos — Clock Skew, Fencing Tokens, GC Pause, Falhas Parciais, Modelos de Sistema

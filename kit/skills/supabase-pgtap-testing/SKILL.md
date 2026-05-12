@@ -1,6 +1,6 @@
 ---
 name: supabase-pgtap-testing
-description: Use ao escrever testes de database/Edge Function em Supabase — pgTAP extension (TAP — Test Anything Protocol) + `supabase test db` runner + Deno tests para Edge Functions (`deno test --allow-all`). Testing shift-left obrigatório em CI (cross-ref skill `supabase-ci-cd-github-actions` Phase 151 CI-05/CI-06). pgTAP é mecanismo canônico de characterization tests (Feathers cap 13) para PG functions legadas. v1.27 incorpora 100% da doc oficial.
+description: Use ao escrever testes de database/Edge Function em Supabase — pgTAP extension (TAP…
 ---
 
 # Supabase — pgTAP & Deno Testing

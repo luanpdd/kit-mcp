@@ -1,6 +1,6 @@
 ---
 name: legacy-extract-class
-description: Use ao identificar classes "muito grandes" (cap 20 Feathers) com responsibility hot spots — extract class para separar responsabilidades. Aplicado a domain classes Supabase (OrderService → OrderValidator + Repository + Notifier).
+description: Use ao identificar classes "muito grandes" (cap 20 Feathers) com responsibility hot spots — extract class para separar responsabilidades.
 ---
 
 # Legacy — Extract Class

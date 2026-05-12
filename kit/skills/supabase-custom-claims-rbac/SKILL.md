@@ -1,6 +1,6 @@
 ---
 name: supabase-custom-claims-rbac
-description: Use ao implementar Custom Claims via Custom Access Token Auth Hook para RBAC em Supabase — pattern canônico 7 passos (enum types + user_roles + role_permissions + auth hook + supabase_auth_admin grants + authorize() function + RLS policies + client jwt-decode). Substitui helper functions PG STABLE com JOIN custoso. Caveat JWT freshness (eventually consistent). v1.25 incorpora 100% da doc oficial Supabase.
+description: Use ao implementar Custom Claims via Custom Access Token Auth Hook para RBAC em Supabase…
 ---
 
 # Supabase — Custom Claims & RBAC via Auth Hooks

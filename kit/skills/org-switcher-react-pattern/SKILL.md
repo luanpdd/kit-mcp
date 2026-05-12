@@ -1,6 +1,6 @@
 ---
 name: org-switcher-react-pattern
-description: Use ao implementar org switcher React em B2B SaaS multi-tenant — URL pattern /orgs/[slug]/ (Next.js App Router middleware) ou useParams() (Vite SPA + React Router v6), zustand v5 persist para active org context, validação slug → org_id ANTES de servir página, JWT stale strategy via supabase.auth.refreshSession() após role change.
+description: Use ao implementar org switcher React em B2B SaaS multi-tenant — URL pattern /orgs/[slug]/ (Next.js App Router middleware) ou useParams() (Vite SPA + React Router v6), zustand v5 persist para act…
 ---
 
 # Org Switcher — React Pattern Multi-Tenant

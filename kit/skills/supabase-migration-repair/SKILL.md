@@ -1,6 +1,6 @@
 ---
 name: supabase-migration-repair
-description: Use ao diagnosticar e reparar sync errors entre local supabase/migrations/ e remote supabase_migrations.schema_migrations tracking table — supabase migration list (diagnose), migration repair --status applied|reverted (tracking table ONLY, NÃO aplica SQL), rollback preview via delete+reopen, schema drift handling após git rebase, permission denied troubleshooting (graphql + custom role). v1.27 incorpora 100% da doc oficial.
+description: Use ao diagnosticar e reparar sync errors entre local supabase/migrations/ e remote supabase_migrations.schema_migrations tracking table…
 ---
 
 # Supabase — Migration Repair

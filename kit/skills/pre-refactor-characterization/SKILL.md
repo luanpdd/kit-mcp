@@ -1,6 +1,6 @@
 ---
 name: pre-refactor-characterization
-description: Use ANTES de refatorar arquivo > 500 linhas OU com contrato externo (webhook, API pública, integração). Bloqueia o refactor até characterization tests existirem com cobertura ≥ 70%. Gate canônico de safety net.
+description: Use ANTES de refatorar arquivo > 500 linhas OU com contrato externo (webhook, API pública, integração). Bloqueia o refactor até characterization tests existirem com cobertura ≥ 70%.
 ---
 
 # Legacy — Pre-Refactor Characterization Gate

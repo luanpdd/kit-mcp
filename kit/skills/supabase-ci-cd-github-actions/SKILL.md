@@ -1,6 +1,6 @@
 ---
 name: supabase-ci-cd-github-actions
-description: Use ao automatizar Supabase via GitHub Actions — 8 workflows canônicos da doc oficial (ci.yml, staging.yml, production.yml, generate-types.yml, database-tests.yml, functions-tests.yml, backup.yml com warning "never backup to public repo" 2×, notify-failure.yaml). Secrets centralizados (SUPABASE_ACCESS_TOKEN + PRODUCTION_DB_PASSWORD/PROJECT_ID + STAGING_DB_PASSWORD/PROJECT_ID + SUPABASE_DB_URL). v1.27 incorpora 100% da doc oficial.
+description: Use ao automatizar Supabase via GitHub Actions — 8 workflows canônicos da doc oficial (ci.yml, staging.yml, production.yml, generate-types.yml, database-tests.yml, functions-tests.yml, backup.yml…
 ---
 
 # Supabase — CI/CD GitHub Actions

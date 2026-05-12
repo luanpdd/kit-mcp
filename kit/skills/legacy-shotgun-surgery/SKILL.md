@@ -1,6 +1,6 @@
 ---
 name: legacy-shotgun-surgery
-description: Use ao detectar mesma mudança espalhada em N lugares (cap 21 Feathers) — extract before modify para reduzir change point. Modernização 2026 — semantic search via embeddings detecta duplicação semântica que regex não pega.
+description: Use ao detectar mesma mudança espalhada em N lugares (cap 21 Feathers) — extract before modify para reduzir change point. Modernização 2026…
 ---
 
 # Legacy — Shotgun Surgery

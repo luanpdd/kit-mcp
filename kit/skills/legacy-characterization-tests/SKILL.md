@@ -1,6 +1,6 @@
 ---
 name: legacy-characterization-tests
-description: Use ao refatorar código legado SEM testes prévios — characterization tests (cap 13 Feathers) capturam comportamento atual como golden snapshot, viram oracle imutável durante o refactor. Bloqueador para legacy refactor.
+description: Use ao refatorar código legado SEM testes prévios — characterization tests (cap 13 Feathers) capturam comportamento atual como golden snapshot, viram oracle imutável durante o refactor.
 ---
 
 # Legacy — Characterization Tests

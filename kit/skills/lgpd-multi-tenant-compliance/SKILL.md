@@ -1,6 +1,6 @@
 ---
 name: lgpd-multi-tenant-compliance
-description: Use ao implementar compliance LGPD (Lei 13.709/2018) per-tenant em B2B SaaS Supabase — 9 direitos Art. 18 com workflow per-org, DSR SLA 15 dias Art. 19 + alert pg_cron D-3, consent management granular default opt-out (Art. 8 §5), erasure via anonymization (não hard delete), cross-border config Brasil-UE adequacy jan/2026.
+description: Use ao implementar compliance LGPD (Lei 13.709/2018) per-tenant em B2B SaaS Supabase — 9 direitos Art. 18 com workflow per-org, DSR SLA 15 dias Art.
 ---
 
 # LGPD Multi-Tenant Compliance — Lei 13.709/2018

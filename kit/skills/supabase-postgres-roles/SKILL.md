@@ -1,6 +1,6 @@
 ---
 name: supabase-postgres-roles
-description: Use ao gerenciar Postgres roles em Supabase — system access (cron jobs, BI tools, ETL, admin scripts). Distinção canônica vs RLS+Custom Claims (application access). CREATE ROLE syntax + password best practices + GRANT/REVOKE + role hierarchy (INHERIT/NOINHERIT) + 10 predefined Supabase roles. NÃO usar para "admin vs user" (use RLS + Custom Claims v1.25). v1.26 incorpora 100% da doc oficial.
+description: Use ao gerenciar Postgres roles em Supabase — system access (cron jobs, BI tools, ETL, admin scripts). Distinção canônica vs RLS+Custom Claims (application access).
 ---
 
 # Supabase — Postgres Roles

@@ -1,6 +1,6 @@
 ---
 name: multi-tenant-performance-scaling
-description: Use ao escalar Postgres multi-tenant em Supabase — Supavisor transaction mode (porta 6543), partial indexes obrigatórios em colunas de RLS, helper functions STABLE, partitioning por org_id quando >50k rows/tenant, MVs per-tenant para query caching.
+description: Use ao escalar Postgres multi-tenant em Supabase — Supavisor transaction mode (porta 6543), partial indexes obrigatórios em colunas de RLS, helper functions STABLE, partitioning por org_id quando…
 ---
 
 # Multi-Tenant Performance & Scaling — Postgres + Supabase
