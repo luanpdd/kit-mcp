@@ -2,46 +2,60 @@
 state_version: 1.0
 milestone: v1.29
 milestone_name: "MCP-Native Discovery via Auto-Sync"
-status: "milestone iniciado — definindo requisitos e roadmap"
-last_updated: "2026-05-12T13:00:00.000Z"
+status: "milestone entregue — 6 fases (166-171) completas, aguardando release+tag"
+last_updated: "2026-05-12T13:30:00.000Z"
 progress:
   total_phases: 6
-  completed_phases: 0
-  total_plans: 0
-  completed_plans: 0
+  completed_phases: 6
+  total_plans: 6
+  completed_plans: 6
 ---
 
 # STATE.md
 
 ## Posição Atual
 
-Fase: 166 (a planejar)
+Fase: — (milestone v1.29 entregue)
 Plano: —
-Status: v1.29 iniciado — MCP-Native Discovery. 6 fases (166-171). Modo execução: totalmente autônomo.
-Última atividade: 2026-05-12 — bootstrap v1.29 após v1.28 release + tag publicada.
+Status: v1.29 ENTREGUE — 6 fases (166-171) completas, 6 commits atômicos. package.json 1.29.0. Aguardando release PR + tag.
+Última atividade: 2026-05-12 — Phase 171 commitada.
 
-## Milestone ativo
+## Milestone entregue
 
-**v1.29 — MCP-Native Discovery via Auto-Sync (6 fases, 166-171)**
+**v1.29 — MCP-Native Discovery via Auto-Sync (6 fases, 166-171)** ✓
 
-| # | Fase | Effort | Status |
-|---|---|---|---|
-| 166 | MCP `roots` capability consumption | S | pending |
-| 167 | Auto-sync no boot (idempotente + permission) | M | pending |
-| 168 | Restart signal via tool result + marker file | S | pending |
-| 169 | MCP `notifications/resources/updated` | M | pending |
-| 170 | Tool descriptions com keywords (fallback) | XS | pending |
-| 171 | `kit doctor` sync drift check | S | pending |
+| # | Fase | Status |
+|---|---|---|
+| 166 | MCP `roots` capability — `src/mcp-server/roots.js` | ✓ |
+| 167 | Auto-install tool — sync para `.claude/` idempotente | ✓ |
+| 168 | Restart signal — marker file + `ack-restart` tool | ✓ |
+| 169 | MCP `resources` + `notifications/resources/list_changed` | ✓ |
+| 170 | Tool descriptions com keywords (fallback MCP puro) | ✓ |
+| 171 | `kit doctor` auto-install drift + restart-pending | ✓ |
 
-## Contexto Acumulado (pós-v1.28)
+## Deliverables v1.29
 
-- **Counts:** 66 agents, 89 commands, 76 skills, 23 audit gates
-- **file-manifest:** 382 files hashed
-- **Coverage:** 88.40% line (último CI run f6db800)
-- **Stable API v1.0+:** preservada cross-**16 releases**
-- **CI:** verde em 9 OS×Node combos pós-PRs #8 #9 #10 #11 #12 #13
-- **v1.28 deliverables ativos:** logger.js, notify.js, kit init/logs/inspect/status/replay, sidecar auto-spawn default + test-mode skip, README reformulado (168 linhas)
+- **2 novos MCP tools:** `auto-install`, `ack-restart`
+- **2 novas capabilities:** `resources` (server-side), `roots` (consumer)
+- **1 novo módulo:** `src/mcp-server/roots.js`
+- **1 novo script:** `scripts/check-tool-descriptions.mjs`
+- **2 markers em `.claude/`:** `.kit-mcp-version` (idempotência), `.kit-mcp-restart-required` (restart-pending)
+- **2 novos `kit doctor` checks:** auto-install, restart pending
+- **Tool descriptions enriquecidas:** `kit` (596 chars) e `auto-install` (499 chars) com trigger keywords
+- **Zero deps externas novas**
+- **Zero breaking changes** (Stable API v1.0+ preservada cross-17-releases)
+
+## Contexto Acumulado pós-v1.29
+
+- **Counts:** 66 agents, 89 commands (kit/), 76 skills, 23 audit gates — sem mudanças no conteúdo
+- **MCP tools:** 7 → **9** (auto-install + ack-restart)
+- **MCP capabilities:** tools → tools + **resources** + **roots-consumer**
+- **MCP resources expostos:** **231** entries (URIs kit://agent/skill/command/<name>)
+- **Local tests:** 560/562 pass (unchanged)
+- **Stable API:** preservada cross-**17 releases**
 
 ## Próxima ação
 
-Implementar fase 166 — MCP `roots` capability.
+1. PR + auto-merge na main
+2. Aguardar CI verde
+3. Tag v1.29.0
