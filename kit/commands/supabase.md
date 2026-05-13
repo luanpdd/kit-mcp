@@ -43,12 +43,17 @@ Agents disponíveis: `kit/agents/supabase-*.md` (Phase 26) + `kit/agents/schema-
 | `column` | `coluna`, `col-priv` | `supabase-column-privileges-writer` (v1.24 canonical materializer column-level — recebe spec via Task) |
 | `rbac` | `roles`, `permissions`, `claims` | `supabase-rbac-implementer` (v1.25 canonical materializer Custom Claims & RBAC via Auth Hook — recebe spec via Task) |
 | `role` | `papel`, `roles-pg` | `supabase-roles-implementer` (v1.26 canonical materializer Postgres Roles — recebe spec via Task; system access) |
-| `edge` | `edge-function`, `function`, `funcao` | `supabase-edge-fn-writer` |
+| `edge` | `edge-function`, `function`, `funcao` | `supabase-edge-fn-writer` (v1.30: 2026 patterns — withSupabase, deno.json, config.toml) |
+| `test` | `testar`, `tests`, `deno-test` | `supabase-edge-fn-tester` (v1.30 — gera Deno tests para função existente) |
+| `mcp` | `mcp-server`, `mcp-lite` | `supabase-edge-fn-writer` com `pattern=mcp-server` |
+| `ai` | `ai-session`, `embeddings-builtin`, `gte-small`, `ollama` | `supabase-edge-fn-writer` com `pattern=rag-embeddings` (Supabase.ai.Session) |
+| `wasm` | `wasm-module` | `supabase-edge-fn-writer` com `pattern=wasm` + static_files config.toml |
+| `websocket` | `ws`, `realtime-ws` | `supabase-edge-fn-writer` com `pattern=websocket` + `per_worker` |
 | `realtime` | `tempo-real` | `supabase-realtime-implementer` |
 | `auth` | `autenticacao`, `auth-ssr` | `supabase-auth-bootstrapper` |
 | `storage` | `armazenamento` | `supabase-storage-implementer` |
-| `rag` | `pgvector`, `embeddings` | `supabase-edge-fn-writer` com prompt sobre embeddings |
-| `cron` | `queues`, `pgmq`, `background` | `supabase-edge-fn-writer` com prompt sobre `cron → pgmq → Edge` |
+| `rag` | `pgvector`, `embeddings` | `supabase-edge-fn-writer` com `pattern=rag-embeddings` |
+| `cron` | `queues`, `pgmq`, `background` | `supabase-edge-fn-writer` com `pattern=cron-pgmq` |
 | `check` | `validar`, `validate` | `schema-checker` (validação pré-migration) |
 | `help` | `ajuda`, `?` | exibe esta tabela inline |
 
@@ -79,12 +84,17 @@ hardener, harden, endurecer      → supabase-rls-hardener      (v1.23 canonical
 column, coluna, col-priv         → supabase-column-privileges-writer  (v1.24 canonical materializer column-level — feature AVANÇADA)
 rbac, roles, permissions, claims → supabase-rbac-implementer           (v1.25 canonical materializer Custom Claims & RBAC via Auth Hook)
 role, papel, roles-pg            → supabase-roles-implementer          (v1.26 canonical materializer Postgres Roles — system access only)
-edge, edge-function, function, funcao → supabase-edge-fn-writer
+edge, edge-function, function, funcao → supabase-edge-fn-writer  (v1.30: 2026 patterns)
+test, testar, tests, deno-test   → supabase-edge-fn-tester    (v1.30)
+mcp, mcp-server, mcp-lite        → supabase-edge-fn-writer (com flag pattern=mcp-server)  (v1.30)
+ai, ai-session, gte-small, ollama → supabase-edge-fn-writer (com flag pattern=rag-embeddings)  (v1.30)
+wasm, wasm-module                → supabase-edge-fn-writer (com flag pattern=wasm)  (v1.30)
+websocket, ws, realtime-ws       → supabase-edge-fn-writer (com flag pattern=websocket)  (v1.30)
 realtime, tempo-real             → supabase-realtime-implementer
 auth, autenticacao, auth-ssr     → supabase-auth-bootstrapper
 storage, armazenamento           → supabase-storage-implementer
-rag, pgvector, embeddings        → supabase-edge-fn-writer (com flag rag=true no prompt)
-cron, queues, pgmq, background   → supabase-edge-fn-writer (com flag pattern=cron-pgmq no prompt)
+rag, pgvector, embeddings        → supabase-edge-fn-writer (com flag pattern=rag-embeddings)
+cron, queues, pgmq, background   → supabase-edge-fn-writer (com flag pattern=cron-pgmq)
 check, validar, validate         → schema-checker
 ```
 
@@ -177,6 +187,16 @@ mode: rag-embeddings   (ou cron-pgmq-edge)
 
 **Subcomando `role` (v1.26 novo):** dispatch direto para `supabase-roles-implementer`. Recebe spec de custom Postgres roles + hierarchy + GRANT matrix e materializa setup completo (CREATE ROLE com LOGIN PASSWORD opcional + role hierarchy INHERIT/NOINHERIT + GRANT/REVOKE per schema/table/function + password security check). **System access apenas** — para application access (end-users), use `/supabase rbac` (v1.25). Aceita input com bloco `<roles_to_create>` + `<grants>` + `<use_case>` no `$ARGUMENTS`. Cross-ref skill [`supabase-postgres-roles`](../skills/supabase-postgres-roles/SKILL.md).
 
+**Subcomando `edge` (v1.30 modernizado):** dispatch para `supabase-edge-fn-writer` que agora aplica 6 skills 2026 — env vars JSON dict (`JSON.parse(SUPABASE_PUBLISHABLE_KEYS)['default']`), `withSupabase` para auth (4 modes: `'user' | 'secret:<name>' | 'publishable:<name>' | 'none'`), per-function `deno.json` (substitui import_map global legacy), per-function `config.toml` entry (`verify_jwt`, `entrypoint`, `static_files`), CORS via `npm:@supabase/supabase-js@2.95.0/cors`, instrumentação OTel + 4 golden signals + SRE defenses (timeout/jitter/RateLimitError handling). Aceita flag `pattern=basic|rag-embeddings|cron-pgmq|mcp-server|websocket|wasm|background-task` no `$ARGUMENTS`. Auto-handoff sugerido para `/supabase test <fn>` ao final.
+
+**Subcomando `test` (v1.30 novo):** dispatch direto para `supabase-edge-fn-tester`. Gera `supabase/functions/tests/<fn>-test.ts` com cobertura canônica de 5 equivalence classes (happy/validation/auth/rate-limit/timeout) usando Deno test runner + `assertSnapshot` + `FunctionsHttpError`/`FunctionsRelayError`/`FunctionsFetchError`. Pattern-specific: `characterization` (legacy via fixtures capturados), `webhook` (signature HMAC fixture), `rag` (determinismo via temperature=0), `mcp` (delega para MCP Inspector). Handoff cooperativo upstream: `supabase-edge-fn-writer` recomenda esse subcomando automaticamente ao criar função nova. Cross-ref skill [`supabase-edge-functions-testing`](../skills/supabase-edge-functions-testing/SKILL.md).
+
+**Subcomandos `mcp` / `ai` / `wasm` / `websocket` (v1.30 novos):** atalhos para `supabase-edge-fn-writer` com pattern específico — economizam o caller de especificar manualmente. Cada um carrega skill especializada:
+- `mcp` → [`supabase-edge-functions-mcp-server`](../skills/supabase-edge-functions-mcp-server/SKILL.md) (mcp-lite, dois Hono apps)
+- `ai` → [`supabase-edge-runtime-builtins`](../skills/supabase-edge-runtime-builtins/SKILL.md) (Supabase.ai.Session, gte-small, Ollama)
+- `wasm` → [`supabase-edge-runtime-builtins`](../skills/supabase-edge-runtime-builtins/SKILL.md) + auto-adiciona `static_files` em config.toml (CLI 2.7.0+, requer Docker no deploy)
+- `websocket` → [`supabase-edge-runtime-builtins`](../skills/supabase-edge-runtime-builtins/SKILL.md) + auto-adiciona `policy = "per_worker"` em config.toml
+
 ## 5. Output
 
 Output do agent é o output do command. Sem post-processing — agent já formata estruturado.
@@ -184,12 +204,15 @@ Output do agent é o output do command. Sem post-processing — agent já format
 </process>
 
 <success_criteria>
-- [ ] Subcomando resolvido para agent canônico (10 subcomandos × seus sinônimos)
+- [ ] Subcomando resolvido para agent canônico (16 subcomandos × seus sinônimos — v1.30)
 - [ ] `project_id` extraído de `supabase/config.toml` se presente
 - [ ] Subcomando `arquiteto` faz `AskUserQuestion` upfront sobre tier + branches
 - [ ] Dispatch via `Task(subagent_type=...)` — único ponto de chain de agents Supabase
 - [ ] Subcomando inválido → mensagem clara com lista
 - [ ] Subcomando `help`/`ajuda`/`?` → exibe tabela inline
 - [ ] Subcomando `check` → invoca `schema-checker` (existente)
+- [ ] Subcomando `edge` (v1.30) → invoca `supabase-edge-fn-writer` com 2026 patterns + auto-recomenda `/supabase test` ao final
+- [ ] Subcomando `test` (v1.30) → invoca `supabase-edge-fn-tester` que lê config.toml + index.ts para detectar auth mode
+- [ ] Subcomandos `mcp` / `ai` / `wasm` / `websocket` (v1.30) → passam `pattern=<canônico>` para writer
 - [ ] Args após subcomando passam transparentemente para o agent
 </success_criteria>

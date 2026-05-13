@@ -10,7 +10,7 @@
 > Entregue como **MCP server**. Você usa direto via `npx`, sem instalar nada.
 
 <!-- AUTOGEN-COUNTS-START -->
-**Bundled workflow:** 66 agents · 89 commands · 76 skills · 23 gates
+**Bundled workflow:** 67 agents · 89 commands · 81 skills · 23 gates
 <!-- AUTOGEN-COUNTS-END -->
 
 ---
@@ -137,9 +137,9 @@ Skills, agents e commands são em PT-BR. Termos técnicos canônicos (RLS, SLO, 
 
 ```
 kit/
-├── agents/      66 agents executáveis (planner, executor, debugger, supabase-rls-hardener, …)
+├── agents/      67 agents executáveis (planner, executor, debugger, supabase-rls-hardener, supabase-edge-fn-tester, …)
 ├── commands/    89 slash-commands (/discutir-fase, /planejar-fase, /executar-fase, …)
-├── skills/      76 skills consultáveis (supabase-rls-policies, structured-events, legacy-characterization-tests, …)
+├── skills/      81 skills consultáveis (supabase-rls-policies, supabase-edge-functions-auth, supabase-edge-runtime-builtins, …)
 ├── framework/   workflows e templates que os agents delegam
 └── hooks/       PostToolUse hooks (sidecar-tool-publisher, etc)
 ```

@@ -6,6 +6,35 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.30.0] - 2026-05-13
+
+### Added — Edge Functions 2026 Modernization
+
+Suíte Supabase Edge Functions reespecializada com 18 gaps extraídos da documentação oficial 2026:
+
+**5 novas skills:**
+- `supabase-edge-functions-auth` — `@supabase/server` package, `withSupabase` com 4 auth modes (`'user' | 'secret:<name>' | 'publishable:<name>' | 'none'`), `createSupabaseContext` para erros customizados, distinção canônica `Authorization` (JWT) vs `apikey` (API key 2026), toggle `verify_jwt` per-function, 7 patterns canônicos + diagnóstico de 401.
+- `supabase-edge-functions-testing` — Deno test runner, folder structure `supabase/functions/tests/<fn>-test.ts`, Chrome DevTools via `--inspect-mode brk` na porta 8083, characterization tests para Edge Functions legadas, signature fixtures para webhook tests, adapter pattern + FakeProvider para testes determinísticos.
+- `supabase-edge-runtime-builtins` — `Supabase.ai.Session` (gte-small embeddings + Ollama/Llamafile LLM), file system persistente via S3FS (`/s3/<bucket>`) + ephemeral (`/tmp`), regional invocation via `x-region` + `FunctionRegion` enum, WebSockets com `Deno.upgradeWebSocket` + JWT via query/subprotocol, Wasm modules com `static_files` em config.toml, env vars runtime (`SB_REGION`, `SB_EXECUTION_ID`, `DENO_DEPLOYMENT_ID`).
+- `supabase-edge-functions-limits` — matriz de limits (256MB / 2s CPU / 150-400s wall clock / 20MB bundle / 100-500-1000 funcs por plano), status codes canônicos (401/404/405/500 WORKER_ERROR / 503 BOOT_ERROR / 504 / **546 WORKER_LIMIT custom**), recursive call rate limit ~5k req/min com `RateLimitError` + `retryAfterMs` handling, client-side error classes (`FunctionsHttpError`/`FunctionsRelayError`/`FunctionsFetchError`), idempotency e backoff patterns.
+- `supabase-edge-functions-mcp-server` — pattern canônico para MCP server em Edge Function com `mcp-lite`, scaffolding via `npm create mcp-lite@latest` template "Supabase Edge Functions", dois Hono apps (outer mount em `/<function-name>`, inner em `/mcp`), security best practices, bridge para Supabase Auth.
+
+**1 skill atualizada:**
+- `supabase-edge-functions` — modernizada com env vars 2026 JSON dict (`JSON.parse(SUPABASE_PUBLISHABLE_KEYS)['default']`), per-function `deno.json` (substitui import_map global legacy), per-function `config.toml`, CORS via `npm:@supabase/supabase-js@2.95.0/cors`, custom NPM registry + private packages, limits resumo + cross-refs para 5 novas skills.
+
+**1 agent novo:**
+- `supabase-edge-fn-tester` — gera Deno tests em `supabase/functions/tests/<fn>-test.ts` com cobertura canônica de 5 equivalence classes (happy/validation/auth/rate-limit/timeout), pattern-specific (basic/characterization/webhook/rag/mcp), handoff target downstream de `supabase-edge-fn-writer`.
+
+**1 agent atualizado:**
+- `supabase-edge-fn-writer` — agora consome 6 skills 2026 + aplica `withSupabase` por default + cria `deno.json` + adiciona `config.toml` entry + injeta `corsHeaders` do SDK + handoff cooperativo upstream + handoff sugerido para `supabase-edge-fn-tester` no output.
+
+**1 command atualizado:**
+- `/supabase` — 6 novos subcomandos: `edge` (modernizado), `test` (→ tester), `mcp` (mcp-lite), `ai` (Supabase.ai.Session), `wasm` (static_files), `websocket` (per_worker). Auto-chain writer → tester.
+
+**Glossário:** 18 novos termos canônicos v1.30 (`SUPABASE_PUBLISHABLE_KEYS/SECRET_KEYS` JSON dict, `@supabase/server`, `withSupabase` auth modes, `verify_jwt` toggle, `Authorization vs apikey`, per-function `deno.json`/`config.toml`, `Supabase.ai.Session`, S3FS, `x-region`/`FunctionRegion`, `Deno.upgradeWebSocket`, `static_files` Wasm, `RateLimitError`/`retryAfterMs`, `FunctionsHttpError`/`FunctionsRelayError`/`FunctionsFetchError`, status code 546, `mcp-lite`, `corsHeaders` from SDK).
+
+**Counts:** 66 → 67 agents · 76 → 81 skills · 89 commands (estáveis).
+
 ## [1.29.0] - 2026-05-12
 
 ### Added — MCP-Native Discovery via Auto-Sync
