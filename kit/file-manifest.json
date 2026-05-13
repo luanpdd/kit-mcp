@@ -1,6 +1,6 @@
 {
   "version": "1.29.0",
-  "timestamp": "2026-05-12T13:38:43.278Z",
+  "timestamp": "2026-05-13T03:51:30.893Z",
   "files": {
     "COMANDOS.md": "d24ec61a6ec35db314cc5f2ae287bfb927b794789c8f1d558c55862f5e6534b2",
     "COMPATIBILITY.md": "794e336a87045cdf0161785b9a7a0975a49abbd80bdd816b8852251fcc8126ca",
@@ -58,7 +58,7 @@
     "agents/supabase-edge-fn-writer.md": "7b470664173f8c5c9ab12af74f58ddaeee3eb46bb3d2ca8de21b1c284961d9dd",
     "agents/supabase-migration-writer.md": "b4a38955e308f9a9aa5d1b397cceacc30f3eab198e526a598592951af2f7dba4",
     "agents/supabase-rbac-implementer.md": "d8700af7ec0ac29419b9edfa74bec5d97bf86446784bd9cf1b24e7ebf705b727",
-    "agents/supabase-realtime-implementer.md": "e10d7f723734da0dd930d6e0481e2afb2abde5b470d9c45e4364889dac19f3d6",
+    "agents/supabase-realtime-implementer.md": "45148983d15597734c64704c12b75e841386a13600f7964fde1f3827090f73ad",
     "agents/supabase-rls-hardener.md": "d0f84218ff22f202db4b1b41c8d75830b570419b5803e69a33266afccf49376e",
     "agents/supabase-rls-writer.md": "98285ba9a9964bfd1623ff1f12e83a0fa3e27dcbb70366e5f7909829056adf7c",
     "agents/supabase-roles-implementer.md": "a8f5ebaa46a0db3fe2f0d36ba66a27731bf68737747d1acddcc07fbc2bb7ccec",
@@ -375,7 +375,7 @@
     "skills/supabase-pgvector-rag/SKILL.md": "cd50663c5b19d08d9bc17bc9b4444f7fc2f6910f5c52502e7c50b1578ebe7e70",
     "skills/supabase-postgres-roles/SKILL.md": "84f3ebeede83c9dbba7919eb28f980c0138ee05caca25ebe095d38dbe69691e3",
     "skills/supabase-postgres-style/SKILL.md": "4e48bd0a9ed46bea7c3be97ef749e5c148369ceca08ef3dc8d813d8a03a48703",
-    "skills/supabase-realtime/SKILL.md": "ca2584a59742b30f5351fad23f4a1957218ca730ce3af990affe79f03854f460",
+    "skills/supabase-realtime/SKILL.md": "0d74f8d38638aba3ce042d93eca11cd0d064908987e0410da120040ec217ba84",
     "skills/supabase-rls-defense-in-depth/SKILL.md": "9a6d16ebe9879f0fcaee0ee549a3840e4600040127b1759386ceabe1135a9b8a",
     "skills/supabase-rls-policies/SKILL.md": "561a4c1a293cfadede1c9de97d6474ce9563178507096c1bf6355cc261ae613f",
     "skills/supabase-storage/SKILL.md": "f7360aa9149e55f68fa794a91c18994329e4f304cc263f90f0607e43053e9da8",
