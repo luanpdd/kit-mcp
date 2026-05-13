@@ -20,6 +20,9 @@ Realtime tem 3 layers que precisam estar alinhados (RLS + trigger + client). Esq
 - `event_kind`: `broadcast` (default) | `presence` | `database_changes` (broadcast de tabela)
 - (Opcional) `source_table`: se `event_kind=database_changes`, qual tabela (ex: `public.messages`)
 - (Opcional) `framework`: `react` (default) | `vue` | `svelte` — afeta cleanup pattern
+- (Opcional) `db_function`: `broadcast_changes` (default) | `send` (custom payload, ver Step 4)
+- (Opcional) `replay`: `{ since: ms_epoch, limit: 1-25 }` — habilita Broadcast Replay (skill v2.74.0+)
+- (Opcional) `transport`: `websocket` (default) | `rest` — REST não exige cleanup nem subscribe
 
 ## Passos
 
@@ -78,7 +81,12 @@ create policy "members_select_room_messages"
 
 ### Step 4 — Trigger DB (se `event_kind=database_changes`)
 
-Para emitir broadcast quando linha de tabela muda (substitui `postgres_changes`):
+Escolha entre `realtime.broadcast_changes` (espelhar mudança de tabela) ou `realtime.send` (payload custom/filtrado). Critério:
+
+- **`realtime.broadcast_changes`** — quando o payload do broadcast deve ser exatamente o row change (com schema/table/op/new/old). Default.
+- **`realtime.send`** — quando o broadcast precisa filtrar campos (PII, secrets), agregar dados de outras tabelas, ou emitir eventos que não mapeiam 1:1 a row change.
+
+**Variante A — `realtime.broadcast_changes` (espelhar row change):**
 
 ```sql
 create or replace function public.<function_name>()
@@ -106,6 +114,35 @@ create trigger <table>_<entity_action>
   for each row
   execute function public.<function_name>();
 ```
+
+**Variante B — `realtime.send` (payload custom/filtrado):**
+
+```sql
+create or replace function public.<function_name>()
+returns trigger
+language plpgsql
+security definer  -- definer para construir payload ignorando RLS da tabela source
+set search_path = ''
+as $$
+begin
+  if tg_op = 'INSERT' then
+    perform realtime.send(
+      jsonb_build_object(
+        '<field_1>', new.<col_1>,
+        '<field_2>', new.<col_2>
+        -- PT-BR: omitir colunas sensíveis (PII, internal_id, etc)
+      ),
+      '<entity_action>',                              -- event
+      '<scope>:<entity>:' || new.<key_column>::text,  -- topic
+      true                                            -- is_private (default em prod)
+    );
+  end if;
+  return null;
+end;
+$$;
+```
+
+> O flag `is_private` no `realtime.send` **deve casar** com `private: true` no client config. Mismatch = mensagem não entregue silenciosamente.
 
 ### Step 5 — Client subscribe + cleanup obrigatório
 
@@ -174,6 +211,65 @@ onMount(() => {
 })
 </script>
 ```
+
+### Step 5.5 — Replay (se `replay` foi pedido)
+
+Se o caller passou `replay: { since, limit }`, adicionar à config do channel para recuperar broadcasts emitidos pelo DB **antes** do client subscribar (útil em chat com histórico, reconexão pós-disconnect):
+
+```ts
+const channel = supabase.channel(`<scope>:<entity>:${<id_prop>}`, {
+  config: {
+    private: true,
+    broadcast: {
+      replay: {
+        since: <since_ms_epoch>,  // ex: Date.now() - 60_000 (últimos 60s)
+        limit: <limit>,           // 1..25
+      },
+    },
+  },
+})
+
+channel.on('broadcast', { event: '<entity_action>' }, ({ payload, meta }) => {
+  if (meta?.replayed) {
+    // PT-BR: histórico — sem som de notificação, marcar visualmente
+    appendItem(payload, { historical: true })
+  } else {
+    appendItem(payload, { historical: false })
+  }
+})
+```
+
+**Importante:** replay funciona APENAS para broadcasts emitidos pelo DB (`realtime.send` / `realtime.broadcast_changes`). Mensagens enviadas via `channel.send()` no client NÃO são replayed.
+
+### Step 5.6 — REST broadcast (se `transport=rest`)
+
+Para emitir broadcast de um server (Edge Function, API route, worker) sem manter WebSocket aberto:
+
+```ts
+// PT-BR: emitir broadcast via HTTP — não precisa subscribe
+await fetch(
+  `https://${PROJECT_REF}.supabase.co/realtime/v1/api/broadcast`,
+  {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      apikey: process.env.SUPABASE_SERVICE_ROLE_KEY!, // server-only
+    },
+    body: JSON.stringify({
+      messages: [
+        {
+          topic: `<scope>:<entity>:${<id>}`,
+          event: '<entity_action>',
+          payload: { /* ... */ },
+          private: true,
+        },
+      ],
+    }),
+  }
+)
+```
+
+Quando usar: serverless functions, cron jobs, webhooks de provider externo. Não precisa de cleanup (nenhuma WS aberta).
 
 ### Step 6 — Presence (se `event_kind=presence`)
 
