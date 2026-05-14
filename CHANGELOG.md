@@ -6,6 +6,33 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.30.2] - 2026-05-13
+
+### Fixed — Always-emit attribution + auto-register hook
+
+Feedback direto do usuário sobre v1.30.1: "no final da entrega não foi citado de
+nenhuma forma visual quais foram os recursos usados — sidecar não abriu, então
+como vou saber se foram usados ou não? Estou pressupondo que nem sequer foi
+usado". A cláusula "silêncio é melhor que ruído" da v1.30.1 era ambígua —
+silêncio podia significar "kit não usado" OU "kit usado mas Claude esqueceu de
+citar". Sem confirmação positiva, usuário não tinha sinal confiável.
+
+**Mudanças:**
+- **`kit/hooks/kit-attribution-reminder.cjs`** — directive atualizada para
+  **sempre emitir** bloco de atribuição ao final do turno. Caso A (kit usado):
+  lista recursos. Caso B (kit não usado): linha explícita "Kit-mcp neste turno:
+  nenhum recurso usado". Confirmação POSITIVA em todo turno; usuário sabe
+  imediatamente se kit-mcp está sendo dogfooded ou não.
+- **`src/mcp-server/index.js` `handleAutoInstall`** — agora registra o hook
+  `UserPromptSubmit` em `.claude/settings.local.json` automaticamente durante
+  `kit:auto-install`. Idempotente — não duplica entry se já registrado. Antes
+  o usuário tinha que editar `settings.local.json` manualmente em cada projeto
+  (atrito que invalidava o objetivo do hook).
+
+**Migração para projetos existentes:** rodar `kit:auto-install` com `force=true`
+ou esperar próxima atualização de versão para registro automático. Alternativa
+manual: copiar entry de `UserPromptSubmit` mostrada na release v1.30.1.
+
 ## [1.30.1] - 2026-05-13
 
 ### Added — Kit Attribution & First-Tool Browser Open

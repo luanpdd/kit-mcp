@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// hook-version: 1.30.1
+// hook-version: 1.30.2
 // kit-mcp · Kit Attribution Reminder (UserPromptSubmit)
 //
 // Injeta `additionalContext` no envelope do prompt do usuário com diretiva
@@ -40,20 +40,14 @@ if (process.env.KIT_MCP_NO_ATTRIBUTION === '1' || process.env.KIT_MCP_NO_ATTRIBU
 }
 
 const DIRECTIVE = [
-  '🔧 KIT-MCP ATTRIBUTION — directive ativa neste turno (v1.30.1):',
+  '🔧 KIT-MCP ATTRIBUTION — directive ativa neste turno (v1.30.2):',
   '',
-  'Se ao responder este turno você usar QUALQUER recurso do kit-mcp (qualquer',
-  'subagent_type listado em /agents kit-mcp, qualquer skill cujo nome começa',
-  'com supabase-/legacy-/cascading-/etc. do kit, ou qualquer /slash-command',
-  'do kit), SEMPRE faça duas coisas:',
+  'SEMPRE termine sua resposta com um bloco de atribuição kit-mcp.',
+  'Sem exceção. O usuário precisa de confirmação POSITIVA em TODO turno',
+  'sobre se kit-mcp foi usado ou não — silêncio é ambíguo (não dá pra',
+  'distinguir "não usei" de "esqueci de citar").',
   '',
-  '1. **Sidecar visual:** o kit-mcp abre o sidecar automaticamente na primeira',
-  '   tool call do MCP server (browser tab em 127.0.0.1:<porta>). Você NÃO',
-  '   precisa abrir manualmente — é fire-and-forget no MCP. Apenas confirme',
-  '   que foi disparado e mencione se o usuário precisar conferir.',
-  '',
-  '2. **Bloco de atribuição no final do output** — adicione ao final da sua',
-  '   resposta um bloco markdown listando TODOS os recursos kit-mcp usados:',
+  '**Caso A — Você USOU recursos kit-mcp neste turno:**',
   '',
   '   ```',
   '   ---',
@@ -61,13 +55,34 @@ const DIRECTIVE = [
   '   - Commands: /<command> (motivo: ...)',
   '   - Agents: <agent-name> (via Task — motivo: ...)',
   '   - Skills: <skill-name> (auto-trigger / consultada — motivo: ...)',
+  '   - MCP tools: mcp__kit__<tool> (motivo: ...)',
   '   - Sidecar: http://127.0.0.1:<porta>/ (opened on first MCP tool call)',
   '   ```',
   '',
-  '   Omita seções vazias. Se NÃO usou nenhum recurso kit-mcp neste turno,',
-  '   **não adicione o bloco** — silêncio é melhor que ruído.',
+  '   Omita LINHAS vazias dentro do bloco. Inclua apenas categorias usadas.',
   '',
-  'Disable temporário: env KIT_MCP_NO_ATTRIBUTION=1.',
+  '**Caso B — Você NÃO usou nenhum recurso kit-mcp neste turno:**',
+  '',
+  '   ```',
+  '   ---',
+  '   🔧 **Kit-mcp neste turno:** nenhum recurso usado (resposta puramente',
+  '   inline / Bash / Edit / Read / Write / Grep / Glob direto sem',
+  '   delegar para agents, skills ou commands do kit).',
+  '   ```',
+  '',
+  'O que conta como "recurso kit-mcp":',
+  '- subagent_types listados em /agents kit-mcp (delegação via Task)',
+  '- skills cujo description começa com "Use ao..." e nome casa um do kit',
+  '  (supabase-*, legacy-*, cascading-*, multi-tenant-*, etc.)',
+  '- /slash-commands do kit (/supabase, /legacy, /multi-tenant, etc.)',
+  '- MCP tools mcp__kit__* invocadas',
+  '',
+  'O que NÃO conta:',
+  '- Tools nativos do Claude Code (Bash, Edit, Read, Write, Grep, Glob, Task',
+  '  com general-purpose, etc.) sem ser instrução de um kit resource',
+  '- Skills genéricas da Anthropic (anthropic-skills:*, engineering:*, etc.)',
+  '',
+  'Disable: env KIT_MCP_NO_ATTRIBUTION=1.',
   '',
 ].join('\n');
 

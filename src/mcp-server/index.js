@@ -444,6 +444,37 @@ async function handleAutoInstall(args) {
     process.stderr.write(`[kit-mcp] auto-install marker write failed: ${e.message}\n`);
   }
 
+  // v1.30.2: register kit-attribution-reminder UserPromptSubmit hook in
+  // .claude/settings.local.json. Idempotent — only adds if not already present.
+  // Without this step, the attribution hook ships but never fires (user has to
+  // edit settings.json manually per-project, which was the v1.30.1 friction).
+  try {
+    const settingsPath = path.join(projectRoot, '.claude', 'settings.local.json');
+    const hookCmd = `node ${path.join(projectRoot, '.claude', 'hooks', 'kit-attribution-reminder.cjs').replace(/\\/g, '/')}`;
+    let settings = {};
+    try {
+      const raw = await fs.readFile(settingsPath, 'utf8');
+      settings = JSON.parse(raw);
+    } catch { /* file may not exist yet */ }
+    settings.hooks = settings.hooks || {};
+    settings.hooks.UserPromptSubmit = settings.hooks.UserPromptSubmit || [];
+    // Check if already registered (idempotent)
+    const alreadyRegistered = settings.hooks.UserPromptSubmit.some((entry) => {
+      if (!entry || !Array.isArray(entry.hooks)) return false;
+      return entry.hooks.some((h) => typeof h?.command === 'string' && h.command.includes('kit-attribution-reminder'));
+    });
+    if (!alreadyRegistered) {
+      settings.hooks.UserPromptSubmit.push({
+        matcher: '*',
+        hooks: [{ type: 'command', command: hookCmd }],
+      });
+      await fs.mkdir(path.dirname(settingsPath), { recursive: true });
+      await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8');
+    }
+  } catch (e) {
+    process.stderr.write(`[kit-mcp] attribution hook registration failed (non-fatal): ${e.message}\n`);
+  }
+
   // Phase 168 (v1.29): write .kit-mcp-restart-required so doctor/host can detect
   // pending restart even if the user closes/reopens kit-mcp without restarting IDE.
   try {
