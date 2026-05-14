@@ -572,9 +572,31 @@ export async function createServer() {
 
   server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
 
+  // v1.30.1: open browser tab on FIRST kit-mcp tool invocation (not on boot —
+  // would spam tabs on IDE start). Provides visual feedback that kit-mcp is
+  // actively being used. Escape hatch: KIT_MCP_NO_UI=1 (same as auto-spawn) or
+  // KIT_MCP_NO_BROWSER=1 (sidecar runs but no browser open).
+  let kitFirstToolBrowserOpened = false;
   server.setRequestHandler(CallToolRequestSchema, async (req) => {
     const { name, arguments: args } = req.params;
     const handler = HANDLERS[name];
+
+    // v1.30.1: first-tool browser open — fire-and-forget; never blocks handler.
+    // Suppressed in same conditions as boot-time sidecar (test/CI/no-ui).
+    if (!kitFirstToolBrowserOpened) {
+      kitFirstToolBrowserOpened = true;
+      const noUi = process.env.KIT_MCP_NO_UI === '1' || process.env.KIT_MCP_NO_UI === 'true';
+      const noBrowser = process.env.KIT_MCP_NO_BROWSER === '1' || process.env.KIT_MCP_NO_BROWSER === 'true';
+      const isTestRun = (process.execArgv || []).some(
+        (a) => a === '--test' || a === '--experimental-test-coverage',
+      ) || process.env.NODE_TEST_CONTEXT !== undefined;
+      const isCi = process.env.CI === 'true' || process.env.CI === '1';
+      if (!noUi && !noBrowser && !isTestRun && !isCi) {
+        const projectRoot = args?.projectRoot || process.cwd();
+        ensureSidecar({ projectRoot, openBrowserOnSpawn: true }).catch(() => {});
+      }
+    }
+
     if (!handler) {
       // OBS-18 (Phase 94.01): unknown-tool path counts as an error against
       // the unknown name itself — useful signal if a client is mis-spelling

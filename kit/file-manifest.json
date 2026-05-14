@@ -1,6 +1,6 @@
 {
-  "version": "1.30.0",
-  "timestamp": "2026-05-13T09:16:42.372Z",
+  "version": "1.30.1",
+  "timestamp": "2026-05-14T07:27:25.436Z",
   "files": {
     "COMANDOS.md": "d24ec61a6ec35db314cc5f2ae287bfb927b794789c8f1d558c55862f5e6534b2",
     "COMPATIBILITY.md": "794e336a87045cdf0161785b9a7a0975a49abbd80bdd816b8852251fcc8126ca",
@@ -297,6 +297,7 @@
     "framework/workflows/verify-work.md": "219b2e45782b0b9ef042b69f02c92232947b8144ac4f472a6f5a6577f21de8df",
     "hooks/check-update.js": "927bb6394259b8547aad508580872c92d508f5886b29e9b3ae9603076baa2a5c",
     "hooks/context-monitor.js": "8ff9295c6ab769ca766e3e612c39d72d171a97bb082bde590bdf328d557249b9",
+    "hooks/kit-attribution-reminder.cjs": "7d0994c63714295c522158e0e4123429ffe65cae497d003de570c5d5e2deb6f4",
     "hooks/post-apply-migration.js": "cd67f24ca9ba0a064087b9abeacee094ae24baad0cdc06f776d7a2f8ccad9685",
     "hooks/prompt-guard.js": "426f0240e3ee383571a48e062e6819d8fc3df456171fbc7e2aafb17889a9a389",
     "hooks/sidecar-tool-publisher.js": "b8357ae80e82bfc875acb6c616cf82a943a2d77cf2ceba2f23a50b7d1f335f2d",

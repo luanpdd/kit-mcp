@@ -6,6 +6,20 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.30.1] - 2026-05-13
+
+### Added — Kit Attribution & First-Tool Browser Open
+
+Visibilidade explícita de uso real do kit-mcp para o usuário detectar bugs no fluxo precocemente.
+
+**Mudanças:**
+- **`src/mcp-server/index.js`** — sidecar UI agora abre o browser tab automaticamente na **primeira** invocação de qualquer tool kit-mcp do session (anteriormente só abria no boot ou com `autoSpawn: true` per-call). Fire-and-forget, nunca bloqueia handler. Escape hatches: `KIT_MCP_NO_UI=1` (sidecar off completo), `KIT_MCP_NO_BROWSER=1` (sidecar sem browser open), test/CI auto-skip.
+- **`kit/hooks/kit-attribution-reminder.cjs`** — novo hook `UserPromptSubmit` que injeta `additionalContext` com diretiva canônica v1.30.1: quando Claude usar recursos kit-mcp neste turno (qualquer agent, skill ou slash-command), DEVE adicionar bloco final no output listando os recursos usados (Commands/Agents/Skills/Sidecar URL). Opt-out: `KIT_MCP_NO_ATTRIBUTION=1`.
+
+**Motivação:** usuário relatou — "sempre que eu peço para fazer algo se um agente, comando ou skill do kit-mcp for usado, deve abrir sozinho o sidecar (feedback visual) E listar os recursos usados (clareza textual) para saber se tem algum erro no fluxo".
+
+**Counts:** estáveis. Tests: 582 pass / 0 fail.
+
 ## [1.30.0] - 2026-05-13
 
 ### Added — Edge Functions 2026 Modernization
