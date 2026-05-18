@@ -6,6 +6,44 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+### Added — Density & routing hardening (análise de 10 pontos)
+
+Resposta direta ao feedback: "o kit está ficando denso e se perdendo; os agents
+não estão sendo chamados de forma correta". Análise produziu 10 pontos de
+melhoria; este lote materializa os de baixo risco e alto impacto.
+
+- **`kit/hooks/kit-router.cjs`** (novo) — hook `UserPromptSubmit` que detecta o
+  domínio canônico do prompt (Supabase, multi-tenant, legacy, observabilidade,
+  SRE, DDIA, workflow de fases) por keyword e injeta uma diretiva firme de
+  delegação: trabalho multi-passo do domínio deve ir para `Task(subagent_type)`
+  em vez de inline. Opt-out: `KIT_MCP_NO_ROUTER=1`. Resolve "agents não são
+  chamados" materializando o roteamento no momento da decisão.
+- **Agent tiers (#6)** — campo `tier: core | specialized` no frontmatter dos 67
+  agents (13 core = backbone de workflow, 54 specialized = domínio). `kit`
+  ganha filtro `tier` em `action=list-agents` e expõe `tier` em `slim`/terse.
+  Reduz a superfície de decisão em ~80%.
+- **`scripts/audit-skill-triggers.mjs`** (novo, #9) — audita colisão de gatilhos
+  das 81 skills (tokens quentes + pares Jaccard ≥30%). Saída em
+  `reports/SKILL-TRIGGER-AUDIT.md`.
+- **`scripts/tag-agent-tiers.mjs`** (novo) — classifica e injeta `tier:` nos
+  agents (idempotente).
+
+### Changed
+
+- **Contadores automáticos (#5)** — descrições das tools `kit` e `auto-install`
+  usam placeholders `{{AGENTS}}`/`{{COMMANDS}}`/`{{SKILLS}}` preenchidos ao vivo
+  no handler `ListTools` via `listKit()`. Antes a descrição mentia (`66/89/76`
+  vs reais `67/89/81`).
+- **`kit/hooks/kit-attribution-reminder.cjs`** (#3) — diretiva reduzida de ~50
+  linhas / ~1,5 KB para ~15 linhas. Agrupa a atribuição por tipo
+  (`agents`/`skills`/`commands`/`mcp`) nomeando cada recurso, e explicita que
+  rodar scripts do kit via `node`/Bash NÃO conta como invocação de MCP tool.
+- **`src/core/sync.js`** — `mergePreservedPrologue` preserva conteúdo do usuário
+  acima do marcador `<!-- kit-mcp:reference -->` em rules mode `single`, para
+  notas cross-session no `CLAUDE.md` sobreviverem ao `kit sync`.
+- **`handleAutoInstall`** — registra ambos os hooks (`kit-router` +
+  `kit-attribution-reminder`) em `.claude/settings.local.json`.
+
 ## [1.30.2] - 2026-05-13
 
 ### Fixed — Always-emit attribution + auto-register hook

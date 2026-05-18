@@ -1,5 +1,6 @@
 ---
 name: audit-log-implementer
+tier: specialized
 description: Materializa audit log multi-tenant — tabela append-only (REVOKE DELETE/UPDATE), helper function private.audit_log com PII hashing, retention scheduler pg_cron 3 tiers (30d/90d/365d), legal_hold f…
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: yellow

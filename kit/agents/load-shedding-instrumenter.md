@@ -1,5 +1,6 @@
 ---
 name: load-shedding-instrumenter
+tier: specialized
 description: Aplica patches de load shedding em código (queue depth gauge, drop policy, deadline-aware handler via AbortSignal, server-side rate limit). Foca em Edge Functions e serviços HTTP.
 tools: Read, Write, Edit, Bash, Grep, Glob
 color: orange

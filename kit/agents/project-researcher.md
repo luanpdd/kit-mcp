@@ -1,5 +1,6 @@
 ---
 name: project-researcher
+tier: core
 description: Pesquisa ecossistema do domínio antes do roadmap. Produz arquivos em .planning/research/ consumidos pelo roadmapper. Invocado por /novo-projeto ou /novo-marco.
 tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*, mcp__firecrawl__*, mcp__exa__*
 color: cyan

@@ -95,7 +95,11 @@ export async function syncTo(targetId, opts = {}) {
   if (target.rules) {
     const rulesContent = buildAggregatedRules(kit, target, kitRoot);
     if (target.rules.mode === 'single') {
-      ops.push({ path: path.join(projectRoot, target.rules.path), content: rulesContent, kind: 'rules' });
+      // Preserve any user-authored prologue above the STUB_MARKER so cross-session
+      // notes (project paths, conventions, etc.) survive subsequent `kit sync`.
+      const outPath = path.join(projectRoot, target.rules.path);
+      const merged = await mergePreservedPrologue(outPath, rulesContent);
+      ops.push({ path: outPath, content: merged, kind: 'rules' });
     } else {
       // multi-rules: split per agent description as a rule snippet (lightweight)
       for (const a of kit.agents) {
@@ -391,6 +395,21 @@ export function summarize(desc) {
   const flat = desc.replace(/\s+/g, ' ').trim();
   if (flat.length <= SUMMARY_MAX_CHARS) return flat;
   return flat.slice(0, SUMMARY_MAX_CHARS - 1) + '…';
+}
+
+// Preserve any user-authored content that appears BEFORE the STUB_MARKER in the
+// existing rules file. Anything from the marker onward is owned by kit-mcp and
+// re-rendered every sync. If the file is absent or has no marker, the generated
+// content is used verbatim.
+async function mergePreservedPrologue(outPath, generated) {
+  let existing;
+  try { existing = await fs.readFile(outPath, 'utf8'); }
+  catch { return generated; }
+  const idx = existing.indexOf(STUB_MARKER);
+  if (idx <= 0) return generated;
+  const prologue = existing.slice(0, idx).replace(/\s+$/, '');
+  if (!prologue) return generated;
+  return `${prologue}\n\n${generated}`;
 }
 
 function buildAggregatedRules(kit, target /* , kitRoot */) {

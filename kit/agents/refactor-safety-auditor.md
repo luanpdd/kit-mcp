@@ -1,5 +1,6 @@
 ---
 name: refactor-safety-auditor
+tier: specialized
 description: Audita arquivo alvo de refactor ANTES da execução — coleta evidências (line count, contrato externo, coverage, mutation testing, characterization existente) e produz veredito GO/BLOCK/WAR…
 tools: Read, Bash, Grep, Glob
 color: red

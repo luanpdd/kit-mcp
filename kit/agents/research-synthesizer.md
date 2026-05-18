@@ -1,5 +1,6 @@
 ---
 name: research-synthesizer
+tier: core
 description: Sintetiza outputs de agentes pesquisadores paralelos em SUMMARY.md. Invocado por /novo-projeto após 4 agentes pesquisadores concluírem.
 tools: Read, Write, Bash
 color: purple

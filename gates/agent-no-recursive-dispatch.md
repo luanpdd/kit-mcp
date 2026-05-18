@@ -27,6 +27,8 @@ Este gate, portanto, valida o conjunto **proibido** (ciclos) e o conjunto **perm
 - `supabase-migration-writer` (cross-suite SQL handoff)
 - `supabase-branching-architect` (v1.27)
 - `supabase-cicd-pipeline-implementer` (v1.27)
+- `supabase-edge-fn-writer` (v1.30) — materializer de Edge Function; recebe handoff cooperativo de agents não-Supabase (evolution-go-integrator, etc.)
+- `supabase-edge-fn-tester` (v1.30) — handoff target de `supabase-edge-fn-writer`
 
 Dispatches para esses targets são **permitidos** mesmo quando o caller é também um agent Supabase.
 
@@ -41,7 +43,7 @@ set -e
 VIOLATIONS=0
 
 # Allowlist canônica (downstream-only): cada um destes é leaf na DAG cooperativa
-ALLOWLIST='supabase-(rls-hardener|rls-writer|column-privileges-writer|rbac-implementer|roles-implementer|migration-writer|branching-architect|cicd-pipeline-implementer)'
+ALLOWLIST='supabase-(rls-hardener|rls-writer|column-privileges-writer|rbac-implementer|roles-implementer|migration-writer|branching-architect|cicd-pipeline-implementer|edge-fn-writer|edge-fn-tester)'
 
 for f in kit/agents/supabase-*.md; do
   [ -f "$f" ] || continue

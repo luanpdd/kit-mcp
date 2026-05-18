@@ -1,5 +1,6 @@
 ---
 name: payload-capture-instrumenter
+tier: specialized
 description: Instrumenta Edge Function Supabase para captura de payloads reais via mcp__supabase__get_logs por N dias; sanitiza PII; produz fixtures para legacy-characterizer.
 tools: Read, Write, Edit, Bash, Grep, Glob, mcp__supabase__execute_sql, mcp__supabase__get_logs, mcp__supabase__list_edge_functions
 color: cyan

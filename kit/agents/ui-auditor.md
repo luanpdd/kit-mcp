@@ -1,5 +1,6 @@
 ---
 name: ui-auditor
+tier: specialized
 description: Auditoria visual retroativa de 6 pilares do código frontend implementado. Produz UI-REVIEW.md pontuado. Invocado pelo orquestrador /revisar-ui.
 tools: Read, Write, Bash, Grep, Glob
 color: "#F472B6"

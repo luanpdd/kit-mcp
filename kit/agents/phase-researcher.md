@@ -1,5 +1,6 @@
 ---
 name: phase-researcher
+tier: core
 description: Pesquisa como implementar uma fase antes do planejamento. Produz RESEARCH.md consumido pelo planner. Invocado pelo orquestrador /planejar-fase.
 tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*, mcp__firecrawl__*, mcp__exa__*
 color: cyan

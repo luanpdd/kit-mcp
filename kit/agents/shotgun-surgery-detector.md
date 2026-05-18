@@ -1,5 +1,6 @@
 ---
 name: shotgun-surgery-detector
+tier: specialized
 description: Detecta duplicação semântica via embeddings (OpenAI text-embedding-3-small ou pgvector) — clusters priorizados por extract value. Modernização 2026…
 tools: Read, Bash, Grep, Glob, Write, mcp__supabase__execute_sql
 color: magenta

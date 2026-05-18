@@ -1,5 +1,6 @@
 ---
 name: ai-mutation-tester
+tier: specialized
 description: Mutation testing modernizado — usa LLM para gerar mutants COMPORTAMENTAIS (mais ricos que sintáticos != → ==) e testa contra suite. Sem precedente em 2004 — literatura recente (2023+).
 tools: Read, Bash, Grep, Glob, Write
 color: red

@@ -1,5 +1,6 @@
 ---
 name: example-reviewer
+tier: specialized
 description: Example sub-agent template. Replace with your own. Reviews a snippet of code and returns 3 concrete improvements.
 tools: Read, Grep, Glob
 color: blue

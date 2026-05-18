@@ -1,5 +1,6 @@
 ---
 name: integration-checker
+tier: core
 description: Verifica integração entre fases e fluxos E2E. Checa se as fases se conectam corretamente e se workflows do usuário completam de ponta a ponta.
 tools: Read, Bash, Grep, Glob
 color: blue

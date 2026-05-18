@@ -1,5 +1,6 @@
 ---
 name: burn-rate-forecaster
+tier: specialized
 description: Calcula burn rate atual + ETA exhaustão + alert config (page vs ticket) — usa lookahead/baseline windows fator 4×, mcp__supabase__execute_sql para queries SLI.
 tools: Read, Bash, Grep, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: orange

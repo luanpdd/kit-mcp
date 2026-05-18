@@ -1,5 +1,6 @@
 ---
 name: assumptions-analyzer
+tier: core
 description: Analisa profundamente a codebase para uma fase e retorna hipóteses estruturadas com evidências. Invocado pelo modo assumptions do discutir-fase.
 tools: Read, Bash, Grep, Glob
 color: cyan

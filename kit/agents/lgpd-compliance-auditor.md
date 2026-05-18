@@ -1,5 +1,6 @@
 ---
 name: lgpd-compliance-auditor
+tier: specialized
 description: Audita gaps LGPD per-tenant em projeto Supabase B2B — 9 direitos Art.
 tools: Read, Write, Bash, Grep, Glob, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: yellow

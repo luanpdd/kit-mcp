@@ -1,5 +1,6 @@
 ---
 name: planner
+tier: core
 description: Cria planos de fase executáveis com decomposição de tarefas, análise de dependências e verificação orientada a objetivos. Acionado pelo orquestrador /planejar-fase.
 tools: Read, Write, Bash, Glob, Grep, WebFetch, mcp__context7__*
 color: green

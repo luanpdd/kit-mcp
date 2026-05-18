@@ -1,5 +1,6 @@
 ---
 name: validador-evolucao-schema
+tier: specialized
 description: Recebe SQL de migration via stdin/argument, detecta 4 breaks canônicos de schema evolution (NOT NULL adicionado em coluna existente / column dropped / type narrowed varchar(255)→varchar(50)…
 tools: Read, Grep, Bash
 color: cyan

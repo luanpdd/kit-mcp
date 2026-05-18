@@ -1,5 +1,6 @@
 ---
 name: supabase-storage-implementer
+tier: specialized
 description: Configura Supabase Storage — buckets públicos vs privados, signed URLs, RLS sobre storage.objects com path multi-tenant, image transforms, alerta egress.
 tools: Read, Write, Edit, Bash, Grep, Glob, mcp__supabase__execute_sql
 color: orange

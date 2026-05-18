@@ -1,5 +1,6 @@
 ---
 name: roadmapper
+tier: core
 description: Cria roadmaps de projeto com divisão de fases, mapeamento de requisitos, derivação de critérios de sucesso e validação de cobertura. Invocado pelo orquestrador /novo-projeto.
 tools: Read, Write, Bash, Glob, Grep
 color: purple

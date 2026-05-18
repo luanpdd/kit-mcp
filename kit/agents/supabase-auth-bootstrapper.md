@@ -1,5 +1,6 @@
 ---
 name: supabase-auth-bootstrapper
+tier: specialized
 description: Bootstrap Next.js v16 + Supabase Auth com @supabase/ssr (browser+server clients + middleware). Audita .env* para NEXT_PUBLIC_*SERVICE* leak. Single serverClient factory.
 tools: Read, Write, Edit, Bash, Grep, Glob
 color: green

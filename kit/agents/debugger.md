@@ -1,5 +1,6 @@
 ---
 name: debugger
+tier: core
 description: Investiga bugs usando método científico, gerencia sessões de debug, trata checkpoints. Invocado pelo orquestrador /depurar.
 tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch
 permissionMode: acceptEdits

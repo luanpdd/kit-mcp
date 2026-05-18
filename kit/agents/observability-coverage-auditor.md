@@ -1,5 +1,6 @@
 ---
 name: observability-coverage-auditor
+tier: specialized
 description: Audita cobertura de observability + legacy safety por Edge Function — golden signals X/N + SLO Y/N + burn alert Z/N + characterization tests + top 5 críticas (por chamadas 30d) sem cobertura.
 tools: Read, Bash, Grep, Glob, Write, mcp__supabase__list_edge_functions, mcp__supabase__get_logs, mcp__supabase__execute_sql
 color: orange

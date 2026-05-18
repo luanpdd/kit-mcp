@@ -1,5 +1,6 @@
 ---
 name: detector-tenant-quente
+tier: specialized
 description: Consulta logs Supabase via mcp__supabase__execute_sql para queries dos últimos 30d, agrupa por org_id, identifica outliers (>3x P50 = WARN, >10x P50 = CRITICAL); produz AUDITORIA-TENANT-QUENTE.md…
 tools: Read, Grep, Bash, Write, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: yellow

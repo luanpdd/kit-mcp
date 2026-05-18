@@ -1,5 +1,6 @@
 ---
 name: evolution-go-integrator
+tier: specialized
 description: Materializa integração WhatsApp (Evolution Go ou Meta Cloud API) em Supabase B2B multi-tenant…
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion, mcp__supabase__execute_sql
 color: green

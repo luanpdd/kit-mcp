@@ -1,6 +1,7 @@
 ---
 name: supabase-edge-fn-writer
-description: Escreve Deno Edge Functions 2026-compliant — imports versionados npm:/jsr:/node:, env vars JSON dict (SUPABASE_PUBLISHABLE_KEYS/SECRET_KEYS), per-function deno.json + config.toml entries, CORS via @supabase/supabase-js/cors v2.95+, withSupabase para auth quando aplicável, /tmp ou /s3 para writes, EdgeRuntime.waitUntil para background, status code canônicos, instrumentação OTel + 4 golden signals + rate-limit/retry defense.
+tier: specialized
+description: Escreve Deno Edge Functions Supabase 2026 — imports versionados npm:/jsr:/node:, env vars JSON dict, per-function deno.json + config.toml, withSupabase auth, EdgeRuntime.waitUntil, OTel.
 tools: Read, Write, Edit, Bash, Grep, Glob
 color: cyan
 ---

@@ -1,5 +1,6 @@
 ---
 name: supabase-realtime-implementer
+tier: specialized
 description: Configura Realtime — canais com private:true, naming scope:entity:id, RLS sobre realtime.messages, removeChannel cleanup, triggers DB via realtime.broadcast_changes.
 tools: Read, Write, Edit, Bash, Grep, Glob, mcp__supabase__execute_sql
 color: magenta

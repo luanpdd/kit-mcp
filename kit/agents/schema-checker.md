@@ -1,5 +1,6 @@
 ---
 name: schema-checker
+tier: specialized
 description: Valida FKs/colunas/tabelas referenciadas em migration SQL ANTES de aplicar em prod. Lê SQL, consulta schema via Supabase MCP, devolve veredito GO/NO-GO/NEEDS-REVIEW.
 tools: Read, Bash, Grep, Glob, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: red

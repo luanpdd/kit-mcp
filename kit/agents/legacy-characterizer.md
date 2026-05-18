@@ -1,5 +1,6 @@
 ---
 name: legacy-characterizer
+tier: specialized
 description: Gera characterization tests (cap 13 Feathers) para código legado…
 tools: Read, Write, Edit, Bash, Grep, Glob
 color: cyan
