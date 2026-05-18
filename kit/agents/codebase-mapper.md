@@ -1,5 +1,6 @@
 ---
 name: codebase-mapper
+tier: core
 description: Explora a codebase e escreve docs de análise estruturados. Invocado por /mapear-codebase com foco (tech, arch, quality, concerns). Reduz carga de contexto do orquestrador.
 tools: Read, Bash, Grep, Glob, Write
 color: cyan

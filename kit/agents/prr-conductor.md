@@ -1,5 +1,6 @@
 ---
 name: prr-conductor
+tier: specialized
 description: Conduz PRR (cap 32) — lê schema/Edge Functions/SLOs/advisors via Supabase MCP, gera PRR-REPORT.md scored 6 axes; offline fallback se MCP ausente.
 tools: Read, Write, Bash, Grep, Glob, AskUserQuestion, mcp__supabase__list_tables, mcp__supabase__execute_sql, mcp__supabase__get_advisors, mcp__supabase__list_edge_functions
 color: purple

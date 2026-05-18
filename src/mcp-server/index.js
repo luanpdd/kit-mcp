@@ -1,4 +1,4 @@
-// kit-mcp server — exposes 7 tools, each with action-based dispatch (or none).
+// kit-mcp server — exposes 9 tools, each with action-based dispatch (or none).
 //
 //   kit              action: list-agents | list-commands | list-skills | get | search
 //   sync             action: targets | status | install | remove
@@ -43,7 +43,9 @@ const TOOLS = [
     // Phase 170 (v1.29): description enriched with trigger keywords so MCP
     // hosts route here on relevant intents even in MCP-pure mode (before
     // auto-install made .claude/ native). Keep under 1024 chars (host limit).
-    description: 'Browse the personal kit: 66 agents, 89 commands, 76 skills. Call this when the user mentions Supabase (RLS, branching, migrations, Edge Functions, Custom Claims, Postgres Roles, Storage, Realtime, pgvector), multi-tenant SaaS, agentic harness, characterization tests, legacy refactor, observability (SLO, golden signals, error budgets), DDIA topics (consistency, replication lag, schema evolution), SRE (postmortems, toil, PRR), CI/CD (hermetic builds, pipelines), or any workflow that benefits from the canonical patterns. Use action=search to discover, action=get to read the full prompt/skill.',
+    // v1.30.3 (#5): counts are {{PLACEHOLDERS}} — injected live at ListTools
+    // time from listKit() so they never drift from the actual catalog.
+    description: 'Browse the personal kit: {{AGENTS}} agents, {{COMMANDS}} commands, {{SKILLS}} skills. Call this when the user mentions Supabase (RLS, branching, migrations, Edge Functions, Custom Claims, Postgres Roles, Storage, Realtime, pgvector), multi-tenant SaaS, agentic harness, characterization tests, legacy refactor, observability (SLO, golden signals, error budgets), DDIA topics (consistency, replication lag, schema evolution), SRE (postmortems, toil, PRR), CI/CD (hermetic builds, pipelines), or any workflow that benefits from the canonical patterns. Use action=search to discover, action=get to read the full prompt/skill.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -52,6 +54,7 @@ const TOOLS = [
         name:   { type: 'string', description: 'For action=get' },
         query:  { type: 'string', description: 'For action=search' },
         terse:  { type: 'boolean', description: 'For action=list-*: omit description, return only {kind, name}. Default false (PERF-15-01).' },
+        tier:   { type: 'string', enum: ['core', 'specialized'], description: 'For action=list-agents: filter by tier. core = workflow backbone (~13); specialized = domain-specific (~54). Omit for all.' },
       },
       required: ['action'],
     },
@@ -157,7 +160,7 @@ const TOOLS = [
     // Idempotent — re-runs are no-ops if .claude/.kit-mcp-version matches the
     // running server's package version. Permission-gated by the host.
     name: 'auto-install',
-    description: 'IMPORTANT for first contact: project kit/ into the host\'s native layout (.claude/agents/, skills/, commands/) so 66 agents become real subagent_types in the Agent tool, 76 skills get native auto-trigger via descriptions, and 89 commands appear as /slash-commands in the IDE. Idempotent — re-running is a no-op if already in sync. Run once per project on first kit-mcp contact; restart the IDE session after to load the new agents/skills/commands. After restart, call ack-restart to clear the marker.',
+    description: 'IMPORTANT for first contact: project kit/ into the host\'s native layout (.claude/agents/, skills/, commands/) so {{AGENTS}} agents become real subagent_types in the Agent tool, {{SKILLS}} skills get native auto-trigger via descriptions, and {{COMMANDS}} commands appear as /slash-commands in the IDE. Idempotent — re-running is a no-op if already in sync. Run once per project on first kit-mcp contact; restart the IDE session after to load the new agents/skills/commands. After restart, call ack-restart to clear the marker.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -208,7 +211,16 @@ async function handleKit(args) {
   // args.terse undefined/false preserves slim()+summarize() cap-80 behavior.
   const variant = args.terse === true ? slimTerse : slim;
   switch (args.action) {
-    case 'list-agents':   return kit.agents.map(variant);
+    case 'list-agents': {
+      // #6 (v1.30.4): optional tier filter — core vs specialized. Agents
+      // without a `tier` frontmatter field are treated as specialized so a
+      // tier=core query never accidentally surfaces an untagged agent.
+      let agents = kit.agents;
+      if (args.tier === 'core' || args.tier === 'specialized') {
+        agents = agents.filter((a) => (a.frontmatter?.tier ?? 'specialized') === args.tier);
+      }
+      return agents.map(variant);
+    }
     case 'list-commands': return kit.commands.map(variant);
     case 'list-skills':   return [...kit.skills, ...kit.skillsExtras].map(variant);
     case 'get': {
@@ -444,13 +456,15 @@ async function handleAutoInstall(args) {
     process.stderr.write(`[kit-mcp] auto-install marker write failed: ${e.message}\n`);
   }
 
-  // v1.30.2: register kit-attribution-reminder UserPromptSubmit hook in
-  // .claude/settings.local.json. Idempotent — only adds if not already present.
-  // Without this step, the attribution hook ships but never fires (user has to
-  // edit settings.json manually per-project, which was the v1.30.1 friction).
+  // v1.30.2/v1.30.4: register kit-mcp UserPromptSubmit hooks in
+  // .claude/settings.local.json. Idempotent — only adds hooks not already
+  // present. Without this step the hooks ship but never fire (user would have
+  // to edit settings.json manually per-project).
+  //   - kit-router: detects domain keywords → injects delegation directive.
+  //   - kit-attribution-reminder: injects the 1-line attribution directive.
   try {
     const settingsPath = path.join(projectRoot, '.claude', 'settings.local.json');
-    const hookCmd = `node ${path.join(projectRoot, '.claude', 'hooks', 'kit-attribution-reminder.cjs').replace(/\\/g, '/')}`;
+    const HOOKS = ['kit-router', 'kit-attribution-reminder'];
     let settings = {};
     try {
       const raw = await fs.readFile(settingsPath, 'utf8');
@@ -458,21 +472,26 @@ async function handleAutoInstall(args) {
     } catch { /* file may not exist yet */ }
     settings.hooks = settings.hooks || {};
     settings.hooks.UserPromptSubmit = settings.hooks.UserPromptSubmit || [];
-    // Check if already registered (idempotent)
-    const alreadyRegistered = settings.hooks.UserPromptSubmit.some((entry) => {
-      if (!entry || !Array.isArray(entry.hooks)) return false;
-      return entry.hooks.some((h) => typeof h?.command === 'string' && h.command.includes('kit-attribution-reminder'));
-    });
-    if (!alreadyRegistered) {
-      settings.hooks.UserPromptSubmit.push({
-        matcher: '*',
-        hooks: [{ type: 'command', command: hookCmd }],
-      });
+    let changed = false;
+    for (const hookName of HOOKS) {
+      const hookCmd = `node ${path.join(projectRoot, '.claude', 'hooks', hookName + '.cjs').replace(/\\/g, '/')}`;
+      const already = settings.hooks.UserPromptSubmit.some((entry) =>
+        Array.isArray(entry?.hooks) &&
+        entry.hooks.some((h) => typeof h?.command === 'string' && h.command.includes(hookName)));
+      if (!already) {
+        settings.hooks.UserPromptSubmit.push({
+          matcher: '*',
+          hooks: [{ type: 'command', command: hookCmd }],
+        });
+        changed = true;
+      }
+    }
+    if (changed) {
       await fs.mkdir(path.dirname(settingsPath), { recursive: true });
       await fs.writeFile(settingsPath, JSON.stringify(settings, null, 2) + '\n', 'utf8');
     }
   } catch (e) {
-    process.stderr.write(`[kit-mcp] attribution hook registration failed (non-fatal): ${e.message}\n`);
+    process.stderr.write(`[kit-mcp] hook registration failed (non-fatal): ${e.message}\n`);
   }
 
   // Phase 168 (v1.29): write .kit-mcp-restart-required so doctor/host can detect
@@ -583,14 +602,20 @@ function slim(x) {
   // Use action=get to fetch the absPath (and content) for a specific item.
   // PERF-13-01 (TOK-02): truncate description via SUMMARY_MAX_CHARS (80) cap shared
   // with src/core/sync.js — full description lives in each item's file under kit/.
-  return { kind: x.kind, name: x.name, description: summarize(x.description) };
+  // #6 (v1.30.4): include `tier` when present (agents only) so clients can group.
+  const out = { kind: x.kind, name: x.name };
+  if (x.frontmatter?.tier) out.tier = x.frontmatter.tier;
+  out.description = summarize(x.description);
+  return out;
 }
 
 // PERF-15-01: terse variant — omits description entirely. Used when MCP client
 // only needs name discovery (e.g. populating UI lists, validating slug references).
 // Default action=list-* still returns description capped via slim()/summarize().
 function slimTerse(x) {
-  return { kind: x.kind, name: x.name };
+  const out = { kind: x.kind, name: x.name };
+  if (x.frontmatter?.tier) out.tier = x.frontmatter.tier;
+  return out;
 }
 
 // --- server bootstrap ---
@@ -601,7 +626,30 @@ export async function createServer() {
     { capabilities: { tools: {} } },
   );
 
-  server.setRequestHandler(ListToolsRequestSchema, async () => ({ tools: TOOLS }));
+  // v1.30.3 (#5): inject live catalog counts into tool descriptions so the
+  // {{AGENTS}}/{{COMMANDS}}/{{SKILLS}} placeholders never drift from reality.
+  // Falls back to the placeholder-as-literal if listKit() fails (defensive —
+  // a broken kit dir must not break tool discovery).
+  server.setRequestHandler(ListToolsRequestSchema, async () => {
+    let counts = null;
+    try {
+      const kit = await listKit(BUNDLED_KIT_ROOT);
+      counts = {
+        AGENTS: String(kit.agents.length),
+        COMMANDS: String(kit.commands.length),
+        SKILLS: String(kit.skills.length + kit.skillsExtras.length),
+      };
+    } catch { /* leave placeholders untouched */ }
+    if (!counts) return { tools: TOOLS };
+    const tools = TOOLS.map((t) => ({
+      ...t,
+      description: t.description.replace(
+        /\{\{(AGENTS|COMMANDS|SKILLS)\}\}/g,
+        (_, key) => counts[key],
+      ),
+    }));
+    return { tools };
+  });
 
   // v1.30.1: open browser tab on FIRST kit-mcp tool invocation (not on boot —
   // would spam tabs on IDE start). Provides visual feedback that kit-mcp is

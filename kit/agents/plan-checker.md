@@ -1,5 +1,6 @@
 ---
 name: plan-checker
+tier: core
 description: Verifica se os planos vão atingir o objetivo da fase antes da execução. Análise reversa a partir do objetivo sobre qualidade do plano. Invocado pelo orquestrador /planejar-fase.
 tools: Read, Bash, Glob, Grep
 color: green

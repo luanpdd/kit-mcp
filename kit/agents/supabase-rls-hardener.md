@@ -1,5 +1,6 @@
 ---
 name: supabase-rls-hardener
+tier: specialized
 description: Recebe draft SQL via Task() upstream context + intent original. Materializa SQL final hardenado preservando intent.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: red

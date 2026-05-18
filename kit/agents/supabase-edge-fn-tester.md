@@ -1,5 +1,6 @@
 ---
 name: supabase-edge-fn-tester
+tier: specialized
 description: Gera Deno tests para Edge Functions Supabase em `supabase/functions/tests/<fn>-test.ts` — happy/validation/auth/rate-limit/timeout equivalence classes, fixtures sanitizados, snapshot testing via jsr:@std/testing, client-side error classes (FunctionsHttpError/RelayError/FetchError), characterization tests para legacy. Handoff target de supabase-edge-fn-writer.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task
 color: teal

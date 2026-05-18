@@ -1,5 +1,6 @@
 ---
 name: slo-engineer
+tier: specialized
 description: Define SLI/SLO/error budget event-based — gera SLO.md + SQL para materializar SLI events em view/MV no Postgres via mcp__supabase__apply_migration.
 tools: Read, Write, Bash, Grep, Glob, AskUserQuestion, mcp__supabase__list_tables, mcp__supabase__execute_sql, mcp__supabase__apply_migration
 color: green

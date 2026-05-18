@@ -1,5 +1,6 @@
 ---
 name: auditor-consistencia-isolamento
+tier: specialized
 description: Audita migrations + RPCs + Edge Functions Supabase em busca de 6 anti-patterns canônicos de race condition (SELECT-then-UPDATE sem FOR UPDATE = lost update vulnerable; trigger sem materializar pr…
 tools: Read, Grep, Glob, Bash, Write
 color: red

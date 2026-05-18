@@ -1,5 +1,6 @@
 ---
 name: observability-instrumenter
+tier: specialized
 description: Instrumenta código com OpenTelemetry — gera spans, atributos canônicos (user.id, tenant_id, request.id, result.success, error.type, build_id) seguindo skill structured-events.
 tools: Read, Write, Edit, Bash, Grep, Glob
 color: yellow

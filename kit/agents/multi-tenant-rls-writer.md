@@ -1,5 +1,6 @@
 ---
 name: multi-tenant-rls-writer
+tier: specialized
 description: Gera RLS policies hierárquicas multi-tenant — org-level, dept-level, role-based, permission-based + super_admin PERMISSIVE bypass.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: red

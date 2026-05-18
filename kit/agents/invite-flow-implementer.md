@@ -1,5 +1,6 @@
 ---
 name: invite-flow-implementer
+tier: specialized
 description: Materializa invite flow B2B — tabela org_invites + RPC create_invite (token raw retornado) + RPC accept_invite (idempotente via FOR UPDATE) + cron expire pending.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion, mcp__supabase__execute_sql
 color: green

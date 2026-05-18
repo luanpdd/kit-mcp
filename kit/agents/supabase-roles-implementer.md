@@ -1,5 +1,6 @@
 ---
 name: supabase-roles-implementer
+tier: specialized
 description: Canonical materializer Postgres Roles em Supabase. Recebe spec (custom roles + hierarchy + GRANT matrix) via Task() upstream context + intent original.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__list_tables, mcp__supabase__apply_migration
 color: red

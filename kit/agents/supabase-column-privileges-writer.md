@@ -1,5 +1,6 @@
 ---
 name: supabase-column-privileges-writer
+tier: specialized
 description: Canonical materializer column-level privileges Supabase. Recebe spec (table + colunas sensíveis + roles permitidos) via Task() upstream context + intent original.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: red

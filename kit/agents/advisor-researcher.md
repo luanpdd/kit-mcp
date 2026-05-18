@@ -1,5 +1,6 @@
 ---
 name: advisor-researcher
+tier: core
 description: Pesquisa uma única decisão de área cinzenta e retorna uma tabela de comparação estruturada com justificativa. Invocado pelo modo advisor do discutir-fase.
 tools: Read, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*
 color: cyan

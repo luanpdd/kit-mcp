@@ -1,5 +1,6 @@
 ---
 name: user-profiler
+tier: specialized
 description: Analisa sessões em 8 dimensões comportamentais para produzir perfil do dev pontuado com confiança e evidências. Invocado por workflows de orquestração de perfil.
 tools: Read
 color: magenta

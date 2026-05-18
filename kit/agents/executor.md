@@ -1,5 +1,6 @@
 ---
 name: executor
+tier: core
 description: Executa planos framework com commits atômicos, tratamento de desvios, protocolos de checkpoint e gerenciamento de estado. Invocado pelo orquestrador executar-fase ou pelo comando executar-plano.
 tools: Read, Write, Edit, Bash, Grep, Glob
 permissionMode: acceptEdits

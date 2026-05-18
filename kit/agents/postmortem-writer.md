@@ -1,5 +1,6 @@
 ---
 name: postmortem-writer
+tier: specialized
 description: Gera postmortem blameless 9 seções (cap 15) — modo --from-investigation lê .planning/investigations/<id>.md ou --incident standalone com perguntas guiadas.
 tools: Read, Write, Bash, Grep, Glob, AskUserQuestion
 color: red

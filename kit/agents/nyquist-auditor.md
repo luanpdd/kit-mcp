@@ -1,5 +1,6 @@
 ---
 name: nyquist-auditor
+tier: specialized
 description: Preenche lacunas de validação Nyquist gerando testes e verificando cobertura para requisitos de fase
 tools:
   - Read

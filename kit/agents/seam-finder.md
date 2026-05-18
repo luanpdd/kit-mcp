@@ -1,5 +1,6 @@
 ---
 name: seam-finder
+tier: specialized
 description: Analisa código alvo para identificar seams (object/link/preprocessing) e recomendar técnica de quebra de dependência (cap 25 Feathers) com menor custo.
 tools: Read, Bash, Grep, Glob, Write
 color: blue

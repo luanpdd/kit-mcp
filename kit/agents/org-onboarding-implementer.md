@@ -1,5 +1,6 @@
 ---
 name: org-onboarding-implementer
+tier: specialized
 description: Implementa fluxo signup → criar org → primeiro admin → setup wizard. Gera migration SQL atômica (org + members em 1 trx) + Edge Function setup wizard async.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion
 color: green

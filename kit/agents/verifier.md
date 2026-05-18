@@ -1,5 +1,6 @@
 ---
 name: verifier
+tier: core
 description: Verifica atingimento do objetivo da fase via análise reversa. Checa se codebase entrega o prometido, não só task completion. Cria VERIFICATION.md.
 tools: Read, Write, Bash, Grep, Glob
 color: green

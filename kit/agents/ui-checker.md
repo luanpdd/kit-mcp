@@ -1,5 +1,6 @@
 ---
 name: ui-checker
+tier: specialized
 description: Valida contratos de design UI-SPEC.md em 6 dimensões de qualidade. Produz vereditos BLOCK/FLAG/PASS. Invocado pelo orquestrador /fase-ui.
 tools: Read, Bash, Glob, Grep
 color: "#22D3EE"
