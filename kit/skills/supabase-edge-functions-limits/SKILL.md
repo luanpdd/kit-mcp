@@ -1,6 +1,6 @@
 ---
 name: supabase-edge-functions-limits
-description: Use ao planejar limites, falhas e retries em Edge Functions Supabase — runtime caps (256MB / 2s CPU / 150-400s wall clock), platform caps (20MB bundle, 100/500/1000 funcs por plano), status codes canônicos (401/404/405/500/503/504/546 WORKER_LIMIT), recursive call budget ~5k req/min com `RateLimitError` + `retryAfterMs`, client-side error classes `FunctionsHttpError`/`FunctionsRelayError`/`FunctionsFetchError`, idempotency e backoff.
+description: Use ao planejar limites e retries em Edge Functions Supabase — runtime caps 256MB/2s CPU/wall clock, status codes canônicos, RateLimitError + retryAfterMs, error classes client-side, idempotency.
 ---
 
 # Supabase — Edge Functions Limits, Status Codes & Rate Limits · 2026

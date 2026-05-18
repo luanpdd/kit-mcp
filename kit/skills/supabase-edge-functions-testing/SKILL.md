@@ -1,6 +1,6 @@
 ---
 name: supabase-edge-functions-testing
-description: Use ao testar/debugar Edge Functions Supabase localmente — `deno test --allow-all` com `Deno.test`, folder structure `supabase/functions/tests/<fn>-test.ts`, `supabase start` + `supabase functions serve --env-file`, Chrome DevTools via `--inspect-mode brk` na porta 8083, `per_worker` policy para WebSocket/background, charset .env local, characterization tests para Edge Functions legadas.
+description: Use ao testar/debugar Edge Functions Supabase localmente — deno test --allow-all, folder tests/<fn>-test.ts, supabase functions serve, Chrome DevTools --inspect-mode, characterization para legadas.
 ---
 
 # Supabase — Edge Functions Testing & Local Debug · 2026

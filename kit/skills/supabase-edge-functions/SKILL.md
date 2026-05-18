@@ -1,6 +1,6 @@
 ---
 name: supabase-edge-functions
-description: Use ao escrever Edge Functions Supabase — Deno + imports versionados npm:/jsr:/node:, env vars 2026 (JSON dict SUPABASE_PUBLISHABLE_KEYS/SUPABASE_SECRET_KEYS), per-function deno.json, config.toml por função (verify_jwt, entrypoint, static_files), file writes APENAS em /tmp ou /s3/<bucket>, EdgeRuntime.waitUntil, CORS via @supabase/supabase-js/cors v2.95+.
+description: Use ao escrever Edge Functions Supabase — Deno, imports versionados npm:/jsr:/node:, env vars JSON dict 2026, per-function deno.json + config.toml, file writes /tmp ou /s3, EdgeRuntime.waitUntil.
 ---
 
 # Supabase — Edge Functions (Deno) · 2026
