@@ -43,6 +43,12 @@ melhoria; este lote materializa os de baixo risco e alto impacto.
   notas cross-session no `CLAUDE.md` sobreviverem ao `kit sync`.
 - **`handleAutoInstall`** — registra ambos os hooks (`kit-router` +
   `kit-attribution-reminder`) em `.claude/settings.local.json`.
+- **Descrições desambiguadas (#2)** — as 5 skills do cluster multi-tenant
+  (`audit-log-multi-tenant`, `member-invite-flow`, `super-admin-platform-pattern`,
+  `permission-gate-react-pattern`, `member-management-react-shadcn`) tinham
+  descrições genéricas ("Use ao implementar … B2B SaaS multi-tenant Supabase…")
+  que colidiam 40-56% (Jaccard). Reescritas para liderar pelo conceito
+  distintivo de cada uma. Colisões na auditoria `#9`: **10 pares → 0**.
 
 ## [1.30.2] - 2026-05-13
 
