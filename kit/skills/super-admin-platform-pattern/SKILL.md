@@ -1,6 +1,6 @@
 ---
 name: super-admin-platform-pattern
-description: "Use ao implementar plataforma super-admin em B2B SaaS multi-tenant…"
+description: "Use ao implementar painel super-admin que gerencia TODOS os tenants — cross-tenant view, impersonation/support takeover, super_admin app_metadata, audit obrigatório de cada ação."
 ---
 
 # Super-Admin Platform Pattern — B2B SaaS Multi-Tenant

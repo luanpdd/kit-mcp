@@ -1,6 +1,6 @@
 ---
 name: member-invite-flow
-description: Use ao implementar invite de membros em B2B SaaS multi-tenant Supabase…
+description: Use ao implementar invite de membros — token SHA-256 (hash no banco), state machine pending/accepted/expired, email-locked, bulk invite, transfer ownership. B2B multi-tenant Supabase.
 ---
 
 # Member Invite Flow — B2B SaaS Multi-Tenant
