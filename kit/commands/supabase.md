@@ -51,6 +51,11 @@ Agents disponíveis: `kit/agents/supabase-*.md` (Phase 26) + `kit/agents/schema-
 | `websocket` | `ws`, `realtime-ws` | `supabase-edge-fn-writer` com `pattern=websocket` + `per_worker` |
 | `realtime` | `tempo-real` | `supabase-realtime-implementer` |
 | `auth` | `autenticacao`, `auth-ssr` | `supabase-auth-bootstrapper` |
+| `social` | `oauth`, `login-social` | `supabase-social-auth-implementer` (v1.32 — social login Google/GitHub/Apple/Facebook/LinkedIn + custom OAuth/OIDC) |
+| `mfa` | `2fa`, `totp` | `supabase-mfa-implementer` (v1.32 — MFA TOTP/Phone + enforcement RLS por AAL) |
+| `hooks` | `auth-hook`, `hook` | `supabase-auth-hook-writer` (v1.32 — materializa os 6 Auth Hooks Postgres/HTTP) |
+| `oauth-server` | `mcp-auth`, `idp` | `supabase-oauth-server-implementer` (v1.32 — Supabase como OAuth 2.1/OIDC identity provider + MCP authentication) |
+| `sso` | `saml`, `enterprise-sso` | `supabase-sso-saml-architect` (v1.32 — Enterprise SSO SAML 2.0 + multi-tenant) |
 | `storage` | `armazenamento` | `supabase-storage-implementer` |
 | `rag` | `pgvector`, `embeddings` | `supabase-edge-fn-writer` com `pattern=rag-embeddings` |
 | `cron` | `queues`, `pgmq`, `background` | `supabase-edge-fn-writer` com `pattern=cron-pgmq` |
@@ -92,6 +97,11 @@ wasm, wasm-module                → supabase-edge-fn-writer (com flag pattern=w
 websocket, ws, realtime-ws       → supabase-edge-fn-writer (com flag pattern=websocket)  (v1.30)
 realtime, tempo-real             → supabase-realtime-implementer
 auth, autenticacao, auth-ssr     → supabase-auth-bootstrapper
+social, oauth, login-social      → supabase-social-auth-implementer    (v1.32 social login + custom OAuth/OIDC)
+mfa, 2fa, totp                   → supabase-mfa-implementer            (v1.32 MFA TOTP/Phone + enforcement RLS)
+hooks, auth-hook, hook           → supabase-auth-hook-writer           (v1.32 materializa Auth Hooks Postgres/HTTP)
+oauth-server, mcp-auth, idp      → supabase-oauth-server-implementer   (v1.32 OAuth 2.1/OIDC identity provider + MCP auth)
+sso, saml, enterprise-sso        → supabase-sso-saml-architect         (v1.32 Enterprise SSO SAML 2.0)
 storage, armazenamento           → supabase-storage-implementer
 rag, pgvector, embeddings        → supabase-edge-fn-writer (com flag pattern=rag-embeddings)
 cron, queues, pgmq, background   → supabase-edge-fn-writer (com flag pattern=cron-pgmq)
@@ -197,6 +207,15 @@ mode: rag-embeddings   (ou cron-pgmq-edge)
 - `wasm` → [`supabase-edge-runtime-builtins`](../skills/supabase-edge-runtime-builtins/SKILL.md) + auto-adiciona `static_files` em config.toml (CLI 2.7.0+, requer Docker no deploy)
 - `websocket` → [`supabase-edge-runtime-builtins`](../skills/supabase-edge-runtime-builtins/SKILL.md) + auto-adiciona `policy = "per_worker"` em config.toml
 
+**Subcomandos de autenticação (v1.32 novos):** materializam a suíte de auth. Cada um faz dispatch direto para o agent canônico e carrega a skill especializada:
+- `social` → `supabase-social-auth-implementer` + skill [`supabase-social-oauth`](../skills/supabase-social-oauth/SKILL.md) — social login (Google/GitHub/Apple/Facebook/LinkedIn) + custom OAuth/OIDC, rota callback PKCE.
+- `mfa` → `supabase-mfa-implementer` + skill [`supabase-mfa`](../skills/supabase-mfa/SKILL.md) — enrollment TOTP/Phone + enforcement RLS RESTRICTIVE por AAL.
+- `hooks` → `supabase-auth-hook-writer` + skill [`supabase-auth-hooks`](../skills/supabase-auth-hooks/SKILL.md) — materializa os 6 Auth Hooks (Postgres function ou Edge Function com Standard Webhooks).
+- `oauth-server` → `supabase-oauth-server-implementer` + skill [`supabase-oauth-server`](../skills/supabase-oauth-server/SKILL.md) — Supabase como OAuth 2.1/OIDC identity provider, **MCP authentication**, RLS por `client_id`.
+- `sso` → `supabase-sso-saml-architect` + skill [`supabase-enterprise-sso-saml`](../skills/supabase-enterprise-sso-saml/SKILL.md) — Enterprise SSO SAML 2.0, attribute mappings, multi-tenant.
+
+O subcomando `auth` (existente) continua para bootstrap SSR Next.js v16 via `supabase-auth-bootstrapper`. Skills de conhecimento complementares (sem agent dedicado): [`supabase-auth-methods`](../skills/supabase-auth-methods/SKILL.md), [`supabase-auth-sessions`](../skills/supabase-auth-sessions/SKILL.md), [`supabase-jwt-signing-keys`](../skills/supabase-jwt-signing-keys/SKILL.md), [`supabase-third-party-auth`](../skills/supabase-third-party-auth/SKILL.md), [`supabase-auth-hardening`](../skills/supabase-auth-hardening/SKILL.md) — a LLM as carrega automaticamente pelos trigger phrases.
+
 ## 5. Output
 
 Output do agent é o output do command. Sem post-processing — agent já formata estruturado.
@@ -204,7 +223,7 @@ Output do agent é o output do command. Sem post-processing — agent já format
 </process>
 
 <success_criteria>
-- [ ] Subcomando resolvido para agent canônico (16 subcomandos × seus sinônimos — v1.30)
+- [ ] Subcomando resolvido para agent canônico (21 subcomandos × seus sinônimos — v1.32)
 - [ ] `project_id` extraído de `supabase/config.toml` se presente
 - [ ] Subcomando `arquiteto` faz `AskUserQuestion` upfront sobre tier + branches
 - [ ] Dispatch via `Task(subagent_type=...)` — único ponto de chain de agents Supabase
@@ -214,5 +233,6 @@ Output do agent é o output do command. Sem post-processing — agent já format
 - [ ] Subcomando `edge` (v1.30) → invoca `supabase-edge-fn-writer` com 2026 patterns + auto-recomenda `/supabase test` ao final
 - [ ] Subcomando `test` (v1.30) → invoca `supabase-edge-fn-tester` que lê config.toml + index.ts para detectar auth mode
 - [ ] Subcomandos `mcp` / `ai` / `wasm` / `websocket` (v1.30) → passam `pattern=<canônico>` para writer
+- [ ] Subcomandos `social` / `mfa` / `hooks` / `oauth-server` / `sso` (v1.32) → dispatch para o agent de auth canônico
 - [ ] Args após subcomando passam transparentemente para o agent
 </success_criteria>
