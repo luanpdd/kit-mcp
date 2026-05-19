@@ -1,6 +1,6 @@
 ---
 name: supabase-auth-ssr
-description: Use ao bootstrap Next.js v16 + Supabase Auth — @supabase/ssr, getAll/setAll APENAS, NUNCA auth-helpers-nextjs, proxy completo com getUser e redirects.
+description: Use ao bootstrap Next.js v16 + Supabase Auth — @supabase/ssr, getAll/setAll APENAS, NUNCA auth-helpers-nextjs, proxy com getClaims, cache headers e redirects.
 ---
 
 # Supabase — Auth SSR (Next.js v16+)
@@ -15,6 +15,7 @@ LLM carrega esta skill quando bootstrap ou auditar autenticação Supabase em Ne
 - "middleware.ts auth", "proxy auth"
 - "cookies getAll setAll"
 - "Supabase auth Next.js v16"
+- "getClaims proteger página SSR", "cache headers setAll"
 
 ## Regras absolutas
 
@@ -26,10 +27,11 @@ LLM carrega esta skill quando bootstrap ou auditar autenticação Supabase em Ne
 - **Browser client e Server client são distintos:**
   - Browser (`createBrowserClient`) → para Client Components ("use client")
   - Server (`createServerClient`) → para Server Components, Route Handlers, Server Actions
-- **Middleware (`middleware.ts`) obrigatório** para refresh de sessão SSR. Deve chamar `supabase.auth.getUser()` em cada request.
-- **Auth method order** — após `createServerClient` mas **ANTES** de `getUser()`, NÃO chamar nada que produza response intermediário. Os cookies precisam fluir corretamente.
-- **`NEXT_PUBLIC_*` apenas para anon key** (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`). **NUNCA** `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY` — service_role bypassa RLS e seria exposto ao cliente (anti-pitfall B6).
-- **Single serverClient factory** — não criar múltiplos clients em layouts (race condition na refresh de token — B13).
+- **Middleware/Proxy (`middleware.ts`) obrigatório** para refresh de sessão SSR. Deve chamar `supabase.auth.getClaims()` em cada request — `getClaims()` valida a assinatura do JWT contra as chaves públicas publicadas e faz o refresh. **NUNCA confie em `getSession()` no servidor** — não revalida o token. `getUser()` continua válido (faz round-trip ao Auth server, garante que a sessão não foi revogada), mas é mais lento; prefira `getClaims()` para proteger páginas.
+- **Auth method order** — após `createServerClient` mas **ANTES** de `getClaims()`, NÃO chamar nada que produza response intermediário. Os cookies precisam fluir corretamente.
+- **Cache headers no `setAll`** — desde `@supabase/ssr` v0.10.0 o `setAll` recebe um 2º argumento com headers de cache (`Cache-Control`, `Expires`, `Pragma`). No proxy, aplique-os ao response — sem isso, um CDN/ISR pode cachear o `Set-Cookie` e vazar a sessão de um usuário para outro.
+- **`NEXT_PUBLIC_*` apenas para a chave pública** — `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY` (chave nova `sb_publishable_...`) ou `NEXT_PUBLIC_SUPABASE_ANON_KEY` (legada, válida até fim de 2026). **NUNCA** `NEXT_PUBLIC_SUPABASE_SERVICE_ROLE_KEY` nem `sb_secret_...` — bypassam RLS e seriam expostos ao cliente (anti-pitfall B6).
+- **Single serverClient factory + inicializar dentro do request handler** — não criar múltiplos clients em layouts (race condition na refresh de token — B13) nem em escopo de módulo (em Vercel Fluid compute o client é reaproveitado entre requests e vaza sessão de outro usuário).
 
 ## Patterns canônicos
 
@@ -93,14 +95,16 @@ export async function createClient() {
 ```
 
 ```tsx
-// PT-BR: uso em Server Component
+// PT-BR: uso em Server Component — getClaims() valida a assinatura do JWT
+// localmente e é a forma canônica de proteger páginas no servidor
 import { createClient } from '@/utils/supabase/server'
 
 export default async function Dashboard() {
   const supabase = await createClient()
-  const { data: { user } } = await supabase.auth.getUser()
-  if (!user) return <p>Não autenticado</p>
-  return <p>Olá, {user.email}</p>
+  const { data } = await supabase.auth.getClaims()
+  const claims = data?.claims
+  if (!claims) return <p>Não autenticado</p>
+  return <p>Olá, {claims.email}</p>
 }
 ```
 
@@ -122,7 +126,7 @@ export async function middleware(request: NextRequest) {
         getAll() {
           return request.cookies.getAll()
         },
-        setAll(cookiesToSet) {
+        setAll(cookiesToSet, headers) {
           cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
@@ -130,14 +134,21 @@ export async function middleware(request: NextRequest) {
           cookiesToSet.forEach(({ name, value, options }) =>
             supabaseResponse.cookies.set(name, value, options)
           )
+          // PT-BR: aplicar cache headers (@supabase/ssr v0.10.0+) — impede
+          // CDN/ISR de cachear o Set-Cookie e vazar sessão entre usuários
+          Object.entries(headers ?? {}).forEach(([key, value]) =>
+            supabaseResponse.headers.set(key, value)
+          )
         },
       },
     }
   )
 
-  // PT-BR: ATENÇÃO — não execute código entre createServerClient e getUser()
+  // PT-BR: ATENÇÃO — não execute código entre createServerClient e getClaims()
   // (qualquer cookie set/get fora desse path quebra refresh silencioso)
-  const { data: { user } } = await supabase.auth.getUser()
+  // getClaims() valida a assinatura do JWT e faz o refresh da sessão
+  const { data } = await supabase.auth.getClaims()
+  const user = data?.claims ?? null
 
   // PT-BR: redirect para /login se sem user
   if (!user && !request.nextUrl.pathname.startsWith('/login')) {
@@ -245,15 +256,50 @@ const { user } = await supabase2.auth.getUser()
 
 **Por quê:** múltiplos `createServerClient` na mesma request podem corromper cookies de refresh de token. Issue [supabase/ssr#68](https://github.com/supabase/ssr/issues/68) — race condition documentada.
 
-**Certo:** middleware faz o refresh **uma vez por request**. Layouts apenas leem o user via `getUser()` que retorna cached:
+**Certo:** middleware faz o refresh **uma vez por request**. Layouts apenas leem os claims via `getClaims()`:
 ```tsx
 // app/layout.tsx — middleware já fez o refresh
 const supabase = await createClient()
-const { data: { user } } = await supabase.auth.getUser()
+const { data } = await supabase.auth.getClaims()
 ```
+
+### Anti-pattern 5: Confiar em `getSession()` no servidor
+
+**Errado:**
+```ts
+// middleware.ts ou Server Component
+const { data: { session } } = await supabase.auth.getSession()
+if (!session) redirect('/login')   // ⚠ inseguro no servidor
+```
+
+**Por quê:** `getSession()` lê a sessão direto dos cookies — que podem ser forjados — e **não revalida** o token. No servidor, use `getClaims()` (valida a assinatura do JWT contra as chaves públicas do projeto) ou `getUser()` (round-trip ao Auth server). `getSession()` é aceitável apenas no cliente.
+
+**Certo:**
+```ts
+const { data } = await supabase.auth.getClaims()
+if (!data?.claims) redirect('/login')
+```
+
+### Anti-pattern 6: Cliente Supabase em escopo de módulo (vazamento em Fluid compute)
+
+**Errado:**
+```ts
+// ⚠ escopo de módulo — reaproveitado entre requests
+const supabase = createServerClient(/* ... */)
+export async function handler(req) { /* usa supabase compartilhado */ }
+```
+
+**Por quê:** em Vercel Fluid compute (e instâncias serverless reaproveitadas) o client persiste entre requests de usuários diferentes — a sessão de um vaza para outro.
+
+**Certo:** crie o client **dentro** do request handler, sempre via a factory `createClient()`.
 
 ## Ver também
 
+- [supabase-auth-methods](../supabase-auth-methods/SKILL.md) — métodos de sign-in/sign-up (password, magic link, OTP, anonymous, Web3)
+- [supabase-social-oauth](../supabase-social-oauth/SKILL.md) — social login + rota callback PKCE `/auth/callback`
+- [supabase-auth-sessions](../supabase-auth-sessions/SKILL.md) — fluxos implicit vs PKCE, refresh tokens
+- [supabase-jwt-signing-keys](../supabase-jwt-signing-keys/SKILL.md) — `getClaims()`, JWKS e signing keys assimétricas
+- [supabase-auth-hardening](../supabase-auth-hardening/SKILL.md) — redirect URLs, custom SMTP, rate limits, CAPTCHA
 - [supabase-rls-policies](../supabase-rls-policies/SKILL.md) — RLS aplicado quando user autenticado consulta tabelas
 - [supabase-edge-functions](../supabase-edge-functions/SKILL.md) — Edge Functions usando service_role server-side
 - [supabase-realtime](../supabase-realtime/SKILL.md) — Realtime exige usuário autenticado para canais privados

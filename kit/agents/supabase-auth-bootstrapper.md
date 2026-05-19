@@ -374,7 +374,21 @@ Constraints: projeto novo Next.js v16; jwt-decode adicionado ao package.json; li
 
 - ⚠ JWT freshness: mudanças em user_roles refletem após refresh (TTL 1h). Para revogação imediata, usar `auth.admin.signOut(userId)` no server-side com service_role.
 - ⚠ Auth hook deve ser habilitado no Dashboard (Authentication > Hooks Beta) ou config.toml local — esse setup não é automatizado pelo bootstrap (DDL do hook é feito pelo `supabase-rbac-implementer` mas o enable depende de UI/config).
-- ⚠ `jwt-decode` é apenas decode (NÃO valida assinatura) — para validação server-side, use `@supabase/ssr` `getUser()` que valida.
+- ⚠ `jwt-decode` é apenas decode (NÃO valida assinatura) — para validação server-side, use `@supabase/ssr` `getClaims()`, que valida a assinatura do JWT contra as chaves públicas do projeto.
+
+## Suíte de autenticação (v1.32) — handoff para agents especializados
+
+O bootstrap cobre o esqueleto SSR (clients + proxy + audit `.env*`). Funcionalidades de auth além do esqueleto têm agents materializadores dedicados — faça handoff via `Task()` ou recomende o subcomando `/supabase` correspondente:
+
+| Necessidade do caller | Agent / subcomando | Skill |
+|---|---|---|
+| Social login (Google/GitHub/Apple/Facebook/LinkedIn, custom OAuth/OIDC) | `supabase-social-auth-implementer` · `/supabase social` | [supabase-social-oauth](../skills/supabase-social-oauth/SKILL.md) |
+| MFA (TOTP / Phone) + enforcement RLS | `supabase-mfa-implementer` · `/supabase mfa` | [supabase-mfa](../skills/supabase-mfa/SKILL.md) |
+| Auth Hooks (Postgres/HTTP) | `supabase-auth-hook-writer` · `/supabase hooks` | [supabase-auth-hooks](../skills/supabase-auth-hooks/SKILL.md) |
+| OAuth 2.1 server / MCP authentication | `supabase-oauth-server-implementer` · `/supabase oauth-server` | [supabase-oauth-server](../skills/supabase-oauth-server/SKILL.md) |
+| Enterprise SSO SAML 2.0 | `supabase-sso-saml-architect` · `/supabase sso` | [supabase-enterprise-sso-saml](../skills/supabase-enterprise-sso-saml/SKILL.md) |
+
+Skills de conhecimento (sem agent, carregadas pela LLM por trigger): [supabase-auth-methods](../skills/supabase-auth-methods/SKILL.md), [supabase-auth-sessions](../skills/supabase-auth-sessions/SKILL.md), [supabase-jwt-signing-keys](../skills/supabase-jwt-signing-keys/SKILL.md), [supabase-third-party-auth](../skills/supabase-third-party-auth/SKILL.md), [supabase-auth-hardening](../skills/supabase-auth-hardening/SKILL.md).
 
 ## Ver também
 

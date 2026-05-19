@@ -6,6 +6,56 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.32.0] - 2026-05-19
+
+### Added — Suíte de autenticação Supabase
+
+Expansão da cobertura de autenticação Supabase a partir da documentação oficial,
+cobrindo quatro temas: auth básico/sessões, social/OAuth/SSO, MFA/segurança
+avançada e Auth Hooks/customização. As novas skills/agents interoperam com o que
+já existia (`supabase-auth-ssr`, `supabase-custom-claims-rbac`,
+`supabase-auth-bootstrapper`) e são orquestrados pelo comando `/supabase`.
+
+- **10 skills novas** em `kit/skills/`:
+  - `supabase-auth-methods` — password, magic link, OTP, phone, anonymous,
+    Web3, identity linking, sign-out.
+  - `supabase-social-oauth` — social login (Google/GitHub/Apple/Facebook/
+    LinkedIn) + custom OAuth/OIDC, rota callback PKCE, provider tokens.
+  - `supabase-auth-sessions` — sessões, fluxos implicit vs PKCE, refresh
+    tokens, limites de lifetime.
+  - `supabase-mfa` — MFA TOTP e Phone, AAL, enforcement via RLS RESTRICTIVE.
+  - `supabase-enterprise-sso-saml` — SSO SAML 2.0, attribute mappings,
+    multi-tenant, padrão bookmark app.
+  - `supabase-auth-hooks` — os 6 Auth Hooks + modelo Standard Webhooks.
+  - `supabase-oauth-server` — Supabase como OAuth 2.1/OIDC identity provider
+    e **MCP authentication**, RLS por `client_id`.
+  - `supabase-third-party-auth` — Clerk, Firebase, Auth0, Cognito, WorkOS.
+  - `supabase-jwt-signing-keys` — estrutura do JWT, signing keys assimétricas,
+    `getClaims()`, JWKS.
+  - `supabase-auth-hardening` — email templates, custom SMTP, redirect URLs,
+    rate limits, CAPTCHA, password security, audit logs.
+- **5 agents materializadores novos** em `kit/agents/`:
+  `supabase-social-auth-implementer`, `supabase-mfa-implementer`,
+  `supabase-auth-hook-writer`, `supabase-oauth-server-implementer`,
+  `supabase-sso-saml-architect` — cada um recebe spec via `Task()` e emite
+  verdicts GO/STRENGTHEN/REWRITE no padrão dos materializadores Supabase.
+- **`kit/commands/supabase.md`** — 5 subcomandos novos: `social`, `mfa`,
+  `hooks`, `oauth-server` (`mcp-auth`), `sso` — com seus sinônimos. Total de
+  21 subcomandos.
+
+### Changed
+
+- **`kit/skills/supabase-auth-ssr/SKILL.md`** — migrado para o padrão 2026:
+  `getClaims()` no proxy e na proteção de páginas (em vez de `getUser()`),
+  cache headers no 2º argumento de `setAll` (`@supabase/ssr` v0.10.0+) para
+  evitar vazamento de sessão por CDN/ISR, suporte à chave nova
+  `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY`, e dois anti-patterns novos
+  (`getSession()` no servidor; client em escopo de módulo com Vercel Fluid
+  compute).
+- **`kit/agents/supabase-auth-bootstrapper.md`** — seção de handoff para os 5
+  agents da suíte de autenticação; `getClaims()` no lugar de `getUser()`.
+- **`kit/COMPATIBILITY.md`** — 5 linhas novas na matriz de compatibilidade.
+
 ## [1.31.0] - 2026-05-18
 
 ### Added — Density & routing hardening (análise de 10 pontos)

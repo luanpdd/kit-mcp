@@ -43,10 +43,15 @@ Modo offline fallback (Patterns B e C): agent declara `[MODO OFFLINE — sem liv
 | storytelling-analyst | A | Full | Full | Full | Full | Full | Lê código + escreve análise; não usa MCP |
 | supabase-architect | B | Full | Full | Partial | Partial | Offline-only | Lista tabelas/extensions live para detectar estado atual; offline projeta plano em texto |
 | supabase-auth-bootstrapper | A | Full | Full | Full | Full | Full | Cria estrutura de pastas + arquivos + audit `.env*`; auth bootstrap totalmente offline |
+| supabase-auth-hook-writer | B | Full | Full | Partial | Partial | Offline-only | Materializa Auth Hooks Postgres/HTTP; valida grants `supabase_auth_admin` via `execute_sql`; offline escreve SQL + Edge Function para user aplicar |
 | supabase-edge-fn-writer | A | Full | Full | Full | Full | Full | Escreve Edge Functions (arquivos locais); não usa `mcp__supabase__*` tools |
+| supabase-mfa-implementer | B | Full | Full | Partial | Partial | Offline-only | Materializa enrollment MFA + políticas RLS por AAL; valida `as restrictive` via `execute_sql`; offline escreve componentes + SQL |
 | supabase-migration-writer | B | Full | Full | Partial | Partial | Offline-only | Aplica migration via `mcp__supabase__apply_migration` após validação; offline escreve arquivo SQL para user aplicar |
+| supabase-oauth-server-implementer | B | Full | Full | Partial | Partial | Offline-only | Materializa OAuth 2.1/OIDC server + MCP auth; aplica RLS por `client_id` via `execute_sql`; offline escreve config.toml + UI consentimento |
 | supabase-realtime-implementer | B | Full | Full | Partial | Partial | Offline-only | Aplica RLS via `mcp__supabase__execute_sql` direto; offline escreve SQL + código client para user aplicar |
 | supabase-rls-writer | B | Full | Full | Partial | Partial | Offline-only | Detecta tabela existente + sugere indexes baseado em policy; offline gera SQL puro para migration manual |
+| supabase-social-auth-implementer | A | Full | Full | Full | Full | Full | Materializa social login OAuth (signInWithOAuth/IdToken) + rota callback PKCE + componentes nativos; totalmente filesystem |
+| supabase-sso-saml-architect | A | Full | Full | Full | Full | Full | Gera comandos `supabase sso` + attribute mapping JSON + RLS de tenant; totalmente filesystem (não usa MCP) |
 | supabase-storage-implementer | B | Full | Full | Partial | Partial | Offline-only | Aplica RLS via `mcp__supabase__execute_sql`; offline escreve SQL + código client para user aplicar |
 | toil-auditor | A | Full | Full | Full | Full | Full | Filesystem + git log + escreve `TOIL-AUDIT.md`; não usa `mcp__supabase__*` |
 
