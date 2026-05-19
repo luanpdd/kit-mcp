@@ -6,6 +6,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.31.0] - 2026-05-18
+
 ### Added — Density & routing hardening (análise de 10 pontos)
 
 Resposta direta ao feedback: "o kit está ficando denso e se perdendo; os agents
