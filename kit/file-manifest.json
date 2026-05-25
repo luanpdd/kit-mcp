@@ -1,6 +1,6 @@
 {
-  "version": "1.32.0",
-  "timestamp": "2026-05-19T11:32:19.637Z",
+  "version": "1.33.0",
+  "timestamp": "2026-05-25T02:26:35.973Z",
   "files": {
     "COMANDOS.md": "d24ec61a6ec35db314cc5f2ae287bfb927b794789c8f1d558c55862f5e6534b2",
     "COMPATIBILITY.md": "036423b40b94d2190b7341f39eff03e1d4270035d1712dc914d111e288712fa9",
@@ -16,6 +16,7 @@
     "agents/codebase-mapper.md": "784ea20a47028875ba960501f6621eabcc3fa6c6fd0a7985b0708cf65a79c9c3",
     "agents/crm-pipeline-implementer.md": "c2772950608dd79fc52636086289a87e04981554f4c6a4d6b28966ee03f2b4a6",
     "agents/debugger.md": "fb8ec6dc6cf235f634ffd7d7550f50c3683dc6b3866c60cb034bbd7e0421248a",
+    "agents/designer-ui.md": "955cbdbeab1dbef8c95c78bde650c7cd38a2d61901c340bd23e65eb241aa1ac9",
     "agents/detector-tenant-quente.md": "28c242d9e6c5bf2fb9818a6727472202c772b9c02f5b3a8b084fa6ffa578b54c",
     "agents/evolution-go-integrator.md": "6165cc72bb318079060ead499588a1f1b8869db1905dc3db7452d4ad81c803b4",
     "agents/example-reviewer.md": "a8511c712f9cf2a48c3729b035b437528cf3718024e5ec1eaa9fb9efa596e4ff",
@@ -406,6 +407,13 @@
     "skills/telemetry-pipelines/SKILL.md": "7623244afdf8e6b0b865e572c8e8537c73255914a4562a95f99f22be7448f80e",
     "skills/telemetry-sampling/SKILL.md": "d448f9022ba0f53a9f692189d2515e45fc3e9de52256bd0715b4c1374c8cc203",
     "skills/tenant-quente-mitigacao/SKILL.md": "5d155296efe22da0bc30c02a5087a0aafa1e7dfe8ab008cb4cddc2d7a20736e5",
+    "skills/ui-anti-padroes-ia/SKILL.md": "fc9bd181c6228f9ac50aa7a6369956394cc9500afd5f45d17f797d71e5a01420",
+    "skills/ui-contexto-produto/SKILL.md": "4d39280ba8f3f51bb18f54dd0ea1eb49edff8a7f10b06a5b428e430384e69b9d",
+    "skills/ui-cor-estrategia/SKILL.md": "5c7d6ebae5d2ee83e947ad49821c7bf53e85b5ce436329be749aa891807317c0",
+    "skills/ui-critica-auditoria/SKILL.md": "f0a50ad457bd541b76421f6af5b6a63f0841dedd1a630671af1cdaa3fb13b798",
+    "skills/ui-motion-funcional/SKILL.md": "5985a7d63d09a434efed606ffc0d78e3bde172b094245156577dfe33a2f045b1",
+    "skills/ui-ritmo-espacial/SKILL.md": "492858acbbad6f8616366c1a7bc2713c7b4e974c2882cf754e9397a531a26005",
+    "skills/ui-tipografia/SKILL.md": "896f182a26210abffdba66fe4426cfaf7892ab3e1fea017abb476e5df868154a",
     "skills/whatsapp-conversation-state-machine/SKILL.md": "d428cc50a065bbcb4d1f4cb605bbe153881aff52e47e58b9cc6b1d0dd0931514"
   }
 }

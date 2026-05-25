@@ -6,6 +6,67 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.33.0] - 2026-05-25
+
+### Added — Suíte de design UI ("fluência de design para IA")
+
+Suíte que codifica vocabulário canônico de design UI como skills + 1 agente
+materializador, mirando projetos que querem **evitar o look genérico de UI
+gerada por IA**. Espelha a arquitetura de três camadas Ensinar/Comandar/Detectar:
+contexto de marca como dependência de prompt, vocabulário compartilhado em
+vez de "make it modern", detecção determinística de tells antes do handoff.
+
+- **7 skills novas** em `kit/skills/`:
+  - `ui-contexto-produto` — carrega/gera `MARCA.md` (estratégia: registro
+    marca vs produto, persona, voz, anti-referências) + `DESIGN.md` (visual:
+    6 seções canônicas Visão/Cores/Tipografia/Elevação/Componentes/Regras).
+    Estratégia ≠ visual; arquivos separados deliberadamente.
+  - `ui-anti-padroes-ia` — catálogo de 18 regras determinísticas que delatam
+    UI gerada por IA: T01-T10 Tells-IA (gradiente roxo, card aninhado,
+    monocultura Inter, hero italic-serif, rótulo uppercase decorativo, texto
+    com gradiente, card com borda lateral colorida, glassmorphism stack,
+    paleta IA genérica) + Q01-Q08 Qualidade (touch < 44px, edge flush, cor
+    hard-coded, contraste baixo em botão, padding cramped, heading skip,
+    bounce easing). Cada regra com grep snippet + severity P0/P1.
+  - `ui-tipografia` — Display + Body + Mono distintos, max 4 tamanhos ×
+    2 pesos, line-height 1.5 body / 1.2 heading, line-length em `ch` unit
+    (65ch body, 18ch hero), pareamentos canônicos com nome próprio (Klim,
+    Grilli, Commercial Type, Dinamo), fontes saturadas no default IA
+    banidas em produto novo (Fraunces, Geist, Mona Sans, Plus Jakarta Sans,
+    Space Grotesk, Recoleta, Instrument Sans).
+  - `ui-cor-estrategia` — split 60/30/10 (superfície/secundária/destaque),
+    lista de reserva do destaque, OKLCH em vez de HSL/HEX (lightness
+    perceptualmente linear), contraste WCAG AA mín 4.5:1, fuga da paleta
+    IA genérica (roxo+mint+amarelo+slate), dark mode via tokens semânticos
+    sem duplicação.
+  - `ui-ritmo-espacial` — escala base-4 (4/8/12/16/20/24/32/40/48/64/96/128),
+    3 densidades (densa/padrão/generosa), alinhamento óptico ≠ matemático
+    para ícones/glifos, breathing room obrigatório no viewport edge,
+    container width em `ch` em texto e `max-w-7xl`/`5xl` em UI, sem
+    arbitrary values `[13px]`.
+  - `ui-motion-funcional` — motion com propósito que comunica estado, não
+    decoração; durações 100-150ms micro / 150-200ms estado / 250-400ms
+    layout / 600-800ms celebration; `ease-out` ou `cubic-bezier(0.2,0.8,0.2,1)`
+    canônico; `prefers-reduced-motion` sempre; sem `bounce`/`elastic` em
+    produto; anima apenas `transform`+`opacity` (no layout thrash).
+  - `ui-critica-auditoria` — duas passadas independentes: crítica (Nielsen
+    10 heurísticas 0-4 + carga cognitiva /8 + verdict de tells-IA pass/fail)
+    e auditoria (5 dimensões a11y/perf/theming/responsive/anti-patterns
+    com P0-P3 severity). Produz `REVISAO-UI.md` scored, route findings para
+    endurecer/polir/otimizar. Não roda em incomplete work.
+- **1 agente materializador** em `kit/agents/`:
+  - `designer-ui` (color `#0EA5E9`) — orquestra a suíte UI. Portão de
+    registro marca vs produto na primeira interação; carrega `MARCA.md` +
+    `DESIGN.md` se existirem (oferece geração se ausentes); consulta as
+    7 skills `ui-*` como vocabulário canônico; executa detector
+    determinístico embutido antes do handoff. Output prescritivo
+    (`BRIEFING-UI.md` / `REVISAO-UI.md` / patches inline).
+
+### Changed
+
+- **README** — counts autogerados atualizados de 72/89/91/23 para
+  73 agents · 89 commands · 98 skills · 23 gates.
+
 ## [1.32.0] - 2026-05-19
 
 ### Added — Suíte de autenticação Supabase
