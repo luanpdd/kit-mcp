@@ -1,61 +1,67 @@
 ---
 state_version: 1.0
-milestone: v1.29
-milestone_name: "MCP-Native Discovery via Auto-Sync"
-status: "milestone entregue — 6 fases (166-171) completas, aguardando release+tag"
-last_updated: "2026-05-12T13:30:00.000Z"
+milestone: v1.37
+milestone_name: "Cost Tracking Suite"
+status: "M1 entregue — nucleo discovery/parser/dedup/pricing verde. Aguardando M2-M5."
+last_updated: "2026-06-05T22:50:00.000Z"
 progress:
-  total_phases: 6
-  completed_phases: 6
-  total_plans: 6
-  completed_plans: 6
+  total_phases: 1
+  completed_phases: 0
+  total_milestones: 5
+  completed_milestones: 1
+  current_phase: 172
+  current_milestone: "M1 done → M2 next"
 ---
 
 # STATE.md
 
 ## Posição Atual
 
-Fase: — (milestone v1.29 entregue)
-Plano: —
-Status: v1.29 ENTREGUE — 6 fases (166-171) completas, 6 commits atômicos. package.json 1.29.0. Aguardando release PR + tag.
-Última atividade: 2026-05-12 — Phase 171 commitada.
+Fase: **172 — Cost Tracking Suite (v1.37.0)**
+Milestone: **M1 — Núcleo (discovery + parser + dedup + pricing)** ✓
+Status: M1 commitado. Gate A verde (50 unit cost tests + 1 integration paridade).
+Próximo: M2 — Agregadores (today/session/blocks/phase/estimate).
+Última atividade: 2026-06-05 — Phase 172 M1 commitado.
 
-## Milestone entregue
+## Phase 172 progress
 
-**v1.29 — MCP-Native Discovery via Auto-Sync (6 fases, 166-171)** ✓
-
-| # | Fase | Status |
+| Milestone | Status | Gate |
 |---|---|---|
-| 166 | MCP `roots` capability — `src/mcp-server/roots.js` | ✓ |
-| 167 | Auto-install tool — sync para `.claude/` idempotente | ✓ |
-| 168 | Restart signal — marker file + `ack-restart` tool | ✓ |
-| 169 | MCP `resources` + `notifications/resources/list_changed` | ✓ |
-| 170 | Tool descriptions com keywords (fallback MCP puro) | ✓ |
-| 171 | `kit doctor` auto-install drift + restart-pending | ✓ |
+| M1 — Núcleo (discovery/parser/dedup/pricing) | ✓ | Gate A verde |
+| M2 — Agregadores | pendente | Gate B |
+| M3 — MCP tools + skill | pendente | Gate C1 |
+| M4 — CLI + statusline | pendente | Gate C2 |
+| M5 — Build pipeline + release v1.37.0 | pendente | Gate D |
 
-## Deliverables v1.29
+## Deliverables M1 (v1.37 wip)
 
-- **2 novos MCP tools:** `auto-install`, `ack-restart`
-- **2 novas capabilities:** `resources` (server-side), `roots` (consumer)
-- **1 novo módulo:** `src/mcp-server/roots.js`
-- **1 novo script:** `scripts/check-tool-descriptions.mjs`
-- **2 markers em `.claude/`:** `.kit-mcp-version` (idempotência), `.kit-mcp-restart-required` (restart-pending)
-- **2 novos `kit doctor` checks:** auto-install, restart pending
-- **Tool descriptions enriquecidas:** `kit` (596 chars) e `auto-install` (499 chars) com trigger keywords
-- **Zero deps externas novas**
-- **Zero breaking changes** (Stable API v1.0+ preservada cross-17-releases)
+- **6 módulos core** em `src/core/cost/`:
+  - `path-normalize.js`, `discovery.js`, `parser.js` (lenient), `dedup.js` (3 níveis), `pricing.js`, `pricing-fallback.js`
+- **2 scripts build manual** em `scripts/`:
+  - `regen-pricing.mjs` (fetcha LiteLLM raw, filtra anthropic/claude, grava snapshot+meta)
+  - `generate-oracle-paridade.mjs` (roda ccusage devDep contra fixture)
+  - `gen-paridade-fixture.mjs` (fallback de oracle independente — débito documentado)
+- **pricing-snapshot.json** + meta com 261 modelos LiteLLM (sha256 + commit pinned).
+- **7 fixtures JSONL** em `test/fixtures/`.
+- **6 unit tests** (50 testes) + **1 integration test** (paridade golden).
+- **devDep ccusage@^15.0.0** em package.json.
 
-## Contexto Acumulado pós-v1.29
+## Débitos M1 (planejados pra M5 ou pós-release)
 
-- **Counts:** 66 agents, 89 commands (kit/), 76 skills, 23 audit gates — sem mudanças no conteúdo
-- **MCP tools:** 7 → **9** (auto-install + ack-restart)
-- **MCP capabilities:** tools → tools + **resources** + **roots-consumer**
-- **MCP resources expostos:** **231** entries (URIs kit://agent/skill/command/<name>)
-- **Local tests:** 560/562 pass (unchanged)
-- **Stable API:** preservada cross-**17 releases**
+1. **Oracle de paridade**: hoje gerado por `gen-paridade-fixture.mjs` (impl independente lendo o MESMO snapshot). Oracle ccusage estrito requer `npm install` + `generate-oracle-paridade.mjs` rodar. Documentado em comentário do test.
+2. **Cobertura strict-mode parser**: apenas 1 caso testado; expandir em M2.
+
+## Contexto Acumulado pré-fase 172
+
+(preservado de v1.29 release — não alterar até M5 v1.37 release)
+
+- Counts: 66 agents, 89 commands, 76 skills, 23 audit gates.
+- MCP tools: 9 (auto-install + ack-restart adicionados em v1.29).
+- Stable API: preservada cross-17 releases.
 
 ## Próxima ação
 
-1. PR + auto-merge na main
-2. Aguardar CI verde
-3. Tag v1.29.0
+1. M2 — Agregadores (today/session/blocks/phase/estimate + persist-snapshot)
+2. M3 — Registrar 5 MCP tools cost-* + skill cost-tracking
+3. M4 — CLI `kit cost` + statusline
+4. M5 — Release v1.37.0 + GH Action weekly refresh-pricing
