@@ -1,6 +1,6 @@
 ---
 name: ui-contexto-produto
-description: Use ANTES de qualquer trabalho de UI — carrega/gera MARCA.md (estratégia: registro marca vs produto, persona, voz, anti-referências) + DESIGN.md (visual: 6 seções canônicas Visão/Cores/Tipografia/Elevação/Componentes/Regras). Estratégia ≠ visual; arquivos separados deliberadamente. Bootstrap canônico de fluência de design para IA.
+description: Use ANTES de trabalho de UI — carrega/gera MARCA.md (marca vs produto, persona, voz, anti-refs) + DESIGN.md (Visao/Cores/Tipografia/Elevacao/Componentes/Regras). Bootstrap de fluencia de design IA.
 ---
 
 # UI — Contexto de Produto (MARCA.md + DESIGN.md)

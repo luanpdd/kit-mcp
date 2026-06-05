@@ -1,6 +1,6 @@
 ---
 name: ui-anti-padroes-ia
-description: Use ao gerar ou revisar UI — catálogo das 18 regras determinísticas que delatam "UI gerada por IA". Categorias Tells-IA (gradiente roxo, card aninhado, monocultura Inter, hero italic-serif, rótulo uppercase decorativo, texto com gradiente, card de borda lateral colorida) e Qualidade (cramped padding, touch < 44px, body flush ao edge, gray-on-colored). Cada regra com grep determinístico para detecção CI-friendly.
+description: Use ao gerar/revisar UI — catalogo de 18 regras que delatam UI gerada por IA. Tells (gradiente roxo, card aninhado, monocultura Inter) + Qualidade (touch <44px, edge flush). Grep CI-friendly.
 ---
 
 # UI — Anti-padrões IA
