@@ -9,6 +9,110 @@ description: Use ao gerar/criticar `.workflow.js` (Opus 4.8+). Codifica os 6 pat
 
 Esta skill existe para que workflows gerados pelo kit sigam um vocabulário comum e não reinventem padrões. Consulte-a SEMPRE antes de materializar um `.workflow.js`.
 
+## FATAL anti-patterns observados em produção (LEIA PRIMEIRO)
+
+Estes 3 erros foram detectados em workflows gerados que falharam ao executar. Memorize antes de tocar em qualquer `.workflow.js`:
+
+### ❌ NUNCA `import` no topo
+
+```js
+// ✗ QUEBRA — não existe esse módulo
+import { agent, pipeline, parallel } from 'kit-mcp/workflow'
+import * as Workflow from '@anthropic/workflows'
+```
+
+```js
+// ✓ CORRETO — sem imports. agent/pipeline/parallel/phase/log/args/budget/workflow
+// são INJETADOS COMO GLOBAIS pelo harness. Começe direto com export const meta.
+export const meta = { /* ... */ }
+phase('Discover')
+const r = await agent('...', { schema: SCHEMA })
+```
+
+### ❌ NUNCA `export default` no body
+
+```js
+// ✗ QUEBRA — o harness wrappeia o body ele mesmo
+export default async function run() {
+  phase('Discover')
+  // ...
+}
+
+// ✗ QUEBRA — variantes
+export default async () => { /* ... */ }
+module.exports = async function () { /* ... */ }
+```
+
+```js
+// ✓ CORRETO — body roda direto em async context após o meta
+export const meta = { /* ... */ }
+
+phase('Discover')              // top-level
+const r = await agent(/*...*/) // top-level await é OK
+return { ok: true }            // top-level return é OK
+```
+
+### ❌ NUNCA `agent({...})` com objeto na posição 1
+
+```js
+// ✗ QUEBRA — essa é a API do Task(subagent_type=...), NÃO do agent() do Workflow
+const r = await agent({
+  name: 'auditor',
+  description: 'audita X',
+  tools: ['Read', 'Bash'],
+  systemPrompt: 'Você é um auditor...',
+  schema: SCHEMA,
+})
+```
+
+```js
+// ✓ CORRETO — primeiro argumento é STRING (o prompt), segundo é opts
+const r = await agent(
+  'Você é um auditor. Avalie X e devolva o resultado.',
+  { schema: SCHEMA, phase: 'Audit', label: 'audit:x' }
+)
+
+// Pra delegar para um agent canônico do kit, use opts.agentType:
+const r = await agent(
+  'Audite a Edge Function process-payments nos 4 golden signals.',
+  { agentType: 'observability-coverage-auditor', schema: AUDIT_SCHEMA }
+)
+```
+
+## Assinaturas EXATAS dos globais injetados
+
+```ts
+agent(prompt: string, opts?: {
+  label?: string,
+  phase?: string,
+  schema?: object,                // JSON Schema com required: [...]
+  model?: string,                 // raro — usa o da sessão por default
+  isolation?: 'worktree',         // EXPENSIVE — só quando agents mutam arquivos paralelo
+  agentType?: string,             // delega pra um agent do kit (subagent_type)
+}): Promise<any>
+
+pipeline(items: any[], stage1: (item) => Promise<any>, stage2?: (prev, item, i) => Promise<any>, ...): Promise<any[]>
+parallel(thunks: Array<() => Promise<any>>): Promise<any[]>
+phase(title: string): void
+log(message: string): void
+workflow(nameOrRef: string | { scriptPath: string }, args?: any): Promise<any>
+
+args: any                         // o args passado em Workflow({args: ...})
+budget: { total: number|null, spent(): number, remaining(): number }
+```
+
+## Outras regras banidas
+
+```js
+Date.now()           // ✗ banido — quebra resume cache
+Math.random()        // ✗ banido — idem
+new Date()           // ✗ banido sem argumento
+new Date('2026-01-01') // ✓ OK
+require(...)         // ✗ sem CommonJS no body
+import ...           // ✗ sem ESM imports no body
+fs / path / process  // ✗ sem Node APIs — leitura/escrita de arquivos é via agent() rodando Bash/Read/Write
+```
+
 ## Os 6 patterns canônicos
 
 A primeira decisão de design é qual pattern usar — ela determina a topologia do script. Todo workflow real ou é exatamente um destes ou uma composição limpa de dois.

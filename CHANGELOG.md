@@ -6,6 +6,75 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.36.0] - 2026-06-05
+
+### Fixed — Workflow Generator parando de gerar `.workflow.js` quebrados
+
+Hardening do `workflow-generator` introduzido em v1.35. Em uso real,
+usuários relataram que o agent gerava `.workflow.js` com **3 bugs estruturais
+fatais** que impediam execução pelo Workflow tool do Claude Code:
+
+1. `import { agent } from 'kit-mcp/workflow'` — módulo inexistente; hooks
+   `agent`/`pipeline`/`parallel`/`phase`/`log`/`args`/`budget`/`workflow` são
+   **globais injetados pelo harness**, não imports
+2. `export default async function ...` envelopando o body — o harness wrappeia
+   o body em async context ele mesmo; `export default` quebra a execução
+3. `agent({ name, description, tools, systemPrompt, schema })` — confusão com
+   a API do `Task(subagent_type=...)` do kit; o agent() real é
+   `agent(prompt: string, opts?: { schema, phase, label, model, agentType, isolation })`
+
+Causa raiz: v1.35 listou regras mas não trouxe **templates concretos copiáveis**
+nem **bloco anti-pattern explícito**. O LLM sintetizava da memória, misturando
+a API do Task com padrões genéricos de módulo JS.
+
+### Mudanças cirúrgicas
+
+- **Templates copiáveis no [`workflow-generator`](kit/agents/workflow-generator.md)**:
+  6 blocos `WORKING TEMPLATE` (um por pattern canônico: Fanout-And-Synthesize,
+  Adversarial-Verification, Classify-And-Act, Generate-And-Filter, Tournament,
+  Loop-Until-Done) + template do slash-command stub. Cada um marcado
+  "COPIE LITERALMENTE — só substitua marcações `<...>`". O LLM agora copia
+  em vez de sintetizar.
+- **Bloco DURO de anti-patterns** no topo do agent body — "ANTI-PATTERNS
+  DETECTADOS EM PRODUÇÃO" com os 3 erros literais + "ASSINATURAS CORRETAS"
+  com as signatures exatas de cada global injetado.
+- **Layer 3.5 — Validação obrigatória** após escrever o `.workflow.js`. O
+  agent DEVE rodar `node -e "..."` que detecta 6 anti-patterns regex (import,
+  export default, Date.now, Math.random, new Date(), agent({name:...})) +
+  syntax check sob o wrap do harness (`new Function('agent', ..., wrap)`).
+  Retry loop de 3 tentativas; falha explícita após.
+- **Skill [`dynamic-workflow-authoring`](kit/skills/dynamic-workflow-authoring/SKILL.md)
+  reforçada** — nova seção "FATAL anti-patterns observados em produção" no
+  topo (LEIA PRIMEIRO) com ❌ NUNCA / ✓ CORRETO lado a lado pra cada caso.
+  Nova seção "Assinaturas EXATAS dos globais injetados" com signatures TS.
+
+### Testes de regressão novos
+
+`test/unit/workflow-generator-templates.test.js` (9 tests):
+
+- Cada template extraído do agent body parseia sob wrap idêntico ao harness
+- Nenhum template contém um dos 6 anti-patterns fatais
+- Todo template declara `export const meta = { ... }`
+- Todo template inicia com header `// kit-mcp:user-generated`
+- Nenhum `agent()` chamado com object-form (Task API confusion)
+- Agent body documenta os 3 anti-patterns por nome literal
+- Layer 3.5 validation step + new Function wrap presentes
+- Skill calls out os 3 fatal cases por nome
+- Skill documenta cada global injetado por nome
+
+Total: **615 unit + 109 integration = 724 testes verdes**.
+
+### Migration
+
+Workflows user-generated em projetos que sobreviveram à v1.35 quebrada e
+foram corrigidos manualmente pelo usuário continuam funcionando — esses
+arquivos não são tocados pelo upgrade (`.claude/workflows/*` user-generated
+não entra no sync). Apenas o próximo `/criar-workflow` usa o gerador novo.
+
+Workflows gerados pela v1.35 que ficaram quebrados podem ser regenerados
+via `/criar-workflow` com a mesma descrição original — o gerador 1.36
+produz código que passa o syntax check.
+
 ## [1.35.0] - 2026-06-05
 
 ### Added — Workflow Generator (camada-0 de classificação por pattern)
