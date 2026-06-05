@@ -1,6 +1,6 @@
 {
-  "version": "1.33.0",
-  "timestamp": "2026-05-25T02:26:35.973Z",
+  "version": "1.34.0",
+  "timestamp": "2026-06-05T16:35:13.066Z",
   "files": {
     "COMANDOS.md": "d24ec61a6ec35db314cc5f2ae287bfb927b794789c8f1d558c55862f5e6534b2",
     "COMPATIBILITY.md": "036423b40b94d2190b7341f39eff03e1d4270035d1712dc914d111e288712fa9",
@@ -86,6 +86,7 @@
     "commands/atualizar.md": "87463791af48f63a65d89df2f864e7ce0fb79434231532c1998ccf87943f4894",
     "commands/auditar-cascading.md": "26344a18010e2a69d499b365a6bb75cb854ef1cbd13aca7c41aff156967fd8c6",
     "commands/auditar-marco.md": "24072293ca829df133f996ff154af3d9d3e25a8288da6af46e6beceecc28b199",
+    "commands/auditar-observabilidade-cobertura-workflow.md": "867f115716e50012b0d7df6624e3cf35c8f779f50e97ce93ca613e2968e3ee04",
     "commands/auditar-observabilidade-cobertura.md": "b77185017145ceefa2abb00c8e91ebc8003cc12bcd5e16bb3e84ef68be3e0f21",
     "commands/auditar-observabilidade.md": "167543a04e41f4dae70209c4af5d8a6d94ae56939132229b5681b8fb37322a1c",
     "commands/auditar-refactor.md": "aaaeb100d21cc7640b7189984db11b3b5270307a163a11e24665dbf61ef2c0e4",
@@ -414,6 +415,7 @@
     "skills/ui-motion-funcional/SKILL.md": "5985a7d63d09a434efed606ffc0d78e3bde172b094245156577dfe33a2f045b1",
     "skills/ui-ritmo-espacial/SKILL.md": "492858acbbad6f8616366c1a7bc2713c7b4e974c2882cf754e9397a531a26005",
     "skills/ui-tipografia/SKILL.md": "896f182a26210abffdba66fe4426cfaf7892ab3e1fea017abb476e5df868154a",
-    "skills/whatsapp-conversation-state-machine/SKILL.md": "d428cc50a065bbcb4d1f4cb605bbe153881aff52e47e58b9cc6b1d0dd0931514"
+    "skills/whatsapp-conversation-state-machine/SKILL.md": "d428cc50a065bbcb4d1f4cb605bbe153881aff52e47e58b9cc6b1d0dd0931514",
+    "workflows/auditar-observabilidade-cobertura.workflow.js": "ca1f186dc79fe61bceeecaa779c3b073be2692b8f9e50e03bdf3c1c10439ec45"
   }
 }

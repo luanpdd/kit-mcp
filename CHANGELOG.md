@@ -6,6 +6,66 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.34.0] - 2026-06-05
+
+### Added — Dynamic Workflows capability
+
+Adiciona suporte a Claude Code Dynamic Workflows (research preview Opus 4.8+,
+plano Max/Team/Enterprise) como nova capability sincronizada pelo kit. Workflows
+são scripts JS (`*.workflow.js`) que orquestram subagentes em paralelo via
+`pipeline()`/`parallel()`/`phase()` e remoção de barreiras entre stages.
+
+- **Nova capability `workflows`** no `TARGETS['claude-code']` do registry
+  (`.claude/workflows/`, extensão `.workflow.js`, `minPlan: 'max'`). Demais IDEs
+  declaram `workflows: null` (a tool `Workflow` só existe no Claude Code hoje).
+- **Loader `kit/workflows/`** em [`src/core/kit.js`](src/core/kit.js):
+  - novo `readWorkflowsDir()` enumera `*.workflow.js`
+  - extrator tolerante de `export const meta = { name, description, whenToUse? }`
+    sem `eval` (respeita o spec do Workflow tool que exige `meta` puro literal)
+  - `searchKit` + `findItem` aceitam `kind: 'workflow'`
+- **Sync branch** em [`src/core/sync.js`](src/core/sync.js):
+  - workflows são sempre copiados (reference-mode quebra invocação),
+    com cabeçalho `// kit-mcp:reference` + `// Canonical source: <rel>` antes do
+    primeiro `export const meta`
+  - `renderWorkflowItem()` independente do `renderItem` markdown
+  - `buildAggregatedRules()` adiciona seção "Workflows" no `CLAUDE.md` quando
+    o target suporta + kit tem ≥ 1 workflow
+  - `statusOf`, `removeFrom` e `isStub` reconhecem o marker JS via token
+    compartilhado `kit-mcp:reference`
+- **Reverse-sync** em [`src/core/reverse-sync.js`](src/core/reverse-sync.js):
+  novo `scanWorkflows()` + `isCleanWorkflowStub()` + `stripWorkflowBoilerplate()`
+  detectam edições em workflows instalados sem confundir com stubs.
+
+### Added — Primeiro workflow: `auditar-observabilidade-cobertura`
+
+Variante paralela do command serial `/auditar-observabilidade-cobertura`,
+demonstrando o padrão canônico de migração:
+
+- [`kit/workflows/auditar-observabilidade-cobertura.workflow.js`](kit/workflows/auditar-observabilidade-cobertura.workflow.js):
+  fan-out 1 agent por Edge Function × 4 dimensões (golden signals, SLO, burn
+  alert, characterization tests); verify adversarial só nos gaps reportados
+  (catch false positives de wrapper imports tipo `withMetrics`); synthesizer
+  final com mesma estrutura do agent serial pra permitir `diff` direto.
+- [`kit/commands/auditar-observabilidade-cobertura-workflow.md`](kit/commands/auditar-observabilidade-cobertura-workflow.md):
+  slash-command que dispara `Workflow({name: 'auditar-observabilidade-cobertura', args})`
+  preservando os mesmos `--traffic-window`, `--top-n`, `--dimensions`, `--output`
+  do command original.
+
+### Compatibility
+
+- `TARGETS['claude-code'].workflows.minPlan: 'max'` — flag declarativa para
+  futuros checks; nenhum hard-block ainda. Workflows são instalados em qualquer
+  plano; a invocação falha graceful se a tool `Workflow` não estiver disponível.
+- Cursor, Codex, Gemini, Copilot, Windsurf, Antigravity e Trae herdam
+  `workflows: null` — `listTargets()` reflete isso em `capabilities.workflows`.
+
+### Migration path
+
+Próximos orquestradores candidatos a versão Workflow (ordem sugerida por ganho):
+`/auditar-marco`, `/dados-distribuidos`, `/multi-tenant`, `/legacy`,
+`/executar-fase`. Cada um vira `kit/workflows/<nome>.workflow.js` + slash-command
+parallel sem remover o original — A/B convive até confidence virar default.
+
 ## [1.33.0] - 2026-05-25
 
 ### Added — Suíte de design UI ("fluência de design para IA")

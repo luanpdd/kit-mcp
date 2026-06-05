@@ -49,14 +49,15 @@ test('syncTo — batched writes deliver all expected files (correctness)', async
     onProgress,
   });
 
-  // All 9 files in sample-kit fixture should be present (rules + agent + 2 commands +
-  // skill + 2 mirror-tree files + 2 .kit-mcp-managed markers).
+  // All files in sample-kit fixture should be present (rules + agent + 2 commands +
+  // skill + workflow + 2 mirror-tree files + 2 .kit-mcp-managed markers).
   const expected = [
     'CLAUDE.md',
     '.claude/agents/sample-agent.md',
     '.claude/commands/sample-command.md',
     '.claude/commands/no-frontmatter-command.md',
     '.claude/skills/sample-skill/SKILL.md',
+    '.claude/workflows/sample-dynamic-workflow.workflow.js',
     '.claude/framework/.kit-mcp-managed',
     '.claude/framework/workflows/sample-workflow.md',
     '.claude/hooks/.kit-mcp-managed',

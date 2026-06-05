@@ -10,7 +10,7 @@
 > Entregue como **MCP server**. Você usa direto via `npx`, sem instalar nada.
 
 <!-- AUTOGEN-COUNTS-START -->
-**Bundled workflow:** 73 agents · 89 commands · 98 skills · 23 gates
+**Bundled workflow:** 73 agents · 90 commands · 98 skills · 23 gates
 <!-- AUTOGEN-COUNTS-END -->
 
 ---
