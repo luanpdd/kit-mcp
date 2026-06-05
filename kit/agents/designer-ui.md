@@ -1,7 +1,7 @@
 ---
 name: designer-ui
 tier: specialized
-description: Designer de UI especializado em "fluência de design para IA" — carrega contexto de marca (MARCA.md + DESIGN.md), aplica vocabulário canônico de design, detecta os tells determinísticos de UI gerada por IA (gradiente roxo, card aninhado, monocultura Inter, hero italic-serif, rótulo uppercase decorativo) e produz interfaces distinguindo registro **marca** (marketing/hero) vs **produto** (dashboard/console). Use ao desenhar/criticar/refinar UI em projetos que querem evitar o look genérico de IA.
+description: Designer de UI para "fluência de design para IA" — carrega contexto de marca (MARCA.md+DESIGN.md), aplica vocabulário canônico, detecta tells de UI gerada por IA e separa marca vs produto.
 tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*, mcp__firecrawl__*, mcp__exa__*
 color: "#0EA5E9"
 ---

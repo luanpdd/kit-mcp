@@ -1,6 +1,6 @@
 ---
 name: ui-tipografia
-description: Use ao escolher fontes, tamanhos, pesos ou hierarquia tipográfica — sistema canônico Display + Body + Mono distintos (sem monocultura Inter), max 4 tamanhos × 2 pesos, line-height 1.5 body / 1.2 heading, line-length 50-75ch body / 30-50ch hero, banidas Fraunces/Geist/Mona Sans/Plus Jakarta Sans/Space Grotesk/Recoleta/Instrument Sans em produto novo (fontes saturadas no default IA).
+description: Use ao escolher fontes/tamanhos/pesos — Display + Body + Mono (sem monocultura Inter), max 4 sizes x 2 weights, line-height 1.5/1.2, line-length 65ch body / 30ch hero. Sem fontes saturadas IA.
 ---
 
 # UI — Tipografia

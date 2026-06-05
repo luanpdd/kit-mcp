@@ -12,6 +12,7 @@ node_modules/
 .claude/agents/
 .claude/commands/
 .claude/skills/
+.claude/workflows/
 .claude/framework/
 .claude/hooks/
 .claude/settings.local.json

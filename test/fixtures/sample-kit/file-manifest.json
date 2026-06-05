@@ -7,6 +7,7 @@
     "commands/sample-command.md": "60b120dc862bbc5d21318c2cd6a7194a8605fea8335eeac2cac18578a7a8035d",
     "framework/workflows/sample-workflow.md": "131b67eb10f8eb43165ec7e27585281ae7f37f486eddd81667a0bf29e37ae5a4",
     "hooks/sample-hook.js": "d08d98ae6bbc86c897833a8c77f9457e3d1e6d24ff271f9dadb0518718826bb2",
-    "skills/sample-skill/SKILL.md": "a1b7f3a8c3321e34fb310b3835957365dcd4ae38a7990aa4c6f62c074fdbc545"
+    "skills/sample-skill/SKILL.md": "a1b7f3a8c3321e34fb310b3835957365dcd4ae38a7990aa4c6f62c074fdbc545",
+    "workflows/sample-dynamic-workflow.workflow.js": "e5bf2bd8ef314996f8b7b124a5b7d79bf12da3dab5b107752e97709420657000"
   }
 }

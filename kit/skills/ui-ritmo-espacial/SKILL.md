@@ -1,6 +1,6 @@
 ---
 name: ui-ritmo-espacial
-description: Use ao definir spacing, padding, layout, grid ou alinhamento — escala canônica em base 4 (4/8/16/24/32/48/64/96), alinhamento óptico ≠ matemático (ícones, glifos), breathing room obrigatório no viewport edge, container width via ch unit em texto, evita arbitrary values [13px] e padding cramped em interactive.
+description: Use ao definir spacing/padding/grid — escala base 4 (4/8/16/24/32/48/64/96), alinhamento optico != matematico, breathing room no viewport edge, sem arbitrary [13px] nem padding cramped.
 ---
 
 # UI — Ritmo Espacial

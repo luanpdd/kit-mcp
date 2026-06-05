@@ -1,6 +1,6 @@
 ---
 name: ui-critica-auditoria
-description: Use ao revisar UI implementada — combina crítica (Nielsen 10 heurísticas 0-4 + carga cognitiva /8 + verdict de tells-IA pass/fail) e auditoria (5 dimensões a11y/perf/theming/responsive/anti-patterns com P0-P3 severity). Produz REVISAO-UI.md scored, routes findings para endurecer/polir/otimizar. Não roda em incomplete work — só em finished pages.
+description: Use ao revisar UI implementada — critica (Nielsen 10 heuristicas + carga cognitiva /8 + tells-IA pass/fail) + auditoria (a11y/perf/theming/responsive P0-P3). Produz REVISAO-UI.md scored.
 ---
 
 # UI — Crítica & Auditoria

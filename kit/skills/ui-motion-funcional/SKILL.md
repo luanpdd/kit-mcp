@@ -1,6 +1,6 @@
 ---
 name: ui-motion-funcional
-description: Use ao adicionar animation, transition ou motion — princípio canônico "motion com propósito que comunica estado, não decoração". Durações 150-200ms interações / 250-400ms layout / 600ms+ celebration justificada. ease-out default, nunca ease-in para entrance, evita bounce em produto. Respeitar prefers-reduced-motion sempre. Sem auto-play, sem parallax gratuito, sem confetti exceto onboarding.
+description: Use ao adicionar animation/transition — motion comunica estado, nao decora. 150-200ms interacoes / 250-400ms layout. ease-out default. prefers-reduced-motion sempre. Sem auto-play e parallax.
 ---
 
 # UI — Motion Funcional

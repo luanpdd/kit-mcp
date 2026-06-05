@@ -1,6 +1,6 @@
 ---
 name: ui-cor-estrategia
-description: Use ao definir paleta, decidir cor de elemento, ou auditar uso de cor — split 60% superfície / 30% secundária / 10% destaque, destaque reservado a elementos LISTADOS exatos, OKLCH preferido sobre HSL/HEX, contraste WCAG AA min 4.5:1, fugir da "paleta padrão IA" (roxo+mint+amarelo claro+gray uniforme), dark mode via tokens não duplicação.
+description: Use ao definir paleta ou auditar cor — split 60/30/10 (superficie/secundaria/destaque), destaque so em listados, OKLCH em vez de HSL/HEX, WCAG AA 4.5:1, sem paleta padrao IA, dark via tokens.
 ---
 
 # UI — Estratégia de Cor
