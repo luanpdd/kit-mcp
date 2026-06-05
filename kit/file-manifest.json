@@ -1,6 +1,6 @@
 {
-  "version": "1.34.0",
-  "timestamp": "2026-06-05T16:59:58.501Z",
+  "version": "1.35.0",
+  "timestamp": "2026-06-05T18:17:28.276Z",
   "files": {
     "COMANDOS.md": "d24ec61a6ec35db314cc5f2ae287bfb927b794789c8f1d558c55862f5e6534b2",
     "COMPATIBILITY.md": "036423b40b94d2190b7341f39eff03e1d4270035d1712dc914d111e288712fa9",
@@ -78,6 +78,7 @@
     "agents/user-profiler.md": "a57d940c6d459de0d69ec73ac48fb2baffbae3067e163e8c9984c613a4d9c707",
     "agents/validador-evolucao-schema.md": "ff7eea2119a6f0df4cb53bb9dcb9fad45dd65e38972a5fb2bc71f4c7c58cd736",
     "agents/verifier.md": "351cbb2eb0e494e0894afe0cb5e22fa2c3b448c6a27e56a1dd2686c0f14124d2",
+    "agents/workflow-generator.md": "5fe968da6412a3cd7e0d7ed4da8a0f87a0e7124f1e8746dc00fd37d6f9ad4656",
     "commands/adicionar-backlog.md": "ed36584b63e3d7bada207f30453b7995b2dbf0fe011889cc08b846bd069b1ca9",
     "commands/adicionar-fase.md": "5c321dd74bb36a4baef52c81ef2dcf1ef37898031bc55149a1a0aea9cc1b26f4",
     "commands/adicionar-tarefa.md": "9bc704898eac7638f0cfa707349ce85a400c7031e618e182ddc1696d2ba2d4e7",
@@ -101,6 +102,7 @@
     "commands/caracterizar.md": "e05f9cf52689f032460fc3564ba41c3c481f44992402e713bbde5aedf88a54c2",
     "commands/concluir-marco.md": "bd8c8ad217af6e4ab0487d35d98fae94a9ec5a5ffd0a2199871e0d484cefd438",
     "commands/configuracoes.md": "7657ed72bca4e7eba30ac74a08d8eeca2136aefdcedf18e739e6a89b2417a8c0",
+    "commands/criar-workflow.md": "bab6e9697d75a0fd5f5252985563c3f5a6ff768c33f201c22b38ad8a55d875d2",
     "commands/dados-distribuidos.md": "c41949a399d29f04074a5b78fccd1cfbb240dde94140261ab8b9b878e61f0452",
     "commands/definir-perfil.md": "d1b73e411b94dad257bb3bac7ffc7f70deb92910442f8762f863076201b81f9b",
     "commands/definir-slo.md": "2f891393b6b46bffd28264d6cc340baf74297c7cd58be137d67c92313e942480",
@@ -329,6 +331,7 @@
     "skills/core-analysis-loop/SKILL.md": "298f27d1706abe0e64fa7dfa925eba3255328dccd03b24589be1e80d6d673dd3",
     "skills/crm-lead-pipeline-patterns/SKILL.md": "5bc38aa162017ee3889d7d6ecae10b4f3448a6492f9c9cee1499161eea55a5c5",
     "skills/distributed-tracing/SKILL.md": "7747bbd0563b28cba11b11064012c0b7a696ac04bd65c64debb42987781b26ff",
+    "skills/dynamic-workflow-authoring/SKILL.md": "957eb782fafb38878f418219ed32a731c9da5f098f0a73ce964bd62a14e82b98",
     "skills/eliminating-toil/SKILL.md": "451c7dfc5dd5af925f0b38657553ddbc1cc95923b3a572ac79d18201acb136cd",
     "skills/escolha-modelo-consistencia/SKILL.md": "3665cb38fd91871ed80d620307485754117fbbab30efe7c790ef1e768b67da3a",
     "skills/event-based-slos/SKILL.md": "6bf107d86cc409ab24773e16f26b4eca6e228dfd2db027de7b384e88a05bd50e",

@@ -6,6 +6,77 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.35.0] - 2026-06-05
+
+### Added — Workflow Generator (camada-0 de classificação por pattern)
+
+Iteração sobre a capability `workflows` shippada em v1.34: em vez de crescer o
+kit com workflows de nicho (`auditar-conversas-ia-whatsapp`, `auditar-prs-stale`,
+etc.), o kit ganha a **capacidade de gerar workflows sob demanda** seguindo os
+6 patterns canônicos da Anthropic blog [A harness for every task — Dynamic
+Workflows in Claude Code](https://claude.com/blog/a-harness-for-every-task-dynamic-workflows-in-claude-code).
+
+A camada-0 obrigatória de classificação por pattern força a escolha de design
+ANTES de gastar tokens em perguntas — pattern errado = workflow errado.
+
+- **Novo slash-command [`/criar-workflow`](kit/commands/criar-workflow.md)** —
+  entrypoint que recebe descrição livre em português e dispara o agent gerador.
+  Valida `$ARGUMENTS` ≥ 10 chars; cria `.claude/workflows/` se ausente; chama
+  `Task(subagent_type="workflow-generator", ...)`.
+- **Novo agent [`workflow-generator`](kit/agents/workflow-generator.md)** —
+  orquestra 4 layers determinísticos:
+  - **Layer 0 — Classify:** `AskUserQuestion` obrigatório com os 6 patterns
+    canônicos. NUNCA infere; o usuário decide o trade-off de design.
+  - **Layer 1 — Specify:** 2–4 perguntas específicas do pattern escolhido
+    (cada pattern tem perguntas diferentes; Fanout pede SQL/glob+dimensões,
+    Tournament pede métrica+bracket, Loop-Until-Done pede stop condition).
+  - **Layer 2 — Compose:** detecta MCP tools necessárias por palavras-chave
+    no description (Supabase → `mcp__supabase__*`, GitHub → `gh`, etc.) e
+    propõe via AskUserQuestion reuso de agents canônicos do kit como
+    building blocks via `opts.agentType`.
+  - **Layer 3 — Materialize:** escreve `.claude/workflows/<slug>.workflow.js`
+    com header `// kit-mcp:user-generated` (distinto do `// kit-mcp:reference`
+    dos canônicos — sync remove sabe não tocar) + `.claude/commands/<slug>.md`.
+  - **Layer 4 — Deliver:** output formatado com `/<slug>`, `/loop 3m /<slug>`,
+    `/schedule "*/3 * * * *" <slug>`.
+- **Nova skill [`dynamic-workflow-authoring`](kit/skills/dynamic-workflow-authoring/SKILL.md)** —
+  fonte canônica que codifica os 6 patterns + regras DURAS da API Workflow
+  (meta literal puro; schema obrigatório em todo `agent()`; `pipeline()` default
+  e `parallel()` só com justificativa; `Date.now`/`Math.random`/argless `new
+  Date()` banidos; cap de concorrência `min(16, cores−2)`; budget hard ceiling).
+  Inclui mapa "minha necessidade → agent canônico do kit" para Layer 2 do
+  gerador.
+
+### Why — arquitetura, não bloat
+
+> O kit não deve crescer com workflows de nicho. Deve crescer com a CAPACIDADE
+> de gerar workflows sob demanda.
+
+Workflows user-generated são **locais ao projeto** (`.claude/workflows/`),
+nunca entram no `kit/file-manifest.json`, nunca sincronizam pra cima.
+Composição via `workflow('nome', args)` permite chamar OUTRO workflow
+do registry — útil pra encadear Understand → Design → Implement → Review
+quando cada fase merece ser um workflow separado (nesting limitado a 1 nível).
+
+### Patterns suportados (catálogo canônico)
+
+| Pattern | Quando usa | API kit |
+|---|---|---|
+| Classify-And-Act | Tipos diferentes → handlers diferentes | `agent` classifier → `agent` específico |
+| Fanout-And-Synthesize | N itens similares, isolation prevê interferência | `pipeline()` + synthesize stage |
+| Adversarial-Verification | Qualidade crítica, falsos-positivos caros | stage Verify cético, multi-voto opcional |
+| Generate-And-Filter | Espaço amplo, descarte barato | `parallel()` gerador → filter agent |
+| Tournament | Ranking qualitativo > absoluto | pairwise em bracket |
+| Loop-Until-Done | Volume desconhecido | `while (dry < K)` ou `while (budget.remaining() > X)` |
+
+### Migration path
+
+Workflows que ANTES seriam shippados no canônico (ex.: `auditar-conversas-ia-whatsapp`,
+`auditar-prs-stale`, `bug-hunt-loop`) agora são **gerados localmente** via
+`/criar-workflow`. O canônico [`auditar-observabilidade-cobertura`](kit/workflows/auditar-observabilidade-cobertura.workflow.js)
+de v1.34 continua como exemplo de referência do pattern Fanout-And-Synthesize +
+Adversarial-Verification combinados.
+
 ## [1.34.0] - 2026-06-05
 
 ### Added — Dynamic Workflows capability
