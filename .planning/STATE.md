@@ -2,15 +2,15 @@
 state_version: 1.0
 milestone: v1.37
 milestone_name: "Cost Tracking Suite"
-status: "M1 entregue — nucleo discovery/parser/dedup/pricing verde. Aguardando M2-M5."
-last_updated: "2026-06-05T22:50:00.000Z"
+status: "M2 entregue — 5 agregadores + persist-snapshot verde. Aguardando M3-M5."
+last_updated: "2026-06-05T23:30:00.000Z"
 progress:
   total_phases: 1
   completed_phases: 0
   total_milestones: 5
-  completed_milestones: 1
+  completed_milestones: 2
   current_phase: 172
-  current_milestone: "M1 done → M2 next"
+  current_milestone: "M2 done → M3 next"
 ---
 
 # STATE.md
@@ -18,17 +18,17 @@ progress:
 ## Posição Atual
 
 Fase: **172 — Cost Tracking Suite (v1.37.0)**
-Milestone: **M1 — Núcleo (discovery + parser + dedup + pricing)** ✓
-Status: M1 commitado. Gate A verde (50 unit cost tests + 1 integration paridade).
-Próximo: M2 — Agregadores (today/session/blocks/phase/estimate).
-Última atividade: 2026-06-05 — Phase 172 M1 commitado.
+Milestone: **M2 — Agregadores (today/session/blocks/phase/estimate + persist-snapshot)** ✓
+Status: M2 commitado. Gate B verde (37 unit cost-aggregate tests + persist-snapshot, suite 702/710).
+Próximo: M3 — Registrar 5 MCP tools cost-* + skill cost-tracking.
+Última atividade: 2026-06-05 — Phase 172 M2 commitado.
 
 ## Phase 172 progress
 
 | Milestone | Status | Gate |
 |---|---|---|
 | M1 — Núcleo (discovery/parser/dedup/pricing) | ✓ | Gate A verde |
-| M2 — Agregadores | pendente | Gate B |
+| M2 — Agregadores (today/session/blocks/phase/estimate + persist-snapshot) | ✓ | Gate B verde |
 | M3 — MCP tools + skill | pendente | Gate C1 |
 | M4 — CLI + statusline | pendente | Gate C2 |
 | M5 — Build pipeline + release v1.37.0 | pendente | Gate D |
@@ -46,10 +46,25 @@ Próximo: M2 — Agregadores (today/session/blocks/phase/estimate).
 - **6 unit tests** (50 testes) + **1 integration test** (paridade golden).
 - **devDep ccusage@^15.0.0** em package.json.
 
-## Débitos M1 (planejados pra M5 ou pós-release)
+## Deliverables M2 (v1.37 wip)
 
-1. **Oracle de paridade**: hoje gerado por `gen-paridade-fixture.mjs` (impl independente lendo o MESMO snapshot). Oracle ccusage estrito requer `npm install` + `generate-oracle-paridade.mjs` rodar. Documentado em comentário do test.
-2. **Cobertura strict-mode parser**: apenas 1 caso testado; expandir em M2.
+- **5 agregadores** em `src/core/cost/`:
+  - `aggregate-today.js` (filtro por data, tz default UTC, Intl.DateTimeFormat pra tz override)
+  - `aggregate-session.js` (filtro por sessionId; deriva de transcript_path; auto-deduz sessão ativa com max_idle_ms 30min)
+  - `aggregate-blocks.js` (5h windows com floor de hora UTC ccusage-compatible + gap detection > 5h)
+  - `aggregate-phase.js` (cruza `.planning/STATE.md` + git log + mtime SPEC.md → confidence high/medium/low/unknown; detecta rebase recente)
+  - `aggregate-estimate.js` (heurística chars/4, range ±30%, disclaimer explícito)
+- **`persist-snapshot.js`** opt-in, mirror do pattern `src/core/metrics.js` (persistSnapshot + loadSnapshots + cleanup rolling >30d).
+- **6 unit tests M2** (37 testes) cobrindo DST boundary, fase ativa sem completed_at, blocks com gap > 5h, JSON corrompido em load, falha graceful em mkdir.
+- **`.gitignore`** atualizado com `.planning/costs/`.
+
+## Débitos M2 (planejados pra M3+ ou pós-release)
+
+1. **`correlation_confidence` heurística inicial** — `aggregate-phase.js` usa 3 sinais binários (SPEC.md mtime, STATE.md completed_at, git log no dir). Iteração com sinais mais ricos (commits que mencionam phase_id, PR linkage) fica para v1.37.1.
+2. **DST não-trivial** — `aggregate-today` usa `Intl.DateTimeFormat` no tz fornecido, o que cobre saltos automaticamente. Mas o teste DST específico para `America/New_York` testa só o caso simples (não testa o instante exato do salto 02:00→03:00).
+3. **`aggregate-session` auto-dedução** — usa apenas mtime do arquivo. Não checa `last_activity_at` no JSONL. Heurística boa o bastante para statusline mas não para audits multi-sessão concorrentes.
+4. **Rebase detection** em `aggregate-phase` lê reflog dos últimos 40 entries com janela de 24h. Em repos com rebase de longa data fora da janela, retorna `false` (potencial falso-positivo de confidence).
+5. Débito herdado de M1: oracle paridade ccusage estrito + cobertura strict-mode parser.
 
 ## Contexto Acumulado pré-fase 172
 
@@ -61,7 +76,6 @@ Próximo: M2 — Agregadores (today/session/blocks/phase/estimate).
 
 ## Próxima ação
 
-1. M2 — Agregadores (today/session/blocks/phase/estimate + persist-snapshot)
-2. M3 — Registrar 5 MCP tools cost-* + skill cost-tracking
-3. M4 — CLI `kit cost` + statusline
-4. M5 — Release v1.37.0 + GH Action weekly refresh-pricing
+1. M3 — Registrar 5 MCP tools cost-* + skill cost-tracking
+2. M4 — CLI `kit cost` + statusline
+3. M5 — Release v1.37.0 + GH Action weekly refresh-pricing
