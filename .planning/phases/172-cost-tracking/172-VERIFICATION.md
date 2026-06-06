@@ -4,16 +4,17 @@ slug: cost-tracking
 milestone: v1.37.0
 verified_by: verifier (claude-opus-4-7[1m])
 verified_at: 2026-06-05
-status: RELEASE-WITH-CAVEATS
+status: RELEASE-READY
+mutation_addendum: 2026-06-05 (post e577eb6)
 ---
 
 # Phase 172 — Verification Report
 
 ## Sumário executivo
 
-Análise reversa dos 14 critérios de aceitação do `172-SPEC.md` § "Critérios de aceitação (verifier)" contra o codebase pós-M5 (commits `c88a505..16be835`). **12 critérios verdes**, **2 amarelos** (1 herdado e documentado, 1 não validado mecanicamente). **Zero vermelhos**.
+Análise reversa dos 14 critérios de aceitação do `172-SPEC.md` § "Critérios de aceitação (verifier)" contra o codebase pós-M5 (commits `5aa5585..e577eb6`). **13 critérios verdes**, **1 amarelo herdado e documentado** (oracle paridade não-estrito, aceito no SPEC G5). **Zero vermelhos**.
 
-Veredito: **RELEASE-WITH-CAVEATS** — pode publicar v1.37.0 puxando 2 caveats explícitos no release notes ou aceitando como débito acordado pra v1.37.1.
+Veredito: **RELEASE-READY** — publicar v1.37.0. Mutation score 88.12% global excede o floor SPEC (≥ 50%) por +38pp após commit `e577eb6` (54 testes targeted).
 
 ---
 
@@ -32,7 +33,7 @@ Veredito: **RELEASE-WITH-CAVEATS** — pode publicar v1.37.0 puxando 2 caveats e
 | 9 | `npm pack` contém pricing-snapshot.json + meta | OK | `npm pack --dry-run` → `86.9kB src/core/cost/pricing-snapshot.json` + `391B src/core/cost/pricing-snapshot.meta.json` listados. `package.json:13-21` `files[]` inclui `src/core/cost/`. |
 | 10 | SKILL.md disambiguation vs burn-rate-status | OK | `kit/skills/cost-tracking/SKILL.md:3` frontmatter `NÃO é error budget (SLO)`; L22 seção `Disambiguation`; L29 tabela vs `burn-rate-status`; L33 regra mnemônica `$/USD/tokens → cost-tracking; SLO/5xx → burn-rate`. `reports/SKILL-TRIGGER-AUDIT.md` zero colisões. |
 | 11 | Test coverage não regride | OK | Pré-fase: count desconhecido, mas pós-fase **702 unit + 151 integration verdes** com **+24 novos test files** (12 unit cost-*, 4 integration cost-*). Total LoC tests +2.000. Zero testes removidos no diff `git diff --stat 5aa5585..HEAD`. |
-| 12 | Mutation score ≥ 50% em pricing.js + dedup.js | **AMARELO** | `stryker.config.json` presente + `npm test:mutation` script ok, **mas `reports/mutation/` não existe** — mutation testing **nunca foi executado nesta fase**. Débito explícito do SPEC § "Open Questions resolvidas #9": acordado `≥ 50% inicial` para v1.37.0 + débito a `≥ 70%` em v1.38.0, mas o **floor de 50% não foi validado mecanicamente**. |
+| 12 | Mutation score ≥ 50% em pricing.js + dedup.js | OK | **88.12% global** (pricing=84.75%, dedup=95.41%) via 54 testes targeted no commit `e577eb6`. Reports em `reports/mutation/mutation-report.{html,json}`. Excede floor SPEC ≥ 50% por +38pp; já cruza o floor v1.38.0 ≥ 70%. |
 | 13 | Zero novas runtime deps | OK | `git diff 5aa5585..HEAD -- package.json` mostra apenas `version`, `files[]`, `scripts.regen-pricing`, e devDep `ccusage`. **Bloco `dependencies` intocado** (`@modelcontextprotocol/sdk` + `commander` + `picocolors` = 3). |
 | 14 | CHANGELOG v1.37.0 entry sem BREAKING | OK | `CHANGELOG.md:9` `## [1.37.0] - 2026-06-05`; seção `Added` extensa; seção `Breaking: Nenhum`. Formato Keep a Changelog. |
 
@@ -48,9 +49,9 @@ Veredito: **RELEASE-WITH-CAVEATS** — pode publicar v1.37.0 puxando 2 caveats e
 - **M3 #3** `persist=true` ignorado em `cost-estimate` — UX-wise OK porque estimate é puro (sem entry_count agregado).
 - **M4 #1-6** flags de filtro/cold-bench slack/no-dry-run — todos não-críticos.
 
-### Bloqueantes potenciais (mas mitigáveis)
+### Resolvidos pós-verifier
 
-- **Critério #12 — mutation score não validado** — SPEC pediu `≥ 50% em pricing.js + dedup.js`. Stryker está configurado mas **nunca rodou nesta fase**. Risco: pode haver mutants sobreviventes (e.g., off-by-one em `minuteBucket`, ou condicional `usd === null` virando `usd === undefined`). Mitigação: **702 unit + 151 integration verdes**, fixtures cobrem caminhos críticos (modelo desconhecido, dedup cross-file, parser corrompido). **Não bloqueia release** se aceito como caveat, mas SPEC literal não cumpriu.
+- **Critério #12 — mutation score validado** — Stryker rodou no commit `e577eb6` com escopo `src/core/cost/{pricing,dedup}.js`. Resultado: **88.12% global** (pricing=84.75%, dedup=95.41%). SPEC literal cumprido com folga; já cruza o floor planejado para v1.38.0 (≥ 70%).
 
 ---
 
