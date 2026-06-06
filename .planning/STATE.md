@@ -2,15 +2,15 @@
 state_version: 1.0
 milestone: v1.37
 milestone_name: "Cost Tracking Suite"
-status: "M2 entregue — 5 agregadores + persist-snapshot verde. Aguardando M3-M5."
-last_updated: "2026-06-05T23:30:00.000Z"
+status: "M3 entregue — 5 MCP tools cost-* + skill cost-tracking + 3 slash commands. Gate C1 verde. Aguardando M4-M5."
+last_updated: "2026-06-05T23:55:00.000Z"
 progress:
   total_phases: 1
   completed_phases: 0
   total_milestones: 5
-  completed_milestones: 2
+  completed_milestones: 3
   current_phase: 172
-  current_milestone: "M2 done → M3 next"
+  current_milestone: "M3 done → M4 next"
 ---
 
 # STATE.md
@@ -18,10 +18,10 @@ progress:
 ## Posição Atual
 
 Fase: **172 — Cost Tracking Suite (v1.37.0)**
-Milestone: **M2 — Agregadores (today/session/blocks/phase/estimate + persist-snapshot)** ✓
-Status: M2 commitado. Gate B verde (37 unit cost-aggregate tests + persist-snapshot, suite 702/710).
-Próximo: M3 — Registrar 5 MCP tools cost-* + skill cost-tracking.
-Última atividade: 2026-06-05 — Phase 172 M2 commitado.
+Milestone: **M3 — MCP tools + skill cost-tracking** ✓
+Status: M3 commitado. Gate C1 verde (23 testes integração cost-tools + check-tool-descriptions 14 tools / 0 over 1024 + regen-manifest idempotente + audit-skill-triggers sem colisão para cost-tracking).
+Próximo: M4 — CLI `kit cost <action>` + statusline cold/warm.
+Última atividade: 2026-06-05 — Phase 172 M3 commitado.
 
 ## Phase 172 progress
 
@@ -29,7 +29,7 @@ Próximo: M3 — Registrar 5 MCP tools cost-* + skill cost-tracking.
 |---|---|---|
 | M1 — Núcleo (discovery/parser/dedup/pricing) | ✓ | Gate A verde |
 | M2 — Agregadores (today/session/blocks/phase/estimate + persist-snapshot) | ✓ | Gate B verde |
-| M3 — MCP tools + skill | pendente | Gate C1 |
+| M3 — MCP tools + skill | ✓ | Gate C1 verde |
 | M4 — CLI + statusline | pendente | Gate C2 |
 | M5 — Build pipeline + release v1.37.0 | pendente | Gate D |
 
@@ -58,6 +58,42 @@ Próximo: M3 — Registrar 5 MCP tools cost-* + skill cost-tracking.
 - **6 unit tests M2** (37 testes) cobrindo DST boundary, fase ativa sem completed_at, blocks com gap > 5h, JSON corrompido em load, falha graceful em mkdir.
 - **`.gitignore`** atualizado com `.planning/costs/`.
 
+## Deliverables M3 (v1.37 wip)
+
+- **5 MCP tools cost-*** em `src/mcp-server/index.js` (append-only — 9 tools pré-existentes intocadas):
+  - `cost-today`, `cost-session`, `cost-blocks`, `cost-phase`, `cost-estimate`
+  - 5 handlers async `handleCostToday/Session/Blocks/Phase/Estimate` reutilizam os agregadores M2
+  - Helper `_maybePersistCost` (opt-in `persist:true` grava `.planning/costs/<ts>-<tool>.json`)
+  - Helper `_costError` envelopa try/catch em `{error:{message,code}}` — sem stack leak ao cliente MCP
+  - Exports `TOOLS`, `HANDLERS`, `__TEST_HANDLERS` (5 cost handlers) para integration tests sem stdio
+- **Skill `cost-tracking`** em `kit/skills/cost-tracking/SKILL.md`:
+  - Disambiguation explícita vs `burn-rate-status` (SLO error budget) e `risk-budget` (SRE risk)
+  - Map de intents → tool + 4 exemplos canônicos + 5 anti-patterns
+  - Limitações conhecidas v1.37.0 (LiteLLM lag, chars/4 heurística, correlation_confidence)
+- **3 slash commands PT-BR** em `kit/commands/`:
+  - `custo-hoje.md` → wrapper `cost-today` (`--tz`, `--refresh-pricing`, `--persist`)
+  - `custo-sessao.md` → wrapper `cost-session` (auto-deduz ou aceita session_id)
+  - `custo-fase.md` → wrapper `cost-phase` (`phase_id` obrigatório; destaca confidence)
+- **1 integration test** `test/integration/cost-tools.test.js` (23 testes):
+  - TOOLS shape (5 cost tools presentes + desc ≤ 1024 chars + inputSchema válido + required correto)
+  - HANDLERS map dispatch (5 cost handlers funcionam)
+  - **Guarda regressão das 9 tools pré-existentes** (kit/sync/reverse-sync/gates/forensics/install/metrics-snapshot/auto-install/ack-restart)
+  - Shape canônico do SPEC validado em cada handler (entries inline + fixtures M1)
+  - Validação manual sem Zod (rejeita types errados com `error.code='invalid_arg'`)
+  - Edge cases: cost-phase unknown vs mocked dir, cost-estimate range, persist=true cria arquivo, persist=false não cria dir
+  - Fixture paridade-ccusage digerida sem erro
+  - Fixture modelo-desconhecido NUNCA retorna $0 silencioso (total_usd=null quando todos unknown)
+- **Contadores README** bumped 91→94 commands, 99→100 skills (auto-via `update-readme-counts.js`). Test `test/unit/update-readme-counts.test.js` atualizado para os novos valores hard-coded.
+- **`kit/file-manifest.json`** regenerado (idempotente — apenas hashes dos arquivos novos/modificados).
+- **`reports/SKILL-TRIGGER-AUDIT.md`** regenerado — `cost-tracking` NÃO colide com nenhuma skill existente (audit zero matches para `cost-tracking`).
+
+## Débitos M3 (planejados pra M4-M5 ou pós-release)
+
+1. **Sem spawn/transport test em M3** — testes M3 chamam handlers via `__TEST_HANDLERS` direto. End-to-end stdio (init handshake + tools/call) fica em M4 (cost-cli.test.js cobre CLI; o spawn MCP fica para uma sanity em M5 se necessário).
+2. **`refresh_pricing:true` aceito em handlers mas não implementado** — args passa adiante para aggregateToday/Session/Blocks/Phase, mas a integração real com `pricing-fallback.js` (HTTP fetch + cache TTL) só conecta em M4/M5. Hoje o aggregator ignora o flag silenciosamente — débito a clarear quando M4 ligar.
+3. **`persist=true` ignorado em cost-estimate** — handler retorna shape direto sem chamar `persistSnapshot` (estimativa é pura, sem entry_count agregado por dia). Documentado no handler como comentário; UX-wise o user pode achar estranho `--persist` ser silencioso ali. Considerar warning explícito em M4 CLI.
+4. **Validação manual de inputSchema NÃO espelha 100% as constraints declaradas** — `inputSchema.required` é informativo para o MCP client; rejeição efetiva é dupla validação manual (`if (!args.text) error`). Sem Zod, qualquer mismatch entre schema declarado e validação manual pode passar. Mitigação: o teste verifica os 2 caminhos críticos (`cost-phase` sem phase_id, `cost-estimate` sem text).
+
 ## Débitos M2 (planejados pra M3+ ou pós-release)
 
 1. **`correlation_confidence` heurística inicial** — `aggregate-phase.js` usa 3 sinais binários (SPEC.md mtime, STATE.md completed_at, git log no dir). Iteração com sinais mais ricos (commits que mencionam phase_id, PR linkage) fica para v1.37.1.
@@ -76,6 +112,5 @@ Próximo: M3 — Registrar 5 MCP tools cost-* + skill cost-tracking.
 
 ## Próxima ação
 
-1. M3 — Registrar 5 MCP tools cost-* + skill cost-tracking
-2. M4 — CLI `kit cost` + statusline
-3. M5 — Release v1.37.0 + GH Action weekly refresh-pricing
+1. M4 — CLI `kit cost <action>` (7 sub-actions) + statusline cold/warm bench
+2. M5 — Release v1.37.0 + GH Action weekly refresh-pricing

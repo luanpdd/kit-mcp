@@ -1,6 +1,6 @@
 {
   "version": "1.36.0",
-  "timestamp": "2026-06-05T20:25:11.147Z",
+  "timestamp": "2026-06-05T23:58:13.524Z",
   "files": {
     "COMANDOS.md": "d24ec61a6ec35db314cc5f2ae287bfb927b794789c8f1d558c55862f5e6534b2",
     "COMPATIBILITY.md": "036423b40b94d2190b7341f39eff03e1d4270035d1712dc914d111e288712fa9",
@@ -103,6 +103,9 @@
     "commands/concluir-marco.md": "bd8c8ad217af6e4ab0487d35d98fae94a9ec5a5ffd0a2199871e0d484cefd438",
     "commands/configuracoes.md": "7657ed72bca4e7eba30ac74a08d8eeca2136aefdcedf18e739e6a89b2417a8c0",
     "commands/criar-workflow.md": "bab6e9697d75a0fd5f5252985563c3f5a6ff768c33f201c22b38ad8a55d875d2",
+    "commands/custo-fase.md": "ce4162a67afc48501e1c22d2c0f999093daa74a52b249b4eded7ed9fb2651eaa",
+    "commands/custo-hoje.md": "df22fd1de6d1cf1576e0f8f0ae91fe628b6aec35d9d1c4af890d03f53626e01d",
+    "commands/custo-sessao.md": "153a7f81487ad7a2f7844691401d2d842fada8acdbea826632bab99f444c874e",
     "commands/dados-distribuidos.md": "c41949a399d29f04074a5b78fccd1cfbb240dde94140261ab8b9b878e61f0452",
     "commands/definir-perfil.md": "d1b73e411b94dad257bb3bac7ffc7f70deb92910442f8762f863076201b81f9b",
     "commands/definir-slo.md": "2f891393b6b46bffd28264d6cc340baf74297c7cd58be137d67c92313e942480",
@@ -329,6 +332,7 @@
     "skills/cascading-failures/SKILL.md": "ec1f943310d8bbc3d22d2ba0499cc3e2c3123e2a0a90e07aa6814fbdaff4b0ee",
     "skills/consistencia-leitura-replica/SKILL.md": "fb94ffc31646d596104cf0dc6acfc2e32fa71c34f579bc14aa2793d6f144bfd4",
     "skills/core-analysis-loop/SKILL.md": "298f27d1706abe0e64fa7dfa925eba3255328dccd03b24589be1e80d6d673dd3",
+    "skills/cost-tracking/SKILL.md": "7ac5b79a3296837b9cd5ff100bafcce265cd738f8cf97bd6091e8b6f9c0785ff",
     "skills/crm-lead-pipeline-patterns/SKILL.md": "5bc38aa162017ee3889d7d6ecae10b4f3448a6492f9c9cee1499161eea55a5c5",
     "skills/distributed-tracing/SKILL.md": "7747bbd0563b28cba11b11064012c0b7a696ac04bd65c64debb42987781b26ff",
     "skills/dynamic-workflow-authoring/SKILL.md": "3500b7f92ed28826132146e61c2dde9a79859bc0263972a16d536545fb26323b",
