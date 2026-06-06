@@ -1,6 +1,6 @@
 ---
 name: cost-tracking
-description: Use ao perguntar quanto Claude Code está custando — USD gastos, tokens consumidos, custo por sessão/fase/bloco de 5h. Cobre cost-today, cost-session, cost-blocks, cost-phase, cost-estimate. NÃO é error budget (SLO) — esta skill é sobre dinheiro real, não disponibilidade.
+description: Use ao perguntar quanto Claude Code custou — USD/tokens por sessão/fase/bloco 5h. Cobre cost-today/session/blocks/phase/estimate. NÃO é error budget (SLO) — é dinheiro real.
 ---
 
 # kit-mcp — Cost Tracking (Claude Code USD + tokens)
