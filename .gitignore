@@ -23,6 +23,16 @@ CLAUDE.md
 # Cleanup is automatic (>30d) via cleanupOldSnapshots in src/core/metrics.js.
 .planning/metrics/snapshots/
 
+# Phase 172 (Cost Tracking): persistSnapshot opt-in para tools cost-*.
+# Dev-only artifact — local cost telemetry, not a shipped doc.
+# Cleanup automático (>30d) via persist-snapshot.js.
+.planning/costs/
+
+# Phase 172 (Cost Tracking) M4: large JSONL fixture is generated on demand
+# by test/integration/cost-statusline.large-jsonl.test.js (~5MB) — keep out
+# of the repo; the generator is deterministic enough for local reruns.
+test/fixtures/jsonl-statusline-10k.jsonl
+
 # Phase 101 (INFRA-20-02): Stryker mutation testing artifacts.
 # Reports são local-only — execução opt-in via `npm run test:mutation`.
 # Baseline documentado em .planning/audits/v1.20/MUTATION-BASELINE.md.

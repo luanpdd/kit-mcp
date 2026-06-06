@@ -34,6 +34,16 @@ import { wrapProgressForUi } from '../ui/wrapper.js';
 import { incrementInvocation, recordLatency, snapshot as metricsSnapshot, persistSnapshot } from '../core/metrics.js';
 import { logEvent } from '../core/logger.js';
 import { notify, isNotifyEnabled } from '../core/notify.js';
+// Phase 172 (v1.37.0): cost-tracking suite — 5 handlers reuse the M2 aggregators
+// (parser → dedup → price pipeline). MCP layer only validates args, calls the
+// aggregator, optionally persists, and returns the shape canônico defined in
+// 172-SPEC.md. NO new runtime deps (manual typeof/Array.isArray validation).
+import { aggregateToday } from '../core/cost/aggregate-today.js';
+import { aggregateSession } from '../core/cost/aggregate-session.js';
+import { aggregateBlocks } from '../core/cost/aggregate-blocks.js';
+import { aggregatePhase } from '../core/cost/aggregate-phase.js';
+import { aggregateEstimate } from '../core/cost/aggregate-estimate.js';
+import { persistSnapshot as persistCostSnapshot } from '../core/cost/persist-snapshot.js';
 // Note: roots.js is imported dynamically inside handlers that need it
 // (handleAutoInstall, handleAckRestart) — keeps boot path minimal.
 
@@ -182,6 +192,86 @@ const TOOLS = [
       properties: {
         projectRoot: { type: 'string' },
       },
+    },
+  },
+  // Phase 172 (v1.37.0): cost-tracking suite — 5 read-only tools that parse
+  // Claude Code JSONL transcripts, dedup, price via embedded LiteLLM snapshot,
+  // and aggregate per dimension. Disambiguation: these tools answer "how much
+  // USD/tokens did I spend?" — NOT "is my SLO error budget burning?" (that is
+  // burn-rate-status / risk-budget). Naming kebab-case for consistency with
+  // metrics-snapshot / reverse-sync / ack-restart.
+  {
+    name: 'cost-today',
+    description: 'Custo Claude Code do dia corrente (USD + tokens por modelo) lendo JSONLs de ~/.claude/projects/. tz default UTC (paridade ccusage). Retorna shape canônico: total_usd, by_model, entry_count, deduped_count, skipped_entry_count, parse_error_count, unknown_models, pricing_source, pricing_staleness_days. Triggers: "quanto gastei hoje", "custo do dia", "spent today", "daily cost". Use cost-session para a sessão atual, cost-blocks para janelas de 5h, cost-phase para uma fase do framework.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        config_dirs:     { type: 'array', items: { type: 'string' }, description: 'Override CLAUDE_CONFIG_DIR. Default: discovery automática (CLAUDE_CONFIG_DIR > XDG_CONFIG_HOME/claude > ~/.claude > %APPDATA%/claude no Windows).' },
+        tz:              { type: 'string', description: 'IANA timezone (ex: America/Sao_Paulo). Default: UTC (paridade ccusage).' },
+        date:            { type: 'string', description: 'Override YYYY-MM-DD do dia alvo (default: hoje no tz).' },
+        refresh_pricing: { type: 'boolean', description: 'Opt-in fallback models.dev pra modelos não cobertos pelo snapshot embedded. Default: false.' },
+        persist:         { type: 'boolean', description: 'Grava snapshot em .planning/costs/<ts>.json (opt-in). Default: false.' },
+        projectRoot:     { type: 'string', description: 'Para persist: raiz do projeto. Default: cwd.' },
+      },
+    },
+  },
+  {
+    name: 'cost-session',
+    description: 'Custo Claude Code de uma sessão específica (ou da sessão ativa auto-deduzida pelo arquivo JSONL mais recente com mtime < 30min). Retorna shape canônico + session_id, started_at, last_activity_at, source_file. Triggers: "custo da sessão", "session cost", "quanto essa conversa gastou", "current session usd". Use cost-today para o dia inteiro.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        session_id:      { type: 'string', description: 'UUID da sessão. Omita para auto-deduzir a sessão ativa.' },
+        transcript_path: { type: 'string', description: 'Path do arquivo JSONL (basename sem .jsonl = session_id). Alternativa a session_id.' },
+        config_dirs:     { type: 'array', items: { type: 'string' } },
+        max_idle_ms:     { type: 'number', description: 'Janela de inatividade para considerar sessão ativa (auto-deduce). Default: 1800000 (30min).' },
+        refresh_pricing: { type: 'boolean' },
+        persist:         { type: 'boolean' },
+        projectRoot:     { type: 'string' },
+      },
+    },
+  },
+  {
+    name: 'cost-blocks',
+    description: 'Custo Claude Code por janelas deslizantes de 5h com gap detection (entries separadas por >5h iniciam novo bloco — pattern ccusage). Retorna blocks[] com started_at, ended_at, total_usd, by_model, entry_count, is_active + shape canônico agregado. Triggers: "custo por bloco", "5h windows", "blocks cost", "ccusage blocks". Use cost-today para dia, cost-session para sessão.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        config_dirs:     { type: 'array', items: { type: 'string' } },
+        tz:              { type: 'string' },
+        refresh_pricing: { type: 'boolean' },
+        persist:         { type: 'boolean' },
+        projectRoot:     { type: 'string' },
+      },
+    },
+  },
+  {
+    name: 'cost-phase',
+    description: 'Custo Claude Code correlacionado com uma fase do framework kit-mcp (.planning/phases/<id>-*/). Cruza mtime de SPEC.md + completed_at de STATE.md + git log para inferir janela temporal. Retorna shape canônico + phase_id, phase_slug, correlation_confidence (high/medium/low/unknown). Diferencial vs ccusage: contexto de workflow. Triggers: "custo da fase", "quanto a fase X gastou", "phase cost".',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        phase_id:        { type: 'string', description: 'ID numérico ou string da fase (ex: "172").' },
+        config_dirs:     { type: 'array', items: { type: 'string' } },
+        refresh_pricing: { type: 'boolean' },
+        persist:         { type: 'boolean' },
+        projectRoot:     { type: 'string', description: 'Raiz onde está .planning/phases/. Default: cwd.' },
+      },
+      required: ['phase_id'],
+    },
+  },
+  {
+    name: 'cost-estimate',
+    description: 'Estima custo USD de um prompt ANTES de mandar para Claude. Heurística chars/4 com range ±30% (sem tokenizer real na v1.37.0 — debt em SKILL.md). Retorna estimated_input_tokens, estimated_output_tokens, estimated_usd, estimated_usd_range:[low,high], disclaimer. Triggers: "quanto vai custar", "estimativa de prompt", "estimate cost", "price this prompt".',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        text:            { type: 'string', description: 'Texto do prompt a estimar.' },
+        model:           { type: 'string', description: 'Modelo alvo. Default: claude-sonnet-4-5.' },
+        output_ratio:    { type: 'number', description: 'Multiplicador input → output esperado. Default: 3.' },
+        chars_per_token: { type: 'number', description: 'Override heurística. Default: 4.' },
+      },
+      required: ['text'],
     },
   },
 ];
@@ -578,6 +668,160 @@ async function handleMetricsSnapshot() {
   return payload;
 }
 
+// Phase 172 (v1.37.0): cost-tracking handlers.
+//
+// Padrão uniforme:
+//   1. Validação manual (typeof / Array.isArray) — sem Zod (budget de deps).
+//   2. Chama o aggregator de M2 (puro, testável).
+//   3. Se args.persist === true, grava em .planning/costs/<ts>.json (opt-in).
+//   4. try/catch envelopa erros num shape {error:{message,code}} — NUNCA
+//      propaga stack para o cliente MCP (defesa em profundidade vs SEC-13).
+//
+// projectRoot fallback é cwd (mesmo padrão de handleAutoInstall). Persist é
+// best-effort: falha graceful retorna {persist_warning} sem derrubar a tool.
+
+function _costError(err, code = 'cost_handler_failed') {
+  const msg = err && typeof err.message === 'string' ? err.message : String(err);
+  return { error: { message: msg, code } };
+}
+
+async function _maybePersistCost(args, toolName, snap) {
+  if (args && args.persist === true) {
+    const rootDir = args.projectRoot || process.cwd();
+    try {
+      const { file, warning } = await persistCostSnapshot(rootDir, snap, { tool: toolName });
+      if (file) return { ...snap, persisted_to: file };
+      if (warning) return { ...snap, persist_warning: warning };
+    } catch (err) {
+      return { ...snap, persist_warning: `persist_threw:${err && err.message ? err.message : 'unknown'}` };
+    }
+  }
+  return snap;
+}
+
+async function handleCostToday(args = {}) {
+  try {
+    if (args.tz !== undefined && typeof args.tz !== 'string') {
+      return _costError(new Error('tz must be string'), 'invalid_arg');
+    }
+    if (args.config_dirs !== undefined && !Array.isArray(args.config_dirs)) {
+      return _costError(new Error('config_dirs must be array of strings'), 'invalid_arg');
+    }
+    const snap = aggregateToday({
+      config_dirs: args.config_dirs,
+      tz: args.tz,
+      date: args.date,
+      now: args.now,
+      entries: args.entries,
+      source_mtimes: args.source_mtimes,
+      snapshot_path: args.snapshot_path,
+      meta_path: args.meta_path,
+    });
+    return await _maybePersistCost(args, 'cost-today', snap);
+  } catch (err) {
+    return _costError(err);
+  }
+}
+
+async function handleCostSession(args = {}) {
+  try {
+    if (args.session_id !== undefined && typeof args.session_id !== 'string') {
+      return _costError(new Error('session_id must be string'), 'invalid_arg');
+    }
+    if (args.transcript_path !== undefined && typeof args.transcript_path !== 'string') {
+      return _costError(new Error('transcript_path must be string'), 'invalid_arg');
+    }
+    if (args.config_dirs !== undefined && !Array.isArray(args.config_dirs)) {
+      return _costError(new Error('config_dirs must be array of strings'), 'invalid_arg');
+    }
+    const snap = aggregateSession({
+      session_id: args.session_id,
+      transcript_path: args.transcript_path,
+      config_dirs: args.config_dirs,
+      max_idle_ms: args.max_idle_ms,
+      now: args.now,
+      entries: args.entries,
+      source_mtimes: args.source_mtimes,
+      snapshot_path: args.snapshot_path,
+      meta_path: args.meta_path,
+    });
+    return await _maybePersistCost(args, 'cost-session', snap);
+  } catch (err) {
+    return _costError(err);
+  }
+}
+
+async function handleCostBlocks(args = {}) {
+  try {
+    if (args.config_dirs !== undefined && !Array.isArray(args.config_dirs)) {
+      return _costError(new Error('config_dirs must be array of strings'), 'invalid_arg');
+    }
+    const snap = aggregateBlocks({
+      config_dirs: args.config_dirs,
+      now: args.now,
+      block_ms: args.block_ms,
+      entries: args.entries,
+      source_mtimes: args.source_mtimes,
+      snapshot_path: args.snapshot_path,
+      meta_path: args.meta_path,
+    });
+    return await _maybePersistCost(args, 'cost-blocks', snap);
+  } catch (err) {
+    return _costError(err);
+  }
+}
+
+async function handleCostPhase(args = {}) {
+  try {
+    if (args.phase_id === undefined || args.phase_id === null || args.phase_id === '') {
+      return _costError(new Error('phase_id is required'), 'invalid_arg');
+    }
+    if (args.config_dirs !== undefined && !Array.isArray(args.config_dirs)) {
+      return _costError(new Error('config_dirs must be array of strings'), 'invalid_arg');
+    }
+    const rootDir = args.projectRoot || args.root_dir || process.cwd();
+    const snap = aggregatePhase({
+      phase_id: args.phase_id,
+      root_dir: rootDir,
+      config_dirs: args.config_dirs,
+      now: args.now,
+      entries: args.entries,
+      source_mtimes: args.source_mtimes,
+      skip_git: args.skip_git,
+      phase_window_override: args.phase_window_override,
+      snapshot_path: args.snapshot_path,
+      meta_path: args.meta_path,
+    });
+    return await _maybePersistCost(args, 'cost-phase', snap);
+  } catch (err) {
+    return _costError(err);
+  }
+}
+
+async function handleCostEstimate(args = {}) {
+  try {
+    if (typeof args.text !== 'string') {
+      return _costError(new Error('text must be a string'), 'invalid_arg');
+    }
+    if (args.model !== undefined && typeof args.model !== 'string') {
+      return _costError(new Error('model must be a string'), 'invalid_arg');
+    }
+    const snap = aggregateEstimate({
+      text: args.text,
+      model: args.model,
+      output_ratio: args.output_ratio,
+      chars_per_token: args.chars_per_token,
+      now: args.now,
+      snapshot_path: args.snapshot_path,
+      meta_path: args.meta_path,
+    });
+    // cost-estimate é puro (não há disco a persistir); ignora `persist`.
+    return snap;
+  } catch (err) {
+    return _costError(err);
+  }
+}
+
 const HANDLERS = {
   kit:                handleKit,
   sync:               handleSync,
@@ -588,6 +832,12 @@ const HANDLERS = {
   'metrics-snapshot': handleMetricsSnapshot,
   'auto-install':     handleAutoInstall,
   'ack-restart':      handleAckRestart,
+  // Phase 172 — cost-tracking (5 read-only tools).
+  'cost-today':       handleCostToday,
+  'cost-session':     handleCostSession,
+  'cost-blocks':      handleCostBlocks,
+  'cost-phase':       handleCostPhase,
+  'cost-estimate':    handleCostEstimate,
 };
 
 // Phase 167+168 test affordances — exported for unit coverage.
@@ -595,7 +845,19 @@ const HANDLERS = {
 export const __TEST_HANDLERS = {
   handleAutoInstall,
   handleAckRestart,
+  // Phase 172 — cost handlers exposed for direct unit/integration coverage
+  // without spinning the stdio transport.
+  handleCostToday,
+  handleCostSession,
+  handleCostBlocks,
+  handleCostPhase,
+  handleCostEstimate,
 };
+
+// Phase 172 — exposed for integration tests to assert TOOLS/HANDLERS shape
+// without re-parsing the source. Keeps the TOOLS array as the single source of
+// truth (no duplicated list in tests).
+export { TOOLS, HANDLERS };
 
 function slim(x) {
   // absPath omitted by design — list-* tools are AI-consumed in tight context budgets.

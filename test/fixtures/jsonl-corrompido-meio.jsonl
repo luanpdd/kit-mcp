@@ -1,0 +1,8 @@
+{"timestamp":"2026-06-03T10:00:00.000Z","sessionId":"sess-corr-1","messageId":"msg-c-1","requestId":"req-c-1","model":"claude-sonnet-4-5","usage":{"input_tokens":100,"output_tokens":40}}
+{"timestamp":"2026-06-03T10:01:00.000Z","sessionId":"sess-corr-1","messageId":"msg-c-2","requestId":"req-c-2","model":"claude-sonnet-4-5","usage":{"input_tokens":110,"output_tokens":45}}
+{"timestamp":"2026-06-03T10:02:00.000Z","sessionId":"sess-corr-1","messageId":"msg-c-3","requestId":"req-c-3","model":"claude-sonnet-4-5","usage":{"input_tokens":120,"output_tokens":50}}
+{{ THIS LINE IS GARBAGE — not valid JSON
+also this entire line is broken: {"timestamp": "incomplete
+{"timestamp":"2026-06-03T10:05:00.000Z","sessionId":"sess-corr-1","messageId":"msg-c-5","requestId":"req-c-5","model":"claude-sonnet-4-5","usage":{"input_tokens":200,"output_tokens":80}}
+{"timestamp":"2026-06-03T10:06:00.000Z","sessionId":"sess-corr-1","messageId":"msg-c-6","requestId":"req-c-6","model":"claude-sonnet-4-5","usage":{"input_tokens":210,"output_tokens":85}}
+{"timestamp":"2026-06-03T10:07:00.000Z","sessionId":"sess-corr-1","messageId":"msg-c-7","requestId":"req-c-7","model":"claude-sonnet-4-5","usage":{"input_tokens":220,"output_tokens":90}}

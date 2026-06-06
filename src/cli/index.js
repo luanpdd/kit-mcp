@@ -864,6 +864,261 @@ program.command('status')
     process.stdout.write(`\n${c.bold('errors:')}   ${errTotal}/${total} (${rate.toFixed(2)}%)\n\n`);
   });
 
+// --- cost (Phase 172, v1.37: cost tracking suite) ---
+// `kit cost <action>` mirrors the 5 cost-* MCP tools + adds statusline +
+// refresh-pricing as CLI-only conveniences. Pattern matches `status` above:
+// global `--json` triggers raw shape; otherwise renders a human summary.
+const cost = program.command('cost').description('Cost tracking (USD/tokens spent with Claude Code).');
+
+/** Resolve project root from a sub-action invocation. */
+function costProjectRoot(opts) {
+  return opts.projectRoot || process.cwd();
+}
+
+/** Parse a comma-separated `--config-dirs` value into an array, or undefined. */
+function parseConfigDirs(value) {
+  if (!value) return undefined;
+  return String(value).split(',').map((s) => s.trim()).filter(Boolean);
+}
+
+/** Pretty-print USD or `n/a` for null. */
+function fmtUsdCli(n) {
+  if (n === null || n === undefined || !Number.isFinite(n)) return 'n/a';
+  return `$${Number(n).toFixed(4)}`;
+}
+
+function renderCostSummary(title, snap) {
+  const lines = [];
+  lines.push('');
+  lines.push(c.bold(title));
+  lines.push(`  total_usd:        ${c.cyan(fmtUsdCli(snap.total_usd))}`);
+  if (snap.entry_count !== undefined) lines.push(`  entry_count:      ${snap.entry_count}`);
+  if (snap.deduped_count !== undefined) lines.push(`  deduped:          ${snap.deduped_count}`);
+  if (snap.skipped_entry_count !== undefined) lines.push(`  skipped:          ${snap.skipped_entry_count}`);
+  if (snap.parse_error_count) lines.push(`  parse_errors:     ${c.yellow(snap.parse_error_count)}`);
+  if (Array.isArray(snap.unknown_models) && snap.unknown_models.length) {
+    lines.push(`  unknown_models:   ${c.yellow(snap.unknown_models.join(', '))}`);
+  }
+  if (snap.by_model && typeof snap.by_model === 'object') {
+    const models = Object.keys(snap.by_model);
+    if (models.length) {
+      lines.push(`  ${c.bold('by_model:')}`);
+      for (const m of models) {
+        const v = snap.by_model[m] || {};
+        lines.push(`    ${m.padEnd(28)}  ${fmtUsdCli(v.usd).padStart(14)}  ` +
+          `in=${v.input_tokens || 0} out=${v.output_tokens || 0} ` +
+          `cc=${v.cache_creation_tokens || 0} cr=${v.cache_read_tokens || 0}`);
+      }
+    }
+  }
+  if (snap.pricing_source) lines.push(`  pricing_source:   ${snap.pricing_source}`);
+  if (snap.pricing_staleness_days !== undefined && snap.pricing_staleness_days !== -1) {
+    lines.push(`  pricing_age:      ${snap.pricing_staleness_days}d`);
+  }
+  if (snap.pricing_warning) lines.push(`  ${c.yellow(icons.warn)} ${snap.pricing_warning}`);
+  if (snap.persisted_to) lines.push(`  persisted_to:     ${c.dim(snap.persisted_to)}`);
+  if (snap.persist_warning) lines.push(`  ${c.yellow(icons.warn)} persist: ${snap.persist_warning}`);
+  lines.push('');
+  return lines.join('\n');
+}
+
+/** Surface handler errors uniformly. */
+function handleCostResult(snap, title) {
+  if (snap && snap.error) {
+    process.stderr.write(`${c.red(icons.cross)} ${snap.error.code || 'cost_handler_failed'}: ${snap.error.message}\n`);
+    process.exit(1);
+  }
+  out(snap, () => renderCostSummary(title, snap));
+}
+
+async function importCostHandlers() {
+  // Lazy import to keep the cold-start of non-cost commands fast.
+  return await import('../mcp-server/index.js');
+}
+
+cost.command('today')
+  .description('Cost spent today (UTC by default).')
+  .option('--date <yyyy-mm-dd>', 'Override the calendar date')
+  .option('--tz <tz>', 'IANA timezone (default UTC)')
+  .option('--refresh-pricing', 'Try models.dev fallback for unknown models')
+  .option('--persist', 'Persist snapshot under .planning/costs/')
+  .option('--config-dirs <list>', 'Comma-separated config_dirs override')
+  .option('--project-root <path>', 'Default: cwd')
+  .action(async (opts) => {
+    const { __TEST_HANDLERS } = await importCostHandlers();
+    const snap = await __TEST_HANDLERS.handleCostToday({
+      date: opts.date,
+      tz: opts.tz,
+      refresh_pricing: !!opts.refreshPricing,
+      persist: !!opts.persist,
+      projectRoot: costProjectRoot(opts),
+      config_dirs: parseConfigDirs(opts.configDirs),
+    });
+    handleCostResult(snap, `kit cost today${opts.date ? ` — ${opts.date}` : ''}`);
+  });
+
+cost.command('session')
+  .description('Cost spent in the active (or given) Claude Code session.')
+  .option('--session-id <id>', 'Explicit sessionId')
+  .option('--transcript <path>', 'Transcript JSONL path; derives sessionId from basename')
+  .option('--refresh-pricing', 'Try models.dev fallback for unknown models')
+  .option('--persist', 'Persist snapshot under .planning/costs/')
+  .option('--config-dirs <list>', 'Comma-separated config_dirs override')
+  .option('--project-root <path>', 'Default: cwd')
+  .action(async (opts) => {
+    const { __TEST_HANDLERS } = await importCostHandlers();
+    const snap = await __TEST_HANDLERS.handleCostSession({
+      session_id: opts.sessionId,
+      transcript_path: opts.transcript,
+      refresh_pricing: !!opts.refreshPricing,
+      persist: !!opts.persist,
+      projectRoot: costProjectRoot(opts),
+      config_dirs: parseConfigDirs(opts.configDirs),
+    });
+    handleCostResult(snap, `kit cost session${opts.sessionId ? ` — ${opts.sessionId}` : ''}`);
+  });
+
+cost.command('blocks')
+  .description('5h sliding windows with gap detection (ccusage-compatible).')
+  .option('--since <date>', 'Filter ISO/epoch — pruned client-side (informational)')
+  .option('--until <date>', 'Filter ISO/epoch — pruned client-side (informational)')
+  .option('--no-gaps', 'Hide blocks with gap_before:true from the human render')
+  .option('--refresh-pricing', 'Try models.dev fallback for unknown models')
+  .option('--persist', 'Persist snapshot under .planning/costs/')
+  .option('--config-dirs <list>', 'Comma-separated config_dirs override')
+  .option('--project-root <path>', 'Default: cwd')
+  .action(async (opts) => {
+    const { __TEST_HANDLERS } = await importCostHandlers();
+    const snap = await __TEST_HANDLERS.handleCostBlocks({
+      refresh_pricing: !!opts.refreshPricing,
+      persist: !!opts.persist,
+      projectRoot: costProjectRoot(opts),
+      config_dirs: parseConfigDirs(opts.configDirs),
+    });
+    if (snap && snap.error) {
+      process.stderr.write(`${c.red(icons.cross)} ${snap.error.code || 'cost_handler_failed'}: ${snap.error.message}\n`);
+      process.exit(1);
+    }
+    // Optional human-side filtering by since/until/no-gaps. JSON output stays raw.
+    if (program.opts().json) {
+      out(snap, () => '');
+      return;
+    }
+    let blocks = Array.isArray(snap.blocks) ? snap.blocks.slice() : [];
+    if (opts.since) {
+      const since = Date.parse(opts.since);
+      if (Number.isFinite(since)) blocks = blocks.filter((b) => b.block_end_ts >= since);
+    }
+    if (opts.until) {
+      const until = Date.parse(opts.until);
+      if (Number.isFinite(until)) blocks = blocks.filter((b) => b.block_start_ts <= until);
+    }
+    if (opts.gaps === false) blocks = blocks.filter((b) => !b.gap_before);
+
+    process.stdout.write(renderCostSummary('kit cost blocks', snap));
+    process.stdout.write(`${c.bold('  blocks:')}\n`);
+    if (blocks.length === 0) {
+      process.stdout.write(`    ${c.dim('no blocks in window')}\n\n`);
+      return;
+    }
+    for (const b of blocks) {
+      const flag = b.is_active ? c.green('active') : c.dim('closed');
+      const gap = b.gap_before ? c.yellow(' gap') : '';
+      process.stdout.write(`    ${b.started_at}  ${fmtUsdCli(b.total_usd).padStart(12)}  n=${b.entry_count}  [${flag}]${gap}\n`);
+    }
+    process.stdout.write('\n');
+  });
+
+cost.command('phase')
+  .description('Cost correlated with a planning phase (.planning/phases/<n>-*).')
+  .option('--phase <id>', 'Phase id (e.g. 172) — required if --milestone absent')
+  .option('--milestone <name>', 'Display-only label echoed in output')
+  .option('--refresh-pricing', 'Try models.dev fallback for unknown models')
+  .option('--persist', 'Persist snapshot under .planning/costs/')
+  .option('--config-dirs <list>', 'Comma-separated config_dirs override')
+  .option('--project-root <path>', 'Default: cwd')
+  .action(async (opts) => {
+    if (!opts.phase) {
+      process.stderr.write(`${c.red(icons.cross)} --phase <id> is required\n`);
+      process.exit(2);
+    }
+    const { __TEST_HANDLERS } = await importCostHandlers();
+    const snap = await __TEST_HANDLERS.handleCostPhase({
+      phase_id: opts.phase,
+      refresh_pricing: !!opts.refreshPricing,
+      persist: !!opts.persist,
+      projectRoot: costProjectRoot(opts),
+      config_dirs: parseConfigDirs(opts.configDirs),
+    });
+    if (snap && opts.milestone && !program.opts().json) {
+      snap.__cli_milestone_hint = opts.milestone;
+    }
+    handleCostResult(snap, `kit cost phase — ${opts.phase}${opts.milestone ? ` (${opts.milestone})` : ''}`);
+  });
+
+cost.command('estimate <prompt...>')
+  .description('Heuristic chars/4 cost estimate (±30%) for a candidate prompt.')
+  .option('--model <id>', 'Override model id (default claude-sonnet-4-5)')
+  .action(async (prompt, opts) => {
+    const text = Array.isArray(prompt) ? prompt.join(' ') : String(prompt || '');
+    if (!text.trim()) {
+      process.stderr.write(`${c.red(icons.cross)} <prompt> is required (non-empty)\n`);
+      process.exit(2);
+    }
+    const { __TEST_HANDLERS } = await importCostHandlers();
+    const snap = await __TEST_HANDLERS.handleCostEstimate({
+      text,
+      model: opts.model,
+    });
+    if (snap && snap.error) {
+      process.stderr.write(`${c.red(icons.cross)} ${snap.error.code || 'cost_handler_failed'}: ${snap.error.message}\n`);
+      process.exit(1);
+    }
+    if (program.opts().json) { out(snap, () => ''); return; }
+    process.stdout.write('\n');
+    process.stdout.write(`${c.bold(`kit cost estimate — ${snap.model}`)}\n`);
+    process.stdout.write(`  text_length:      ${snap.text_length}\n`);
+    process.stdout.write(`  input_tokens:     ~${snap.estimated_input_tokens}\n`);
+    process.stdout.write(`  output_tokens:    ~${snap.estimated_output_tokens}\n`);
+    process.stdout.write(`  estimated_usd:    ${c.cyan(fmtUsdCli(snap.estimated_usd))}\n`);
+    if (Array.isArray(snap.estimated_usd_range)) {
+      process.stdout.write(`  range:            ${fmtUsdCli(snap.estimated_usd_range[0])} .. ${fmtUsdCli(snap.estimated_usd_range[1])}\n`);
+    }
+    process.stdout.write(`  ${c.dim(snap.disclaimer)}\n`);
+    if (snap.unknown_models && snap.unknown_models.length) {
+      process.stdout.write(`  ${c.yellow(icons.warn)} unknown_models: ${snap.unknown_models.join(', ')}\n`);
+    }
+    process.stdout.write('\n');
+  });
+
+cost.command('statusline')
+  .description('Statusline mode: reads Claude Code JSON from stdin, writes ONE line to stdout.')
+  .option('--format <fmt>', 'compact | verbose | json (env KIT_MCP_STATUSLINE_FORMAT overrides)')
+  .option('--no-cache', 'Skip the tmpdir cache (force recompute)')
+  .action(async (opts) => {
+    const { runStatusline } = await import('./statusline.js');
+    await runStatusline({
+      opts: {
+        format: opts.format,
+        no_cache: opts.cache === false,
+      },
+    });
+  });
+
+cost.command('refresh-pricing')
+  .description('Run scripts/regen-pricing.mjs (manual refresh of LiteLLM pricing snapshot).')
+  .action(async () => {
+    const { spawnSync } = await import('node:child_process');
+    const here = path.dirname(fileURLToPath(import.meta.url));
+    const script = path.resolve(here, '..', '..', 'scripts', 'regen-pricing.mjs');
+    if (!fs.existsSync(script)) {
+      process.stderr.write(`${c.red(icons.cross)} scripts/regen-pricing.mjs not found at ${script}\n`);
+      process.exit(1);
+    }
+    const res = spawnSync(process.execPath, [script], { stdio: 'inherit' });
+    process.exit(res.status == null ? 1 : res.status);
+  });
+
 // --- init (Phase 161, v1.28: guided onboarding — install + sync + doctor) ---
 program.command('init')
   .description('Onboard: register kit-mcp into an IDE, sync the kit, run doctor.')
