@@ -44,7 +44,7 @@ Adicione ao `.mcp.json` do seu projeto (ou config global do IDE):
 }
 ```
 
-Pronto. Na próxima sessão, o IDE faz `npx` e expõe os 7 tools do kit-mcp. Nada instalado globalmente, sem `npm install`.
+Pronto. Na próxima sessão, o IDE faz `npx` e expõe as 14 tools do kit-mcp. Nada instalado globalmente, sem `npm install`.
 
 ### Registrar automaticamente
 
@@ -85,6 +85,85 @@ npx -y @luanpdd/kit-mcp init
 
 ---
 
+## Cost tracking (v1.37+)
+
+Suíte de telemetria de **custo USD/tokens** consumidos pelo Claude Code, inspirada no
+[`ccusage`](https://github.com/ryoppippi/ccusage) com paridade numérica auditável
+(delta ≤ 0.5% vs ccusage em fixture golden). Diferencial: integração nativa com
+as fases do framework (`cost-phase` correlaciona usage com `.planning/phases/<n>/`).
+
+### 5 MCP tools
+
+| Tool | O que faz |
+|---|---|
+| `cost-today` | Custo do dia corrente (default UTC; `--tz` override) |
+| `cost-session` | Custo de uma sessão (`session_id` explícito ou auto-deduzido) |
+| `cost-blocks` | Janelas de 5h com gap-detection (compatível com ccusage `blocks`) |
+| `cost-phase` | Custo correlacionado a uma fase do framework + `correlation_confidence` |
+| `cost-estimate` | Estimativa prévia (heurística `chars/4 ± 30%`, sem tokenizer real) |
+
+Todas retornam o shape canônico com `total_usd`, `by_model`, `entry_count`,
+`deduped_count`, `unknown_models`, `pricing_source` e `pricing_staleness_days`.
+
+### CLI `kit cost`
+
+```bash
+kit cost today                          # tabela human-friendly
+kit cost today --json                   # raw output do tool
+kit cost session --transcript <path>    # sessão de um transcript
+kit cost blocks --since 2026-06-01      # janelas 5h dos últimos N dias
+kit cost phase --phase 172              # custo correlacionado à fase 172
+kit cost estimate "prompt de exemplo"   # estimativa ex-ante
+kit cost statusline                     # contrato statusline Claude Code
+kit cost refresh-pricing                # refresca snapshot LiteLLM (manual)
+```
+
+### Statusline (Claude Code)
+
+Adicione ao `~/.claude/settings.json`:
+
+```json
+{
+  "statusLine": {
+    "type": "command",
+    "command": "npx -y @luanpdd/kit-mcp cost statusline"
+  }
+}
+```
+
+Output default compact: `$0.42 sess | $1.20 day | $0.18 5h`.
+Override via `KIT_MCP_STATUSLINE_FORMAT=verbose|json`.
+Bench: cold P50 ~148ms, warm P50 < 1ms (cache em `os.tmpdir()`).
+
+### Skill `cost-tracking`
+
+Auto-trigger por keywords (`custo`, `cost`, `gasto`, `tokens`, `usd`, `quanto gastei`).
+A skill tem bloco de disambiguation explícito vs `burn-rate-status` (SLO error budget)
+e `risk-budget` (SRE risk) para evitar colisão de intent.
+
+### Pricing snapshot
+
+Snapshot embedded do [LiteLLM](https://github.com/BerriAI/litellm/blob/main/model_prices_and_context_window.json)
+em `src/core/cost/pricing-snapshot.json` (refresh weekly via GitHub Action,
+sempre PR aberto para review humano — nunca auto-merge).
+
+**Limitação conhecida:** o snapshot LiteLLM tem lag-behind oficial de 2-4 semanas
+para modelos recém-lançados. Tools retornam `pricing_staleness_days` + warning
+se > 30 dias. Modelo desconhecido NUNCA retorna `$0` silencioso — sempre `usd: null`
++ entrada em `unknown_models[]`.
+
+### Persistência opt-in
+
+Use `--persist` (CLI) ou `persist: true` (MCP tool) para gravar o output em
+`.planning/costs/<ts>-<tool>.json` (gitignored, dev-only).
+
+### Sem novas runtime deps
+
+Tudo offline-safe, zero deps adicionados em runtime (`ccusage` está em `devDependencies`
+apenas para o golden test de paridade). Preserva o budget de 6 deps enforçado em CI.
+
+---
+
 ## O que a comunidade precisa saber
 
 ### Dois fluxos diferentes, mesma origem
@@ -98,12 +177,12 @@ npx -y @luanpdd/kit-mcp init
 
 ┌──────────────┐  spawns       ┌──────────────────┐
 │ Claude Code  │ ────────────▶ │ kit-mcp (stdio)  │   tools live via
-│  (IDE host)  │  stdin/stdout │  7 tools         │   JSON-RPC
+│  (IDE host)  │  stdin/stdout │  14 tools        │   JSON-RPC
 └──────────────┘ ◀──────────── └──────────────────┘
 ```
 
 - **`kit sync`** projeta o conteúdo no formato nativo do IDE — funciona offline e o IDE só precisa dos arquivos.
-- **`kit-mcp` (MCP server)** roda como subprocess do IDE e expõe 7 tools (`kit`, `sync`, `gates`, `forensics`, `install`, `metrics-snapshot`, `reverse-sync`).
+- **`kit-mcp` (MCP server)** roda como subprocess do IDE e expõe 14 tools (`kit`, `sync`, `reverse-sync`, `gates`, `forensics`, `install`, `metrics-snapshot`, `auto-install`, `ack-restart`, `cost-today`, `cost-session`, `cost-blocks`, `cost-phase`, `cost-estimate`).
 
 **Sem output no terminal ao rodar `kit-mcp`?** Não é bug. A spec MCP proíbe stdout fora do JSON-RPC. Use `kit-mcp logs --follow` ou o sidecar UI em `http://localhost:7878`.
 

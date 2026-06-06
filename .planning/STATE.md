@@ -1,27 +1,36 @@
 ---
 state_version: 1.0
-milestone: v1.37
+milestone: v1.37.0
 milestone_name: "Cost Tracking Suite"
-status: "M4 entregue — CLI `kit cost` com 7 sub-actions + statusline cold/warm bench. Gate C2 verde. Aguardando M5."
+status: "v1.37.0 ENTREGUE — Phase 172 completa. M5 commitado: package.json bump 1.36→1.37, README seção Cost tracking, CHANGELOG entry, GH Action refresh-pricing-snapshot.yml weekly + PR auto. Gate D verde. Pronto para publish manual via npm publish + git tag v1.37.0."
 last_updated: "2026-06-05T00:00:00.000Z"
 progress:
   total_phases: 1
-  completed_phases: 0
+  completed_phases: 1
   total_milestones: 5
-  completed_milestones: 4
+  completed_milestones: 5
   current_phase: 172
-  current_milestone: "M4 done → M5 next"
+  current_milestone: "M5 done → release v1.37.0 (aguardando publish manual)"
 ---
 
 # STATE.md
 
 ## Posição Atual
 
-Fase: **172 — Cost Tracking Suite (v1.37.0)**
-Milestone: **M4 — CLI + statusline** ✓
-Status: M4 commitado. Gate C2 verde (12 testes cost-cli + 4 testes bench statusline + 2 testes large-jsonl = 18 testes M4, 100% pass). Cold P50 ~148ms (budget 200ms). Warm P50 ~0.12ms (budget 50ms). Compute 10k entries ~180ms in-process.
-Próximo: M5 — Release v1.37.0 + GH Action weekly refresh-pricing.
-Última atividade: 2026-06-05 — Phase 172 M4 commitado.
+Fase: **172 — Cost Tracking Suite (v1.37.0)** ✓ ENTREGUE
+Milestone: **M5 — Build pipeline + release v1.37.0** ✓
+Status: M5 commitado. Gate D verde (`npm run prepublishOnly` + `npm pack --dry-run` confirmando tarball inclui `src/core/cost/pricing-snapshot.json` + meta + `npm test` full suite verde). package.json bump 1.36.0→1.37.0, files[] inclui `src/core/cost/`, scripts.regen-pricing adicionado MANUAL (fora de prepublishOnly — preserva offline-safe), CHANGELOG entry v1.37.0 publicada, README com seção "Cost tracking" completa + bump tools counter 9→14, `.github/workflows/refresh-pricing-snapshot.yml` criado com permissions+concurrency+PR auto via peter-evans/create-pull-request@v6.
+Próximo: publish manual (`npm publish` + `git tag v1.37.0` + `git push --follow-tags`).
+Última atividade: 2026-06-05 — Phase 172 M5 commitado. Phase ENTREGUE.
+
+## Release v1.37.0 entregue
+
+- Phase de origem: [172-cost-tracking](.planning/phases/172-cost-tracking/172-SPEC.md)
+- 5 commits feature (M1+M2+M3+M4+M5)
+- Tarball inclui pricing-snapshot embedded (zero rede em consumer)
+- 5 MCP tools + CLI + statusline + skill + 3 slash commands + GH Action
+- Zero novas runtime deps (apenas devDep ccusage)
+- Pronto para publish manual
 
 ## Phase 172 progress
 
@@ -31,7 +40,7 @@ Próximo: M5 — Release v1.37.0 + GH Action weekly refresh-pricing.
 | M2 — Agregadores (today/session/blocks/phase/estimate + persist-snapshot) | ✓ | Gate B verde |
 | M3 — MCP tools + skill | ✓ | Gate C1 verde |
 | M4 — CLI + statusline | ✓ | Gate C2 verde |
-| M5 — Build pipeline + release v1.37.0 | pendente | Gate D |
+| M5 — Build pipeline + release v1.37.0 | ✓ | Gate D verde |
 
 ## Deliverables M1 (v1.37 wip)
 
@@ -147,6 +156,61 @@ Próximo: M5 — Release v1.37.0 + GH Action weekly refresh-pricing.
 - MCP tools: 9 (auto-install + ack-restart adicionados em v1.29).
 - Stable API: preservada cross-17 releases.
 
+## Deliverables M5 (v1.37 release)
+
+- **package.json**:
+  - `version`: 1.36.0 → **1.37.0**
+  - `files[]`: adicionado `src/core/cost/` (cobre snapshot+meta+módulos js)
+  - `scripts.regen-pricing`: `node scripts/regen-pricing.mjs` (MANUAL, fora de prepublishOnly)
+  - `prepublishOnly` continua offline-safe (regen-pricing NÃO encadeado)
+  - devDep `ccusage@^15.0.0` mantido (M1 já tinha adicionado)
+- **`.gitignore`**: confirmado `.planning/costs/` presente (M2 já tinha)
+- **README.md**:
+  - Bump tools counter 7→14 (3 ocorrências: install msg, fluxograma, lista nominal)
+  - Nova seção "Cost tracking (v1.37+)" após Comandos diários cobrindo: 5 tools, CLI 7 sub-actions, statusline setup snippet `~/.claude/settings.json`, skill auto-trigger, pricing snapshot+limitação LiteLLM lag-behind 2-4 semanas, persistência opt-in, disclaimer "zero novas runtime deps"
+- **CHANGELOG.md**: entry `## [1.37.0] - 2026-06-05` com Added/Notes/Breaking (none), citando paridade ccusage delta ≤ 0.5%, devDep ccusage, snapshot staleness warning > 30d, chars/4 heurística, correlation_confidence iteração v1.37.1, cross-platform (Windows EPERM/ESRCH handling)
+- **`.github/workflows/refresh-pricing-snapshot.yml`** (NEW):
+  - Cron `0 0 * * 1` (segundas 00:00 UTC) + `workflow_dispatch` manual
+  - `permissions: { contents: write, pull-requests: write }`
+  - `concurrency: { group: pricing-snapshot-refresh, cancel-in-progress: false }`
+  - Steps: checkout v6 → setup-node 20 → `npm run regen-pricing` → detect diff → `peter-evans/create-pull-request@v6`
+  - Title PR: `chore(pricing): weekly snapshot refresh`
+  - Body com diff stats + LiteLLM source link + review checklist + nota "Não usar auto-merge"
+  - Labels: chore, pricing, automated
+
+## Comandos manuais que o user precisa rodar pra publicar
+
+1. **Merge PR para main** (se este worktree é PR branch):
+   ```bash
+   gh pr create --title "feat: v1.37.0 Cost Tracking Suite" --body "Phase 172 — 5 commits"
+   # Após review: gh pr merge --squash
+   ```
+2. **Atualizar local e taggear**:
+   ```bash
+   git checkout main
+   git pull
+   git tag v1.37.0
+   ```
+3. **Push da tag** (dispara `.github/workflows/publish.yml` que faz `npm publish` automaticamente):
+   ```bash
+   git push origin v1.37.0
+   ```
+4. **Validar publish** (workflow publish.yml já roda smoke + tests + npm audit + npm publish + cria GH Release):
+   ```bash
+   gh run watch
+   npm view @luanpdd/kit-mcp version  # deve mostrar 1.37.0
+   ```
+
+Alternativa local (sem GH Action):
+
+```bash
+npm run prepublishOnly  # já roda como prepub hook
+npm publish --access public
+```
+
 ## Próxima ação
 
-1. M5 — Release v1.37.0 + GH Action weekly refresh-pricing (bump `version` + `files[]` + CHANGELOG + README seção Cost tracking + `.github/workflows/refresh-pricing-snapshot.yml`).
+Phase 172 ENTREGUE. Próximas fases a discutir:
+- v1.37.1 — iteração `correlation_confidence` em `cost-phase`
+- v1.38.0 — tokenizer real (tiktoken/anthropic-tokenizer) em `cost-estimate`
+- v1.38.0 — `cost` em `kit ui` dashboard (debt fora-de-escopo aprovada)

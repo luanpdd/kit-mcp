@@ -1,6 +1,6 @@
 {
   "name": "@luanpdd/kit-mcp",
-  "version": "1.36.0",
+  "version": "1.37.0",
   "description": "Generic infrastructure to ship YOUR personal kit of agents/commands/skills as an MCP server, with cross-IDE sync (Claude Code, Cursor, Codex, Gemini, Windsurf, Antigravity, Copilot, Trae).",
   "type": "module",
   "bin": {
@@ -13,6 +13,7 @@
   "files": [
     "bin/",
     "src/",
+    "src/core/cost/",
     "kit/",
     "gates/",
     "README.md",
@@ -47,6 +48,7 @@
     "test:all": "node test/run.mjs test",
     "test:integration": "node test/run.mjs test/integration",
     "test:mutation": "stryker run",
+    "regen-pricing": "node scripts/regen-pricing.mjs",
     "prepublishOnly": "node scripts/regen-manifest.js && node scripts/update-readme-counts.js && node test/run.mjs test/unit && node test/run.mjs test/integration"
   },
   "dependencies": {

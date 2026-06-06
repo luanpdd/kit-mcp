@@ -6,6 +6,76 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.37.0] - 2026-06-05
+
+### Added — Cost Tracking Suite (Phase 172)
+
+Suíte completa de telemetria de **custo USD/tokens** consumidos pelo Claude Code,
+inspirada no `ccusage` com paridade numérica auditável (delta ≤ 0.5% vs ccusage
+em fixture golden de 1k entries). Diferencial vs ccusage: integração nativa com
+o framework de fases do kit (`cost-phase` correlaciona usage com
+`.planning/phases/<n>/`).
+
+**5 MCP tools** (kebab-case, consistente com `metrics-snapshot`/`reverse-sync`):
+
+- `cost-today` — custo do dia corrente (default UTC, `--tz` override)
+- `cost-session` — custo de sessão (explícita ou auto-deduzida via transcript_path)
+- `cost-blocks` — janelas de 5h sliding com gap-detection ccusage-compatível
+- `cost-phase` — custo correlacionado a fase do framework + `correlation_confidence`
+  (high/medium/low/unknown via 3 sinais: SPEC.md mtime + STATE.md completed_at + git log)
+- `cost-estimate` — estimativa ex-ante via heurística `chars/4 ± 30%` (sem tokenizer real)
+
+**CLI `kit cost <action>`** com 7 sub-actions: `today`, `session`, `blocks`, `phase`,
+`estimate`, `statusline`, `refresh-pricing`. Suporte a `--json` raw output e render
+human-friendly default.
+
+**Statusline contrato Claude Code** em `src/cli/statusline.js`:
+
+- Lê stdin JSON do Claude Code, resolve `transcript_path` → session_id
+- Cold P50: **~148ms** (budget 200ms); warm P50: **<1ms** (cache `os.tmpdir()`)
+- Formatos: `compact` (default — `$0.42 sess | $1.20 day | $0.18 5h`),
+  `verbose`, `json` via env `KIT_MCP_STATUSLINE_FORMAT`
+- Failure modes: emite string vazia + stderr (NUNCA crasha Claude Code)
+
+**Skill `cost-tracking`** com auto-trigger por keywords (`custo`, `cost`, `gasto`,
+`tokens`, `usd`, `quanto gastei`) + bloco de disambiguation explícito vs
+`burn-rate-status` (SLO error budget) e `risk-budget` (SRE risk).
+
+**3 slash commands PT-BR**: `/custo-hoje`, `/custo-sessao`, `/custo-fase`.
+
+**Pricing snapshot LiteLLM embedded** em `src/core/cost/pricing-snapshot.json`
+(261 modelos, sha256 + commit pinned em `pricing-snapshot.meta.json`) +
+fallback opt-in `models.dev` via flag `refresh_pricing:true` com cache TTL 24h.
+
+**GitHub Action `refresh-pricing-snapshot.yml`** — cron weekly (segunda 00:00 UTC),
+fetcha LiteLLM raw, abre PR com `peter-evans/create-pull-request@v6`. Sempre PR
+aberto para review humano, nunca auto-merge.
+
+### Notes
+
+- **Zero novas runtime deps** — `ccusage@^15.0.0` adicionado apenas como `devDependency`
+  para o golden test de paridade. Preserva o budget de 6 deps enforçado em CI desde
+  Phase 92.01. Validação de shape via `typeof` + `Array.isArray` manual (sem Zod).
+- **`prepublishOnly` continua offline-safe** — `regen-pricing` é script **manual**
+  fora do prepublishOnly. Refresh acontece via GH Action weekly.
+- **Snapshot embedded pode estar stale** em modelos recém-lançados — LiteLLM
+  tem lag-behind oficial de 2-4 semanas. Tools retornam `pricing_staleness_days`
+  + warning se > 30 dias.
+- **`cost-estimate` usa heurística `chars/4 ± 30%`** — tokenizer real
+  (tiktoken/anthropic-tokenizer) planejado para v1.38.0. Disclaimer explícito
+  no output.
+- **`correlation_confidence` heurística inicial** em `cost-phase` — iteração com
+  sinais mais ricos (PR linkage, commits que mencionam phase_id) planejada para v1.37.1.
+- **Cross-platform** — Windows + Linux + macOS. `CLAUDE_CONFIG_DIR` semicolon-split
+  em Windows, colon em POSIX. PID liveness via `process.kill(pid, 0)` com tratamento
+  específico de `EPERM` (Windows = alive) vs `ESRCH` (dead).
+- **Persistência opt-in** — `.planning/costs/` gitignored, gravado apenas quando
+  `persist:true` (tool) ou `--persist` (CLI).
+
+### Breaking
+
+- Nenhum. API MCP estável preservada (append-only nas 5 tools cost-*).
+
 ## [1.36.0] - 2026-06-05
 
 ### Fixed — Workflow Generator parando de gerar `.workflow.js` quebrados
