@@ -1,6 +1,6 @@
 {
   "version": "1.37.0",
-  "timestamp": "2026-06-06T01:12:17.889Z",
+  "timestamp": "2026-06-06T02:24:44.566Z",
   "files": {
     "COMANDOS.md": "d24ec61a6ec35db314cc5f2ae287bfb927b794789c8f1d558c55862f5e6534b2",
     "COMPATIBILITY.md": "036423b40b94d2190b7341f39eff03e1d4270035d1712dc914d111e288712fa9",
@@ -332,7 +332,7 @@
     "skills/cascading-failures/SKILL.md": "ec1f943310d8bbc3d22d2ba0499cc3e2c3123e2a0a90e07aa6814fbdaff4b0ee",
     "skills/consistencia-leitura-replica/SKILL.md": "fb94ffc31646d596104cf0dc6acfc2e32fa71c34f579bc14aa2793d6f144bfd4",
     "skills/core-analysis-loop/SKILL.md": "298f27d1706abe0e64fa7dfa925eba3255328dccd03b24589be1e80d6d673dd3",
-    "skills/cost-tracking/SKILL.md": "7ac5b79a3296837b9cd5ff100bafcce265cd738f8cf97bd6091e8b6f9c0785ff",
+    "skills/cost-tracking/SKILL.md": "365ca0dd1c28a49c4bbffe32660c4444db2b8da6706e40672bab9912be6a4178",
     "skills/crm-lead-pipeline-patterns/SKILL.md": "5bc38aa162017ee3889d7d6ecae10b4f3448a6492f9c9cee1499161eea55a5c5",
     "skills/distributed-tracing/SKILL.md": "7747bbd0563b28cba11b11064012c0b7a696ac04bd65c64debb42987781b26ff",
     "skills/dynamic-workflow-authoring/SKILL.md": "3500b7f92ed28826132146e61c2dde9a79859bc0263972a16d536545fb26323b",
