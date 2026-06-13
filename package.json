@@ -1,7 +1,7 @@
 {
   "name": "@luanpdd/kit-mcp",
-  "version": "1.37.0",
-  "description": "Generic infrastructure to ship YOUR personal kit of agents/commands/skills as an MCP server, with cross-IDE sync (Claude Code, Cursor, Codex, Gemini, Windsurf, Antigravity, Copilot, Trae).",
+  "version": "1.38.0",
+  "description": "Generic infrastructure to ship YOUR personal kit of agents/commands/skills as an MCP server, with cross-IDE sync (Claude Code, Cursor, Codex, Windsurf, Antigravity, Copilot, Trae).",
   "type": "module",
   "bin": {
     "kit-mcp": "bin/mcp.js",
@@ -25,7 +25,7 @@
     "claude",
     "cursor",
     "codex",
-    "gemini",
+    "antigravity",
     "agents",
     "skills",
     "workflows",

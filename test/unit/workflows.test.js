@@ -33,7 +33,7 @@ test('registry — claude-code declares workflows capability with .workflow.js e
 });
 
 test('registry — non-claude-code targets declare workflows: null', () => {
-  for (const id of ['cursor', 'codex', 'gemini-cli', 'copilot', 'windsurf', 'antigravity', 'trae']) {
+  for (const id of ['cursor', 'codex', 'copilot', 'windsurf', 'antigravity', 'trae']) {
     assert.equal(TARGETS[id].workflows, null, `${id} should not advertise workflows`);
   }
 });

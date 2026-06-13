@@ -2,10 +2,10 @@ import { test } from 'node:test';
 import assert from 'node:assert/strict';
 import { listTargets, getTarget, TARGETS } from '../../src/core/registry.js';
 
-test('TARGETS — has 8 IDEs', () => {
+test('TARGETS — has 7 IDEs', () => {
   const ids = Object.keys(TARGETS);
-  assert.equal(ids.length, 8);
-  for (const required of ['claude-code', 'cursor', 'codex', 'gemini-cli', 'copilot', 'windsurf', 'antigravity', 'trae']) {
+  assert.equal(ids.length, 7);
+  for (const required of ['claude-code', 'cursor', 'codex', 'copilot', 'windsurf', 'antigravity', 'trae']) {
     assert.ok(ids.includes(required), `missing target: ${required}`);
   }
 });

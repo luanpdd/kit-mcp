@@ -136,7 +136,7 @@ const TOOLS = [
   },
   {
     name: 'install',
-    description: 'Register this kit-mcp server into an IDE\'s MCP config (Claude/Cursor/Codex/Gemini/Windsurf).',
+    description: 'Register this kit-mcp server into an IDE\'s MCP config (Claude/Cursor/Codex/Antigravity/Windsurf).',
     inputSchema: {
       type: 'object',
       properties: {

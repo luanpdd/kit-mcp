@@ -43,7 +43,7 @@ Perfis de modelo controlam qual modelo Claude cada agente framework usa. Isso pe
 - **Obrigatório ao usar provedores não-Anthropic** (OpenRouter, modelos locais, etc.) — caso contrário o framework pode chamar modelos Anthropic diretamente, gerando custos inesperados
 - Use quando: você quer que o framework siga seu modelo de runtime selecionado atualmente
 
-## Usando Runtimes Não-Claude (Codex, OpenCode, Gemini CLI)
+## Usando Runtimes Não-Claude (Codex, OpenCode, Antigravity CLI)
 
 Quando instalado para um runtime não-Claude, o instalador do framework define `resolve_model_ids: "omit"` em `~/.framework/defaults.json`. Isso retorna um parâmetro model vazio para todos os agentes, então cada agente usa o modelo padrão do runtime. Nenhuma configuração manual é necessária.
 

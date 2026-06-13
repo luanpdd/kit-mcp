@@ -15,13 +15,11 @@ Verifique quais CLIs de IA estão disponíveis no sistema:
 
 ```bash
 # Verificar cada CLI
-command -v gemini >/dev/null 2>&1 && echo "gemini:available" || echo "gemini:missing"
 command -v claude >/dev/null 2>&1 && echo "claude:available" || echo "claude:missing"
 command -v codex >/dev/null 2>&1 && echo "codex:available" || echo "codex:missing"
 ```
 
 Analise as flags de `$ARGUMENTS`:
-- `--gemini` → incluir Gemini
 - `--claude` → incluir Claude
 - `--codex` → incluir Codex
 - `--all` → incluir todos disponíveis
@@ -30,7 +28,6 @@ Analise as flags de `$ARGUMENTS`:
 Se nenhuma CLI disponível:
 ```
 Nenhuma CLI de IA externa encontrada. Instale pelo menos uma:
-- gemini: https://github.com/google-gemini/gemini-cli
 - codex: https://github.com/openai/codex
 - claude: https://github.com/anthropics/claude-code
 
@@ -116,11 +113,6 @@ Escreva em um arquivo temporário: `/tmp/review-prompt-{phase}.md`
 <step name="invoke_reviewers">
 Para cada CLI selecionada, invoque em sequência (não em paralelo — evitar limites de taxa):
 
-**Gemini:**
-```bash
-gemini -p "$(cat /tmp/review-prompt-{phase}.md)" 2>/dev/null > /tmp/review-gemini-{phase}.md
-```
-
 **Claude (sessão separada):**
 ```bash
 claude -p "$(cat /tmp/review-prompt-{phase}.md)" --no-input 2>/dev/null > /tmp/review-claude-{phase}.md
@@ -150,18 +142,12 @@ Combine todas as respostas de revisão em `{phase_dir}/{padded_phase}-REVIEWS.md
 ```markdown
 ---
 phase: {N}
-reviewers: [gemini, claude, codex]
+reviewers: [claude, codex]
 reviewed_at: {timestamp ISO}
 plans_reviewed: [{lista de arquivos PLAN.md}]
 ---
 
 # Revisão Cruzada Entre IAs — Fase {N}
-
-## Revisão Gemini
-
-{conteúdo da revisão gemini}
-
----
 
 ## Revisão Claude
 
