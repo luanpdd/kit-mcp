@@ -2,7 +2,7 @@
 // hook-version: 1.30.1
 // SEC-13-05: flush-before-exit category = A (stdout.write + immediate exit)
 // Fix applied: process.stdout.write(payload, () => process.exit(0)) on warning path.
-// Context Monitor - PostToolUse/AfterTool hook (Gemini uses AfterTool)
+// Context Monitor - PostToolUse/AfterTool hook (Antigravity/Gemini use AfterTool)
 // Reads context metrics from the statusline bridge file and injects
 // warnings when context usage is high. This makes the AGENT aware of
 // context limits (the statusline only shows the user).

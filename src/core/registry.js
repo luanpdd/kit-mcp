@@ -49,17 +49,6 @@ export const TARGETS = {
                 userPath: '~/.codex/config.toml',          strategy: 'append-toml-snippet',
                 userKey:  'mcp_servers' },
   },
-  'gemini-cli': {
-    label: 'Gemini CLI',
-    rules:    { path: 'GEMINI.md',                         mode: 'single' },
-    agents:   null,
-    commands: null,
-    skills:   { path: '.gemini/skills/',                   mode: 'multi-dir' },
-    workflows: null,
-    mcpConfig:{ path: null,
-                userPath: '~/.gemini/settings.json',       strategy: 'merge-mcpServers-json',
-                userKey:  'mcpServers' },
-  },
   'copilot': {
     label: 'GitHub Copilot',
     rules:    { path: '.github/copilot-instructions.md',   mode: 'single' },
@@ -80,13 +69,32 @@ export const TARGETS = {
                 userKey:  'mcpServers' },
   },
   'antigravity': {
+    // Google Antigravity (IDE + CLI). Config conventions verified 2026-06 against
+    // official Google codelabs (developer-knowledge-mcp / authoring-skills /
+    // autonomous-pipelines), the Gemini API "Building Managed Agents" docs, and the
+    // Google AI Developers Forum (Google staff). See CHANGELOG.
     label: 'Google Antigravity',
+    // Per-file workspace rules in .agents/rules/ (plural is the 2.0 default;
+    // legacy .agent/ singular is backward-compat only).
     rules:    { path: '.agents/rules/',                    mode: 'multi',     extension: '.md' },
-    agents:   { path: '.agents/agents/',                   mode: 'multi',     extension: '.md' },
-    commands: null,
-    skills:   { path: '.agents/workflows/',                mode: 'multi-dir' },
+    // agents: null by design — Antigravity has NO per-agent .md registry like
+    // Claude's .claude/agents/. Its .agents/agents.md is a single fixed-persona
+    // team file (@pm/@engineer/@qa/...), not a drop-in dir for the kit's agents.
+    agents:   null,
+    // Slash-commands live as flat .md in .agents/workflows/<name>.md, invoked as
+    // /<name>. This is the IDE's slash-command surface — NOT Dynamic Workflows
+    // (those stay Claude-Code-only; see workflows:null).
+    commands: { path: '.agents/workflows/',                mode: 'multi',     extension: '.md' },
+    // Skills: directory packages at .agents/skills/<name>/SKILL.md.
+    skills:   { path: '.agents/skills/',                   mode: 'multi-dir' },
     workflows: null,
-    mcpConfig: null,
+    // MCP: Antigravity 2.0 (IDE + CLI) reads the shared central user config
+    // ~/.gemini/config/mcp_config.json (top-level key mcpServers; stdio servers
+    // use command/args/env). Project scope is unreliable (antigravity-cli #60),
+    // so we only write the user-level path.
+    mcpConfig:{ path: null,
+                userPath: '~/.gemini/config/mcp_config.json', strategy: 'merge-mcpServers-json',
+                userKey:  'mcpServers' },
   },
   'trae': {
     label: 'Trae',

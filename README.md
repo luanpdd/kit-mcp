@@ -5,7 +5,7 @@
 [![CI](https://github.com/luanpdd/kit-mcp/actions/workflows/ci.yml/badge.svg)](https://github.com/luanpdd/kit-mcp/actions/workflows/ci.yml)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
-> Um kit de **agentes, comandos e skills** prontos para Claude Code, Cursor, Codex, Gemini CLI, Windsurf e outros — destilado da documentação oficial do Supabase, livros canônicos de engenharia, e técnicas comprovadas de orquestração agêntica.
+> Um kit de **agentes, comandos e skills** prontos para Claude Code, Cursor, Codex, Windsurf, Antigravity e outros — destilado da documentação oficial do Supabase, livros canônicos de engenharia, e técnicas comprovadas de orquestração agêntica.
 >
 > Entregue como **MCP server**. Você usa direto via `npx`, sem instalar nada.
 
@@ -50,7 +50,7 @@ Pronto. Na próxima sessão, o IDE faz `npx` e expõe as 14 tools do kit-mcp. Na
 
 ```bash
 npx -y @luanpdd/kit-mcp install claude-code
-# ou: cursor, codex, gemini-cli, windsurf, antigravity, copilot, trae
+# ou: cursor, codex, windsurf, antigravity, copilot, trae
 ```
 
 ### Projetar skills/agents/commands para o IDE ler

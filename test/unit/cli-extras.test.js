@@ -13,7 +13,7 @@
 //   - 589-598  doctor: bundled kit dir check
 //   - 610-613  doctor: framework-state .planning detection
 //   - --kit-root preAction hook with valid/invalid path
-//   - install dry-run for additional targets (windsurf, gemini-cli)
+//   - install dry-run for additional targets (windsurf, antigravity)
 
 import { test } from 'node:test';
 import assert from 'node:assert/strict';
@@ -202,12 +202,15 @@ test('install dry-run windsurf returns ok with json preview', () => {
   fs.rmSync(tmp, { recursive: true, force: true });
 });
 
-// --- install dry-run gemini-cli (json strategy, user scope) ---
+// --- install dry-run antigravity (json strategy, user scope) ---
+// Antigravity gained an mcpConfig (~/.gemini/config/mcp_config.json,
+// merge-mcpServers-json). Retargeted here from the removed gemini-cli to keep
+// coverage of the user-scope HOME-override JSON-merge path.
 
-test('install dry-run gemini-cli with HOME override', () => {
+test('install dry-run antigravity with HOME override', () => {
   const homeOverride = mkTmp();
   const r = runCLI(
-    ['--json', 'install', 'dry-run', 'gemini-cli', '--scope', 'user', '--via', 'npx'],
+    ['--json', 'install', 'dry-run', 'antigravity', '--scope', 'user', '--via', 'npx'],
     { env: { HOME: homeOverride, USERPROFILE: homeOverride } },
   );
   assert.equal(r.status, 0, r.stderr);

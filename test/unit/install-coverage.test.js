@@ -18,10 +18,10 @@ function mkRoot() {
 
 test('listInstallTargets — returns only IDEs with an mcpConfig integration', () => {
   const ts = listInstallTargets();
-  // From registry: claude-code, cursor, codex, gemini-cli, windsurf have mcpConfig.
-  // copilot, antigravity, trae do NOT.
+  // From registry: claude-code, cursor, codex, windsurf, antigravity have mcpConfig.
+  // copilot, trae do NOT.
   const ids = ts.map(t => t.id).sort();
-  assert.deepEqual(ids, ['claude-code', 'codex', 'cursor', 'gemini-cli', 'windsurf']);
+  assert.deepEqual(ids, ['antigravity', 'claude-code', 'codex', 'cursor', 'windsurf']);
   // Guard: every returned target has capabilities.mcpConfig === true
   for (const t of ts) assert.equal(t.capabilities.mcpConfig, true);
 });

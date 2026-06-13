@@ -1,7 +1,7 @@
 ---
 name: revisar
 description: Solicita revisão entre IAs de planos de fase a partir de CLIs externas
-argument-hint: "--phase N [--gemini] [--claude] [--codex] [--all]"
+argument-hint: "--phase N [--claude] [--codex] [--all]"
 allowed-tools:
   - Read
   - Write
@@ -11,7 +11,7 @@ allowed-tools:
 ---
 
 <objective>
-Invoca CLIs externas de IA (Gemini, Claude, Codex) para revisar planos de fase de forma independente.
+Invoca CLIs externas de IA (Claude, Codex) para revisar planos de fase de forma independente.
 Produz um REVIEWS.md estruturado com feedback por revisor que pode ser incorporado de volta ao
 planejamento via /planejar-fase --reviews.
 
@@ -26,7 +26,6 @@ planejamento via /planejar-fase --reviews.
 Número da fase: extraído de $ARGUMENTS (obrigatório)
 
 **Flags:**
-- `--gemini` — Incluir revisão do Gemini CLI
 - `--claude` — Incluir revisão do Claude CLI (usa sessão separada)
 - `--codex` — Incluir revisão do Codex CLI
 - `--all` — Incluir todos os CLIs disponíveis

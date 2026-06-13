@@ -3,10 +3,10 @@
 // Defense in depth: catches per-target path resolution / cleanup regressions
 // in the unit suite before a PR ever reaches the (slower, costlier) 72-run CI.
 //
-// Coverage (10 tests):
+// Coverage (9 tests):
 //   1× registry has every expected ID
 //   1× every target exposes >=1 capability
-//   8× per-target round-trip (install writes >=1 file; remove leaves 0 stubs
+//   7× per-target round-trip (install writes >=1 file; remove leaves 0 stubs
 //      under capability dirs — rules-aggregated stays by design)
 //
 // Skips mode=copy: sync.test.js already covers it for claude-code; logic is
@@ -25,7 +25,7 @@ import { syncTo, removeFrom } from '../../src/core/sync.js';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const SAMPLE_KIT = path.resolve(__dirname, '../fixtures/sample-kit');
 
-const ALL_IDS = ['claude-code', 'cursor', 'codex', 'gemini-cli', 'copilot', 'windsurf', 'antigravity', 'trae'];
+const ALL_IDS = ['claude-code', 'cursor', 'codex', 'copilot', 'windsurf', 'antigravity', 'trae'];
 
 async function withTmpDir(fn) {
   const tmp = await fs.mkdtemp(path.join(os.tmpdir(), 'kit-mcp-rt-'));
@@ -61,7 +61,7 @@ async function countStubs(dir) {
   return count;
 }
 
-test('all 8 targets — registry has every expected ID', () => {
+test('all 7 targets — registry has every expected ID', () => {
   const ids = Object.keys(TARGETS).sort();
   assert.deepEqual(
     ids,
@@ -70,7 +70,7 @@ test('all 8 targets — registry has every expected ID', () => {
   );
 });
 
-test('all 8 targets — getTarget succeeds and exposes >=1 capability', () => {
+test('all 7 targets — getTarget succeeds and exposes >=1 capability', () => {
   for (const id of ALL_IDS) {
     const t = getTarget(id);
     const caps = ['rules', 'agents', 'commands', 'skills', 'framework', 'hooks'];

@@ -78,8 +78,8 @@ test('sync targets returns target list with capability flags', () => {
   assert.equal(r.status, 0, r.stderr);
   const targets = JSON.parse(r.stdout);
   assert.ok(Array.isArray(targets));
-  // 8 IDEs in registry (registry.test.js verifies this)
-  assert.equal(targets.length, 8);
+  // 7 IDEs in registry (registry.test.js verifies this)
+  assert.equal(targets.length, 7);
 });
 
 test('install dry-run claude-code emits ok=true preview', () => {
