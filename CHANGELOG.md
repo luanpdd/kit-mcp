@@ -6,6 +6,40 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.38.0] - 2026-06-13
+
+### Changed — Suporte ao Google Antigravity 2.0 (IDE + CLI)
+
+- **Antigravity target agora integra MCP.** `kit install antigravity` passa a registrar o
+  server no config central compartilhado do Antigravity 2.0 (lido tanto pela IDE quanto pela
+  CLI): `~/.gemini/config/mcp_config.json` (chave `mcpServers`, estratégia
+  `merge-mcpServers-json`). Antes `mcpConfig` era `null` e o install recusava o target.
+- **Paths do Antigravity corrigidos** contra documentação oficial (Google codelabs
+  developer-knowledge-mcp / authoring-skills / autonomous-pipelines + Gemini API "Building
+  Managed Agents" + Google AI Developers Forum — verificado 2026-06):
+  - `skills` → `.agents/skills/<name>/SKILL.md` (antes apontava errado para `.agents/workflows/`)
+  - `commands` (slash-commands) → `.agents/workflows/<name>.md`, invocados como `/<name>` (antes `null`)
+  - `rules` → `.agents/rules/*.md` (inalterado)
+  - `agents` → `null` por design: o Antigravity não tem registry de agents por-arquivo como
+    `.claude/agents/`; seu `.agents/agents.md` é um arquivo único de personas fixas, não um
+    destino para os agents nomeados do kit.
+- Um único target `antigravity` cobre IDE **e** CLI — ambos leem o mesmo
+  `~/.gemini/config/mcp_config.json`. Nenhum target `antigravity-cli` separado é necessário.
+
+### Removed
+
+- **Target `gemini-cli` removido.** O acesso consumer (Google AI Pro/Ultra/free) do Gemini CLI
+  encerra em **2026-06-18**, migrando para o Antigravity CLI (`agy`) — anúncio oficial no Google
+  Developers Blog ("Transitioning Gemini CLI to Antigravity CLI"). Use o target `antigravity`.
+  Nota: usuários enterprise/OSS/API-key do Gemini CLI mantêm acesso e o convention
+  `~/.gemini/settings.json` segue válido; esta remoção é escolha de produto do kit, não uma
+  quebra técnica forçada.
+- **Flag `--gemini` removida de `/revisar`** (e do workflow `review.md`). O cross-review entre
+  IAs agora usa apenas `--claude` e `--codex` (o `review.md` deixou de detectar/invocar o binário
+  `gemini`). Menções ao "Gemini CLI" como runtime não-Claude em `model-profiles.md` /
+  `workflow-generator.md` passaram a referir o Antigravity CLI; o smoke matrix do CI (`ci.yml`)
+  deixou de incluir o alvo `gemini-cli`.
+
 ## [1.37.0] - 2026-06-05
 
 ### Added — Cost Tracking Suite (Phase 172)

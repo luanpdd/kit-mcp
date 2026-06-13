@@ -528,7 +528,7 @@ Quer que eu execute 1x agora pra validar? (y/n)
 
 ## Compat
 
-Full em Claude Code Max/Team/Enterprise (tool `Workflow` exigida). Cursor/Codex/Gemini/Copilot/Windsurf/Antigravity/Trae ainda não têm Dynamic Workflows — se invocado nesses, retorne erro explícito ("requires Claude Code Opus 4.8+ on Max/Team/Enterprise plan").
+Full em Claude Code Max/Team/Enterprise (tool `Workflow` exigida). Cursor/Codex/Copilot/Windsurf/Antigravity/Trae ainda não têm Dynamic Workflows — se invocado nesses, retorne erro explícito ("requires Claude Code Opus 4.8+ on Max/Team/Enterprise plan").
 
 ## Ver também
 

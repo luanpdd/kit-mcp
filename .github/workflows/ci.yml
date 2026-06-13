@@ -112,7 +112,7 @@ jobs:
       matrix:
         os: [ubuntu-latest, macos-latest, windows-latest]
         node: ['20', '22', '24']
-        target: [claude-code, cursor, codex, gemini-cli, copilot, windsurf, antigravity, trae]
+        target: [claude-code, cursor, codex, copilot, windsurf, antigravity, trae]
 
     steps:
       - uses: actions/checkout@v6
@@ -280,8 +280,8 @@ jobs:
       - name: Sync round-trip
         shell: bash
         run: |
-          # DX-15-03: parameterized by matrix.target — exercises all 8 IDEs
-          # (claude-code, cursor, codex, gemini-cli, copilot, windsurf, antigravity, trae)
+          # DX-15-03: parameterized by matrix.target — exercises all 7 IDEs
+          # (claude-code, cursor, codex, copilot, windsurf, antigravity, trae)
           # in CI. Generic contract (file count, stub cleanup) — claude-code-specific
           # asserts (.claude/framework, CLAUDE.md, example-reviewer.md) live in the
           # "Mirror-tree safety" step which is gated to target == 'claude-code'.
@@ -296,9 +296,9 @@ jobs:
           echo "OK: sync install ${{ matrix.target }} wrote $FILES_AFTER_INSTALL file(s)"
           node bin/cli.js sync remove ${{ matrix.target }} --project-root .ci-test
           # Post-remove: zero stubs remain in capability dirs (agents/commands/skills/framework/hooks).
-          # Rules-aggregated files (CLAUDE.md, AGENTS.md, GEMINI.md, .github/copilot-instructions.md
+          # Rules-aggregated files (CLAUDE.md, AGENTS.md, .github/copilot-instructions.md
           # and rules/ multi dirs) are NOT removed by design — single source for rules, possibly
-          # user-edited. Registry-driven check covers all 8 targets uniformly.
+          # user-edited. Registry-driven check covers all 7 targets uniformly.
           STUBS_LEFT=$(node --input-type=module -e "
             import { getTarget } from './src/core/registry.js';
             import fs from 'node:fs';
