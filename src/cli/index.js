@@ -17,6 +17,7 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { listKit, searchKit, findItem } from '../core/kit.js';
+import { listPacks, resolvePacks, packResourceCounts } from '../core/packs.js';
 import { listTargets } from '../core/registry.js';
 import { syncTo, statusOf, removeFrom, summarize } from '../core/sync.js';
 import { watchKit, detectExistingTargets } from '../core/watch.js';
@@ -217,6 +218,7 @@ sync.command('status <target>')
 sync.command('install [target]')
   .option('--project-root <path>')
   .option('--mode <mode>', 'reference | copy', 'reference')
+  .option('--packs <list>', 'Comma-separated content packs to install (e.g. core,legacy). Default: all. See `kit pack list`.')
   .option('--dry-run')
   .option('--quiet', 'Suppress per-file progress; keep final summary')
   .action(async (target, opts) => {
@@ -232,6 +234,7 @@ sync.command('install [target]')
     const runSync = (onProgress) => syncTo(target, {
       projectRoot: opts.projectRoot,
       mode: opts.mode,
+      packs: opts.packs,
       dryRun: opts.dryRun,
       onProgress: wrapOnProgress(opts.quiet ? null : onProgress),
     });
@@ -269,6 +272,71 @@ sync.command('watch [targets...]')
     const shutdown = async () => { log('shutting down...'); await w.stop(); process.exit(0); };
     process.on('SIGINT',  shutdown);
     process.on('SIGTERM', shutdown);
+  });
+
+// --- pack (content packs: install a subset of the kit) ---
+function sortedPackIds(catalog) {
+  const ids = Object.keys(catalog);
+  return ids.sort((a, b) => (a === 'core' ? -1 : b === 'core' ? 1 : a.localeCompare(b)));
+}
+const pack = program.command('pack').description('Content packs — install a subset of the kit (core + opt-in domains).');
+pack.command('list')
+  .description('List available content packs with resource counts.')
+  .action(async () => {
+    const [{ packs: catalog }, kit] = await Promise.all([listPacks(), listKit()]);
+    const rows = sortedPackIds(catalog).map((id) => {
+      const p = catalog[id];
+      const counts = packResourceCounts(p, kit);
+      return {
+        id,
+        name: p.name,
+        kind: p.kind,
+        removable: p.removable !== false,
+        requires: p.requires ?? [],
+        recommends: p.recommends ?? [],
+        counts,
+      };
+    });
+    out(rows, (v) => {
+      let s = `\n${c.bold('Content packs')} (${v.length})\n\n`;
+      for (const r of v) {
+        const tag = r.kind === 'core' ? c.yellow('[core, required]') : (r.removable ? c.dim('[opcional]') : c.dim('[fixo]'));
+        const req = r.requires.length ? c.dim(` · requires: ${r.requires.join(', ')}`) : '';
+        s += `${c.bold(r.id.padEnd(15))} ${tag}${req}\n`;
+        s += `  ${c.dim(`${r.counts.agents} agents · ${r.counts.commands} commands · ${r.counts.skills} skills · ${r.counts.workflows} wf`)}\n`;
+        s += `  ${r.name}\n\n`;
+      }
+      s += c.dim('Instale um subconjunto: kit sync install <ide> --packs core,legacy,observability\n');
+      return s;
+    });
+  });
+pack.command('info <id>')
+  .description('Show one pack manifest, resolved dependencies, and members.')
+  .action(async (id) => {
+    const { packs: catalog } = await listPacks();
+    const p = catalog[id];
+    if (!p) return fail(`Pack não encontrado: ${id}. Veja \`kit pack list\`.`);
+    let resolved;
+    try { resolved = resolvePacks([id], catalog); }
+    catch (e) { return fail(e.message); }
+    out({ pack: p, resolved }, (v) => {
+      const r = v.resolved;
+      let s = `\n${c.bold(v.pack.name)} (${v.pack.id})  ${c.dim('v' + v.pack.version)}\n`;
+      s += `${v.pack.description}\n\n`;
+      s += `kind: ${v.pack.kind} · removable: ${v.pack.removable !== false}\n`;
+      if ((v.pack.requires ?? []).length) s += `requires: ${v.pack.requires.join(', ')}\n`;
+      if ((v.pack.recommends ?? []).length) s += `recommends: ${v.pack.recommends.join(', ')}\n`;
+      if ((v.pack.provides ?? []).length) s += `provides: ${v.pack.provides.join(', ')}\n`;
+      s += `\n${c.bold('Instala (com deps):')} ${r.effective.join(', ')}\n`;
+      if (r.added.length) s += c.dim(`(auto-incluídos por dependência: ${r.added.join(', ')})\n`);
+      for (const w of r.warnings) s += c.yellow(`! ${w}\n`);
+      const res = v.pack.resources ?? {};
+      for (const bucket of ['agents', 'commands', 'skills', 'workflows']) {
+        const list = res[bucket] ?? [];
+        if (list.length) s += `\n${c.bold(bucket)} (${list.length}): ${c.dim(list.join(', '))}\n`;
+      }
+      return s + '\n';
+    });
   });
 
 // --- reverse-sync ---

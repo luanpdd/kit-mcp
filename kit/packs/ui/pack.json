@@ -1,0 +1,49 @@
+{
+  "schemaVersion": 1,
+  "id": "ui",
+  "name": "UI & Design",
+  "version": "1.39.0",
+  "description": "Fluência de design para IA: contrato UI-SPEC, verificação, auditoria visual, designer guiado por MARCA.md. Stack-agnostic (React/shadcn).",
+  "publisher": "luanpdd",
+  "kind": "domain",
+  "removable": true,
+  "compat": {
+    "kitMcp": ">=1.39.0",
+    "targets": [
+      "claude-code",
+      "cursor",
+      "codex",
+      "windsurf",
+      "antigravity",
+      "copilot",
+      "trae"
+    ]
+  },
+  "requires": [],
+  "recommends": [],
+  "conflicts": [],
+  "provides": [],
+  "resources": {
+    "agents": [
+      "designer-ui",
+      "ui-auditor",
+      "ui-checker",
+      "ui-researcher"
+    ],
+    "commands": [
+      "fase-ui",
+      "revisar-ui"
+    ],
+    "skills": [
+      "ui-anti-padroes-ia",
+      "ui-contexto-produto",
+      "ui-cor-estrategia",
+      "ui-critica-auditoria",
+      "ui-motion-funcional",
+      "ui-ritmo-espacial",
+      "ui-tipografia"
+    ],
+    "workflows": [],
+    "hooks": []
+  }
+}

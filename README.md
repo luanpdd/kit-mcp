@@ -73,6 +73,34 @@ npx -y @luanpdd/kit-mcp init
 
 ---
 
+## Content Packs — instale só o que você usa (v1.39+)
+
+O kit é dividido em **packs autossuficientes** (cada um traz tudo que precisa — sem dependência
+entre packs). A base (`core`) é sempre instalada; o resto é opcional. Não usa Supabase? Não instale
+o pack `supabase` e nenhum recurso Supabase é projetado.
+
+| Pack | O que é |
+|---|---|
+| `core` | **Obrigatório.** Framework de fases (discutir→planejar→executar→verificar), debugging, mapeamento. |
+| `supabase` | Mundo Supabase completo: schema/RLS/migrations/Edge Functions/Auth/Storage/Realtime + B2B multi-tenant + auditoria de dados distribuídos. |
+| `observability` | OpenTelemetry, golden signals, SLO/burn-rate, toil, postmortem, PRR. |
+| `legacy` | Characterization tests, seams, refactor seguro, duplicação (Feathers). |
+| `ui` | Fluência de design para IA: UI-SPEC, auditoria visual, designer. |
+| `cost-workflow` | Cost tracking (USD/tokens) + gerador de Dynamic Workflows. |
+
+```bash
+npx -y @luanpdd/kit-mcp pack list                 # ver o catálogo + contagens
+npx -y @luanpdd/kit-mcp pack info supabase        # detalhe de um pack
+
+# instalar tudo MENOS Supabase:
+npx -y @luanpdd/kit-mcp sync install claude-code --packs core,observability,legacy,ui,cost-workflow
+
+# sem --packs = kit inteiro (comportamento padrão, sem breaking change):
+npx -y @luanpdd/kit-mcp sync install claude-code
+```
+
+---
+
 ## Comandos diários
 
 | Comando | Para quê |

@@ -1,6 +1,6 @@
 {
-  "version": "1.38.0",
-  "timestamp": "2026-06-13T21:47:15.976Z",
+  "version": "1.39.0",
+  "timestamp": "2026-06-14T01:50:06.956Z",
   "files": {
     "COMANDOS.md": "d24ec61a6ec35db314cc5f2ae287bfb927b794789c8f1d558c55862f5e6534b2",
     "COMPATIBILITY.md": "e6c180cd98b37b5b1e3f2d4e81c2ddef9c214d252603fb6ed0cb782bfee6d0cd",
@@ -316,6 +316,13 @@
     "hooks/sidecar-tool-publisher.js": "b8357ae80e82bfc875acb6c616cf82a943a2d77cf2ceba2f23a50b7d1f335f2d",
     "hooks/statusline.js": "65c0113331f6de219e2224cb2403fa7e4e9202441895e48797732b20b0f2b48b",
     "hooks/workflow-guard.js": "197f1921c971236174f2f7cd65ae51e36ce5ac0ecbeac25c518ca379525fb0f6",
+    "packs/core/pack.json": "8639aa9c7716e4affd654f31fb85d8e17c6bd4fede59f0829fbbba77df1b47c4",
+    "packs/cost-workflow/pack.json": "3b46576c024fcd9fc912f4defc4705f46272726a02df51fc1e00e7cae5b0d29c",
+    "packs/legacy/pack.json": "f4ab6afa6929ddaf7228cade22c479e886dab3cba6894638e7d48be4c5057339",
+    "packs/observability/pack.json": "2211e361199edfcde4fc002368fd4293ccecd8eafa912d8b20ca1ba915feb074",
+    "packs/registry.json": "23e2ecce1717bd5c370ee31cbdf37c6a283e3afdc71decc2c7a983b7358c5707",
+    "packs/supabase/pack.json": "9819f0396272ef034a464557e1e6984e23e3dc1d2af90e1b9e00e36fba3ad218",
+    "packs/ui/pack.json": "333d3fc7cd7f7372d74b6f950612f75195201b15567ce7137db1b5058efbeba9",
     "settings.json": "39e3e9bd40bc30a00c1790071462651e8ba6e52f5f16455a8f7bbacd7bde1827",
     "skills/_shared-dados-distribuidos/glossary.md": "13d5cdb670411cad9b8946bb5fa3cac94dd613301295f37ca308984fcf2e42d0",
     "skills/_shared-legacy/glossary.md": "7dabc31ddd3b2b597f76d1a55ef51b0bd59315aaef59245873c224c4fd21c86d",

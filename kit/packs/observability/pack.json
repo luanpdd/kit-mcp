@@ -1,0 +1,90 @@
+{
+  "schemaVersion": 1,
+  "id": "observability",
+  "name": "Observabilidade & SRE",
+  "version": "1.39.0",
+  "description": "OpenTelemetry, golden signals, SLO/burn-rate, toil, postmortem, PRR, cascading failures, load shedding, release audit. Stack-agnostic.",
+  "publisher": "luanpdd",
+  "kind": "domain",
+  "removable": true,
+  "compat": {
+    "kitMcp": ">=1.39.0",
+    "targets": [
+      "claude-code",
+      "cursor",
+      "codex",
+      "windsurf",
+      "antigravity",
+      "copilot",
+      "trae"
+    ]
+  },
+  "requires": [],
+  "recommends": [],
+  "conflicts": [],
+  "provides": [],
+  "resources": {
+    "agents": [
+      "burn-rate-forecaster",
+      "cascading-failures-auditor",
+      "golden-signals-instrumenter",
+      "incident-investigator",
+      "load-shedding-instrumenter",
+      "observability-coverage-auditor",
+      "observability-instrumenter",
+      "omm-auditor",
+      "payload-capture-instrumenter",
+      "postmortem-writer",
+      "prr-conductor",
+      "release-pipeline-auditor",
+      "slo-engineer",
+      "toil-auditor"
+    ],
+    "commands": [
+      "auditar-cascading",
+      "auditar-observabilidade",
+      "auditar-observabilidade-cobertura",
+      "auditar-observabilidade-cobertura-workflow",
+      "auditar-release",
+      "auditar-toil",
+      "burn-rate-status",
+      "capturar-payloads",
+      "definir-slo",
+      "golden-signals",
+      "instrumentar-fase",
+      "investigar-producao",
+      "load-shedding",
+      "observabilidade",
+      "postmortem",
+      "prr",
+      "risk-budget",
+      "sre"
+    ],
+    "skills": [
+      "blameless-postmortems",
+      "burn-rate-alerting",
+      "cascading-failures",
+      "core-analysis-loop",
+      "distributed-tracing",
+      "eliminating-toil",
+      "event-based-slos",
+      "four-golden-signals",
+      "hermetic-builds",
+      "load-shedding-graceful-degradation",
+      "observability-driven-development",
+      "observability-maturity-model",
+      "opentelemetry-standard",
+      "production-readiness-review",
+      "release-engineering",
+      "retry-strategies",
+      "sre-risk-management",
+      "structured-events",
+      "telemetry-pipelines",
+      "telemetry-sampling"
+    ],
+    "workflows": [
+      "auditar-observabilidade-cobertura"
+    ],
+    "hooks": []
+  }
+}
