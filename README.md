@@ -7,7 +7,7 @@
 
 > Um kit de **agentes, comandos e skills** prontos para Claude Code, Cursor, Codex, Windsurf, Antigravity e outros — destilado da documentação oficial do Supabase, livros canônicos de engenharia, e técnicas comprovadas de orquestração agêntica.
 >
-> Entregue como **MCP server**. Você usa direto via `npx`, sem instalar nada.
+> Entregue como **MCP server**, **modular**: instale só os **packs** que você usa (Supabase, Observabilidade, Legacy, UI…) — o resto não entra no seu projeto. Use direto via `npx`, sem instalar nada.
 
 <!-- AUTOGEN-COUNTS-START -->
 **Bundled workflow:** 74 agents · 94 commands · 100 skills · 23 gates
@@ -77,7 +77,7 @@ npx -y @luanpdd/kit-mcp init
 
 O kit é dividido em **packs autossuficientes** (cada um traz tudo que precisa — sem dependência
 entre packs). A base (`core`) é sempre instalada; o resto é opcional. Não usa Supabase? Não instale
-o pack `supabase` e nenhum recurso Supabase é projetado.
+o pack `supabase` e nenhum recurso Supabase é projetado no seu `.claude/`.
 
 | Pack | O que é |
 |---|---|
@@ -88,16 +88,45 @@ o pack `supabase` e nenhum recurso Supabase é projetado.
 | `ui` | Fluência de design para IA: UI-SPEC, auditoria visual, designer. |
 | `cost-workflow` | Cost tracking (USD/tokens) + gerador de Dynamic Workflows. |
 
-```bash
-npx -y @luanpdd/kit-mcp pack list                 # ver o catálogo + contagens
-npx -y @luanpdd/kit-mcp pack info supabase        # detalhe de um pack
+### Ver os packs disponíveis
 
-# instalar tudo MENOS Supabase:
+```bash
+npx -y @luanpdd/kit-mcp pack list                 # catálogo: cada pack + nº de agents/skills/commands
+npx -y @luanpdd/kit-mcp pack info supabase        # detalhe de um pack (o que instala, deps, removível)
+```
+
+### Instalar — escolher os packs
+
+```bash
+# sem --packs = kit inteiro (padrão, sem breaking change):
+npx -y @luanpdd/kit-mcp sync install claude-code
+
+# só a base + os packs que você quer (ex.: tudo MENOS Supabase):
 npx -y @luanpdd/kit-mcp sync install claude-code --packs core,observability,legacy,ui,cost-workflow
 
-# sem --packs = kit inteiro (comportamento padrão, sem breaking change):
-npx -y @luanpdd/kit-mcp sync install claude-code
+# só o essencial Supabase:
+npx -y @luanpdd/kit-mcp sync install claude-code --packs core,supabase
 ```
+
+### Trocar os packs depois
+
+Reprojete com o novo conjunto. Para **limpar** os arquivos de packs que você está tirando, remova e
+reinstale:
+
+```bash
+npx -y @luanpdd/kit-mcp sync remove claude-code
+npx -y @luanpdd/kit-mcp sync install claude-code --packs core,observability   # novo conjunto
+```
+
+> `--packs` vale para qualquer IDE (`cursor`, `codex`, `windsurf`, `antigravity`, `copilot`, `trae`).
+> `add`/`remove` incremental de pack é roadmap (RFC `docs/rfc-content-packs.md`).
+
+### Consciência de uso e custo (v1.40+)
+
+Cada agent/skill declara **`cost_tier: leve | medio | pesado`** no frontmatter — você vê o peso no
+seletor da IDE **antes** de acionar (ex.: `executor` é `pesado` porque encadeia subagentes). As
+descriptions seguem o padrão *outcome-first* (o que entrega + quando usar + sinal de custo). Para o
+gasto real em USD/tokens, use o pack `cost-workflow`: `npx -y @luanpdd/kit-mcp cost today`.
 
 ---
 
@@ -105,11 +134,11 @@ npx -y @luanpdd/kit-mcp sync install claude-code
 
 | Comando | Para quê |
 |---|---|
-| `kit-mcp logs --tail --follow` | Ver tool calls do servidor em tempo real (JSONL em `~/.kit-mcp/logs/`) |
+| `kit-mcp logs --follow` | Ver tool calls do servidor em tempo real (JSONL em `~/.kit-mcp/logs/`); `--tail <n>` ajusta o backlog |
 | `kit-mcp status` | p50/p95/p99 + error rate + sidecar status |
 | `kit-mcp doctor` | Diagnóstico completo (versão, sidecar, hooks, IDE config, log dir) |
 | `kit-mcp inspect` | TUI live mostrando request/response do MCP |
-| `kit-mcp replay list \| show <id>` | Inspecionar payloads de agents gravados |
+| `kit-mcp replay list` · `replay show <id>` | Inspecionar payloads de agents gravados |
 
 ---
 
@@ -212,7 +241,7 @@ apenas para o golden test de paridade). Preserva o budget de 6 deps enforçado e
 - **`kit sync`** projeta o conteúdo no formato nativo do IDE — funciona offline e o IDE só precisa dos arquivos.
 - **`kit-mcp` (MCP server)** roda como subprocess do IDE e expõe 14 tools (`kit`, `sync`, `reverse-sync`, `gates`, `forensics`, `install`, `metrics-snapshot`, `auto-install`, `ack-restart`, `cost-today`, `cost-session`, `cost-blocks`, `cost-phase`, `cost-estimate`).
 
-**Sem output no terminal ao rodar `kit-mcp`?** Não é bug. A spec MCP proíbe stdout fora do JSON-RPC. Use `kit-mcp logs --follow` ou o sidecar UI em `http://localhost:7878`.
+**Sem output no terminal ao rodar `kit-mcp`?** Não é bug. A spec MCP proíbe stdout fora do JSON-RPC. Use `kit-mcp logs --follow` ou o sidecar UI (porta auto-pick na faixa 7100-7199, impressa no stderr ao iniciar).
 
 ### Stable API v1.0+ desde v1.13
 
@@ -244,9 +273,10 @@ Skills, agents e commands são em PT-BR. Termos técnicos canônicos (RLS, SLO, 
 
 ```
 kit/
-├── agents/      67 agents executáveis (planner, executor, debugger, supabase-rls-hardener, supabase-edge-fn-tester, …)
-├── commands/    89 slash-commands (/discutir-fase, /planejar-fase, /executar-fase, …)
-├── skills/      81 skills consultáveis (supabase-rls-policies, supabase-edge-functions-auth, supabase-edge-runtime-builtins, …)
+├── agents/      74 agents executáveis (planner, executor, debugger, supabase-rls-hardener, …) — cada um com cost_tier
+├── commands/    94 slash-commands (/discutir-fase, /planejar-fase, /executar-fase, …)
+├── skills/      100 skills consultáveis (supabase-rls-policies, supabase-edge-functions-auth, …) — cada uma com cost_tier
+├── packs/       manifestos dos Content Packs (core, supabase, observability, legacy, ui, cost-workflow)
 ├── framework/   workflows e templates que os agents delegam
 └── hooks/       PostToolUse hooks (sidecar-tool-publisher, etc)
 ```
@@ -259,8 +289,11 @@ kit/
 
 ### Quando NÃO usar
 
-- Você não usa Supabase, Claude Code/Cursor, nem trabalha com agents — provavelmente outro kit serve melhor
-- Você quer um framework genérico tipo LangChain — kit-mcp é opinionated, em PT-BR, focado no fluxo Supabase + agêntico
+- Você não usa Claude Code/Cursor/Codex (ou similar) nem trabalha com agents — provavelmente outro kit serve melhor
+- Você quer um framework genérico tipo LangChain — kit-mcp é opinionated e em PT-BR
+
+> **Não usa Supabase?** Ainda serve: instale `--packs core,observability,legacy,ui,cost-workflow` e
+> nenhum recurso Supabase entra. O pack `supabase` é opcional, não o produto inteiro.
 
 ---
 
