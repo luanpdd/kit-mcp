@@ -1,6 +1,7 @@
 ---
 name: supabase-social-oauth
-description: Use ao implementar login social com OAuth no Supabase — signInWithOAuth, PKCE callback, signInWithIdToken, Google One Tap e providers customizados.
+cost_tier: leve
+description: Implementa login social OAuth no Supabase — signInWithOAuth com PKCE callback, signInWithIdToken, Google One Tap, FedCM, Apple, LinkedIn OIDC e providers customizados.
 ---
 
 # Supabase — Social Login / OAuth

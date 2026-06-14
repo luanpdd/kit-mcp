@@ -1,7 +1,8 @@
 ---
 name: supabase-migration-writer
+cost_tier: pesado
 tier: specialized
-description: Escreve migrations Supabase seguindo declarative schema + GRANT+RLS obrigatório + style guide. Template v1.23 com 5 blocos obrigatórios em CREATE TABLE. Recebe draft upstream via Task()…
+description: Gera arquivo SQL de migration Supabase com GRANT+RLS granular, declarative schema e style guide v1.23. Use ao criar/alterar tabelas. Aceita draft SQL via Task(). (pesado)
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__list_tables, mcp__supabase__apply_migration
 color: yellow
 ---

@@ -1,6 +1,7 @@
 ---
 name: supabase-pgtap-testing
-description: Use ao escrever testes de database/Edge Function em Supabase — pgTAP extension (TAP…
+cost_tier: leve
+description: Guia de testes shift-left para Supabase — pgTAP (schema, RLS, PG functions via `supabase test db`) + Deno test (Edge Functions). Inclui characterization tests para PG legado.
 ---
 
 # Supabase — pgTAP & Deno Testing

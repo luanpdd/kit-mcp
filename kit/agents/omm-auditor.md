@@ -1,7 +1,8 @@
 ---
 name: omm-auditor
+cost_tier: pesado
 tier: specialized
-description: Pontua projeto contra Observability Maturity Model (1-5 em 5 capacidades — resiliência, qualidade, complexidade, cadência, comportamento). Output OMM-REPORT.md acionável.
+description: Pontua maturidade de observability (1-5, 5 capacidades — resiliência, qualidade, complexidade, cadência, comportamento) e gera OMM-REPORT.md com trend vs marco anterior. Use em audit periódica.
 tools: Read, Write, Bash, Grep, Glob, mcp__supabase__execute_sql
 color: purple
 ---

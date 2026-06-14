@@ -1,7 +1,8 @@
 ---
 name: evolution-go-integrator
+cost_tier: pesado
 tier: specialized
-description: Materializa integração WhatsApp (Evolution Go ou Meta Cloud API) em Supabase B2B multi-tenant…
+description: Gera tabelas org_whatsapp_configs + whatsapp_messages, webhook Edge Function e send queue pgmq para WhatsApp (Evolution Go ou Meta Cloud API) em Supabase B2B multi-tenant. (pesado — despacha
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion, mcp__supabase__execute_sql
 color: green
 ---

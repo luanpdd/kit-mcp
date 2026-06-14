@@ -1,6 +1,7 @@
 ---
 name: distributed-tracing
-description: Use ao instrumentar tracing — trace_id/span_id/parent_id, propagar W3C TraceContext via header traceparent, stitching além de RPCs (batch, lambda, queue).
+cost_tier: leve
+description: Guia de instrumentacao OTel para tracing distribuido — trace_id/span_id/parent_id, propagacao W3C TraceContext via traceparent, stitching cross-service, queue (pgmq/SQS), batch e lambda.
 ---
 
 # Observabilidade — Distributed Tracing

@@ -1,6 +1,7 @@
 ---
 name: supabase-auth-hardening
-description: Use ao configurar SMTP customizado, templates de email, redirect URLs, rate limits, CAPTCHA, segurança de senha e audit logs de autenticação no Supabase.
+cost_tier: leve
+description: Configura hardening de auth Supabase — SMTP customizado, email templates, redirect URLs seguras, rate limits, CAPTCHA (hCaptcha/Turnstile), senha forte e audit logs. Use ao endurecer auth em
 ---
 
 # Supabase — Hardening de Autenticação (Config, SMTP, Rate Limits, CAPTCHA)

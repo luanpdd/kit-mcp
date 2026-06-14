@@ -1,6 +1,7 @@
 ---
 name: legacy-shotgun-surgery
-description: Use ao detectar mesma mudança espalhada em N lugares (cap 21 Feathers) — extract before modify para reduzir change point. Modernização 2026…
+cost_tier: leve
+description: Detecta duplicação sintática (jscpd/ast-grep) e semântica (embeddings) em N lugares do codebase e guia extract-before-modify (cap 21 Feathers). Use quando mesma mudança ocorre em 3+ pontos.
 ---
 
 # Legacy — Shotgun Surgery

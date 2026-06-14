@@ -1,6 +1,7 @@
 ---
 name: event-based-slos
-description: Use ao definir SLO — SLI event-based (não time-based), sliding window 30d, decouple what/why. SLO-based alerts substituem thresholds brutos como CPU/memória.
+cost_tier: leve
+description: Define SLOs com SLI event-based (não time-based), sliding window 30d e target ≤99.95%. Substitui alertas threshold brutos. Use ao criar SLI, calcular error budget ou decouple what/why.
 ---
 
 # Observabilidade — Event-Based SLOs

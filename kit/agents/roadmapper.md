@@ -1,7 +1,8 @@
 ---
 name: roadmapper
+cost_tier: medio
 tier: core
-description: Cria roadmaps de projeto com divisão de fases, mapeamento de requisitos, derivação de critérios de sucesso e validação de cobertura. Invocado pelo orquestrador /novo-projeto.
+description: Gera ROADMAP.md + STATE.md com fases derivadas dos requisitos, criterios de sucesso observaveis e 100% de cobertura. Use ao iniciar projeto ou milestone novo.
 tools: Read, Write, Bash, Glob, Grep
 color: purple
 ---

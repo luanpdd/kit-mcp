@@ -1,7 +1,8 @@
 ---
 name: debugger
+cost_tier: pesado
 tier: core
-description: Investiga bugs usando método científico, gerencia sessões de debug, trata checkpoints. Invocado pelo orquestrador /depurar.
+description: Depura bugs via método científico — hipótese → teste → causa raiz. Mantém estado persistente de sessão (sobrevive a resets de contexto). Use ao reportar sintoma ou erro. (pesado)
 tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch
 permissionMode: acceptEdits
 color: orange

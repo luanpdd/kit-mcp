@@ -1,7 +1,8 @@
 ---
 name: designer-ui
+cost_tier: pesado
 tier: specialized
-description: Designer de UI para "fluência de design para IA" — carrega contexto de marca (MARCA.md+DESIGN.md), aplica vocabulário canônico, detecta tells de UI gerada por IA e separa marca vs produto.
+description: Produz patches e specs de UI — carrega MARCA.md+DESIGN.md, detecta tells de UI gerada por IA, separa marca vs produto. Use antes de qualquer trabalho de frontend. (pesado)
 tools: Read, Write, Edit, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*, mcp__firecrawl__*, mcp__exa__*
 color: "#0EA5E9"
 ---

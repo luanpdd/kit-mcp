@@ -1,6 +1,7 @@
 ---
 name: whatsapp-conversation-state-machine
-description: Use ao modelar conversação WhatsApp como state machine xstate v5 + persistência em PG…
+cost_tier: leve
+description: State machine xstate v5 para fluxo WhatsApp com 9 estados em Postgres. Entrega tabela conversations, load+transition+save e cron 24h para abandono. Use ao modelar bot, handoff ou automacao B2B.
 ---
 
 # WhatsApp Conversation State Machine — xstate v5 + Postgres

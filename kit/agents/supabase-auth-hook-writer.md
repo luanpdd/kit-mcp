@@ -1,7 +1,8 @@
 ---
 name: supabase-auth-hook-writer
+cost_tier: medio
 tier: specialized
-description: Materializer de Auth Hooks Supabase. Recebe spec (tipo de hook, Postgres vs HTTP, lógica) via Task() e produz função PG com grants canônicos ou Edge Function com Standard Webhooks.
+description: Gera migration SQL com grants canônicos ou Edge Function com Standard Webhooks para Auth Hooks Supabase + config.toml. Use ao implementar custom-access-token, send-email ou before-user-created.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__apply_migration
 color: red
 ---

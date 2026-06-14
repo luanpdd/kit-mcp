@@ -1,6 +1,7 @@
 ---
 name: structured-events
-description: Use ao instrumentar — wide events de alta cardinalidade (1/request), campos canônicos com dot notation, evite logs unstructured e métricas pre-aggregated.
+cost_tier: leve
+description: Guia wide events de alta cardinalidade (1/request) com dot notation OTel. Use ao instrumentar handlers/Edge Functions evitando logs unstructured e métricas pre-aggregated.
 ---
 
 # Observabilidade — Structured Events (Wide Events)

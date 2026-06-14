@@ -1,6 +1,7 @@
 ---
 name: legacy-effect-analysis
-description: Use ao decidir quais testes escrever em código sem testes — effect sketch (cap 11-12 Feathers) rastreia propagação de efeitos do change point para inflection/pinch points onde 1 teste cob…
+cost_tier: leve
+description: Use ao decidir quais testes escrever em código legado — effect sketch (cap 11-12 Feathers) identifica inflection/pinch points onde 1 teste cobre N efeitos. Entrega plano de testes mínimo e eficaz.
 ---
 
 # Legacy — Effect Analysis

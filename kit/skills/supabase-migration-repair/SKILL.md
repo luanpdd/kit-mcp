@@ -1,6 +1,7 @@
 ---
 name: supabase-migration-repair
-description: Use ao diagnosticar e reparar sync errors entre local supabase/migrations/ e remote supabase_migrations.schema_migrations tracking table…
+cost_tier: leve
+description: Diagnostica e repara sync errors Supabase — mismatch entre supabase/migrations/ e tracking table remota, migration repair --status, rollback preview branch, drift de timestamps e erros
 ---
 
 # Supabase — Migration Repair

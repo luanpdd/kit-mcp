@@ -1,7 +1,8 @@
 ---
 name: supabase-social-auth-implementer
+cost_tier: medio
 tier: specialized
-description: Materializer de social login / OAuth em Supabase. Recebe spec (providers, framework, web vs native) via Task() e produz código PKCE, callbacks e componentes hardenados.
+description: Materializa social login OAuth em Supabase — gera signInWithOAuth/signInWithIdToken, rota PKCE /auth/callback e componentes hardenados. Use ao implementar login social (Google, Apple, GitHub).
 tools: Read, Write, Edit, Bash, Grep, Glob, Task
 color: green
 ---

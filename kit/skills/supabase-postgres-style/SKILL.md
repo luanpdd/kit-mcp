@@ -1,6 +1,7 @@
 ---
 name: supabase-postgres-style
-description: Use ao escrever SQL para Postgres/Supabase — snake_case, lowercase reserved, plurais para tabelas e singular para colunas, ISO 8601, CTEs lineares.
+cost_tier: leve
+description: Use ao escrever SQL para Postgres/Supabase. Enforça snake_case, lowercase reserved, tabelas plural, timestamptz (ISO 8601), aliases explícitos e CTEs lineares em queries complexas.
 ---
 
 # Supabase — Postgres Style Guide

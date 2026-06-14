@@ -1,7 +1,8 @@
 ---
 name: release-pipeline-auditor
+cost_tier: medio
 tier: specialized
-description: Audita CI/CD para hermeticidade (lockfile commitado, sem network em build), reprodutibilidade, policy enforcement (signed commits, branch protection, required reviewers). Gera RELEASE-AUDIT.md scored.
+description: Gera RELEASE-AUDIT.md scored em 3 dimensões — hermeticidade (lockfile, sem network em build), reprodutibilidade e policy enforcement (signed commits, branch protection). Use antes de aceitar CI/CD.
 tools: Read, Bash, Grep, Glob, Write
 color: yellow
 ---

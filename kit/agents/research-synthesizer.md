@@ -1,7 +1,8 @@
 ---
 name: research-synthesizer
+cost_tier: medio
 tier: core
-description: Sintetiza outputs de agentes pesquisadores paralelos em SUMMARY.md. Invocado por /novo-projeto após 4 agentes pesquisadores concluírem.
+description: Gera SUMMARY.md unificado sintetizando 4 pesquisas paralelas (STACK, FEATURES, ARCHITECTURE, PITFALLS) com implicações de fases para o roadmap. Use após pesquisas de /novo-projeto concluirem.
 tools: Read, Write, Bash
 color: purple
 ---

@@ -1,6 +1,7 @@
 ---
 name: supabase-pgvector-rag
-description: Use ao implementar RAG com pgvector — create extension vector, dim consistente, HNSW vs IVFFlat, operadores <=>/<#>, RAG with permissions via RLS, chunking.
+cost_tier: leve
+description: Guia pgvector RAG Supabase — schema vector(N), HNSW/IVFFlat, match_documents (security invoker), RAG with permissions via RLS, chunking. Use ao implementar embeddings ou similarity search.
 ---
 
 # Supabase — pgvector + RAG
@@ -145,7 +146,7 @@ Deno.serve(async (req) => {
   const openai = new OpenAI({ apiKey: Deno.env.get('OPENAI_API_KEY') })
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SECRET_KEYS')!
+    JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS')!)['default']
   )
 
   // PT-BR: chunk em pedaços de ~400 tokens com overlap 20%

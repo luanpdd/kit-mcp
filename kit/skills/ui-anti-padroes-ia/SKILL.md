@@ -1,6 +1,7 @@
 ---
 name: ui-anti-padroes-ia
-description: Use ao gerar/revisar UI — catalogo de 18 regras que delatam UI gerada por IA. Tells (gradiente roxo, card aninhado, monocultura Inter) + Qualidade (touch <44px, edge flush). Grep CI-friendly.
+cost_tier: leve
+description: Detecta 18 anti-padroes de UI gerada por IA (tells + qualidade) com greps CI-friendly. Use ao gerar ou revisar UI — zero P0 antes do ship. Verifica gradiente, monocultura, touch <44px e contraste.
 ---
 
 # UI — Anti-padrões IA

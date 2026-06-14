@@ -1,6 +1,7 @@
 ---
 name: rbac-permissions-matrix-supabase
-description: "Use ao modelar RBAC granular em Supabase B2B — permission strings resource:action, matrix N:M roles ↔ permissions, regra \\"user só atribui roles ≤ ao próprio\\", 3 roles built-in (owner…"
+cost_tier: leve
+description: Use ao modelar RBAC granular em Supabase B2B multi-tenant — define permission strings resource:action, matrix N:M roles↔permissions, 3 roles built-in (owner/admin/member) e regra anti-escalation.
 ---
 
 # RBAC Permissions Matrix — Supabase B2B Multi-Tenant

@@ -1,7 +1,8 @@
 ---
 name: postmortem-writer
+cost_tier: medio
 tier: specialized
-description: Gera postmortem blameless 9 seções (cap 15) — modo --from-investigation lê .planning/investigations/<id>.md ou --incident standalone com perguntas guiadas.
+description: Gera postmortem blameless em .planning/postmortems/<id>.md com 9 secoes canonicas (Summary, Root Causes, Timeline UTC). Use apos SEV1/SEV2. Modos — --from-investigation <id> ou --incident.
 tools: Read, Write, Bash, Grep, Glob, AskUserQuestion
 color: red
 ---

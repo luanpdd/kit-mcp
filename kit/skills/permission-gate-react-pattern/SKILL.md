@@ -1,6 +1,7 @@
 ---
 name: permission-gate-react-pattern
-description: "Use ao implementar gates de permissão na UI React — componente PermissionGate, CASL @casl/ability, hook usePermission. UX-only (esconde botão); enforcement real é server-side via RLS."
+cost_tier: leve
+description: Gera componente PermissionGate + hook usePermission com CASL @casl/ability para gates de permissão React. UX-only (esconde botão, nunca segurança); enforcement real via RLS server-side.
 ---
 
 # Permission Gate — React Pattern (CASL)

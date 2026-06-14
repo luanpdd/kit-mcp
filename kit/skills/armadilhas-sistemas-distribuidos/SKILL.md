@@ -1,6 +1,7 @@
 ---
 name: armadilhas-sistemas-distribuidos
-description: Use ao desenhar lógica que depende de relógio (expiração, TTL, ordenação por timestamp) ou distributed lock em Supabase…
+cost_tier: leve
+description: Evita 5 armadilhas — clock skew (now() vs clock_timestamp()), fencing tokens, GC pause, falhas parciais e modelos de sistema. Use ao desenhar TTL, lease ou distributed lock em Supabase/Edge
 ---
 
 # Armadilhas de Sistemas Distribuídos — Clock Skew, Fencing Tokens, GC Pause, Falhas Parciais, Modelos de Sistema

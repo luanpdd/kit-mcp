@@ -1,5 +1,6 @@
 ---
 name: ui-critica-auditoria
+cost_tier: leve
 description: Use ao revisar UI implementada — critica (Nielsen 10 heuristicas + carga cognitiva /8 + tells-IA pass/fail) + auditoria (a11y/perf/theming/responsive P0-P3). Produz REVISAO-UI.md scored.
 ---
 

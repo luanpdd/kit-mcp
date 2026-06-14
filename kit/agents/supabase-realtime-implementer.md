@@ -1,7 +1,8 @@
 ---
 name: supabase-realtime-implementer
+cost_tier: medio
 tier: specialized
-description: Configura Realtime — canais com private:true, naming scope:entity:id, RLS sobre realtime.messages, removeChannel cleanup, triggers DB via realtime.broadcast_changes.
+description: Gera as 3 layers Realtime Supabase — RLS sobre realtime.messages, trigger DB (broadcast_changes ou send) e client subscribe com removeChannel cleanup. Use ao implementar chat, presence ou live
 tools: Read, Write, Edit, Bash, Grep, Glob, mcp__supabase__execute_sql
 color: magenta
 ---

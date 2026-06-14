@@ -1,7 +1,8 @@
 ---
 name: load-shedding-instrumenter
+cost_tier: leve
 tier: specialized
-description: Aplica patches de load shedding em código (queue depth gauge, drop policy, deadline-aware handler via AbortSignal, server-side rate limit). Foca em Edge Functions e serviços HTTP.
+description: Aplica 5 patches de load shedding em Edge Functions e handlers HTTP — concurrency limit + 503, deadline-aware, queue bound, rate limit e slow start. Use ao detectar saturação em serviço
 tools: Read, Write, Edit, Bash, Grep, Glob
 color: orange
 ---

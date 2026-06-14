@@ -1,6 +1,7 @@
 ---
 name: dynamic-workflow-authoring
-description: Use ao gerar/criticar `.workflow.js` (Opus 4.8+). Codifica os 6 patterns canonicos (Classify-Act, Fanout-Synthesize, Adversarial-Verify, Generate-Filter, Tournament, Loop-Done) + API rules.
+cost_tier: pesado
+description: Gera e valida `.workflow.js` para Dynamic Workflows — 6 patterns (Classify-Act, Fanout-Synthesize, Adversarial-Verify, Generate-Filter, Tournament, Loop-Done), anti-patterns fatais e regras de API.
 ---
 
 # Dynamic Workflow Authoring

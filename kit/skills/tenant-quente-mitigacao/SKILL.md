@@ -1,6 +1,7 @@
 ---
 name: tenant-quente-mitigacao
-description: Use ao escalar Postgres multi-tenant em Supabase quando 1 tenant consome >>> que outros (problema "Justin Bieber tenant" do DDIA Ch 6)…
+cost_tier: leve
+description: Mitiga hot tenant multi-tenant Supabase (skew >10× P50) — detecta via 3 métricas 30d, entrega 5 estratégias (rate limit, pool isolado, MV per-tenant, pgmq priority) e particionamento HASH/RANGE.
 ---
 
 # Tenant Quente — Mitigação (DDIA Ch 6 aplicado a Postgres + Supabase)

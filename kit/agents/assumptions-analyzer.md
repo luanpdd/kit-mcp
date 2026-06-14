@@ -1,7 +1,8 @@
 ---
 name: assumptions-analyzer
+cost_tier: medio
 tier: core
-description: Analisa profundamente a codebase para uma fase e retorna hipóteses estruturadas com evidências. Invocado pelo modo assumptions do discutir-fase.
+description: Retorna hipóteses estruturadas com evidências de codebase para uma fase — quais arquivos, padrões e decisões anteriores impactam a implementação. Usar antes de planejar uma fase.
 tools: Read, Bash, Grep, Glob
 color: cyan
 ---

@@ -1,6 +1,7 @@
 ---
 name: escolha-modelo-consistencia
-description: Use ao desenhar feature distribuída em Supabase decidindo o modelo de consistência…
+cost_tier: leve
+description: Guia modelo de consistência em Supabase/Postgres — árvore de decisão linearizabilidade vs causal vs eventual, UNIQUE constraint anti-race, transactional outbox, sagas e CAP/PACELC. Use ao
 ---
 
 # Escolha de Modelo de Consistência — Decision Tree + Patterns Postgres

@@ -1,5 +1,6 @@
 ---
 name: cost-tracking
+cost_tier: leve
 description: Use ao perguntar quanto Claude Code custou — USD/tokens por sessão/fase/bloco 5h. Cobre cost-today/session/blocks/phase/estimate. NÃO é error budget (SLO) — é dinheiro real.
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: telemetry-sampling
-description: Use ao reduzir custo de telemetria — head/tail sampling, by-key, dynamic. 100% errors, by-tier para customers, head-based propaga via traceparent.
+cost_tier: leve
+description: Reduz custo de telemetria sem perder sinal — orienta head/tail sampling, by-key, dynamic e regras canônicas (100% errors, 100% enterprise, gravar _sample_rate). Usar ao configurar OTel sampling.
 ---
 
 # Observabilidade — Telemetry Sampling

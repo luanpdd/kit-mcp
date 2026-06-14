@@ -1,7 +1,8 @@
 ---
 name: org-onboarding-implementer
+cost_tier: pesado
 tier: specialized
-description: Implementa fluxo signup → criar org → primeiro admin → setup wizard. Gera migration SQL atômica (org + members em 1 trx) + Edge Function setup wizard async.
+description: Materializa fluxo signup→org→admin→setup wizard — migration SQL atômica + Edge Function wizard async via Suíte Supabase. Use ao implementar onboarding B2B multi-tenant. (pesado — despacha
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion
 color: green
 ---

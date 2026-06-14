@@ -1,7 +1,8 @@
 ---
 name: planner
+cost_tier: medio
 tier: core
-description: Cria planos de fase executáveis com decomposição de tarefas, análise de dependências e verificação orientada a objetivos. Acionado pelo orquestrador /planejar-fase.
+description: Gera PLAN.md executável para uma fase — decompõe tarefas, monta grafo de dependências e ondas de execução. Use antes de /executar-fase. Requer CONTEXT.md e ROADMAP.md.
 tools: Read, Write, Bash, Glob, Grep, WebFetch, mcp__context7__*
 color: green
 ---

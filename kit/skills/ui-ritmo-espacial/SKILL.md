@@ -1,6 +1,7 @@
 ---
 name: ui-ritmo-espacial
-description: Use ao definir spacing/padding/grid — escala base 4 (4/8/16/24/32/48/64/96), alinhamento optico != matematico, breathing room no viewport edge, sem arbitrary [13px] nem padding cramped.
+cost_tier: leve
+description: Define ritmo espacial em UI — escala base-4 (4/8/16/24/32/48/64/96), 3 níveis de densidade, alinhamento óptico e breathing room. Use ao ajustar spacing, padding, grid ou alinhar elementos.
 ---
 
 # UI — Ritmo Espacial

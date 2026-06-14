@@ -1,6 +1,7 @@
 ---
 name: blameless-postmortems
-description: Use após incident SEV1/SEV2 — template canônico (9 seções), cultura blameless (foco em sistema, não pessoas), no postmortem left unreviewed, Wheel of Misfortune.
+cost_tier: leve
+description: Gera postmortem blameless — template 9 seções, 5 whys, Action Items SMART, Timeline UTC. Use após SEV1/SEV2 ou near-miss. Wheel of Misfortune e revisão por par inclusos.
 ---
 
 # SRE — Blameless Postmortems

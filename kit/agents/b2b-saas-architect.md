@@ -1,7 +1,8 @@
 ---
 name: b2b-saas-architect
+cost_tier: pesado
 tier: specialized
-description: Projeta arquitetura B2B SaaS multi-tenant ANTES da implementação — coleta hierarquia firm→department→leader→collaborator, RBAC granular, isolation strategy, JWT minimal.
+description: Projeta arquitetura B2B SaaS multi-tenant e produz B2B-DESIGN.md — coleta hierarquia org→dept→member, RBAC granular, isolation strategy e JWT design. Use antes da implementação. (pesado)
 tools: Read, Write, Bash, Grep, Glob, AskUserQuestion, Task, mcp__supabase__list_tables
 color: blue
 ---

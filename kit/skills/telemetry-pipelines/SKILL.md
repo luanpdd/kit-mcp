@@ -1,6 +1,7 @@
 ---
 name: telemetry-pipelines
-description: Use ao gerenciar coleta/transporte de telemetria — OTel Collector, routing por destino, buffering, filtering, security. App envia para sidecar; sidecar roteia.
+cost_tier: leve
+description: Guia de arquitetura de telemetry pipeline com OTel Collector — routing multi-destino, buffering, filtering de PII e backpressure. Use ao desenhar ou auditar pipelines de coleta/transporte.
 ---
 
 # Observabilidade — Telemetry Pipelines

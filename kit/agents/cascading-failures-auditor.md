@@ -1,7 +1,8 @@
 ---
 name: cascading-failures-auditor
+cost_tier: medio
 tier: specialized
-description: Audita código de serviço para triggers de cascading failure (sem timeout, retry sem jitter, sem circuit breaker, dependências sem health check, queue sem limite).
+description: Gera CASCADING-AUDIT.md P0/P1/P2 com patches prontos detectando 5 triggers (timeout, retry sem jitter, circuit breaker, queue, health check). Use antes de PR em servicos com dependencias externas.
 tools: Read, Bash, Grep, Glob, Write
 color: red
 ---

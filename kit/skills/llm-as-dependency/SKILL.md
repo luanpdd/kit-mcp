@@ -1,6 +1,7 @@
 ---
 name: llm-as-dependency
-description: Use ao escrever código que depende de LLM (OpenAI/Anthropic) — adapter pattern + FakeLLMProvider para testes determinísticos sem custo. Modernização 2026 sem precedente em 2004.
+cost_tier: leve
+description: Entrega adapter pattern (LLMProvider + FakeLLMProvider) para tratar LLM como dependência testável sem custo. Use ao escrever/refatorar código que chama OpenAI/Anthropic em produção.
 ---
 
 # LLM as Dependency (Modernização)

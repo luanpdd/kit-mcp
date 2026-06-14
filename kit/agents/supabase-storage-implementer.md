@@ -1,7 +1,8 @@
 ---
 name: supabase-storage-implementer
+cost_tier: medio
 tier: specialized
-description: Configura Supabase Storage — buckets públicos vs privados, signed URLs, RLS sobre storage.objects com path multi-tenant, image transforms, alerta egress.
+description: Configura Supabase Storage com 3 layers — bucket (público/privado), RLS sobre storage.objects com path multi-tenant e código client upload/signed URL. Use ao implementar upload.
 tools: Read, Write, Edit, Bash, Grep, Glob, mcp__supabase__execute_sql
 color: orange
 ---

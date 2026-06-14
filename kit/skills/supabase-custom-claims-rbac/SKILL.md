@@ -1,6 +1,7 @@
 ---
 name: supabase-custom-claims-rbac
-description: Use ao implementar Custom Claims via Custom Access Token Auth Hook para RBAC em Supabase…
+cost_tier: leve
+description: Implementa RBAC em Supabase com Custom Claims via Custom Access Token Auth Hook — enum app_role, tabelas user_roles + role_permissions, authorize() e RLS policies sem JOIN.
 ---
 
 # Supabase — Custom Claims & RBAC via Auth Hooks

@@ -1,7 +1,8 @@
 ---
 name: verifier
+cost_tier: pesado
 tier: core
-description: Verifica atingimento do objetivo da fase via análise reversa. Checa se codebase entrega o prometido, não só task completion. Cria VERIFICATION.md.
+description: Gera VERIFICATION.md com veredito de atingimento do objetivo da fase via análise reversa — verifica se a codebase entrega o prometido, não só task completion. Use após /executar-fase. (pesado)
 tools: Read, Write, Bash, Grep, Glob
 color: green
 ---

@@ -1,7 +1,8 @@
 ---
 name: refactor-safety-auditor
+cost_tier: leve
 tier: specialized
-description: Audita arquivo alvo de refactor ANTES da execução — coleta evidências (line count, contrato externo, coverage, mutation testing, characterization existente) e produz veredito GO/BLOCK/WAR…
+description: Audita arquivo antes do refactor e produz REFACTOR-SAFETY.md com veredito GO/BLOCK/WARN — avalia line count, contrato externo, coverage e characterization. Gate obrigatorio pre-refactor.
 tools: Read, Bash, Grep, Glob
 color: red
 ---

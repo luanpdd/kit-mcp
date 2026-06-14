@@ -1,7 +1,8 @@
 ---
 name: seam-finder
+cost_tier: leve
 tier: specialized
-description: Analisa código alvo para identificar seams (object/link/preprocessing) e recomendar técnica de quebra de dependência (cap 25 Feathers) com menor custo.
+description: Produz SEAM-ANALYSIS.md com seams (object/link/preprocessing) e técnica de menor custo (cap 25 Feathers). Use quando legacy-characterizer falha por deps externas bloqueando isolamento.
 tools: Read, Bash, Grep, Glob, Write
 color: blue
 ---

@@ -1,7 +1,8 @@
 ---
 name: incident-investigator
+cost_tier: medio
 tier: specialized
-description: Aplica Core Analysis Loop em incidente real — itera hipóteses validadas com mcp__supabase__get_logs/execute_sql/get_advisors. Estado persistente em .planning/investigations/.
+description: Investiga incidente real com Core Analysis Loop — valida hipóteses via Supabase logs/SQL/advisors e documenta root cause em .planning/investigations/. Use em alerta, SLO burn ou complaint.
 tools: Read, Write, Bash, Grep, Glob, mcp__supabase__get_logs, mcp__supabase__execute_sql, mcp__supabase__get_advisors, mcp__supabase__list_tables
 color: red
 ---

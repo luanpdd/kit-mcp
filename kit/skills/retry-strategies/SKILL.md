@@ -1,6 +1,7 @@
 ---
 name: retry-strategies
-description: Use ao implementar retry — full/equal/decorrelated jitter, exponential backoff cap, retry budget, idempotency keys, when NOT to retry. Cap 22 livro Google SRE.
+cost_tier: leve
+description: Entrega padrões de retry seguro com jitter (full/equal/decorrelated), backoff cap, retry budget e idempotency keys. Use ao chamar deps externas com falhas transientes. Cap 22 Google SRE.
 ---
 
 # SRE — Retry Strategies

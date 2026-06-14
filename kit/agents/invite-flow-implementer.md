@@ -1,7 +1,8 @@
 ---
 name: invite-flow-implementer
+cost_tier: pesado
 tier: specialized
-description: Materializa invite flow B2B — tabela org_invites + RPC create_invite (token raw retornado) + RPC accept_invite (idempotente via FOR UPDATE) + cron expire pending.
+description: Materializa invite flow B2B multi-tenant — gera migration org_invites + RPCs create/accept_invite + cron expiração + Edge Function de email. Use ao implementar convites. (pesado)
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion, mcp__supabase__execute_sql
 color: green
 ---

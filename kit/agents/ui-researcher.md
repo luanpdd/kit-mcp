@@ -1,7 +1,8 @@
 ---
 name: ui-researcher
+cost_tier: medio
 tier: specialized
-description: Produz contrato de design UI-SPEC.md para fases frontend. Lê artefatos upstream, detecta estado do sistema de design, faz apenas perguntas não respondidas. Invocado pelo orquestrador /fase-ui.
+description: Produz UI-SPEC.md com contrato visual e de interacao para fases frontend. Le artefatos upstream, detecta sistema de design (shadcn/tokens) e pergunta apenas o que REQUIREMENTS.md nao respondeu.
 tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*, mcp__firecrawl__*, mcp__exa__*
 color: "#E879F9"
 ---

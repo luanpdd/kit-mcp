@@ -1,6 +1,7 @@
 ---
 name: supabase-oauth-server
-description: Use ao implementar OAuth 2.1 Server com Supabase como identity provider, incluindo autenticação MCP, PKCE, OIDC, registro de clients e RLS por client_id.
+cost_tier: leve
+description: "Transforma Supabase em identity provider OAuth 2.1 + OIDC — cobre PKCE, registro de clients, autenticação MCP, RLS por client_id e UI de consentimento. Usar ao implementar \"Login com sua"
 ---
 
 # Supabase — OAuth 2.1 Server (Identity Provider & MCP Auth)

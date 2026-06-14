@@ -1,7 +1,8 @@
 ---
 name: legacy-characterizer
+cost_tier: medio
 tier: specialized
-description: Gera characterization tests (cap 13 Feathers) para código legado…
+description: Gera suite de characterization tests (cap 13 Feathers) que congela comportamento atual como oracle imutavel. Use antes de refatorar codigo legado sem testes — recebe target_file e produz testes
 tools: Read, Write, Edit, Bash, Grep, Glob
 color: cyan
 ---

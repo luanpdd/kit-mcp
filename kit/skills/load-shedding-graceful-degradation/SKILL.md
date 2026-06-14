@@ -1,6 +1,7 @@
 ---
 name: load-shedding-graceful-degradation
-description: Use ao instrumentar defesas server-side — load shedding (drop com 503), queue management, deadline-aware handlers, graceful degradation modes. Cap 22 livro Google SRE.
+cost_tier: leve
+description: Instrumenta defesas server-side contra overload — load shedding (503+Retry-After), queue bound+drop policy, deadline-aware handlers e graceful degradation. Use ao desenhar handlers saturados.
 ---
 
 # SRE — Load Shedding & Graceful Degradation

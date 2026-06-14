@@ -1,6 +1,7 @@
 ---
 name: supabase-cron-queues
-description: Use ao orquestrar background jobs — pg_cron + pgmq + pg_net pattern cron → pgmq → Edge Function. Sem dep externa. Postgres 15.6.1.143+.
+cost_tier: leve
+description: Orienta background jobs Supabase sem dep externa — pattern canônico pg_cron → pgmq → Edge Function com idempotência. Use ao implementar scheduled tasks ou queues. Requer Postgres 15.6.1.143+.
 ---
 
 # Supabase — Cron + Queues (background jobs)
@@ -92,7 +93,7 @@ import { createClient } from 'npm:@supabase/supabase-js@2'
 Deno.serve(async () => {
   const supabase = createClient(
     Deno.env.get('SUPABASE_URL')!,
-    Deno.env.get('SUPABASE_SECRET_KEYS')!
+    JSON.parse(Deno.env.get('SUPABASE_SECRET_KEYS')!)['default']
   )
 
   // PT-BR: pegar até 10 mensagens com visibility timeout 30s

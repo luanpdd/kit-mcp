@@ -1,6 +1,7 @@
 ---
 name: legacy-storytelling-naked-crc
-description: Use ao precisar entender codebase desconhecido antes de mudar (cap 16-17 Feathers) — telling the story + naked CRC sketches. Modernização 2026…
+cost_tier: medio
+description: Gera STORYTELLING-module.md (story 5 frases + CRC sketch + hot spots) para entender codebase desconhecido antes de mudar. IA faz draft; humano valida (cap 16-17 Feathers).
 ---
 
 # Legacy — Storytelling & Naked CRC

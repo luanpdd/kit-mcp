@@ -1,7 +1,8 @@
 ---
 name: example-reviewer
+cost_tier: leve
 tier: specialized
-description: Example sub-agent template. Replace with your own. Reviews a snippet of code and returns 3 concrete improvements.
+description: Revisa trecho de código e retorna exatamente 3 melhorias concretas (o que mudar, como mudar, por que). Use ao submeter um snippet ou apontar um arquivo para revisao rapida.
 tools: Read, Grep, Glob
 color: blue
 ---

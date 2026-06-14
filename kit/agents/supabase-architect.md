@@ -1,7 +1,8 @@
 ---
 name: supabase-architect
+cost_tier: pesado
 tier: specialized
-description: Projeta schema + RLS + topologia realtime ANTES da implementação. Pergunta Free vs Pro upfront. Alerta sobre custo de branches abertas. NÃO escreve código.
+description: Projeta schema + RLS + topologia realtime antes da primeira migration. Entrega plano arquitetural (schema, RLS, realtime, branching). Use ao iniciar app Supabase. Não escreve código. (pesado)
 tools: Read, Write, Bash, Grep, Glob, AskUserQuestion, mcp__supabase__list_tables, mcp__supabase__list_extensions
 color: blue
 ---

@@ -1,6 +1,7 @@
 ---
 name: member-management-react-shadcn
-description: Use ao implementar painel UI de gestão de membros em React + shadcn/ui — data-table TanStack, dialog de invite, dropdown de role, 9 componentes shadcn canônicos, PermissionGate por ação.
+cost_tier: leve
+description: Painel de gestão de membros React + shadcn/ui com data-table TanStack, dialog de invite, dropdown de role, 9 componentes canônicos e PermissionGate por ação. Use ao implementar member management
 ---
 
 # Member Management — React + shadcn/ui

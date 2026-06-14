@@ -1,6 +1,7 @@
 ---
 name: supabase-auth-sessions
-description: Use ao configurar sessões Supabase — PKCE vs implicit flow, exchangeCodeForSession, lifetime, JWT expiry e refresh token reuse detection.
+cost_tier: leve
+description: Guia de sessões Supabase — decide PKCE vs implicit flow, implementa exchangeCodeForSession, configura JWT expiry, session lifetime e refresh token reuse detection. Use ao configurar auth SSR.
 ---
 
 # Supabase — Sessões e Fluxos de Autenticação

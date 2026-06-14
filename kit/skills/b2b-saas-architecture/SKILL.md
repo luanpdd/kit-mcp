@@ -1,6 +1,7 @@
 ---
 name: b2b-saas-architecture
-description: Use ao desenhar app B2B multi-tenant (org→department→leader→collaborator) com Supabase + React…
+cost_tier: leve
+description: Define schema canônico multi-tenant (org→dept→role→permission) + JWT minimal + 5 anti-patterns RLS. Use ao desenhar app B2B SaaS com Supabase. Base para agents RLS, onboarding e RBAC.
 ---
 
 # B2B SaaS Multi-Tenant — Arquitetura Canônica

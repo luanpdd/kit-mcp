@@ -1,7 +1,8 @@
 ---
 name: integration-checker
+cost_tier: medio
 tier: core
-description: Verifica integração entre fases e fluxos E2E. Checa se as fases se conectam corretamente e se workflows do usuário completam de ponta a ponta.
+description: Verifica conexões entre fases (exports→imports, APIs→consumidores, formulários→handlers) e fluxos E2E — retorna veredito de integração. Use após concluir múltiplas fases.
 tools: Read, Bash, Grep, Glob
 color: blue
 ---

@@ -1,7 +1,8 @@
 ---
 name: lgpd-compliance-auditor
+cost_tier: pesado
 tier: specialized
-description: Audita gaps LGPD per-tenant em projeto Supabase B2B — 9 direitos Art.
+description: Gera LGPD-AUDIT.md scored (P0/P1/P2) auditando 9 direitos LGPD per-tenant em Supabase B2B — DSR, retenção, RLS, consentimento. Use ao preparar compliance ANPD proativo. (pesado)
 tools: Read, Write, Bash, Grep, Glob, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: yellow
 ---

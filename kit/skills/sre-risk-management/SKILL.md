@@ -1,6 +1,7 @@
 ---
 name: sre-risk-management
-description: Use ao escolher SLO target — risk continuum, error budget como balanço explícito risk × innovation, "as reliable as needs to be, no more", sabedoria 99.99%.
+cost_tier: leve
+description: Orienta escolha de SLO target — decide noves justificáveis via risk continuum, modela error budget como balanço risk×innovation e define política green/yellow/red por tier de cliente.
 ---
 
 # SRE — Risk Management

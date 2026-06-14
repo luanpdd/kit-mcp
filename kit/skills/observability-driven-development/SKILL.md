@@ -1,6 +1,7 @@
 ---
 name: observability-driven-development
-description: Use ao bundlear telemetria com nova feature — 4 perguntas pré-PR, instrumentação shift-left, auto-page do autor por 30-60min após merge. Análogo TDD para produção.
+cost_tier: leve
+description: Bundeia telemetria OTel com a feature no mesmo PR — 4 perguntas pré-PR obrigatórias, shift-left + auto-page do autor 30-60min pós-merge. Use ao escrever nova feature.
 ---
 
 # Observabilidade — Observability-Driven Development (ODD)

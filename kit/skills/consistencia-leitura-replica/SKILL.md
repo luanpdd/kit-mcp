@@ -1,6 +1,7 @@
 ---
 name: consistencia-leitura-replica
-description: Use ao usar Supabase read replicas via Supavisor (porta 6543) ou ao combinar Realtime broadcast + leitura DB…
+cost_tier: leve
+description: Guia de consistencia para Supabase read replicas — 5 regras (read-after-write, monotonic reads, LSN wait) + roteamento porta 5432 vs 6543 + Realtime broadcast sem SELECT stale.
 ---
 
 # Consistência Leitura Réplica — Supabase + Supavisor + Realtime

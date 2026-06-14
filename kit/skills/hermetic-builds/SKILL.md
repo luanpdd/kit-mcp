@@ -1,6 +1,7 @@
 ---
 name: hermetic-builds
-description: Use ao desenhar/auditar pipeline de build — reproducibility + isolation + provenance + lockfiles + frozen-install + SLSA framework. Cap 8 livro Google SRE.
+cost_tier: leve
+description: "Audita/desenha pipeline de build hermético — lockfile commitado, frozen-install, image base por SHA, sem network em build, provenance SLSA. Use ao suspeitar de \"no meu ambiente funciona\"."
 ---
 
 # SRE — Hermetic Builds

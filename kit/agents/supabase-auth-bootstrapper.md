@@ -1,7 +1,8 @@
 ---
 name: supabase-auth-bootstrapper
+cost_tier: medio
 tier: specialized
-description: Bootstrap Next.js v16 + Supabase Auth com @supabase/ssr (browser+server clients + middleware). Audita .env* para NEXT_PUBLIC_*SERVICE* leak. Single serverClient factory.
+description: Gera estrutura Supabase Auth SSR em Next.js v16+ — utils/supabase/{client,server}.ts + middleware.ts, @supabase/ssr, getAll/setAll e audit .env* contra service_role leak.
 tools: Read, Write, Edit, Bash, Grep, Glob
 color: green
 ---

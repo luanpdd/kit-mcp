@@ -1,6 +1,7 @@
 ---
 name: example-skill
-description: Example skill template. Replace with your own. Use when the user mentions "example", "demo", or asks how skills work.
+cost_tier: leve
+description: Template de skill de exemplo — demonstra como skills funcionam e onde criar a sua em kit/skills/. Use quando o usuário perguntar sobre skills ou pedir uma demo.
 ---
 
 # Example skill

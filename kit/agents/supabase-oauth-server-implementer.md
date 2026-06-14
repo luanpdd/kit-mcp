@@ -1,7 +1,8 @@
 ---
 name: supabase-oauth-server-implementer
+cost_tier: medio
 tier: specialized
-description: Materializer de OAuth 2.1 Server com Supabase como identity provider. Recebe spec (caso de uso MCP/mobile/platform, clients, scopes) via Task() e produz config + UI de consentimento hardenada.
+description: Materializa OAuth 2.1 Server com Supabase como IdP — produz config.toml, UI de consentimento hardenada e RLS com client_id. Use ao implementar auth para MCP server, mobile ou developer platform.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__apply_migration
 color: red
 ---

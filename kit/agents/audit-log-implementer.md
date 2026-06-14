@@ -1,7 +1,8 @@
 ---
 name: audit-log-implementer
+cost_tier: pesado
 tier: specialized
-description: Materializa audit log multi-tenant — tabela append-only (REVOKE DELETE/UPDATE), helper function private.audit_log com PII hashing, retention scheduler pg_cron 3 tiers (30d/90d/365d), legal_hold f…
+description: Materializa audit log multi-tenant append-only com PII hashing, pg_cron retention 3 tiers (30/90/365d) e legal_hold. Pré-requisito para super-admin. Use ao implementar rastreabilidade. (pesado)
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: yellow
 ---

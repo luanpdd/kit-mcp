@@ -1,7 +1,8 @@
 ---
 name: codebase-mapper
+cost_tier: pesado
 tier: core
-description: Explora a codebase e escreve docs de análise estruturados. Invocado por /mapear-codebase com foco (tech, arch, quality, concerns). Reduz carga de contexto do orquestrador.
+description: Produz docs de análise da codebase em .planning/codebase/ (STACK, ARCHITECTURE, CONVENTIONS, CONCERNS). Use ao explorar projeto desconhecido antes de planejar fases. (pesado)
 tools: Read, Bash, Grep, Glob, Write
 color: cyan
 ---

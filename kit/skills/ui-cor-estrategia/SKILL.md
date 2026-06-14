@@ -1,6 +1,7 @@
 ---
 name: ui-cor-estrategia
-description: Use ao definir paleta ou auditar cor — split 60/30/10 (superficie/secundaria/destaque), destaque so em listados, OKLCH em vez de HSL/HEX, WCAG AA 4.5:1, sem paleta padrao IA, dark via tokens.
+cost_tier: leve
+description: Define paleta e audita cor — split 60/30/10, tokens OKLCH semanticos, WCAG AA 4.5:1, dark mode via CSS vars. Use ao escolher paleta, auditar cor ou adicionar dark mode.
 ---
 
 # UI — Estratégia de Cor

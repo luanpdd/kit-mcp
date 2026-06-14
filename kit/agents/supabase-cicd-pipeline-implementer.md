@@ -1,7 +1,8 @@
 ---
 name: supabase-cicd-pipeline-implementer
+cost_tier: pesado
 tier: specialized
-description: Canonical materializer pipeline CI/CD Supabase. Recebe BRANCHING-DESIGN.md de supabase-branching-architect (v1.27) ou user direto + materializa 7-8 workflows GitHub Actions canônicos (ci.yml, sta…
+description: Materializa 7-8 workflows GitHub Actions Supabase em .github/workflows/ + SECRETS-CHECKLIST.md com 6 secrets. Use após BRANCHING-DESIGN.md do supabase-branching-architect ou direto. (pesado)
 tools: Read, Write, Edit, Bash, Task, AskUserQuestion
 color: yellow
 ---

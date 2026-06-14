@@ -1,7 +1,8 @@
 ---
 name: supabase-column-privileges-writer
+cost_tier: leve
 tier: specialized
-description: Canonical materializer column-level privileges Supabase. Recebe spec (table + colunas sensíveis + roles permitidos) via Task() upstream context + intent original.
+description: Gera SQL REVOKE + GRANT column-level para Supabase quando compliance LGPD/GDPR exige restrição por coluna sensível no banco. Use só se RLS row-level não atender; retorna verdict REWRITE se o caso
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: red
 ---

@@ -1,6 +1,7 @@
 ---
 name: ui-tipografia
-description: Use ao escolher fontes/tamanhos/pesos — Display + Body + Mono (sem monocultura Inter), max 4 sizes x 2 weights, line-height 1.5/1.2, line-length 65ch body / 30ch hero. Sem fontes saturadas IA.
+cost_tier: leve
+description: Define escala tipografica (Display + Body + Mono, max 4 sizes x 2 weights, 65ch body) evitando monocultura Inter e fontes saturadas de IA. Use ao escolher fontes ou hierarquia visual.
 ---
 
 # UI — Tipografia

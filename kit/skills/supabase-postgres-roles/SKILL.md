@@ -1,6 +1,7 @@
 ---
 name: supabase-postgres-roles
-description: Use ao gerenciar Postgres roles em Supabase — system access (cron jobs, BI tools, ETL, admin scripts). Distinção canônica vs RLS+Custom Claims (application access).
+cost_tier: leve
+description: Use ao criar/gerenciar Postgres roles em Supabase para system access — service accounts (cron jobs, BI tools, ETL). Distingue RLS+Custom Claims (application) de Postgres roles (system access).
 ---
 
 # Supabase — Postgres Roles

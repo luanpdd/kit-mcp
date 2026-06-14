@@ -1,6 +1,7 @@
 ---
 name: ui-motion-funcional
-description: Use ao adicionar animation/transition — motion comunica estado, nao decora. 150-200ms interacoes / 250-400ms layout. ease-out default. prefers-reduced-motion sempre. Sem auto-play e parallax.
+cost_tier: leve
+description: Aplica regras de motion funcional — durações (100-150ms micro / 250-400ms layout), ease-out, prefers-reduced-motion. Proibe parallax e auto-play. Use ao adicionar animation/transition.
 ---
 
 # UI — Motion Funcional

@@ -1,6 +1,7 @@
 ---
 name: crm-lead-pipeline-patterns
-description: Use ao implementar CRM lead pipeline em B2B SaaS Supabase — 6 stages canônicos lead→qualified→proposal→negotiation→won|lost, trigger PG BEFORE UPDATE valida transições (CHECK cons…
+cost_tier: leve
+description: Entrega patterns CRM lead pipeline multi-tenant — tabela leads, trigger BEFORE UPDATE valida 6 stages canônicos, ownership transfer com audit log e dedup. Use ao implementar pipeline em Supabase
 ---
 
 # CRM Lead Pipeline — Patterns Canônicos

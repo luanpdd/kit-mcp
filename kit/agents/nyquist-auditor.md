@@ -1,7 +1,8 @@
 ---
 name: nyquist-auditor
+cost_tier: medio
 tier: specialized
-description: Preenche lacunas de validação Nyquist gerando testes e verificando cobertura para requisitos de fase
+description: Audita cobertura Nyquist de fase concluída, gera testes comportamentais mínimos para cada lacuna, executa e depura, produz VALIDATION.md. Use após fase sem cobertura completa de requisitos.
 tools:
   - Read
   - Write

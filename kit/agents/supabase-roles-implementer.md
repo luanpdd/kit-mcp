@@ -1,7 +1,8 @@
 ---
 name: supabase-roles-implementer
+cost_tier: leve
 tier: specialized
-description: Canonical materializer Postgres Roles em Supabase. Recebe spec (custom roles + hierarchy + GRANT matrix) via Task() upstream context + intent original.
+description: Gera SQL de Postgres Roles em Supabase (CREATE ROLE + GRANT matrix + BYPASSRLS) para system access — service accounts, BI, cron jobs. Recebe spec via Task(). Nao substitui RLS + Custom Claims.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__list_tables, mcp__supabase__apply_migration
 color: red
 ---

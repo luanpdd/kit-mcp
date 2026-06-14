@@ -1,6 +1,7 @@
 ---
 name: legacy-seams-and-test-harness
-description: Use ao identificar pontos de extensão (seams) em código não-testável e aplicar uma das ~24 dependency-breaking techniques (cap 25 Feathers) para colocar código sob test harness.
+cost_tier: leve
+description: Identifica seams (object/link/preprocessing) e aplica dependency-breaking techniques (cap 25 Feathers) para montar test harness. Use quando DB, HTTP, singleton ou clock bloqueiam testes.
 ---
 
 # Legacy — Seams & Test Harness

@@ -1,7 +1,8 @@
 ---
 name: multi-tenant-rls-writer
+cost_tier: pesado
 tier: specialized
-description: Gera RLS policies hierárquicas multi-tenant — org-level, dept-level, role-based, permission-based + super_admin PERMISSIVE bypass.
+description: Gera RLS policies hierárquicas multi-tenant (org/dept/role/permission + super_admin PERMISSIVE bypass) para tabelas Supabase B2B. Use ao modelar acesso por hierarquia. (pesado)
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: red
 ---

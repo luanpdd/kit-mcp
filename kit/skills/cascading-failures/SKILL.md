@@ -1,6 +1,7 @@
 ---
 name: cascading-failures
-description: Use ao desenhar/auditar serviços com deps externas — cap 22 livro Google SRE. Triggers de cascade, loops de feedback, prevenção via timeout/jitter/deadline/circuit breaker, immediate response.
+cost_tier: leve
+description: Previne cascading failures (cap 22 Google SRE) — entrega patterns de timeout agressivo, retry com jitter, deadline propagation e circuit breaker. Use ao desenhar/auditar serviços com deps externas.
 ---
 
 # SRE — Addressing Cascading Failures

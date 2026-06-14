@@ -1,6 +1,7 @@
 ---
 name: eliminating-toil
-description: Use ao identificar/eliminar toil — 6 critérios canônicos (manual, repetitivo, automatizável, tático, sem valor durável, escala linear), regra ≤ 50%, automação como invariante.
+cost_tier: leve
+description: Classifica trabalho como toil via 6 critérios canônicos, gera TOIL-AUDIT.md com hours/week e priorização P0/P1/P2. Use ao auditar tarefas operacionais ou aplicar regra ≤ 50% SRE.
 ---
 
 # SRE — Eliminating Toil

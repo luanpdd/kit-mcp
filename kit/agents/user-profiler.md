@@ -1,7 +1,8 @@
 ---
 name: user-profiler
+cost_tier: medio
 tier: specialized
-description: Analisa sessões em 8 dimensões comportamentais para produzir perfil do dev pontuado com confiança e evidências. Invocado por workflows de orquestração de perfil.
+description: Produz perfil comportamental do dev em 8 dimensoes com pontuacao e evidencias — analise JSON estruturada. Use via /perfil-usuario apos coletar sessoes do historico.
 tools: Read
 color: magenta
 ---

@@ -1,7 +1,8 @@
 ---
 name: ai-mutation-tester
+cost_tier: pesado
 tier: specialized
-description: Mutation testing modernizado — usa LLM para gerar mutants COMPORTAMENTAIS (mais ricos que sintáticos != → ==) e testa contra suite. Sem precedente em 2004 — literatura recente (2023+).
+description: Gera MUTATION-AI-REPORT.md com mutants COMPORTAMENTAIS via LLM (skip audit, pula validacao, inverte chamadas) e identifica survived mutants = pontos cegos nos testes. Use antes de refatorar. (pesado)
 tools: Read, Bash, Grep, Glob, Write
 color: red
 ---
@@ -117,8 +118,9 @@ Para cada mutant, gerar:
 Para cada mutant:
 
 ```bash
-# 1. Backup original
+# 1. Backup original + trap de restauração (garante restore mesmo se o processo morrer no meio)
 cp "$TARGET_FILE" "$TARGET_FILE.original"
+trap 'cp "$TARGET_FILE.original" "$TARGET_FILE" 2>/dev/null' EXIT
 
 # 2. Aplicar diff (você como agent edita o arquivo)
 # (apply mutant diff to TARGET_FILE)
@@ -136,8 +138,10 @@ else
   STATUS="survived"
 fi
 
-# 5. Restaurar original
+# 5. Restaurar original + limpar backup (trap cobre o caso de crash)
 cp "$TARGET_FILE.original" "$TARGET_FILE"
+rm -f "$TARGET_FILE.original"
+trap - EXIT
 
 # 6. Salvar resultado
 echo "$MUTANT_ID,$STATUS,$CATEGORY"

@@ -1,6 +1,7 @@
 ---
 name: ai-prompt-characterization
-description: Use ao modificar prompt/tool LLM em produção — characterization de generations com temperature=0 + seed fixo + sanitização específica. Modernização 2026 sem precedente em 2004…
+cost_tier: leve
+description: Gera suite de characterization tests para prompts/tools LLM — temperature=0 + seed fixo + sanitização + 5 intents canônicas. Use ao modificar prompt em produção para detectar drift silencioso.
 ---
 
 # AI Prompt Characterization (Modernização)

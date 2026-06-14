@@ -1,6 +1,7 @@
 ---
 name: production-readiness-review
-description: Use antes de aceitar serviço em produção — PRR checklist 6 axes (System/Instrumentation/Emergency/Capacity/Change/Performance), 3 engagement models, handoff dev→SRE.
+cost_tier: leve
+description: Gera PRR-REPORT.md com score nos 6 axes (System/Instrumentation/Emergency/Capacity/Change/Performance) e veredito Approved/Blocked. Use antes de aceitar tráfego real; reviewer externo ao time.
 ---
 
 # SRE — Production Readiness Review (PRR)
