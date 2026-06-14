@@ -6,6 +6,8 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.40.0] - 2026-06-14
+
 ### Added — Consciência de uso e custo nos recursos
 
 - **`cost_tier: leve|medio|pesado`** no frontmatter de todos os 74 agents + 100 skills
@@ -27,6 +29,14 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
   `SUPABASE_SECRET_KEYS` via `JSON.parse(...)['default']` (era usado como string — silent fail).
 - **`ai-mutation-tester`:** `trap` de restauração + cleanup do backup `.original` no Step 3 —
   evita deixar o código-fonte do usuário mutado permanentemente se o processo for interrompido.
+
+### Docs
+
+- **README:** seção **Content Packs** expandida (ver / instalar / trocar packs) + nota de
+  consciência de custo (`cost_tier`); tagline e "Quando NÃO usar" reescritos para refletir a
+  modularidade; "Estrutura do kit" atualizada (74/94/100 + `kit/packs/`). Corrige comandos
+  pré-existentes imprecisos: `logs --follow` (não `--tail --follow`), porta do sidecar (auto-pick
+  7100-7199, não 7878) e `replay list` / `replay show <id>` (não pipe).
 
 ## [1.39.0] - 2026-06-14
 
