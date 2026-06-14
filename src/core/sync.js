@@ -13,6 +13,7 @@ import path from 'node:path';
 import fs from 'node:fs/promises';
 import { getTarget } from './registry.js';
 import { listKit, resolveKitRoot } from './kit.js';
+import { applyPackFilter } from './packs.js';
 import { verifyManifest } from './manifest-verify.js';
 
 const STUB_MARKER = '<!-- kit-mcp:reference -->';
@@ -65,7 +66,9 @@ function resolveForceFullSync() {
  * @param {boolean} [opts.dryRun=false] - skip all fs writes; ops still listed.
  * @param {Function} [opts.onProgress] - per-op callback ({phase, current, total, label, skipped?}).
  * @param {object} [opts.kit] - pre-loaded kit (skips listKit re-walk).
- * @returns {Promise<{target, mode, projectRoot, kitRoot, written, dryRun}>}
+ * @param {string|string[]} [opts.packs] - content-pack selection (csv or array).
+ *        Absent or 'all' = full kit (back-compat). See src/core/packs.js.
+ * @returns {Promise<{target, mode, projectRoot, kitRoot, written, dryRun, packs}>}
  */
 export async function syncTo(targetId, opts = {}) {
   const target      = getTarget(targetId);
@@ -91,7 +94,13 @@ export async function syncTo(targetId, opts = {}) {
   // already have one in hand (CLI sync that follows reverse-sync detect, etc).
   // PERF-S1: in mode=reference (default), read just frontmatter — body/content
   // is never used by stub renderers. Saves I/O on big kit files (planner.md etc).
-  const kit  = opts.kit ?? await listKit(kitRoot, { stubsOnly: mode === 'reference' });
+  const kitFull = opts.kit ?? await listKit(kitRoot, { stubsOnly: mode === 'reference' });
+
+  // Content packs (Phase: docs/rfc-content-packs.md): project a SUBSET of the kit.
+  // Filtering once here keeps ops[], buildAggregatedRules and written[] consistent
+  // automatically. Absent/'all' selection returns kitFull unchanged (back-compat).
+  const packFilter = await applyPackFilter(kitFull, { packs: opts.packs, kitRoot });
+  const kit  = packFilter.kit;
   const ops  = [];
 
   if (target.rules) {
@@ -247,7 +256,7 @@ export async function syncTo(targetId, opts = {}) {
     }
   }
 
-  return { target: targetId, mode, projectRoot, kitRoot, written: ops.map(o => o.path), dryRun };
+  return { target: targetId, mode, projectRoot, kitRoot, written: ops.map(o => o.path), dryRun, packs: packFilter.effective };
 }
 
 // SEC-02: walkTree refuses entries whose normalized rel-path escapes the root or

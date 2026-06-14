@@ -6,6 +6,35 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.39.0] - 2026-06-14
+
+### Added — Content Packs (instalação modular/seletiva)
+
+- **Sistema de packs**: o kit deixa de ser all-or-nothing. Cada projeto instala só os conjuntos
+  que usa. Manifestos declarativos em `kit/packs/<id>/pack.json` + índice gerado
+  `kit/packs/registry.json` + resolver em `src/core/packs.js`.
+- **6 packs autossuficientes** (zero dependências entre packs — tudo que um pack usa está nele ou
+  na base `core`):
+  - `core` (obrigatório, sempre instalado) — framework de fases, 16 agents de ciclo de vida.
+  - `supabase` (opcional) — **todo o mundo Supabase**: materialização (schema/RLS/migrations/Edge
+    Functions/Auth/Storage/Realtime) + B2B multi-tenant + auditoria de dados distribuídos.
+  - `observability`, `legacy`, `ui`, `cost-workflow` (opcionais, stack-agnostic).
+- **Seleção na instalação**: `kit sync install <ide> --packs core,observability,legacy,ui,cost-workflow`
+  (sem a flag = kit inteiro, comportamento idêntico ao anterior — zero breaking change).
+- **Nova CLI `kit pack`**: `pack list` (catálogo + contagens) e `pack info <id>` (manifesto + membros).
+- **Gate de cobertura**: `regen-pack-registry` valida que a união de todos os packs == `listKit()`
+  (nenhum recurso órfão) e roda no `prepublishOnly`.
+- Documentação de desenho completa em `docs/rfc-content-packs.md`. `pack add/remove` incremental +
+  checkbox interativo de loja ficam para release futura (RFC §10 Fase 3).
+
+### Fixed
+
+- **`bin/mcp.js` agora é dual-mode.** `npx @luanpdd/kit-mcp` resolve para o bin `kit-mcp`
+  (`bin/mcp.js`), que antes **sempre** subia o servidor stdio e ignorava os argumentos — então
+  `npx -y @luanpdd/kit-mcp install/sync/init/pack list` (todos documentados no README) ficavam
+  pendurados sem saída. Agora: **com** argumentos → despacha para a CLI; **sem** argumentos (como
+  os clientes MCP o lançam) → sobe o servidor stdio.
+
 ## [1.38.0] - 2026-06-13
 
 ### Changed — Suporte ao Google Antigravity 2.0 (IDE + CLI)
