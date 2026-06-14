@@ -1,7 +1,8 @@
 ---
 name: multi-tenant-isolation-auditor
+cost_tier: pesado
 tier: specialized
-description: Audita gaps de isolamento cross-tenant em projeto Supabase B2B — detecta tabelas sem RLS, policies sem private.has_permission, helpers VOLATILE, JOINs cross-tenant, super_admin sem audit, partial…
+description: Produz ISOLATION-AUDIT.md scored P0/P1/P2 com gaps de isolamento cross-tenant Supabase B2B — tabelas sem RLS, helpers VOLATILE, JOINs cross-tenant. Use antes de release ou periodicamente. (pesado)
 tools: Read, Write, Bash, Grep, Glob, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: yellow
 ---

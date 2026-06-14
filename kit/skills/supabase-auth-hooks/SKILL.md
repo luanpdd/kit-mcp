@@ -1,6 +1,7 @@
 ---
 name: supabase-auth-hooks
-description: Use ao implementar Auth Hooks no Supabase — custom access token, send email/SMS, before user created, MFA e password verification hooks.
+cost_tier: leve
+description: Implementa Auth Hooks Supabase (custom access token, send email/SMS, before user created, MFA e password verification) com grants corretos ao supabase_auth_admin e verificacao Standard Webhooks.
 ---
 
 # Supabase — Auth Hooks

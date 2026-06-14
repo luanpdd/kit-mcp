@@ -1,7 +1,8 @@
 ---
 name: executor
+cost_tier: pesado
 tier: core
-description: Executa planos framework com commits atômicos, tratamento de desvios, protocolos de checkpoint e gerenciamento de estado. Invocado pelo orquestrador executar-fase ou pelo comando executar-plano.
+description: Executa PLAN.md com commits atômicos por tarefa, trata desvios automaticamente e produz SUMMARY.md + STATE.md. Use ao rodar uma fase do roadmap. Requer PLAN.md pronto. (pesado)
 tools: Read, Write, Edit, Bash, Grep, Glob
 permissionMode: acceptEdits
 color: yellow

@@ -1,6 +1,7 @@
 ---
 name: legacy-monster-methods
-description: Use ao refatorar método > 100 linhas sem testes — scratch refactoring, single-goal editing, safe extraction (cap 22 Feathers). Padrões para domesticar bulleted vs snarled methods.
+cost_tier: leve
+description: Refatora monster methods (>100 linhas, sem testes) com scratch refactoring, single-goal editing e safe extraction (cap 22 Feathers). Distingue bulleted vs snarled e acumula coverage emergente.
 ---
 
 # Legacy — Monster Methods

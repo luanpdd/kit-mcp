@@ -1,6 +1,7 @@
 ---
 name: multi-tenant-rls-hierarchy
-description: Use ao escrever RLS hierárquica multi-tenant (org→dept→role→permission→super-admin bypass) em Supabase.
+cost_tier: leve
+description: Gera helper functions SQL (schema private) + RLS policies hierárquicas multi-tenant org→dept→role + super_admin bypass PERMISSIVE. Use ao escrever RLS Supabase B2B com hierarquia.
 ---
 
 # Multi-Tenant RLS Hierarchy — Helper Functions + Policies

@@ -1,6 +1,7 @@
 ---
 name: super-admin-platform-pattern
-description: "Use ao implementar painel super-admin que gerencia TODOS os tenants — cross-tenant view, impersonation/support takeover, super_admin app_metadata, audit obrigatório de cada ação."
+cost_tier: leve
+description: Implementa painel super-admin cross-tenant — impersonation (TTL 30min), RLS PERMISSIVE, super_admin via app_metadata e audit_log por acao. Use ao criar plataforma admin B2B multi-tenant.
 ---
 
 # Super-Admin Platform Pattern — B2B SaaS Multi-Tenant

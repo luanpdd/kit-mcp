@@ -1,7 +1,8 @@
 ---
 name: supabase-branching-architect
+cost_tier: pesado
 tier: specialized
-description: Projeta estratégia branching Supabase ANTES do setup técnico. Coleta 4 decisões canônicas via AskUserQuestion (GitHub integration vs Dashboard alpha [default GitHub], persistent vs ephemer…
+description: Gera BRANCHING-DESIGN.md com 4 decisoes (GitHub integration, branch mix, seed, secrets) + estimativa Branching Compute Hours. Usar antes do setup Supabase CI/CD. (pesado — despacha subagents)
 tools: Read, Write, Bash, AskUserQuestion, Task
 color: blue
 ---

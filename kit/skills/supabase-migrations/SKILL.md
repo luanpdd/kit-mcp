@@ -1,6 +1,7 @@
 ---
 name: supabase-migrations
-description: Use ao criar arquivos de migration Supabase — naming YYYYMMDDHHmmss_short.sql, header de metadados, GRANT antes de ENABLE RLS, RLS obrigatório em toda nova tabela, granular policies, indice…
+cost_tier: leve
+description: Use ao criar/editar migrations Supabase — naming YYYYMMDDHHmmss, GRANT antes de ENABLE RLS, RLS obrigatório em toda tabela nova, 4 policies granulares por operação e index em colunas de policy.
 ---
 
 # Supabase — Migrations

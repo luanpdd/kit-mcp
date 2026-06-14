@@ -1,6 +1,7 @@
 ---
 name: observability-maturity-model
-description: Use ao avaliar maturidade observabilidade — 5 capacidades (resiliência, qualidade, complexidade, cadência, comportamento) com sintomas doing well/poorly por capacidade.
+cost_tier: leve
+description: Avalia maturidade de observability e gera OMM snapshot — score 1-5 em 5 capacidades (resiliencia, qualidade, complexidade, cadencia, comportamento) + trend + action items priorizados.
 ---
 
 # Observabilidade — Maturity Model (OMM)

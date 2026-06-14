@@ -1,7 +1,8 @@
 ---
 name: supabase-rbac-implementer
+cost_tier: medio
 tier: specialized
-description: Canonical materializer Custom Claims & RBAC via Custom Access Token Auth Hook em Supabase. Recebe spec (roles + permissions matrix) via Task() upstream context + intent original.
+description: Materializa RBAC completo em Supabase — Custom Claims + Auth Hook, authorize(), RLS policies template e client decoder. Use ao implementar RBAC multi-tenant com Custom Access Token Auth Hook.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__list_tables, mcp__supabase__apply_migration
 color: red
 ---

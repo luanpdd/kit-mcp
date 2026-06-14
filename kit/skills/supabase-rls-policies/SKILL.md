@@ -1,6 +1,7 @@
 ---
 name: supabase-rls-policies
-description: Use ao criar/auditar RLS — sempre (select auth.uid()), policies separadas por operação, GRANTs antes de ENABLE RLS, IS NOT NULL para anti silent-fail, índices nas colunas, NUNCA user_meta…
+cost_tier: leve
+description: Gera RLS policies Supabase seguras — (select auth.uid()) wrapper, GRANT antes de ENABLE RLS, policies por operação, índice em colunas, IS NOT NULL anti-silent-fail, NUNCA user_metadata em
 ---
 
 # Supabase — RLS Policies

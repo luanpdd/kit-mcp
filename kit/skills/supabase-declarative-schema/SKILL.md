@@ -1,6 +1,7 @@
 ---
 name: supabase-declarative-schema
-description: Use ao gerenciar schema via supabase/schemas/ — workflow stop → db diff -f → revisar → apply. Inclui caveats sobre views, RLS, partitions.
+cost_tier: leve
+description: Gerencia schema Supabase declarativo via supabase/schemas/ — gera migration com stop → db diff -f → revisar → apply. Caveats — views, RLS, partitions.
 ---
 
 # Supabase — Declarative Database Schema

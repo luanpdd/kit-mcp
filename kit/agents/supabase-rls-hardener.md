@@ -1,7 +1,8 @@
 ---
 name: supabase-rls-hardener
+cost_tier: pesado
 tier: specialized
-description: Recebe draft SQL via Task() upstream context + intent original. Materializa SQL final hardenado preservando intent.
+description: Recebe draft SQL + intent, valida RLS Supabase em 10 camadas defense-in-depth, entrega GO/STRENGTHEN/REWRITE + SQL hardenado + diff explícito. Use ao gerar migrations com CREATE TABLE. (pesado)
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: red
 ---

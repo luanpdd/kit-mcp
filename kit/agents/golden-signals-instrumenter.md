@@ -1,7 +1,8 @@
 ---
 name: golden-signals-instrumenter
+cost_tier: medio
 tier: specialized
-description: Instrumenta serviço/Edge Function com 4 golden signals OTel — Latency (histogram), Traffic (counter), Errors (counter por error.type), Saturation (gauge).
+description: Instrumenta serviço/Edge Function com 4 golden signals OTel — Latency (histogram), Traffic (counter), Errors (error.type), Saturation (gauge). Use ao montar observabilidade user-facing.
 tools: Read, Write, Edit, Bash, Grep, Glob
 color: yellow
 ---

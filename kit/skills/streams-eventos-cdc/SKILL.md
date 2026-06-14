@@ -1,6 +1,7 @@
 ---
 name: streams-eventos-cdc
-description: Use ao implementar event stream em Supabase — diferença AMQP/JMS-style (LISTEN/NOTIFY) vs log-based (pgmq) brokers, padrões CDC via wal2json + Realtime broadcast OU pglogical → Kafka, ev…
+cost_tier: leve
+description: Orienta implementação de event stream em Supabase — AMQP/JMS-style vs log-based (pgmq), CDC via wal2json + Realtime ou pglogical→Kafka, event sourcing append-only e exactly-once com dedup table.
 ---
 
 # Streams, Eventos e CDC — Brokers, Event Sourcing, Exactly-Once em Postgres

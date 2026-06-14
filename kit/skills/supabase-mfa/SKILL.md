@@ -1,6 +1,7 @@
 ---
 name: supabase-mfa
-description: Use ao implementar Multi-Factor Authentication (MFA) com TOTP, Phone ou AAL no Supabase — enrollment, challenge, verify, enforce via RLS aal2.
+cost_tier: leve
+description: Implementa MFA no Supabase (TOTP + Phone) — enrollment, challenge, verify e enforce via RLS RESTRICTIVE com AAL aal2. Use ao configurar 2FA, autenticação multifator ou exigir aal2 por política.
 ---
 
 # Supabase — Multi-Factor Authentication (MFA)

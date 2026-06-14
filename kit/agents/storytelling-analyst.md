@@ -1,7 +1,8 @@
 ---
 name: storytelling-analyst
+cost_tier: medio
 tier: specialized
-description: Lê módulo/diretório target e produz STORYTELLING-<module>.md — story 5 frases + inventário + naked CRC + responsibility hot spots + extract candidates. Modernização 2026 — IA primeiro draft.
+description: Produz STORYTELLING-<module>.md — story 5 frases, inventário, naked CRC, hot spots e extract candidates. Use ao herdar codebase desconhecido ou antes de refatorar módulo.
 tools: Read, Bash, Grep, Glob, Write
 color: purple
 ---

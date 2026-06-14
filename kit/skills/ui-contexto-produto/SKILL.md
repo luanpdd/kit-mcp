@@ -1,6 +1,7 @@
 ---
 name: ui-contexto-produto
-description: Use ANTES de trabalho de UI — carrega/gera MARCA.md (marca vs produto, persona, voz, anti-refs) + DESIGN.md (Visao/Cores/Tipografia/Elevacao/Componentes/Regras). Bootstrap de fluencia de design IA.
+cost_tier: leve
+description: Gera MARCA.md (estratégia — registro, persona, voz, anti-refs) + DESIGN.md (Visao/Cores/Tipografia/Elevacao/Componentes/Regras). Use ANTES de qualquer trabalho de UI ou ao invocar designer-ui.
 ---
 
 # UI — Contexto de Produto (MARCA.md + DESIGN.md)

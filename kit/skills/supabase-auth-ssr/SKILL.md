@@ -1,6 +1,7 @@
 ---
 name: supabase-auth-ssr
-description: Use ao bootstrap Next.js v16 + Supabase Auth — @supabase/ssr, getAll/setAll APENAS, NUNCA auth-helpers-nextjs, proxy com getClaims, cache headers e redirects.
+cost_tier: leve
+description: Configura Supabase Auth em Next.js v16+ (App Router) com @supabase/ssr — gera browser/server client, middleware com getClaims, cache headers e redirects. NUNCA auth-helpers-nextjs.
 ---
 
 # Supabase — Auth SSR (Next.js v16+)

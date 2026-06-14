@@ -1,7 +1,8 @@
 ---
 name: shotgun-surgery-detector
+cost_tier: pesado
 tier: specialized
-description: Detecta duplicação semântica via embeddings (OpenAI text-embedding-3-small ou pgvector) — clusters priorizados por extract value. Modernização 2026…
+description: Detecta duplicação sintática (jscpd) + semântica (embeddings OpenAI/pgvector) e gera SHOTGUN-SURGERY.md com clusters priorizados. Use ao suspeitar de shotgun surgery (cap 21 Feathers). (pesado)
 tools: Read, Bash, Grep, Glob, Write, mcp__supabase__execute_sql
 color: magenta
 ---

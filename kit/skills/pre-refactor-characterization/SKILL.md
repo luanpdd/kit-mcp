@@ -1,6 +1,7 @@
 ---
 name: pre-refactor-characterization
-description: Use ANTES de refatorar arquivo > 500 linhas OU com contrato externo (webhook, API pública, integração). Bloqueia o refactor até characterization tests existirem com cobertura ≥ 70%.
+cost_tier: leve
+description: Gate de safety para refactor — bloqueia ate characterization tests cobrirem ≥ 70% comportamental. Gatilho — arquivo > 500 linhas, contrato externo (webhook, Edge Functions) ou cobertura < 60%.
 ---
 
 # Legacy — Pre-Refactor Characterization Gate

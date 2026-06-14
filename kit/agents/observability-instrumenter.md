@@ -1,7 +1,8 @@
 ---
 name: observability-instrumenter
+cost_tier: medio
 tier: specialized
-description: Instrumenta código com OpenTelemetry — gera spans, atributos canônicos (user.id, tenant_id, request.id, result.success, error.type, build_id) seguindo skill structured-events.
+description: Instrumenta handlers/Edge Functions com OTel — gera spans e atributos canônicos (user.id, tenant_id, error.type, result.success). Use antes de PR quando código não tem spans.
 tools: Read, Write, Edit, Bash, Grep, Glob
 color: yellow
 ---

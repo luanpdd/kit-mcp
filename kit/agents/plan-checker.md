@@ -1,7 +1,8 @@
 ---
 name: plan-checker
+cost_tier: leve
 tier: core
-description: Verifica se os planos vão atingir o objetivo da fase antes da execução. Análise reversa a partir do objetivo sobre qualidade do plano. Invocado pelo orquestrador /planejar-fase.
+description: Veredito binário (aprovado/bloqueado) sobre se os planos de fase atingem o objetivo. Análise reversa — parte do objetivo e valida cobertura de requisitos, dependências e escopo. Use antes de
 tools: Read, Bash, Glob, Grep
 color: green
 ---

@@ -1,6 +1,7 @@
 ---
 name: legacy-api-only-applications
-description: Use ao escrever ou refatorar código que é maioritariamente wrapper de API externa (cap 15 Feathers + Supabase Edge Functions). Adapter / anti-corruption layer canônico…
+cost_tier: leve
+description: Adapter pattern e anti-corruption layer para código API-only (cap 15 Feathers). Use ao acoplar Supabase Edge Functions a Stripe, OpenAI ou qualquer vendor — interface mínima + fake adapter
 ---
 
 # Legacy — API-Only Applications

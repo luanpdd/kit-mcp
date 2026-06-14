@@ -1,6 +1,7 @@
 ---
 name: supabase-auth-methods
-description: Use ao implementar fluxos de autenticação de usuário final no Supabase — senha, magic link, OTP, anônimo, Web3 e identity linking.
+cost_tier: leve
+description: Guia canônico de autenticação Supabase — senha, magic link, OTP email/SMS, login anônimo, Web3 e identity linking. Use ao implementar qualquer fluxo de login/signup de usuário final.
 ---
 
 # Supabase — Métodos de Autenticação

@@ -1,7 +1,8 @@
 ---
 name: detector-tenant-quente
+cost_tier: medio
 tier: specialized
-description: Consulta logs Supabase via mcp__supabase__execute_sql para queries dos últimos 30d, agrupa por org_id, identifica outliers (>3x P50 = WARN, >10x P50 = CRITICAL); produz AUDITORIA-TENANT-QUENTE.md…
+description: Produz AUDITORIA-TENANT-QUENTE.md com top 5 tenants outliers (WARN 3×P50, CRITICAL 10×P50) via pg_stat_statements. Use ao suspeitar de noisy neighbor ou cost overrun em app multi-tenant Supabase.
 tools: Read, Grep, Bash, Write, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: yellow
 ---

@@ -1,7 +1,8 @@
 ---
 name: supabase-sso-saml-architect
+cost_tier: medio
 tier: specialized
-description: Architect/materializer de Enterprise SSO SAML 2.0 em Supabase. Recebe spec (IdP, metadata, domínios, tenant) via Task() e produz comandos CLI + RLS de tenant hardenados.
+description: Gera comandos CLI supabase sso add + RLS RESTRICTIVE multi-tenant para Enterprise SSO SAML 2.0 (Okta, Azure AD, Google Workspace). Use ao configurar IdP com Supabase.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task
 color: green
 ---

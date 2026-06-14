@@ -1,7 +1,8 @@
 ---
 name: supabase-rls-writer
+cost_tier: medio
 tier: specialized
-description: Gera RLS policies para tabelas com GRANTs antes de ENABLE RLS (v1.23), indexing recomendado, (select auth.uid()) wrapper sempre, IS NOT NULL opcional (v1.23), granular por operação, views com sec…
+description: Gera RLS policies granulares por operação com GRANTs antes de ENABLE RLS, (select auth.uid()) obrigatório, indexes e views security_invoker. Aborta se detecta user_metadata (privilege escalation).
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: red
 ---

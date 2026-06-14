@@ -1,6 +1,7 @@
 ---
 name: supabase-enterprise-sso-saml
-description: Use ao configurar Enterprise SSO via SAML 2.0 no Supabase — Okta, Azure AD, Google Workspace, signInWithSSO, attribute mapping e RLS multi-tenant.
+cost_tier: leve
+description: Configura Enterprise SSO SAML 2.0 no Supabase com Okta, Azure AD, Google Workspace — gera RLS multi-tenant via sso_provider_id, attribute mapping e fluxo SP-initiated.
 ---
 
 # Supabase — Enterprise SSO (SAML 2.0)

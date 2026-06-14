@@ -1,6 +1,7 @@
 ---
 name: postgres-isolamento-concorrencia
-description: Use ao escrever transação Postgres com risco de race condition…
+cost_tier: leve
+description: Guia de isolamento Postgres — 6 race conditions, decision tree de isolation level e 3 padrões para lost update (FOR UPDATE, CAS, advisory lock). Use com write skew, phantom ou SERIALIZABLE.
 ---
 
 # Isolamento e Concorrência Postgres — 6 Race Conditions, Decision Tree, 3 Padrões para Lost Update

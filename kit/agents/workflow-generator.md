@@ -1,7 +1,8 @@
 ---
 name: workflow-generator
+cost_tier: pesado
 tier: specialized
-description: Gera `.workflow.js` Dynamic Workflows sob demanda. 4 layers — Classify pattern (6 opcoes), Specify, Compose (reusa kit), Materialize em .claude/workflows/. Nada vai pro kit canonico.
+description: Gera .workflow.js Dynamic Workflows sob demanda. 4 layers — Classify pattern (6 opções), Specify, Compose reusando agents do kit, Materialize. (pesado)
 tools: Read, Write, Bash, Grep, Glob, AskUserQuestion, Task
 color: "#A855F7"
 ---

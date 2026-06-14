@@ -1,6 +1,7 @@
 ---
 name: evolution-go-whatsapp-integration
-description: Use ao integrar Evolution Go (whatsmeow) ou Meta Cloud API com Supabase B2B multi-tenant…
+cost_tier: leve
+description: Use ao integrar Evolution Go (whatsmeow) ou Meta Cloud API com Supabase B2B multi-tenant. Entrega padrões de webhook HMAC, idempotência, rate limit e tabela org_whatsapp_configs por tenant.
 ---
 
 # Evolution Go + WhatsApp — Integração Multi-Tenant Supabase

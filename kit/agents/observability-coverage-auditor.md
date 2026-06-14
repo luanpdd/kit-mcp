@@ -1,7 +1,8 @@
 ---
 name: observability-coverage-auditor
+cost_tier: medio
 tier: specialized
-description: Audita cobertura de observability + legacy safety por Edge Function — golden signals X/N + SLO Y/N + burn alert Z/N + characterization tests + top 5 críticas (por chamadas 30d) sem cobertura.
+description: Gera OBSERVABILITY-COVERAGE.md com tabela X/N de Edge Functions cobertas por golden signals, SLO, burn alert e characterization tests. Use para mapear gaps antes de incident SEV1.
 tools: Read, Bash, Grep, Glob, Write, mcp__supabase__list_edge_functions, mcp__supabase__get_logs, mcp__supabase__execute_sql
 color: orange
 ---

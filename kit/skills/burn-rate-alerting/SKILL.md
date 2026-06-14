@@ -1,6 +1,7 @@
 ---
 name: burn-rate-alerting
-description: Use ao calcular burn rate predictive — lookahead/baseline window com fator 4×, context-aware vs short-term, fórmula de extrapolação para alert page vs ticket.
+cost_tier: leve
+description: Configura alertas SLO predictive com 2 níveis (page + ticket) — fórmula burn rate, lookahead ≤ 4× baseline, threshold page=14.4× e ticket=1×. Use ao definir alertas de error budget.
 ---
 
 # Observabilidade — Burn Rate Alerting

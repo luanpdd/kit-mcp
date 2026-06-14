@@ -1,7 +1,8 @@
 ---
 name: burn-rate-forecaster
+cost_tier: leve
 tier: specialized
-description: Calcula burn rate atual + ETA exhaustão + alert config (page vs ticket) — usa lookahead/baseline windows fator 4×, mcp__supabase__execute_sql para queries SLI.
+description: Calcula burn rate SLO + ETA de exaustão + ação recomendada (page vs ticket). Use quando suspeitar de degradação de SLO. Requer obs.sli_<slo_name> e .planning/slos/ definidos.
 tools: Read, Bash, Grep, mcp__supabase__execute_sql, mcp__supabase__list_tables
 color: orange
 ---

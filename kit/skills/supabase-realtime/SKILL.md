@@ -1,6 +1,7 @@
 ---
 name: supabase-realtime
-description: Use ao implementar Realtime — broadcast com private:true, naming scope:entity:id, RLS sobre realtime.messages, removeChannel cleanup, migrar de postgres_changes.
+cost_tier: leve
+description: Use ao implementar Realtime em Supabase — configura broadcast com private:true, naming scope:entity:id, RLS sobre realtime.messages e removeChannel; migra de postgres_changes.
 ---
 
 # Supabase — Realtime

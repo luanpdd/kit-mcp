@@ -6,6 +6,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+### Added — Consciência de uso e custo nos recursos
+
+- **`cost_tier: leve|medio|pesado`** no frontmatter de todos os 74 agents + 100 skills
+  (108 leve / 39 médio / 27 pesado), derivado de auditoria multi-agente. Campo NOVO, distinto do
+  `tier:` (capacidade) — base para badge de custo no seletor e pré-flight de subagentes.
+- **`docs/audit-recursos-melhorias.md`** — auditoria multi-agente (1 subagente por recurso, 3 lentes:
+  fluxo, UX/clareza, transparência de custo) com temas transversais, roadmap priorizado P0/P1/P2 e
+  ideias de UX de consciência/custo.
+
+### Changed
+
+- **Descriptions de frontmatter reescritas** (174 agents/skills) no padrão outcome-first ≤200 chars:
+  o que entrega + quando usar + sinal de custo para pesados; elimina truncamento "…" e
+  "Invocado pelo orquestrador X"; preserva termos canônicos de busca (RLS, SLO, OTel, etc.).
+
+### Fixed
+
+- **A2 (Edge Functions 2026):** `supabase-cron-queues` e `supabase-pgvector-rag` agora acessam
+  `SUPABASE_SECRET_KEYS` via `JSON.parse(...)['default']` (era usado como string — silent fail).
+- **`ai-mutation-tester`:** `trap` de restauração + cleanup do backup `.original` no Step 3 —
+  evita deixar o código-fonte do usuário mutado permanentemente se o processo for interrompido.
+
 ## [1.39.0] - 2026-06-14
 
 ### Added — Content Packs (instalação modular/seletiva)

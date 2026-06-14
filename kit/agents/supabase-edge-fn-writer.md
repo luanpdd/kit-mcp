@@ -1,7 +1,8 @@
 ---
 name: supabase-edge-fn-writer
+cost_tier: medio
 tier: specialized
-description: Escreve Deno Edge Functions Supabase 2026 — imports versionados npm:/jsr:/node:, env vars JSON dict, per-function deno.json + config.toml, withSupabase auth, EdgeRuntime.waitUntil, OTel.
+description: Gera index.ts + deno.json + entry config.toml para Edge Functions Supabase 2026 (withSupabase auth, imports npm:/jsr:, OTel, EdgeRuntime.waitUntil). Use ao criar Edge Functions Supabase do zero.
 tools: Read, Write, Edit, Bash, Grep, Glob
 color: cyan
 ---

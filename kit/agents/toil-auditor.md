@@ -1,7 +1,8 @@
 ---
 name: toil-auditor
+cost_tier: medio
 tier: specialized
-description: Audita repo + git log + scripts shell + runbooks → identifica toil (6 critérios canônicos), gera TOIL-AUDIT.md priorizado P0/P1/P2 com esforço.
+description: Gera TOIL-AUDIT.md com toil priorizado P0/P1/P2 — audita repo, git log, scripts e runbooks pelos 6 critérios canônicos. Use ao quantificar automação ou antes de /auditar-marco.
 tools: Read, Write, Bash, Grep, Glob
 color: orange
 ---

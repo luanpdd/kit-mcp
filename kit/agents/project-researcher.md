@@ -1,7 +1,8 @@
 ---
 name: project-researcher
+cost_tier: pesado
 tier: core
-description: Pesquisa ecossistema do domínio antes do roadmap. Produz arquivos em .planning/research/ consumidos pelo roadmapper. Invocado por /novo-projeto ou /novo-marco.
+description: Produz pesquisa do ecossistema do domínio em .planning/research/ (SUMMARY, STACK, FEATURES, ARCHITECTURE, PITFALLS) para alimentar o roadmap. Use antes de /novo-projeto ou /novo-marco. (pesado)
 tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*, mcp__firecrawl__*, mcp__exa__*
 color: cyan
 ---

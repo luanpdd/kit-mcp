@@ -1,7 +1,8 @@
 ---
 name: phase-researcher
+cost_tier: pesado
 tier: core
-description: Pesquisa como implementar uma fase antes do planejamento. Produz RESEARCH.md consumido pelo planner. Invocado pelo orquestrador /planejar-fase.
+description: Produz RESEARCH.md com stack, padroes e armadilhas para uma fase antes do planejamento. Use antes de /planejar-fase para fundamentar decisoes tecnicas com confianca HIGH/MEDIUM/LOW. (pesado)
 tools: Read, Write, Bash, Grep, Glob, WebSearch, WebFetch, mcp__context7__*, mcp__firecrawl__*, mcp__exa__*
 color: cyan
 ---

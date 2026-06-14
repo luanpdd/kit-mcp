@@ -1,7 +1,8 @@
 ---
 name: auditor-consistencia-isolamento
+cost_tier: medio
 tier: specialized
-description: Audita migrations + RPCs + Edge Functions Supabase em busca de 6 anti-patterns canônicos de race condition (SELECT-then-UPDATE sem FOR UPDATE = lost update vulnerable; trigger sem materializar pr…
+description: Audita migrations + RPCs + Edge Functions Supabase — 6 anti-patterns race condition (DDIA Ch 7/8). Gera AUDITORIA-CONSISTENCIA.md P0/P1/P2 com findings em arquivo:linha. Use pré-produção
 tools: Read, Grep, Glob, Bash, Write
 color: red
 ---

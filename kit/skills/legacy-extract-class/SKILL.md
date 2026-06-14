@@ -1,6 +1,7 @@
 ---
 name: legacy-extract-class
-description: Use ao identificar classes "muito grandes" (cap 20 Feathers) com responsibility hot spots — extract class para separar responsabilidades.
+cost_tier: leve
+description: Separa responsabilidades de classes grandes (cap 20 Feathers) — detecta hot spots por matriz de coupling e extrai classes coesas. Use quando classe > 300 linhas ou 3+ responsabilidades.
 ---
 
 # Legacy — Extract Class

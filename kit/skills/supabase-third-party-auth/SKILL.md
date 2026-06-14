@@ -1,6 +1,7 @@
 ---
 name: supabase-third-party-auth
-description: Use ao integrar Clerk, Firebase, Auth0, AWS Cognito ou WorkOS como provedor de autenticação primário junto ao Supabase, via opção accessToken no createClient.
+cost_tier: leve
+description: Integra Clerk, Firebase, Auth0, AWS Cognito ou WorkOS ao Supabase mantendo RLS funcional via JWT externo + opção accessToken. JWT deve ser assimétrico (RS256/ES256) com claim role:authenticated.
 ---
 
 # Supabase — Third-Party Auth (Clerk, Firebase, Auth0, Cognito, WorkOS)

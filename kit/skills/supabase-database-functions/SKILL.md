@@ -1,6 +1,7 @@
 ---
 name: supabase-database-functions
-description: Use ao criar funções Postgres — SECURITY INVOKER por padrão, SET search_path = '' SEMPRE, schema-qualified names, IMMUTABLE/STABLE quando possível.
+cost_tier: leve
+description: Use ao criar ou auditar funções Postgres no Supabase — garante SECURITY INVOKER por padrão, SET search_path = '' (anti-hijack), schema-qualified names e IMMUTABLE/STABLE corretos.
 ---
 
 # Supabase — Database Functions

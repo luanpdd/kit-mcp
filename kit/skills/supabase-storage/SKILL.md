@@ -1,6 +1,7 @@
 ---
 name: supabase-storage
-description: Use ao integrar Storage — buckets públicos vs privados, signed URLs com expiration, RLS sobre storage.objects com multi-tenant path, image transforms, TUS uploads.
+cost_tier: leve
+description: Configura Supabase Storage com buckets públicos vs privados, signed URLs com expiration, RLS sobre storage.objects, multi-tenant path isolation, image transforms e TUS uploads para arquivos grandes.
 ---
 
 # Supabase — Storage

@@ -1,7 +1,8 @@
 ---
 name: supabase-mfa-implementer
+cost_tier: medio
 tier: specialized
-description: Materializer de MFA em Supabase. Recebe spec (tipos TOTP/phone, política enforcement) via Task() e produz componentes React + políticas RLS RESTRICTIVE hardenadas.
+description: Materializa MFA em Supabase — componentes React EnrollMFA/UnenrollMFA + AAL check + RLS RESTRICTIVE com aal2. Use ao implementar TOTP/phone enforcement (todos/novos/opt-in). Evita 5 falhas criticas
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, mcp__supabase__execute_sql, mcp__supabase__apply_migration
 color: red
 ---

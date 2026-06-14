@@ -1,6 +1,7 @@
 ---
 name: supabase-edge-runtime-builtins
-description: Use ao usar built-ins do Edge Runtime Supabase — Supabase.ai.Session (embeddings/LLM), file system S3FS /s3 + /tmp, regional via x-region, WebSockets Deno.upgradeWebSocket, Wasm via static_files.
+cost_tier: leve
+description: Use ao acessar built-ins do Edge Runtime Supabase — Supabase.ai.Session (embeddings/LLM), S3FS /s3 + /tmp, regional x-region, WebSockets Deno.upgradeWebSocket, Wasm static_files.
 ---
 
 # Supabase — Edge Runtime Built-ins · 2026

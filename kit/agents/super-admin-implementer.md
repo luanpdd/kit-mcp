@@ -1,7 +1,8 @@
 ---
 name: super-admin-implementer
+cost_tier: pesado
 tier: specialized
-description: Materializa super-admin platform — cross-tenant RLS PERMISSIVE, Edge Function impersonate (TTL 30min + reason obrigatório), banner React, RPC super_admin_delete_org com dupla confirmação.
+description: Materializa super-admin platform — cross-tenant RLS PERMISSIVE, Edge Function impersonate (TTL 30min + reason), banner React, RPC delete_org com dupla confirmacao. Requer audit_log. (pesado)
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion, mcp__supabase__execute_sql
 color: red
 ---

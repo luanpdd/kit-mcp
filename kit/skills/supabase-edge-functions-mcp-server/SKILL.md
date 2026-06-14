@@ -1,6 +1,7 @@
 ---
 name: supabase-edge-functions-mcp-server
-description: Use ao construir MCP server em Supabase Edge Functions com mcp-lite — scaffold npm create mcp-lite, dois apps Hono, deno.json, verify_jwt=false + auth no nível MCP, deploy para Claude/Cursor.
+cost_tier: leve
+description: Constroi MCP server em Supabase Edge Functions com mcp-lite — scaffold Hono, deno.json, auth no nivel MCP (verify_jwt=false), deploy para Claude/Cursor. Use ao expor Supabase como tools para LLM.
 ---
 
 # Supabase — Edge Functions como MCP Server (`mcp-lite`) · 2026

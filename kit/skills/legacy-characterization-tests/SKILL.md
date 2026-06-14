@@ -1,6 +1,7 @@
 ---
 name: legacy-characterization-tests
-description: Use ao refatorar código legado SEM testes prévios — characterization tests (cap 13 Feathers) capturam comportamento atual como golden snapshot, viram oracle imutável durante o refactor.
+cost_tier: leve
+description: Gera suite de characterization tests (cap 13 Feathers) para refactor seguro de codigo legado sem testes — captura comportamento atual como golden snapshot, oracle imutavel antes de qualquer mudanca.
 ---
 
 # Legacy — Characterization Tests

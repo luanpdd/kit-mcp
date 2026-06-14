@@ -1,6 +1,7 @@
 ---
 name: supabase-jwt-signing-keys
-description: Use ao configurar JWT signing keys assimétricas (ES256/RS256) no Supabase, verificar JWTs com getClaims(), rotacionar chaves ou entender estrutura e claims do JWT.
+cost_tier: leve
+description: Configura JWT signing keys assimétricas (ES256/RS256) no Supabase, ensina verificação segura com getClaims() vs getSession(), rotação zero-downtime e cache JWKS. Use ao migrar HS256 ou integrar
 ---
 
 # Supabase — JWT e Signing Keys

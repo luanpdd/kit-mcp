@@ -1,6 +1,7 @@
 ---
 name: org-switcher-react-pattern
-description: Use ao implementar org switcher React em B2B SaaS multi-tenant — URL pattern /orgs/[slug]/ (Next.js App Router middleware) ou useParams() (Vite SPA + React Router v6), zustand v5 persist para act…
+cost_tier: leve
+description: Use ao implementar org switcher React B2B multi-tenant — URL /orgs/[slug]/ (Next.js App Router middleware ou React Router v6), zustand v5 persist, RLS validado, refresh JWT apos assign_role.
 ---
 
 # Org Switcher — React Pattern Multi-Tenant

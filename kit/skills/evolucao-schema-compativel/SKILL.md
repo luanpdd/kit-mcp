@@ -1,6 +1,7 @@
 ---
 name: evolucao-schema-compativel
-description: Use ao escrever migration Postgres ou versionar contrato API Edge Function…
+cost_tier: leve
+description: Guia migrations Postgres zero-downtime (padrão 3-passos, DROP 2-fase, rename via view) e payload Edge Function backward+forward compat. Use ao alterar colunas em uso ou versionar contrato API.
 ---
 
 # Evolução de Schema Compatível — Padrão 3-Passos + Rolling Upgrade

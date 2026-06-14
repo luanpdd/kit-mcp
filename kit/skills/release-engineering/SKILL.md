@@ -1,6 +1,7 @@
 ---
 name: release-engineering
-description: Use ao desenhar/auditar pipeline de release — deployment philosophy, self-service, policy enforcement, canary, rollback, branching strategy, release invariants. Cap 8 livro Google SRE.
+cost_tier: leve
+description: Guia 4 invariantes canônicos (self-service, high velocity, hermetic builds, policy enforcement), canary 1%→100% com SLO check e rollback <5min. Use ao desenhar ou auditar release pipeline.
 ---
 
 # SRE — Release Engineering

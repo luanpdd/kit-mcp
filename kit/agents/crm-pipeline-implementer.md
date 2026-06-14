@@ -1,7 +1,8 @@
 ---
 name: crm-pipeline-implementer
+cost_tier: pesado
 tier: specialized
-description: Materializa CRM lead pipeline — tabela leads (6 stages canônicos + custom prefix), tabela lead_stage_transitions data-driven, trigger PG BEFORE UPDATE validate_lead_stage_transition, trigge…
+description: Materializa CRM lead pipeline — tabela leads (6 stages + custom), lead_stage_transitions, triggers PG, RLS multi-tenant, Edge Function notificacao. Use ao implementar CRM em B2B SaaS Supabase.
 tools: Read, Write, Edit, Bash, Grep, Glob, Task, AskUserQuestion, mcp__supabase__execute_sql
 color: green
 ---

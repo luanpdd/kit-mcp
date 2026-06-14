@@ -1,6 +1,7 @@
 ---
 name: core-analysis-loop
-description: Use ao debugar produção — método científico iterativo (sintoma → hipótese de dados → validação via query → root cause). Substitui dashboard-flipping e debug-by-intuition.
+cost_tier: leve
+description: Depura produção via método científico iterativo (sintoma, query, root cause) sem dashboard-flipping. Documenta trilha em .planning/investigations/. Gatilho — SLO burn, alerta, anomalia.
 ---
 
 # Observabilidade — Core Analysis Loop

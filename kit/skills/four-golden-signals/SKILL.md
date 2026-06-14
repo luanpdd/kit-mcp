@@ -1,6 +1,7 @@
 ---
 name: four-golden-signals
-description: Use ao instrumentar serviço user-facing — Latency + Traffic + Errors + Saturation, percentis (não mean), histogram exponencial, latência success vs error separadas.
+cost_tier: leve
+description: Instrumenta serviço user-facing com 4 golden signals (Latency+Traffic+Errors+Saturation) via OTel — histogram exponencial, percentis p50/p95/p99, latência success vs error separadas.
 ---
 
 # SRE — Four Golden Signals

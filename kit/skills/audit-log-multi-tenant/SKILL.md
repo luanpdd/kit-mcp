@@ -1,6 +1,7 @@
 ---
 name: audit-log-multi-tenant
-description: Use ao implementar audit log append-only — tabela com REVOKE DELETE/UPDATE, retention pg_cron por tiers, legal hold LGPD, sanitização de PII, taxonomia de eventos. Multi-tenant Supabase.
+cost_tier: leve
+description: Gera audit_logs append-only multi-tenant — REVOKE DELETE/UPDATE, retention pg_cron 3 tiers, legal hold LGPD, PII SHA-256, taxonomia 7 eventos canônicos. Use ao implementar audit log Supabase.
 ---
 
 # Audit Log Multi-Tenant — Compliance + Forensics

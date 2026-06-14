@@ -1,6 +1,7 @@
 ---
 name: supabase-edge-functions-auth
-description: Use ao autenticar Edge Functions Supabase 2026 — package @supabase/server, withSupabase({auth}), createSupabaseContext, Authorization JWT vs apikey, toggle verify_jwt por função no config.toml.
+cost_tier: leve
+description: Autentica Edge Functions Supabase 2026 com @supabase/server — withSupabase auth modes (user/secret/none), verify_jwt por função, Authorization JWT vs apikey, diagnóstico de 401.
 ---
 
 # Supabase — Edge Functions Auth (`@supabase/server`) · 2026

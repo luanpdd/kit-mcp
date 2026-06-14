@@ -1,6 +1,7 @@
 ---
 name: opentelemetry-standard
-description: Use ao adotar OTel — SDK + API + Tracer + Meter + Exporter + OTLP + Collector. Auto-instrumentation primeiro, custom attrs depois. Vendor-neutral por design.
+cost_tier: leve
+description: Guia canonico OTel — patterns SDK Node.js/Deno, Tracer, Meter, OTLP Collector e anti-patterns. Use ao adotar instrumentacao vendor-neutral com auto-instrumentation, custom attrs e Edge Functions.
 ---
 
 # Observabilidade — OpenTelemetry (OTel)

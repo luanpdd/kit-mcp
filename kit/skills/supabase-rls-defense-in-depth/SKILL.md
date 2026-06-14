@@ -1,6 +1,7 @@
 ---
 name: supabase-rls-defense-in-depth
-description: Use ao desenhar defense-in-depth RLS em Supabase — event trigger rls_auto_enable (default projetos novos), BYPASSRLS role privilege, service_role caveat, security definer functions como bypass co…
+cost_tier: leve
+description: Defense-in-depth RLS em Supabase — 10 camadas (event trigger rls_auto_enable, BYPASSRLS, security definer, views security_invoker, column-level privileges). Use ao proteger schema multi-camada.
 ---
 
 # Supabase — RLS Defense in Depth

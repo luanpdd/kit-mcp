@@ -1,5 +1,6 @@
 ---
 name: member-invite-flow
+cost_tier: leve
 description: Use ao implementar invite de membros — token SHA-256 (hash no banco), state machine pending/accepted/expired, email-locked, bulk invite, transfer ownership. B2B multi-tenant Supabase.
 ---
 

@@ -1,6 +1,7 @@
 ---
 name: supabase-column-level-security
-description: Use ao implementar Column-Level Security (CLS) em Supabase — complementa RLS com privilégios granulares por coluna via GRANT/REVOKE (col1, col2) ON TABLE. Feature AVANÇADA…
+cost_tier: leve
+description: Restringe colunas PII via GRANT/REVOKE column-level — complementa RLS (Camada 8 defense-in-depth). Use em compliance LGPD/GDPR, audit log ou billing; prefira dedicated role table para casos simples.
 ---
 
 # Supabase — Column Level Security
