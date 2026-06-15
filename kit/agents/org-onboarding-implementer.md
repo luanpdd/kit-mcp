@@ -185,14 +185,9 @@ ORG-ONBOARDING-IMPLEMENTER · output integrado
 - App single-tenant (1 org fixa, sem signup público) → overhead, não precisa onboarding flow
 - Mudança trivial (renomear coluna em organizations) → use Edit direto
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-Onboarding é hot path crítico — emite eventos canônicos:
-
-1. **`org_created`** event em audit_log com `actor_id`, `org_id`, `slug`, `plan` (skill [`audit-log-multi-tenant`](../skills/audit-log-multi-tenant/SKILL.md))
-2. **`first_admin_assigned`** event em audit_log com `org_id`, `user_id`
-3. **Counter:** `signup.org_created.count` (skill [`four-golden-signals`](../skills/four-golden-signals/SKILL.md))
-4. **Histogram:** `signup.duration_ms` (latência total signup → dashboard)
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Cooperative handoff to supabase-rls-hardener (v1.23)
 

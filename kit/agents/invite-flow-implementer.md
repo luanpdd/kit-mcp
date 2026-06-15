@@ -123,12 +123,9 @@ INVITE-FLOW-IMPLEMENTER · output integrado
 - App single-user (sem invites) → escopo errado
 - Invite via approval workflow (não token) → diferente, fora deste escopo
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-- Counter `invite.created.count{org_id, role}`
-- Counter `invite.accepted.count{org_id, role}`
-- Histogram `invite.accept_latency_ms` (tempo entre create e accept)
-- Alarme se `invite.created.count > bulk_limit_per_hour` por org → suspeita de abuso
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Cooperative handoff to supabase-rls-hardener (v1.23)
 

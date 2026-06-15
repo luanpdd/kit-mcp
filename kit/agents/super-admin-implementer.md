@@ -166,12 +166,9 @@ SUPER-ADMIN-IMPLEMENTER · output integrado
 - App single-tenant → escopo errado
 - Sem necessidade de impersonation/delete → use Edit direto para PERMISSIVE policies simples
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-- Counter `super_admin.action.count{action_type}` (impersonation_started, delete_org, etc.)
-- Histogram `super_admin.impersonation.duration_seconds`
-- Alarme se >5 impersonations/dia per super_admin → review necessário
-- Alarme se delete_org > 1/semana → suspeita
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Cooperative handoff to supabase-rls-hardener (v1.23)
 

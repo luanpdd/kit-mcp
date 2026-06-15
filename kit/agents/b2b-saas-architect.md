@@ -145,10 +145,9 @@ Cross-suite delegation note:
 - App single-tenant (1 org fixa) → use `supabase-architect` v1.8 direto
 - Schema base já existe (extensão vs design) → use Edit + outras phases
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-- Counter `b2b.architect.runs.count`
-- Histogram `b2b.architect.duration_seconds`
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Ver também
 

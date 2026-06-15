@@ -162,13 +162,9 @@ EVOLUTION-GO-INTEGRATOR · output integrado
 - App sem WhatsApp use case → escopo errado
 - Já tem integração WhatsApp legacy → analisar primeiro, depois decidir migrate
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-- Counter `whatsapp.webhook.received{org_id, provider}` por request
-- Counter `whatsapp.message.idempotent_drop{org_id}` por duplicate ignored
-- Histogram `whatsapp.webhook.duration_ms`
-- Counter `whatsapp.send.rate_limited{org_id}` por 131056 hit
-- Alarme se `whatsapp.send.rate_limited > baseline` → review queue/throttle
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Cooperative handoff to supabase-rls-hardener (v1.23)
 

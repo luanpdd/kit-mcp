@@ -228,11 +228,9 @@ where not exists (
 - Recém-criou esquema (não tem dados ainda) — overhead, audit é mais útil em projetos maduros
 - Já rodou audit há < 1 semana sem mudanças significativas
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-- Counter `audit.gaps.found{severity}` por execução
-- Histogram `audit.duration_ms` (latência total da auditoria)
-- Cada gap fica registrado em `obs.events` com `audit_run_id` para rastreabilidade
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Detecção de Hot Tenant Gap (v1.22+)
 

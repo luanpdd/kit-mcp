@@ -745,20 +745,9 @@ Se algum gate falhar → Verdict STRENGTHEN com diff explícito do que adicionar
 - Caller já invocou este agent para mesmo projeto no mesmo PR → evite loop
 - Repo público + intent backup.yml → REWRITE bloqueia (não materializar)
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-Span estruturado para cada invocação:
-
-- `agent.name = "supabase-cicd-pipeline-implementer"`
-- `caller.name` (upstream)
-- `verdict` (GO | STRENGTHEN | REWRITE)
-- `workflows_created_count` (7 | 8)
-- `workflows_skipped` (lista — database-tests, functions-tests)
-- `secrets_count` (6 canônicos)
-- `cross_suite_handoffs` (lista — migration-writer, release-auditor)
-- `audit_result` (ROBUST | ADEQUATE | FRAGILE | BROKEN)
-- `repo_visibility` (PRIVATE | PUBLIC)
-- `confirmation_required` (bool)
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Ver também
 

@@ -537,17 +537,9 @@ Se algum gate falhar → Verdict STRENGTHEN com diff explícito do que adicionar
 - Projeto sem schema (sem migrations → branching não tem o que validar)
 - Setup de CI/CD geral sem branching context (use `release-pipeline-auditor` diretamente)
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-Span estruturado para cada invocação:
-
-- `agent.name = "supabase-branching-architect"`
-- `caller.name` (upstream)
-- `verdict` (GO | STRENGTHEN | REWRITE)
-- `decisions_collected` (count 1..4)
-- `integration_method` (GitHub | Dashboard | Hybrid)
-- `cost_estimate_monthly_usd` (numeric)
-- `confirmation_required` (bool)
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Ver também
 

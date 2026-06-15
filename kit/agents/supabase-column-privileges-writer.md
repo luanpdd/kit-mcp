@@ -377,19 +377,9 @@ Se ≥ 1 row retorna, há gap defense-in-depth Camada 8 — sugira invocar `supa
 - Caller já invocou este agent para mesma tabela na mesma session → evite loop
 - Schema declarativo `supabase/schemas/` em vez de migration
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-Emite span estruturado em cada invocação:
-
-- `agent.name = "supabase-column-privileges-writer"`
-- `caller.name` (de upstream_intent)
-- `verdict` (GO | STRENGTHEN | REWRITE)
-- `caso_justificado` (bool)
-- `sensitive_columns_count` (int)
-- `allowed_roles_count` (int)
-- `confirmation_required` (bool)
-
-Para investigação via Core Analysis Loop (skill `core-analysis-loop`).
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Ver também
 

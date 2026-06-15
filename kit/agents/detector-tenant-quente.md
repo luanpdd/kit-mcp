@@ -322,11 +322,9 @@ OK:       <count> tenants (≤ 3× P50)
 - App recém-lançado (< 30 dias produção) — janela insuficiente para sample
 - Já rodou audit há < 14 dias sem mudanças significativas em uso
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-- Counter `audit.tenant_hot.findings{severity=CRITICAL|WARN|OK,metric=queries|storage|connections}` por execução
-- Histogram `audit.tenant_hot.duration_ms` (latência total da auditoria)
-- Gauge `audit.tenant_hot.skew_ratio{tenant_id}` (ratio do top tenant vs P50) — para alertar trend
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Ver também
 

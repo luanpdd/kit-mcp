@@ -161,11 +161,9 @@ AUDIT-LOG-IMPLEMENTER · output integrado
 - App single-tenant sem requisito de audit → overhead
 - Audit log já existe em outra tabela (legacy) → use Edit + migration de schema
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-- Counter `audit.log.events.count{event_type, tenant_id}` por insert
-- Histogram `audit.log.payload_size_bytes` (detectar payload bloat)
-- Alarme se `audit.log.events.count{event_type=super_admin_action}` > baseline → suspeita de comprometimento
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Cooperative handoff to supabase-rls-hardener (v1.23)
 

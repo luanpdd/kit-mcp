@@ -499,19 +499,9 @@ Este agent bloqueia ou strengthen-corrige os seguintes anti-patterns canônicos 
 - Caller já invocou hardener para o mesmo draft e está iterando — evite loop
 - Schema declarativo `supabase/schemas/` está sendo editado (não migration) — outro caminho de validação
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-Emite span estruturado em cada invocação:
-
-- `agent.name = "supabase-rls-hardener"`
-- `caller.name` (de upstream_intent)
-- `verdict` (GO | STRENGTHEN | REWRITE)
-- `checklist.passed` (count de itens C1..C7 com ✅)
-- `checklist.failed` (count com ❌)
-- `confirmation_required` (bool)
-- `anti_patterns_detected` (array)
-
-Para investigação de drift via Core Analysis Loop (skill `core-analysis-loop`).
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Ver também
 
