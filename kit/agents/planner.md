@@ -924,3 +924,12 @@ Se ≥ 1 match em qualquer tarefa do plan → injetar tarefa final:
 **Não bloqueia execução:** se hardener responde STRENGTHEN/REWRITE, executor absorve o feedback e aplica diff. Aborto silencioso é proibido.
 
 </sql_auto_handoff_cooperativo>
+
+<subagent_preflight>
+## Pré-flight de subagentes (custo)
+
+Antes de QUALQUER fan-out de `Task()` (sobretudo 2+ subagents, ou 1 subagent de cost_tier pesado que encadeia os seus), siga o protocolo canônico:
+@./.claude/framework/references/subagent-preflight.md
+
+Resumo: liste os subagents que vai disparar + o cost_tier de cada (leve/medio/pesado), respeite `workflow.cost_awareness` (silencioso → segue; resumo → mostra a lista e segue; confirmar → pede OK antes), e use a MCP tool `cost-estimate` para materializar o tier em USD aproximado quando útil. Não dispare N subagents sem o usuário saber que paga por N.
+</subagent_preflight>

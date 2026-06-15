@@ -406,3 +406,12 @@ Quando agent gera bucket privado novo, **sempre inclui**:
 - [telemetry-sampling](../skills/telemetry-sampling/SKILL.md) *(Phase 34)* — head-based sampling por size_bytes
 - [four-golden-signals](../skills/four-golden-signals/SKILL.md) — 4 sinais canônicos (Latency, Traffic, Errors, Saturation) cap 6 livro Google SRE — saturation = bucket size / quota plan
 - [golden-signals-instrumenter](./golden-signals-instrumenter.md) — agent que retro-instrumenta storage existente com os 4 signals
+
+<subagent_preflight>
+## Pré-flight de subagentes (custo)
+
+Antes de QUALQUER fan-out de `Task()` (sobretudo 2+ subagents, ou 1 subagent de cost_tier pesado que encadeia os seus), siga o protocolo canônico:
+@./.claude/framework/references/subagent-preflight.md
+
+Resumo: liste os subagents que vai disparar + o cost_tier de cada (leve/medio/pesado), respeite `workflow.cost_awareness` (silencioso → segue; resumo → mostra a lista e segue; confirmar → pede OK antes), e use a MCP tool `cost-estimate` para materializar o tier em USD aproximado quando útil. Não dispare N subagents sem o usuário saber que paga por N.
+</subagent_preflight>

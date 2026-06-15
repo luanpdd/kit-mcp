@@ -777,3 +777,12 @@ Span estruturado para cada invocação:
 - [lgpd-multi-tenant-compliance](../skills/lgpd-multi-tenant-compliance/SKILL.md) (v1.21) — backup criptografado per-tenant para compliance LGPD
 - [glossário compartilhado](../skills/_shared-supabase/glossary.md) — termos GitHub Actions Supabase, ci.yml, staging.yml, production.yml, backup 3-dump, never backup to public repo
 - Doc oficial: [Supabase GitHub Actions](https://supabase.com/docs/guides/deployment/ci), [GitHub Actions docs](https://docs.github.com/en/actions)
+
+<subagent_preflight>
+## Pré-flight de subagentes (custo)
+
+Antes de QUALQUER fan-out de `Task()` (sobretudo 2+ subagents, ou 1 subagent de cost_tier pesado que encadeia os seus), siga o protocolo canônico:
+@./.claude/framework/references/subagent-preflight.md
+
+Resumo: liste os subagents que vai disparar + o cost_tier de cada (leve/medio/pesado), respeite `workflow.cost_awareness` (silencioso → segue; resumo → mostra a lista e segue; confirmar → pede OK antes), e use a MCP tool `cost-estimate` para materializar o tier em USD aproximado quando útil. Não dispare N subagents sem o usuário saber que paga por N.
+</subagent_preflight>
