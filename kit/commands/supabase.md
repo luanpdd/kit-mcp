@@ -1,6 +1,6 @@
 ---
 name: supabase
-description: Orquestrador da Suíte Supabase — serviço de materialização (v1.23) que recebe planejamento/draft SQL de qualquer agent ou user e devolve código hardenado pronto. NUNCA bloqueia upstream…
+description: Orquestrador da Suíte Supabase — recebe planejamento ou draft SQL de qualquer agent/user e devolve código hardenado pronto (RLS, migrations, Edge Functions). NUNCA bloqueia o upstream.
 argument-hint: "<subcomando> [args...]"
 allowed-tools:
   - Read

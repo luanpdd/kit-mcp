@@ -1,6 +1,6 @@
 ---
 name: auditar-release
-description: Invoca release-pipeline-auditor — audita CI/CD para hermeticidade (lockfile + frozen-install + image SHA + sem network), reprodutibilidade (versions pinned), policy enforcement (branch protection…
+description: Invoca release-pipeline-auditor — audita CI/CD em 3 dimensões (hermeticidade, reprodutibilidade, policy enforcement) e gera RELEASE-AUDIT.md scored com gaps priorizados.
 argument-hint: "[--dimensions hermeticidade,reprodutibilidade,policy-enforcement] [--gh-repo OWNER/REPO]"
 allowed-tools:
   - Read
