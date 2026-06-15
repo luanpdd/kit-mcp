@@ -68,6 +68,8 @@ Isso garante que padrões, convenções e melhores práticas específicas do pro
 Esse gate é canônico — equivale ao que `golden-signals-coverage` (v1.10) faz para Edge Functions sem golden signals. Skill canônica: `pre-refactor-characterization`. Configurável via `.planning/config.json#workflow.legacy_refactor_gate_blocking`.
 
 **Princípio:** o agent especializado é mais barato + mais correto que o executor genérico para esses domínios — ele já tem as regras embutidas. Delegação não é overhead; é correção.
+
+**Fallback graceful (Content Packs):** os agents da tabela vivem em packs opcionais (`supabase`, `legacy`) que podem não estar instalados neste projeto. Antes de delegar, considere disponibilidade: se o `subagent_type` não existir (pack não selecionado), **não bloqueie** — faça o trabalho inline aplicando as skills do projeto (`.claude/skills/`) e as regras do CLAUDE.md, ou use `general-purpose` com um brief explícito. Ausência de um agent canônico degrada para execução direta, nunca para abort.
 </project_context>
 
 <execution_flow>
@@ -560,6 +562,8 @@ hardener_result = Task(
 - **REWRITE** → se user_facing_caller=true, PAUSA execução e pede confirmação ao usuário; sem confirmação, não aplica
 
 **Princípio canônico v1.23:** Executor faz (aplica plan); supabase-rls-hardener hardena (valida defense-in-depth). Conflitos viram diff explícito, nunca abortos silenciosos.
+
+**Fallback graceful:** `supabase-rls-hardener` vive no pack `supabase`. Se ele não estiver instalado, **não pule a segurança** — aplique você mesmo o checklist da skill `supabase-rls-defense-in-depth` (se presente) ou as regras RLS do CLAUDE.md antes de aplicar o SQL. Sem o agent, hardening vira passo inline; nunca um SQL aplicado sem revisão.
 
 **Registro em SUMMARY.md:** se hardener veredict ≠ GO, SUMMARY.md inclui section "## RLS Hardener Trace" com verdict + diff aplicado + justificativa.
 

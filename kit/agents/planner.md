@@ -897,6 +897,8 @@ Siga os templates nas seções checkpoints e revision_mode respectivamente.
 
 Ao gerar PLAN.md que inclui tarefas com SQL/DDL (CREATE TABLE, CREATE POLICY, CREATE VIEW, ALTER TABLE adicionando column, etc.), **automaticamente** adiciona ao plan uma tarefa final de handoff cooperativo para `supabase-rls-hardener`.
 
+**Fallback graceful (Content Packs):** `supabase-rls-hardener` vive no pack `supabase`, que pode não estar instalado. Só injete a tarefa de handoff se o agent existir no projeto (`.claude/agents/supabase-rls-hardener.md`). Se ausente, substitua por uma tarefa de validação inline ("revisar o SQL contra RLS defense-in-depth / CLAUDE.md antes de aplicar") — nunca referencie um `subagent_type` que o projeto não tem.
+
 **Heurística de detecção (regex):**
 
 ```regex

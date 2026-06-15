@@ -171,7 +171,14 @@ export async function syncTo(targetId, opts = {}) {
     ops.push({ path: path.join(dstRoot, MANAGED_MARKER_FILE), content: MANAGED_MARKER_BODY, kind: cap });
     for (const f of files) {
       const dst = path.join(dstRoot, f.rel);
-      ops.push({ path: dst, srcAbs: f.abs, kind: cap, treeCopy: true });
+      const op = { path: dst, srcAbs: f.abs, kind: cap, treeCopy: true };
+      // Bundle-aware router (RFC §7.4): bake the installed-pack set into the
+      // projected kit-router.cjs so it only routes to domains whose pack is
+      // installed — without reading the lockfile on every prompt.
+      if (cap === 'hooks' && (f.rel === 'kit-router.cjs' || f.rel.endsWith('/kit-router.cjs'))) {
+        op.transform = (src) => renderRouterHook(src, packFilter.effective);
+      }
+      ops.push(op);
     }
   }
 
@@ -200,6 +207,7 @@ export async function syncTo(targetId, opts = {}) {
 
     const diffOne = async (op) => {
       if (forceFullSync) return { op, skip: false };
+      if (op.transform) return { op, skip: false }; // transformed output ≠ source — always write
       if (!op.treeCopy) return { op, skip: false };
       let targetStat;
       try { targetStat = await fs.stat(op.path); }
@@ -231,7 +239,10 @@ export async function syncTo(targetId, opts = {}) {
     // even when 16 ops race for the same parent dir.
     const applyOp = async (op) => {
       await fs.mkdir(path.dirname(op.path), { recursive: true });
-      if (op.treeCopy) {
+      if (op.transform) {
+        const src = await fs.readFile(op.srcAbs, 'utf8');
+        await fs.writeFile(op.path, op.transform(src), 'utf8');
+      } else if (op.treeCopy) {
         await fs.copyFile(op.srcAbs, op.path);
       } else {
         await fs.writeFile(op.path, op.content, 'utf8');
@@ -416,6 +427,18 @@ function renderWorkflowItem(item, kitRoot, outPath) {
 
 `;
   return header + (item.content ?? '');
+}
+
+// Bundle-aware router (RFC §7.4): rewrite the `const INSTALLED_PACKS = …;` line
+// (tagged `// KIT_MCP_INSTALLED_PACKS`) in kit-router.cjs with the effective pack
+// set so the projected hook only routes to installed domains. `effective === null`
+// means a full (unfiltered) install → keep `null` so ALL domains stay active.
+// Idempotent + defensive: if the sentinel is absent (older hook), copy verbatim.
+const ROUTER_PACKS_RE = /const INSTALLED_PACKS = [^;]*; \/\/ KIT_MCP_INSTALLED_PACKS/;
+export function renderRouterHook(src, effective) {
+  if (!ROUTER_PACKS_RE.test(src)) return src;
+  const value = Array.isArray(effective) ? JSON.stringify(effective) : 'null';
+  return src.replace(ROUTER_PACKS_RE, `const INSTALLED_PACKS = ${value}; // KIT_MCP_INSTALLED_PACKS`);
 }
 
 function renderRuleStub(agent, kitRoot, outPath) {

@@ -25,11 +25,21 @@ if (process.env.KIT_MCP_NO_ROUTER === '1' || process.env.KIT_MCP_NO_ROUTER === '
   process.exit(0);
 }
 
-// Tabela domínio → { keywords, entrypoint (suíte/commands), agents canônicos }.
+// Content-pack awareness (RFC §7.4): o `sync` REESCREVE a linha abaixo com a
+// lista de packs efetivamente instalados no momento da projeção (bundle-aware).
+// Mantido como `null` na fonte (kit/) = todos os domínios ativos (dev/default,
+// back-compat). NÃO lemos o lockfile a cada prompt — o conjunto é baked-in no
+// arquivo projetado, então o filtro é só uma comparação em memória.
+const INSTALLED_PACKS = null; // KIT_MCP_INSTALLED_PACKS
+
+// Tabela domínio → { pack, keywords, entrypoint (suíte/commands), agents canônicos }.
+// `pack` mapeia o domínio ao Content Pack que o fornece — domínios cujo pack não
+// está instalado são filtrados (não roteia para /supabase nem para agents ausentes).
 // keywords são casadas como substring no prompt em lowercase.
 const DOMAINS = [
   {
     name: 'Supabase',
+    pack: 'supabase',
     keywords: ['supabase', 'rls', 'row level security', 'edge function', 'pgvector',
       'custom claim', 'postgres role', 'realtime', ' migration', 'migração', 'supavisor'],
     entrypoint: '/supabase',
@@ -38,6 +48,7 @@ const DOMAINS = [
   },
   {
     name: 'Multi-tenant SaaS',
+    pack: 'supabase',
     keywords: ['multi-tenant', 'multi tenant', 'multitenant', 'b2b saas', 'tenant',
       'rbac', 'super-admin', 'super admin', 'org invite', 'convite de membro', 'lgpd'],
     entrypoint: '/multi-tenant',
@@ -46,6 +57,7 @@ const DOMAINS = [
   },
   {
     name: 'Legacy / refactor',
+    pack: 'legacy',
     keywords: ['refactor', 'refatorar', 'código legado', 'codigo legado', 'legacy',
       'characterization', 'caracterização', 'seam', 'sem testes', 'sem teste'],
     entrypoint: '/legacy',
@@ -53,6 +65,7 @@ const DOMAINS = [
   },
   {
     name: 'Observabilidade',
+    pack: 'observability',
     keywords: ['observability', 'observabilidade', 'slo', 'golden signal', 'tracing',
       'telemetr', 'burn rate', 'opentelemetry', 'otel', 'error budget'],
     entrypoint: '/observabilidade',
@@ -60,6 +73,7 @@ const DOMAINS = [
   },
   {
     name: 'SRE',
+    pack: 'observability',
     keywords: ['postmortem', 'post-mortem', 'post mortem', 'toil', ' prr',
       'production readiness', 'incident', 'incidente', 'release pipeline', 'runbook'],
     entrypoint: '/sre',
@@ -67,6 +81,7 @@ const DOMAINS = [
   },
   {
     name: 'Sistemas distribuídos (DDIA)',
+    pack: 'supabase',
     keywords: ['consistency', 'consistência', 'replication', 'replicação', 'replica',
       'schema evolution', 'evolução de schema', 'cdc', 'hot tenant', 'tenant quente'],
     entrypoint: '/dados-distribuidos',
@@ -75,12 +90,18 @@ const DOMAINS = [
   },
   {
     name: 'Workflow de fases / milestone',
+    pack: 'core',
     keywords: ['planejar fase', 'executar fase', 'milestone', 'marco', 'roadmap',
       'nova fase', 'plano de fase'],
     entrypoint: '/planejar-fase, /executar-fase',
     agents: ['planner', 'executor', 'verifier'],
   },
 ];
+
+// Domínios ativos = todos (INSTALLED_PACKS null) OU só os cujo pack está instalado.
+const ACTIVE_DOMAINS = INSTALLED_PACKS
+  ? DOMAINS.filter((d) => INSTALLED_PACKS.includes(d.pack))
+  : DOMAINS;
 
 function buildDirective(matched) {
   const lines = [
@@ -120,8 +141,8 @@ process.stdin.on('end', () => {
   ).toLowerCase();
   if (!prompt) process.exit(0);
 
-  const matched = DOMAINS.filter((d) => d.keywords.some((k) => prompt.includes(k)));
-  if (matched.length === 0) process.exit(0); // sem domínio — prompt limpo
+  const matched = ACTIVE_DOMAINS.filter((d) => d.keywords.some((k) => prompt.includes(k)));
+  if (matched.length === 0) process.exit(0); // sem domínio (ou pack não instalado) — prompt limpo
 
   const payload = JSON.stringify({
     continue: true,
