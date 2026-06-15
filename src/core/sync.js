@@ -343,6 +343,11 @@ export async function removeFrom(targetId, opts = {}) {
   return { target: targetId, projectRoot, removed };
 }
 
+// Exported for pack-ops.js (selective removePack): reconfirm a projected file is
+// still a kit-managed stub before deleting it, so user-edited files are preserved.
+export { STUB_MARKER_TOKEN };
+export async function isManagedStub(p) { return isStub(p); }
+
 async function isStub(p) {
   try {
     const stat = await fs.stat(p);

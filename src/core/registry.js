@@ -8,6 +8,9 @@
 //   skills:    where skill packs live (multi-dir, one folder per skill)
 //   workflows: where Dynamic Workflows scripts live (.workflow.js, Claude Code Opus 4.8+)
 //   mcpConfig: where the IDE stores MCP server registrations (or null)
+//   stateDir:  per-target dot-dir where kit-mcp keeps project state — the version
+//              marker (.kit-mcp-version) and the content-pack lockfile
+//              (.kit-mcp-packs.json) live here. See src/core/packs.js (lockfile).
 //
 // Mode legend:
 //   single     → one aggregated file
@@ -17,6 +20,7 @@
 export const TARGETS = {
   'claude-code': {
     label: 'Claude Code',
+    stateDir: '.claude',
     rules:    { path: 'CLAUDE.md',                         mode: 'single' },
     agents:   { path: '.claude/agents/',                   mode: 'multi',     extension: '.md' },
     commands: { path: '.claude/commands/',                 mode: 'multi',     extension: '.md' },
@@ -30,6 +34,7 @@ export const TARGETS = {
   },
   'cursor': {
     label: 'Cursor',
+    stateDir: '.cursor',
     rules:    { path: '.cursor/rules/',                    mode: 'multi',     extension: '.mdc' },
     agents:   { path: '.cursor/agents/',                   mode: 'multi',     extension: '.md' },
     commands: null,
@@ -40,6 +45,7 @@ export const TARGETS = {
   },
   'codex': {
     label: 'OpenAI Codex',
+    stateDir: '.codex',
     rules:    { path: 'AGENTS.md',                         mode: 'single' },
     agents:   null,
     commands: null,
@@ -51,6 +57,7 @@ export const TARGETS = {
   },
   'copilot': {
     label: 'GitHub Copilot',
+    stateDir: '.github',
     rules:    { path: '.github/copilot-instructions.md',   mode: 'single' },
     agents:   { path: '.github/agents/',                   mode: 'multi',     extension: '.agent' },
     commands: null,
@@ -60,6 +67,7 @@ export const TARGETS = {
   },
   'windsurf': {
     label: 'Windsurf',
+    stateDir: '.windsurf',
     rules:    { path: '.windsurf/rules/',                  mode: 'multi',     extension: '.md' },
     agents:   { path: '.windsurf/agents/',                 mode: 'multi',     extension: '.md' },
     commands: null,
@@ -74,6 +82,7 @@ export const TARGETS = {
     // autonomous-pipelines), the Gemini API "Building Managed Agents" docs, and the
     // Google AI Developers Forum (Google staff). See CHANGELOG.
     label: 'Google Antigravity',
+    stateDir: '.agents',
     // Per-file workspace rules in .agents/rules/ (plural is the 2.0 default;
     // legacy .agent/ singular is backward-compat only).
     rules:    { path: '.agents/rules/',                    mode: 'multi',     extension: '.md' },
@@ -98,6 +107,7 @@ export const TARGETS = {
   },
   'trae': {
     label: 'Trae',
+    stateDir: '.trae',
     rules:    { path: '.trae/rules/',                      mode: 'multi',     extension: '.md' },
     agents:   { path: '.trae/agents/',                     mode: 'multi',     extension: '.md' },
     commands: null,

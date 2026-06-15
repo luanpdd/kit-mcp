@@ -20,6 +20,8 @@ import path from 'node:path';
 import { listKit, searchKit, findItem, BUNDLED_KIT_ROOT } from '../core/kit.js';
 import { listTargets } from '../core/registry.js';
 import { syncTo, statusOf, removeFrom, summarize } from '../core/sync.js';
+import { listPacks, resolvePacks, readLockfile, explicitPacksFromLockfile, packResourceCounts } from '../core/packs.js';
+import { addPacks, removePacks } from '../core/pack-ops.js';
 import { detectReverse, applyReverse } from '../core/reverse-sync.js';
 import { validateProjectRoot } from '../core/path-safety.js';
 import { sanitizeMcpError } from '../core/error-redaction.js';
@@ -261,6 +263,25 @@ const TOOLS = [
     },
   },
   {
+    // Phase v1.41 (Content Packs Fase 3): manage the installed pack selection.
+    // Read actions (list/info/resolve/doctor) are safe; add/remove re-sync + write
+    // the lockfile (they receive explicit ids); store is TTY-only → blocked in MCP.
+    name: 'pack',
+    description: 'Gerencia Content Packs (subconjuntos instaláveis do kit). action=list catálogo com contagens, info detalha um pack, resolve mostra o fecho de dependências, doctor reporta packs instalados por IDE, add/remove ajustam a seleção e re-sincronizam (escrevem o lockfile .kit-mcp-packs.json). Triggers: "instalar pack", "remover pack", "quais packs", "content pack".',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action:      { type: 'string', enum: ['list', 'info', 'resolve', 'doctor', 'add', 'remove'] },
+        id:          { type: 'string', description: 'For action=info' },
+        packs:       { type: 'array', items: { type: 'string' }, description: 'Pack ids for action=resolve|add|remove' },
+        target:      { type: 'string', description: 'For add/remove/doctor: pin to one IDE. Default: todos os targets instalados.' },
+        cascade:     { type: 'boolean', description: 'For action=remove: também remove packs dependentes (fecho reverso).' },
+        projectRoot: { type: 'string', description: 'For add/remove/doctor. Default: cwd.' },
+      },
+      required: ['action'],
+    },
+  },
+  {
     name: 'cost-estimate',
     description: 'Estima custo USD de um prompt ANTES de mandar para Claude. Heurística chars/4 com range ±30% (sem tokenizer real na v1.37.0 — debt em SKILL.md). Retorna estimated_input_tokens, estimated_output_tokens, estimated_usd, estimated_usd_range:[low,high], disclaimer. Triggers: "quanto vai custar", "estimativa de prompt", "estimate cost", "price this prompt".',
     inputSchema: {
@@ -445,6 +466,66 @@ async function handleInstall(args) {
   }
 }
 
+// Phase v1.41 (Content Packs Fase 3): pack management tool.
+async function handlePack(args = {}) {
+  const action = args.action;
+  switch (action) {
+    case 'list': {
+      const [{ packs: catalog }, kit] = await Promise.all([listPacks(), listKit()]);
+      const ids = Object.keys(catalog).sort((a, b) => (a === 'core' ? -1 : b === 'core' ? 1 : a.localeCompare(b)));
+      return ids.map((id) => {
+        const p = catalog[id];
+        return {
+          id, name: p.name, kind: p.kind, removable: p.removable !== false,
+          requires: p.requires ?? [], recommends: p.recommends ?? [],
+          counts: packResourceCounts(p, kit),
+        };
+      });
+    }
+    case 'info': {
+      const { packs: catalog } = await listPacks();
+      const p = catalog[args.id];
+      if (!p) return { error: `Pack não encontrado: ${args.id}` };
+      try { return { pack: p, resolved: resolvePacks([args.id], catalog) }; }
+      catch (e) { return { error: e.message, code: e.code }; }
+    }
+    case 'resolve': {
+      const { packs: catalog } = await listPacks();
+      try { return resolvePacks(Array.isArray(args.packs) ? args.packs : [], catalog); }
+      catch (e) { return { error: e.message, code: e.code }; }
+    }
+    case 'doctor': {
+      const projectRoot = args.projectRoot || process.cwd();
+      const out = [];
+      for (const t of listTargets()) {
+        const lf = await readLockfile(t.id, projectRoot);
+        if (!lf) continue;
+        out.push({
+          target: t.id,
+          kitMcpVersion: lf.kitMcpVersion,
+          inSync: lf.kitMcpVersion === PKG_VERSION,
+          packs: Object.entries(lf.packs).map(([id, v]) => ({ id, explicit: v.explicit !== false, version: v.version })),
+        });
+      }
+      return { projectRoot, currentVersion: PKG_VERSION, targets: out };
+    }
+    case 'add':
+    case 'remove': {
+      const guard = await validateProjectRoot(args.projectRoot);
+      if (!guard.ok) return { error: guard.reason };
+      const projectRoot = guard.resolvedPath;
+      const targets = args.target ? [args.target] : undefined;
+      try {
+        if (action === 'add') return await addPacks(args.packs, { projectRoot, targets });
+        return await removePacks(args.packs, { projectRoot, targets, cascade: args.cascade });
+      } catch (e) { return { error: e.message, code: e.code }; }
+    }
+    case 'store':
+      return { error: 'pack store requer TTY interativo; use `kit pack store` no CLI ou pack add/remove com ids explícitos.' };
+    default: return { error: `Unknown action: ${action}` };
+  }
+}
+
 // OBS-18 (Phase 94.01): metrics-snapshot is parameterless and read-only.
 // Returns the live snapshot synchronously — no auth, no projectRoot guard
 // (no disk reads, no shell). Wraps in an async fn for handler-API uniformity.
@@ -522,10 +603,24 @@ async function handleAutoInstall(args) {
     };
   }
 
+  // Content packs (RFC §5.4): auto-install ONLY READS the lockfile — it must
+  // never overwrite the user's selection on a hot re-sync. If a lockfile exists
+  // for this target, re-project the same pack selection (so a kit upgrade keeps
+  // the chosen subset and picks up new resources within those packs).
+  let lockedPacks; // undefined ⇒ full kit (no lockfile = back-compat default)
+  try {
+    const lf = await readLockfile(target, projectRoot);
+    if (lf) {
+      const explicit = explicitPacksFromLockfile(lf);
+      const { packs: catalog } = await listPacks();
+      lockedPacks = resolvePacks(explicit ?? [], catalog).effective;
+    }
+  } catch { /* malformed lockfile ⇒ fall back to full kit */ }
+
   // Run the sync.
   let syncResult;
   try {
-    syncResult = await syncTo(target, { projectRoot, mode: 'reference', dryRun: false });
+    syncResult = await syncTo(target, { projectRoot, mode: 'reference', dryRun: false, packs: lockedPacks });
   } catch (e) {
     return {
       ok: false,
@@ -829,6 +924,7 @@ const HANDLERS = {
   gates:              handleGates,
   forensics:          handleForensics,
   install:            handleInstall,
+  pack:               handlePack,
   'metrics-snapshot': handleMetricsSnapshot,
   'auto-install':     handleAutoInstall,
   'ack-restart':      handleAckRestart,

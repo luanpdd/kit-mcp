@@ -94,5 +94,5 @@ test('updateReadmeCounts: real repo — counts match disk and is no-op', async (
   assert.equal(r.counts.agents, 74);
   assert.equal(r.counts.commands, 94);
   assert.equal(r.counts.skills, 100);
-  assert.equal(r.counts.gates, 23);
+  assert.equal(r.counts.gates, 24);
 });
