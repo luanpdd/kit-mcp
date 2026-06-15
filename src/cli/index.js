@@ -17,7 +17,8 @@ import { readFileSync } from 'node:fs';
 import { fileURLToPath } from 'node:url';
 import path from 'node:path';
 import { listKit, searchKit, findItem } from '../core/kit.js';
-import { listPacks, resolvePacks, packResourceCounts } from '../core/packs.js';
+import { listPacks, resolvePacks, packResourceCounts, readLockfile, explicitPacksFromLockfile } from '../core/packs.js';
+import { installPacks, addPacks, removePacks } from '../core/pack-ops.js';
 import { listTargets } from '../core/registry.js';
 import { syncTo, statusOf, removeFrom, summarize } from '../core/sync.js';
 import { watchKit, detectExistingTargets } from '../core/watch.js';
@@ -30,7 +31,7 @@ import { listReplays, loadReplay } from '../core/replays.js';
 import { installMcp, listInstallTargets } from '../mcp-server/install.js';
 import { listLogs, tailLogs, logDir, currentLogPath } from '../core/logger.js';
 import * as render from './render.js';
-import { c, icons, spinner, progress, select, confirm } from '../core/ui.js';
+import { c, icons, spinner, progress, select, confirm, multiSelect } from '../core/ui.js';
 import { readLock, lockPathFor } from '../ui/lockfile.js';
 import { checkUpgrade } from './upgrade-check.js';
 // PERF-16-04: ui/server.js, ui/wrapper.js, ui/browser.js are loaded LAZILY
@@ -164,7 +165,11 @@ function slim(x) {
   // PERF-13-01: cap description at SUMMARY_MAX_CHARS via shared summarize()
   // helper from src/core/sync.js — keeps cross-surface behavior identical
   // (CLI listing == MCP listing). Full text remains in each item's source file.
-  return { kind: x.kind, name: x.name, description: summarize(x.description) };
+  // v1.41: include cost_tier (cost-awareness) when present — agents/skills only.
+  const out = { kind: x.kind, name: x.name };
+  if (x.frontmatter?.cost_tier) out.cost_tier = x.frontmatter.cost_tier;
+  out.description = summarize(x.description);
+  return out;
 }
 
 // PERF-15-01: terse variant — paridade com mcp-server slimTerse. CLI flag --terse
@@ -231,19 +236,40 @@ sync.command('install [target]')
       else tally.written += 1;
       if (orig) orig(ev);
     };
-    const runSync = (onProgress) => syncTo(target, {
-      projectRoot: opts.projectRoot,
-      mode: opts.mode,
-      packs: opts.packs,
-      dryRun: opts.dryRun,
-      onProgress: wrapOnProgress(opts.quiet ? null : onProgress),
-    });
+    // Content packs (RFC §5.4 / Fase 3):
+    //   --packs given  → installPacks: project the selection AND write the lockfile.
+    //   no --packs but lockfile present → re-sync the LOCKED selection (no rewrite).
+    //   neither        → full kit (no lockfile = back-compat default).
+    const projectRoot = opts.projectRoot;
+    let lockedPacks; // undefined ⇒ full kit
+    if (!opts.packs) {
+      const lf = await readLockfile(target, projectRoot ?? process.cwd());
+      if (lf) {
+        const { packs: catalog } = await listPacks();
+        lockedPacks = resolvePacks(explicitPacksFromLockfile(lf) ?? [], catalog).effective;
+      }
+    }
+    const runSync = async (onProgress) => {
+      const op = wrapOnProgress(opts.quiet ? null : onProgress);
+      if (!opts.dryRun && opts.packs) {
+        const r = await installPacks(target, { projectRoot, mode: opts.mode, packs: opts.packs, onProgress: op });
+        return { ...r.sync, _packWarnings: r.warnings, _lockfile: r.lockfile };
+      }
+      return syncTo(target, {
+        projectRoot,
+        mode: opts.mode,
+        packs: opts.packs ?? lockedPacks,
+        dryRun: opts.dryRun,
+        onProgress: op,
+      });
+    };
     const result = opts.quiet
       ? await runSync()
       : await withProgress(`Syncing kit → ${target}`, 300, runSync,
           { tool: 'sync.install', projectRoot: opts.projectRoot });
     result._tally = tally; // surfaced by renderSyncInstall (v1.28)
     out(result, render.renderSyncInstall);
+    for (const w of result._packWarnings ?? []) process.stderr.write(`${c.yellow(icons.warn)} ${w}\n`);
   });
 sync.command('remove <target>')
   .option('--project-root <path>')
@@ -338,6 +364,94 @@ pack.command('info <id>')
       return s + '\n';
     });
   });
+pack.command('add <ids...>')
+  .description('Adiciona packs à seleção e re-sincroniza os IDEs instalados (escreve o lockfile).')
+  .option('--project-root <path>')
+  .option('--target <id>', 'Limitar a um IDE (default: todos os instalados)')
+  .action(async (ids, opts) => {
+    try {
+      const r = await withSpinner(`Adicionando packs: ${ids.join(', ')}`, () =>
+        addPacks(ids, { projectRoot: opts.projectRoot, targets: opts.target ? [opts.target] : undefined }));
+      out(r, (v) => renderPackResults('add', v));
+      for (const w of r.warnings ?? []) process.stderr.write(`${c.yellow(icons.warn)} ${w}\n`);
+    } catch (e) { fail(e.message); }
+  });
+pack.command('remove <ids...>')
+  .description('Remove packs da seleção — apaga só os arquivos exclusivos (reconfirma stub) e re-sincroniza.')
+  .option('--project-root <path>')
+  .option('--target <id>', 'Limitar a um IDE (default: todos os instalados)')
+  .option('--cascade', 'Remover também packs dependentes (fecho reverso)')
+  .action(async (ids, opts) => {
+    try {
+      const r = await withSpinner(`Removendo packs: ${ids.join(', ')}`, () =>
+        removePacks(ids, { projectRoot: opts.projectRoot, targets: opts.target ? [opts.target] : undefined, cascade: opts.cascade }));
+      out(r, (v) => renderPackResults('remove', v));
+    } catch (e) { fail(e.message); }
+  });
+pack.command('doctor')
+  .description('Mostra os packs instalados por IDE (lê o lockfile .kit-mcp-packs.json).')
+  .option('--project-root <path>')
+  .action(async (opts) => {
+    const projectRoot = opts.projectRoot || process.cwd();
+    const rows = [];
+    for (const t of listTargets()) {
+      const lf = await readLockfile(t.id, projectRoot);
+      if (lf) rows.push({ target: t.id, kitMcpVersion: lf.kitMcpVersion, packs: Object.keys(lf.packs) });
+    }
+    out(rows, (v) => {
+      if (!v.length) return `${icons.warn} nenhum lockfile de packs neste projeto (instale com --packs ou kit pack add)\n`;
+      let s = `\n${c.bold('Packs instalados por IDE')}\n\n`;
+      for (const r of v) s += `${c.bold(r.target.padEnd(14))} ${c.dim('v' + r.kitMcpVersion)}  ${r.packs.join(', ')}\n`;
+      return s + '\n';
+    });
+  });
+pack.command('store')
+  .description('Loja interativa (checkbox): marque os packs que cada IDE deve ter. core é obrigatório.')
+  .option('--project-root <path>')
+  .option('--target <id>', 'IDE alvo (default: pergunta)')
+  .action(async (opts) => {
+    const projectRoot = opts.projectRoot || process.cwd();
+    const target = opts.target || await pickTarget(listTargets(), 'Em qual IDE gerenciar packs?');
+    const [{ packs: catalog }, kit] = await Promise.all([listPacks(), listKit()]);
+    const lf = await readLockfile(target, projectRoot);
+    const current = lf ? (explicitPacksFromLockfile(lf) ?? []) : Object.keys(catalog);
+    const choices = sortedPackIds(catalog).map((id) => {
+      const p = catalog[id];
+      const counts = packResourceCounts(p, kit);
+      const isCore = id === 'core' || p.removable === false;
+      return {
+        name: `${id.padEnd(15)} ${c.dim(`${counts.agents}a/${counts.skills}s/${counts.commands}c`)} — ${p.name}`,
+        value: id,
+        checked: isCore || current.includes(id),
+        disabled: isCore ? '(obrigatório)' : false,
+      };
+    });
+    let selected;
+    try { selected = await multiSelect({ message: `Packs para ${target} (espaço marca, enter confirma)`, choices }); }
+    catch (e) { return fail(e.message); }
+    const selSet = new Set([...selected, 'core']);
+    const toAdd = [...selSet].filter((id) => !current.includes(id));
+    const toRemove = current.filter((id) => !selSet.has(id) && id !== 'core' && catalog[id]?.removable !== false);
+    if (!toAdd.length && !toRemove.length) { process.stdout.write(`${c.green(icons.check)} nenhuma mudança em ${target}\n`); return; }
+    try {
+      if (toRemove.length) await removePacks(toRemove, { projectRoot, targets: [target], cascade: true });
+      if (toAdd.length) await addPacks(toAdd, { projectRoot, targets: [target] });
+    } catch (e) { return fail(e.message); }
+    process.stdout.write(`${c.green(icons.check)} ${target}: +[${toAdd.join(', ') || '—'}] -[${toRemove.join(', ') || '—'}]\n`);
+  });
+
+function renderPackResults(verb, v) {
+  let s = `\n${c.green(icons.check)} pack ${verb}\n`;
+  for (const r of v.results ?? []) {
+    if (r.skipped) { s += `  ${c.dim(r.target)}: ${r.skipped}\n`; continue; }
+    const failedTxt = (r.failed || []).length ? c.yellow(`, ${r.failed.length} falharam`) : '';
+    const detail = verb === 'add'
+      ? `efetivos: ${(r.effective || []).join(', ')} (${r.written} arquivos)`
+      : `removidos: ${(r.removed || []).join(', ')} — ${(r.deleted || []).length} apagados, ${(r.preserved || []).length} preservados${failedTxt}`;
+    s += `  ${c.bold(r.target)}: ${detail}\n`;
+  }
+  return s + '\n';
+}
 
 // --- reverse-sync ---
 const reverse = program.command('reverse-sync').description('Detect and apply edits made directly in an IDE back to the canonical kit/.');
@@ -468,6 +582,26 @@ install.command('write [target]')
 
     out(await installMcp(target, opts), render.renderInstallResult);
   });
+
+// packPickerCsv — interactive checkbox of content packs for `init`. core is
+// pre-checked + locked. Returns a csv of selected ids (always incl. core), or
+// throws if no TTY (caller falls back to full kit).
+async function packPickerCsv() {
+  const [{ packs: catalog }, kit] = await Promise.all([listPacks(), listKit()]);
+  const choices = sortedPackIds(catalog).map((id) => {
+    const p = catalog[id];
+    const counts = packResourceCounts(p, kit);
+    const isCore = id === 'core' || p.removable === false;
+    return {
+      name: `${id.padEnd(15)} ${c.dim(`${counts.agents}a/${counts.skills}s/${counts.commands}c`)} — ${p.name}`,
+      value: id,
+      checked: true, // default: everything (matches the historical full-kit install)
+      disabled: isCore ? '(obrigatório)' : false,
+    };
+  });
+  const selected = await multiSelect({ message: 'Quais Content Packs instalar? (espaço marca, enter confirma)', choices });
+  return [...new Set(['core', ...selected])].join(',');
+}
 
 // pickTarget — interactive selector for IDE targets, falls back to error in non-TTY/--json
 async function pickTarget(targets, message) {
@@ -1194,6 +1328,7 @@ program.command('init')
   .option('--project-root <path>', 'Default: cwd')
   .option('--non-interactive', 'Fail fast if --ide is missing instead of prompting')
   .option('--mode <mode>', 'sync mode: reference | copy', 'reference')
+  .option('--packs <list>', 'Content packs (csv ou "all"). Default: checkbox interativo, ou kit inteiro em --non-interactive.')
   .action(async (opts) => {
     const projectRoot = opts.projectRoot || process.cwd();
     const targets = listInstallTargets();
@@ -1224,15 +1359,26 @@ program.command('init')
       process.exit(1);
     }
 
-    // 2. Sync kit content
+    // 2. Sync kit content (with optional content-pack selection)
     process.stdout.write(`\n${c.cyan('2/3')} syncing kit content...\n`);
     const tally = { written: 0, skipped: 0 };
+    const onSyncProgress = (ev) => { if (ev?.skipped) tally.skipped += 1; else tally.written += 1; };
+    // Resolve pack selection: --packs flag, else interactive checkbox (TTY),
+    // else full kit (non-interactive / no TTY = back-compat, no lockfile).
+    let packs = opts.packs;
+    if (!packs && !opts.nonInteractive && process.stdin.isTTY) {
+      try { packs = await packPickerCsv(); } catch { /* picker unavailable → full kit */ }
+    }
     try {
-      const r = await syncTo(ide, {
-        projectRoot,
-        mode: opts.mode,
-        onProgress: (ev) => { if (ev?.skipped) tally.skipped += 1; else tally.written += 1; },
-      });
+      let r;
+      if (packs) {
+        const ip = await installPacks(ide, { projectRoot, mode: opts.mode, packs, onProgress: onSyncProgress });
+        r = ip.sync;
+        for (const w of ip.warnings ?? []) process.stdout.write(`     ${c.yellow(icons.warn)} ${w}\n`);
+        process.stdout.write(`     ${c.dim('packs: ' + ip.effective.join(', '))}\n`);
+      } else {
+        r = await syncTo(ide, { projectRoot, mode: opts.mode, onProgress: onSyncProgress });
+      }
       const total = (r.written || []).length;
       process.stdout.write(`     ${c.green(icons.check)} ${total} files (${tally.written} new/updated, ${tally.skipped} unchanged)\n`);
     } catch (e) {

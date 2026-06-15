@@ -1,5 +1,5 @@
 #!/usr/bin/env node
-// hook-version: 1.30.5
+// hook-version: 1.41.0
 // kit-mcp · Kit Attribution Reminder (UserPromptSubmit)
 //
 // Injeta `additionalContext` no envelope do prompt do usuário com uma
@@ -62,6 +62,8 @@ const DIRECTIVE = [
   '  sendo arquivos do kit, isso é Bash, NÃO é invocar a MCP tool.',
   '• skills genéricas da Anthropic (anthropic-skills:*, engineering:*, …).',
   'Nenhum recurso → "🔧 kit-mcp: nenhum recurso usado".',
+  'Custo: se usou agents/skills de cost_tier medio/pesado neste turno, acrescente',
+  'na MESMA linha " · custo: /custo-sessao" para o usuário ver o gasto real (USD/tokens).',
   'Disable: env KIT_MCP_NO_ATTRIBUTION=1.',
 ].join('\n');
 

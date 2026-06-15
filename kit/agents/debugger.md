@@ -778,6 +778,8 @@ O orquestrador apresenta o checkpoint ao usuário, obtém resposta, invoca agent
 
 Ao investigar bug que envolve RLS/policy/SQL (hipótese: "policy negando", "auth.uid() retornando null", "RLS bypass via view", "permission denied"), antes de propor fix SQL, faça handoff cooperativo para `supabase-rls-hardener` para validation.
 
+**Fallback graceful (Content Packs):** `supabase-rls-hardener` vive no pack `supabase`. Se ele não estiver instalado neste projeto, **não trave a investigação** — valide o fix SQL inline contra a skill `supabase-rls-defense-in-depth` (se presente) ou as regras RLS do CLAUDE.md, e registre isso como evidence. Ausência do agent vira validação manual, nunca um `Task()` para um `subagent_type` inexistente.
+
 **Heurística de detecção (hipótese mention):**
 
 ```regex

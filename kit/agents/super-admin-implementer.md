@@ -166,12 +166,9 @@ SUPER-ADMIN-IMPLEMENTER · output integrado
 - App single-tenant → escopo errado
 - Sem necessidade de impersonation/delete → use Edit direto para PERMISSIVE policies simples
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-- Counter `super_admin.action.count{action_type}` (impersonation_started, delete_org, etc.)
-- Histogram `super_admin.impersonation.duration_seconds`
-- Alarme se >5 impersonations/dia per super_admin → review necessário
-- Alarme se delete_org > 1/semana → suspeita
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Cooperative handoff to supabase-rls-hardener (v1.23)
 
@@ -281,3 +278,12 @@ Após migração 100% completa, remover legacy check.
 - [supabase-migration-writer](./supabase-migration-writer.md) — invoked para SQL
 - [supabase-edge-fn-writer](./supabase-edge-fn-writer.md) — invoked para Edge Function
 - [_shared-multi-tenant/glossary.md](../skills/_shared-multi-tenant/glossary.md) — `super_admin`, `impersonation`, `platform admin`
+
+<subagent_preflight>
+## Pré-flight de subagentes (custo)
+
+Antes de QUALQUER fan-out de `Task()` (sobretudo 2+ subagents, ou 1 subagent de cost_tier pesado que encadeia os seus), siga o protocolo canônico:
+@./.claude/framework/references/subagent-preflight.md
+
+Resumo: liste os subagents que vai disparar + o cost_tier de cada (leve/medio/pesado), respeite `workflow.cost_awareness` (silencioso → segue; resumo → mostra a lista e segue; confirmar → pede OK antes), e use a MCP tool `cost-estimate` para materializar o tier em USD aproximado quando útil. Não dispare N subagents sem o usuário saber que paga por N.
+</subagent_preflight>

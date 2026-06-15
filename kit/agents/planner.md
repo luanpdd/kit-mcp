@@ -897,6 +897,8 @@ Siga os templates nas seções checkpoints e revision_mode respectivamente.
 
 Ao gerar PLAN.md que inclui tarefas com SQL/DDL (CREATE TABLE, CREATE POLICY, CREATE VIEW, ALTER TABLE adicionando column, etc.), **automaticamente** adiciona ao plan uma tarefa final de handoff cooperativo para `supabase-rls-hardener`.
 
+**Fallback graceful (Content Packs):** `supabase-rls-hardener` vive no pack `supabase`, que pode não estar instalado. Só injete a tarefa de handoff se o agent existir no projeto (`.claude/agents/supabase-rls-hardener.md`). Se ausente, substitua por uma tarefa de validação inline ("revisar o SQL contra RLS defense-in-depth / CLAUDE.md antes de aplicar") — nunca referencie um `subagent_type` que o projeto não tem.
+
 **Heurística de detecção (regex):**
 
 ```regex
@@ -922,3 +924,12 @@ Se ≥ 1 match em qualquer tarefa do plan → injetar tarefa final:
 **Não bloqueia execução:** se hardener responde STRENGTHEN/REWRITE, executor absorve o feedback e aplica diff. Aborto silencioso é proibido.
 
 </sql_auto_handoff_cooperativo>
+
+<subagent_preflight>
+## Pré-flight de subagentes (custo)
+
+Antes de QUALQUER fan-out de `Task()` (sobretudo 2+ subagents, ou 1 subagent de cost_tier pesado que encadeia os seus), siga o protocolo canônico:
+@./.claude/framework/references/subagent-preflight.md
+
+Resumo: liste os subagents que vai disparar + o cost_tier de cada (leve/medio/pesado), respeite `workflow.cost_awareness` (silencioso → segue; resumo → mostra a lista e segue; confirmar → pede OK antes), e use a MCP tool `cost-estimate` para materializar o tier em USD aproximado quando útil. Não dispare N subagents sem o usuário saber que paga por N.
+</subagent_preflight>

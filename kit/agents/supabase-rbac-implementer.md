@@ -372,15 +372,9 @@ Se `has_user_roles > 0 AND (has_hook = 0 OR auth_admin_can_execute = false)`, h�
 - Permission depende de row ownership → use RLS row-level com `auth.uid()`
 - Caller já invocou este agent para mesmo projeto → evite loop
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-Span estruturado:
-- `agent.name = "supabase-rbac-implementer"`
-- `caller.name` (upstream)
-- `verdict` (GO | STRENGTHEN | REWRITE)
-- `roles_count`, `permissions_count`
-- `multi_tenant` (bool)
-- `confirmation_required` (bool)
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Ver também
 
@@ -392,3 +386,12 @@ Span estruturado:
 - [rbac-permissions-matrix-supabase](../skills/rbac-permissions-matrix-supabase/SKILL.md) (v1.21+v1.25) — comparação custom claim vs helper function STABLE
 - [multi-tenant-rls-hierarchy](../skills/multi-tenant-rls-hierarchy/SKILL.md) (v1.21) — context-aware multi-tenant (combinar com claim global)
 - [glossário compartilhado](../skills/_shared-supabase/glossary.md) — termos custom claims, Custom Access Token Auth Hook, JWT user_role claim, authorize() function, supabase_auth_admin role, app_role enum, app_permission enum, jwt-decode client pattern
+
+<subagent_preflight>
+## Pré-flight de subagentes (custo)
+
+Antes de QUALQUER fan-out de `Task()` (sobretudo 2+ subagents, ou 1 subagent de cost_tier pesado que encadeia os seus), siga o protocolo canônico:
+@./.claude/framework/references/subagent-preflight.md
+
+Resumo: liste os subagents que vai disparar + o cost_tier de cada (leve/medio/pesado), respeite `workflow.cost_awareness` (silencioso → segue; resumo → mostra a lista e segue; confirmar → pede OK antes), e use a MCP tool `cost-estimate` para materializar o tier em USD aproximado quando útil. Não dispare N subagents sem o usuário saber que paga por N.
+</subagent_preflight>

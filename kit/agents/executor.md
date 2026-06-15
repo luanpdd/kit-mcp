@@ -68,6 +68,8 @@ Isso garante que padrões, convenções e melhores práticas específicas do pro
 Esse gate é canônico — equivale ao que `golden-signals-coverage` (v1.10) faz para Edge Functions sem golden signals. Skill canônica: `pre-refactor-characterization`. Configurável via `.planning/config.json#workflow.legacy_refactor_gate_blocking`.
 
 **Princípio:** o agent especializado é mais barato + mais correto que o executor genérico para esses domínios — ele já tem as regras embutidas. Delegação não é overhead; é correção.
+
+**Fallback graceful (Content Packs):** os agents da tabela vivem em packs opcionais (`supabase`, `legacy`) que podem não estar instalados neste projeto. Antes de delegar, considere disponibilidade: se o `subagent_type` não existir (pack não selecionado), **não bloqueie** — faça o trabalho inline aplicando as skills do projeto (`.claude/skills/`) e as regras do CLAUDE.md, ou use `general-purpose` com um brief explícito. Ausência de um agent canônico degrada para execução direta, nunca para abort.
 </project_context>
 
 <execution_flow>
@@ -561,6 +563,17 @@ hardener_result = Task(
 
 **Princípio canônico v1.23:** Executor faz (aplica plan); supabase-rls-hardener hardena (valida defense-in-depth). Conflitos viram diff explícito, nunca abortos silenciosos.
 
+**Fallback graceful:** `supabase-rls-hardener` vive no pack `supabase`. Se ele não estiver instalado, **não pule a segurança** — aplique você mesmo o checklist da skill `supabase-rls-defense-in-depth` (se presente) ou as regras RLS do CLAUDE.md antes de aplicar o SQL. Sem o agent, hardening vira passo inline; nunca um SQL aplicado sem revisão.
+
 **Registro em SUMMARY.md:** se hardener veredict ≠ GO, SUMMARY.md inclui section "## RLS Hardener Trace" com verdict + diff aplicado + justificativa.
 
 </sql_auto_handoff_cooperativo>
+
+<subagent_preflight>
+## Pré-flight de subagentes (custo)
+
+Antes de QUALQUER fan-out de `Task()` (sobretudo 2+ subagents, ou 1 subagent de cost_tier pesado que encadeia os seus), siga o protocolo canônico:
+@./.claude/framework/references/subagent-preflight.md
+
+Resumo: liste os subagents que vai disparar + o cost_tier de cada (leve/medio/pesado), respeite `workflow.cost_awareness` (silencioso → segue; resumo → mostra a lista e segue; confirmar → pede OK antes), e use a MCP tool `cost-estimate` para materializar o tier em USD aproximado quando útil. Não dispare N subagents sem o usuário saber que paga por N.
+</subagent_preflight>

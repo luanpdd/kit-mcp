@@ -1,6 +1,6 @@
 ---
 name: caracterizar
-description: Invoca legacy-characterizer — gera characterization tests (cap 13 Feathers) capturando comportamento atual como golden snapshots; cobre 5+ grupos de equivalência canônicos; valida cobertur…
+description: Invoca legacy-characterizer — gera characterization tests (cap 13 Feathers) que congelam o comportamento atual como golden snapshots antes de refatorar código legado sem testes.
 argument-hint: "<target_file> [--symbol <name>] [--min-inputs N] [--gap-fill] [--fixtures-dir <path>] [--no-mutation]"
 allowed-tools:
   - Read

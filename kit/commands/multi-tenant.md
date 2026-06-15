@@ -1,6 +1,6 @@
 ---
 name: multi-tenant
-description: Orquestrador da Suíte Multi-Tenant SaaS B2B — dispatch para agents especializados (architect, rls, onboarding, invite, super-admin, audit-log, whatsapp, crm, lgpd, isolation-audit) com sin…
+description: Orquestrador da Suíte Multi-Tenant SaaS B2B — roteia para agents de architect, RLS, onboarding, convite, super-admin, audit-log, CRM, LGPD e isolation-audit com sinônimos PT/EN.
 argument-hint: "<subcomando> [args...]"
 allowed-tools:
   - Read

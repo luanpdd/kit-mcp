@@ -322,11 +322,9 @@ Apenas o relatório estruturado. Sem preâmbulo. Sem "vou analisar agora". Diret
 - Rows com valores > novo limit varchar → migration falha no apply
 - INSERTs novos pegam default diferente do esperado → bug silencioso
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-- Counter `audit.schema_evolution.veredict{result=GO|NO-GO|NEEDS-REVIEW}` por execução
-- Counter `audit.schema_evolution.detectors{detector=1..4}` por finding
-- Histogram `audit.schema_evolution.duration_ms` (latência total)
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Ver também
 

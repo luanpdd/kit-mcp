@@ -248,11 +248,9 @@ NOTAS
 - Tabela com policies já estabelecidas e ajuste pequeno → use Edit direto
 - Catálogo público (`public.permissions`) → leitura `to authenticated` sem RLS hierárquica
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-- RLS denials emitem evento `rls_deny` em `obs.events` (cross-ref [`structured-events`](../skills/structured-events/SKILL.md))
-- super_admin actions emitem evento `super_admin_action` em `audit_logs` (Phase 109)
-- Counter `rls.deny.count{tenant_id, policy}` (cross-ref [`four-golden-signals`](../skills/four-golden-signals/SKILL.md))
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Cooperative handoff to supabase-rls-hardener (v1.23)
 

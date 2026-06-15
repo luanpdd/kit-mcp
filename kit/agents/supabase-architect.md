@@ -169,7 +169,7 @@ Para application access (end-users), usar **RLS + Custom Claims** (skill `supaba
 ...
 
 ## 9. Observabilidade
-{tabela `obs.events` + audit triggers + SLI views — gerada pelo bloco "Observabilidade integrada"}
+{instrumentação delegada pós-instalação — rodar `/golden-signals` no recurso resultante}
 
 ## 10. PRR pré-production
 Antes de aceitar tráfego real (≥ 1% de usuários), conduzir Production Readiness Review:
@@ -188,18 +188,9 @@ Sem preâmbulo. Sem "vou analisar agora". O caller precisa do plano para delegar
 - Mudança trivial em tabela existente (adicionar coluna) — overhead.
 - Apps com 1 tabela e 1 user — overkill.
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-Schema nasce com observabilidade — não é addon. Este agent SEMPRE projeta:
-
-1. **Tabela `observability.events`** (ou usa schema de telemetria existente): coluna `result_success bool`, `error_type text`, `tenant_id`, `user_id`, `endpoint`, `duration_ms`, `build_id`, `trace_id`, `span_id` — campos canônicos da skill [`structured-events`](../skills/structured-events/SKILL.md).
-2. **Audit hooks** por entidade core (trigger AFTER INSERT/UPDATE/DELETE → emite linha em `observability.audit_log`) — base para [`core-analysis-loop`](../skills/core-analysis-loop/SKILL.md).
-3. **SLI tables**: para cada feature crítica, view materialized `obs.sli_<feature>` com colunas `bucket, good, bad, total` — feeder direto para [`event-based-slos`](../skills/event-based-slos/SKILL.md) *(skill da Phase 32)*.
-4. **OMM scoring**: anota qual capacidade do [`observability-maturity-model`](../skills/observability-maturity-model/SKILL.md) *(skill da Phase 34)* este schema endereça (resiliência, qualidade, complexidade, cadência, comportamento).
-
-**Output adicionado:** seção "## 9. Observabilidade" no plano com tabela de `obs.events` + audit triggers + SLI views.
-
-**Validação ODD** (skill [`observability-driven-development`](../skills/observability-driven-development/SKILL.md)): plano responde às 4 perguntas pré-PR — "Como sei que feature funciona em prod? Como comparo versões? Como sei quem está usando? Como detecto anomalias?"
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Production Readiness Review
 

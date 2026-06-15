@@ -155,6 +155,17 @@ export async function confirm(opts) {
   return inqConfirm(opts);
 }
 
+// multiSelect — checkbox prompt (content-pack store/init picker). Mirrors
+// select()/confirm(): TTY-guarded + lazy @inquirer/prompts (optionalDependency).
+// opts.choices: [{ name, value, checked?, disabled? }]. Returns selected values[].
+export async function multiSelect(opts) {
+  if (!process.stdin.isTTY) {
+    throw new Error('Interactive prompt unavailable: stdin is not a TTY. Pass --packs <list> instead.');
+  }
+  const { checkbox } = await loadInquirer();
+  return checkbox(opts);
+}
+
 // --- summary panel ---
 
 export function summary({ title, rows = [], total, hint }) {

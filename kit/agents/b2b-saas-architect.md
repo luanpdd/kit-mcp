@@ -145,10 +145,9 @@ Cross-suite delegation note:
 - App single-tenant (1 org fixa) → use `supabase-architect` v1.8 direto
 - Schema base já existe (extensão vs design) → use Edit + outras phases
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-- Counter `b2b.architect.runs.count`
-- Histogram `b2b.architect.duration_seconds`
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Ver também
 
@@ -156,3 +155,12 @@ Cross-suite delegation note:
 - [supabase-architect](./supabase-architect.md) — v1.8, invocado via Task() handoff
 - [multi-tenant-rls-hierarchy](../skills/multi-tenant-rls-hierarchy/SKILL.md) — Phase 108, RLS pattern
 - [_shared-multi-tenant/glossary.md](../skills/_shared-multi-tenant/glossary.md) — termos canônicos
+
+<subagent_preflight>
+## Pré-flight de subagentes (custo)
+
+Antes de QUALQUER fan-out de `Task()` (sobretudo 2+ subagents, ou 1 subagent de cost_tier pesado que encadeia os seus), siga o protocolo canônico:
+@./.claude/framework/references/subagent-preflight.md
+
+Resumo: liste os subagents que vai disparar + o cost_tier de cada (leve/medio/pesado), respeite `workflow.cost_awareness` (silencioso → segue; resumo → mostra a lista e segue; confirmar → pede OK antes), e use a MCP tool `cost-estimate` para materializar o tier em USD aproximado quando útil. Não dispare N subagents sem o usuário saber que paga por N.
+</subagent_preflight>

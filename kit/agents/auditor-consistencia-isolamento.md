@@ -364,11 +364,9 @@ Quando este agent detecta problema, **propõe fix mas NÃO escreve**. Delega via
 - Fase de greenfield design — agent é defesa para código existente, não substitui review de design
 - App single-tenant (1 org fixa) — Detector 5 (cross-tenant) não se aplica; outros 5 ainda valem
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-- Counter `audit.consistency.findings{severity=P0|P1|P2,detector=1..6}` por execução
-- Histogram `audit.consistency.duration_ms` (latência total da auditoria)
-- Cada finding fica registrado em `obs.events` com `audit_run_id` para rastreabilidade
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Validação de RLS hardener cooperativo (v1.23 — CROSS-09)
 

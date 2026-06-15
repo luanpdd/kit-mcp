@@ -1,6 +1,6 @@
 ---
 name: inserir-fase
-description: Insere trabalho urgente como fase decimal (ex: 72.1) entre fases existentes
+description: Insere trabalho urgente como fase decimal (p.ex. 72.1) entre fases existentes, renumerando as subsequentes.
 argument-hint: "<after> <description>"
 allowed-tools:
   - Read

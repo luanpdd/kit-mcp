@@ -37,6 +37,13 @@ export function renderKitList(items, kind) {
   if (items.length === 0) {
     return `${c.dim(`No ${kind}s in kit.`)}\n`;
   }
+  // Cost-awareness (v1.41): surface cost_tier in the listing so the user sees
+  // leve/medio/pesado before invoking. Only when present (agents/skills).
+  const hasCost = items.some((x) => x.cost_tier);
+  if (hasCost) {
+    const rows = items.map(x => [x.name, x.cost_tier || '—', (x.description ?? '').slice(0, 72)]);
+    return table(rows, ['name', 'custo', 'description']);
+  }
   const rows = items.map(x => [x.name, (x.description ?? '').slice(0, 80)]);
   return table(rows, ['name', 'description']);
 }

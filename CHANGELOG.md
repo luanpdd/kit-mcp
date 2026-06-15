@@ -6,6 +6,64 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.41.0] - 2026-06-14
+
+### Added — Content Packs Fase 3 (gestão incremental)
+
+- **Lockfile por-(pack, target)** em `<stateDir>/.kit-mcp-packs.json` (`.claude/`, `.cursor/`, …):
+  registra a seleção de packs + provenance (`projectedFiles` por pack). Escrito **só** nos pontos
+  que conhecem a seleção (`pack add/remove`, `sync install --packs`, `init`); `syncTo`/`auto-install`/
+  `watch` apenas leem (regra dura do RFC §5.4). `registry.js` ganha `stateDir` por target.
+- **`kit pack add/remove/store/doctor`** (CLI) + tool MCP `pack` (`list|info|resolve|doctor|add|remove`;
+  `store` exige TTY). `add` une a seleção e re-sincroniza; `remove` apaga **só** os arquivos exclusivos
+  do pack (reconfirma o stub marker — preserva arquivos editados à mão), recusa `core`, suporta
+  `--cascade`, e itera sobre **todos** os IDEs instalados. `store` é a loja interativa (checkbox).
+- **`init` e `sync install`** com seleção de packs: `init` mostra checkbox interativo (`--packs` em
+  modo não-interativo); `sync install` sem `--packs` mas com lockfile re-projeta a seleção gravada.
+- **`auto-install` preserva a seleção**: lê o lockfile e re-projeta os mesmos packs no upgrade/re-sync.
+- `src/core/pack-ops.js` (novo) — `installPacks/addPacks/removePacks`; `ui.js` ganha `multiSelect` (checkbox).
+
+### Added — Consciência de custo em runtime
+
+- **`cost_tier` nas listagens**: `kit kit list-agents/list-skills` (coluna "custo"), tool MCP `kit`
+  (`slim` inclui `cost_tier`; o modo `terse` mantém o contrato `{kind,name}`) e badge `leve|medio|pesado`
+  no `CLAUDE.md` agregado.
+- **Pré-flight de subagentes**: `kit/framework/references/subagent-preflight.md` (protocolo canônico —
+  lista subagents + tier antes do fan-out, reusa a MCP tool `cost-estimate`) + bloco `<subagent_preflight>`
+  em 17 agents que fazem fan-out de `Task()` (executor, planner, codebase-mapper, *-implementer, …).
+- **Toggle `workflow.cost_awareness`** (`silencioso|resumo|confirmar`, default `resumo`) em `/configuracoes`.
+- **Rodapé de custo** no hook `kit-attribution-reminder.cjs`: sugere `/custo-sessao` quando o turno usou
+  recursos `medio`/`pesado`.
+
+### Added — Gate de qualidade de recursos
+
+- **Gate bloqueante `resource-frontmatter`** (`gates/resource-frontmatter.md` + `scripts/check-resource-frontmatter.mjs`
+  + `test/unit/resource-frontmatter.test.js`): valida `cost_tier` válido (agents/skills), `description`
+  ≤200 char **e** byte, sem reticências, sem `": "` em description não-aspada, e tools de agents existentes
+  (built-in ou `mcp__*`). Roda no `prepublishOnly` (sem bash — igual no Windows e no Linux).
+
+### Changed
+
+- **Router bundle-aware** (RFC §7.4): `kit-router.cjs` ganha tag `pack` por domínio + placeholder
+  `INSTALLED_PACKS`; `syncTo` reescreve a lista com os packs efetivos no momento da projeção
+  (`renderRouterHook`), então o router só roteia para domínios instalados — sem ler o lockfile a cada prompt.
+- **Handoffs hardcoded → fallback graceful**: `executor.md`, `planner.md`, `debugger.md` e
+  `framework/workflows/discuss-phase.md` degradam para execução inline / `general-purpose` / validação
+  manual quando o agent de domínio (ex.: `supabase-rls-hardener`, `supabase-architect`) não está instalado.
+
+### Fixed
+
+- **Observabilidade morta (audit #9)**: 19 agents declaravam seções "Observabilidade integrada" com
+  métricas OTel que nenhum passo emitia → substituídas por nota apontando para `/golden-signals`.
+  Preservados os 3 com observabilidade **real** (storage/migration/realtime-implementer geram o código emissor).
+- **8 commands com description truncada/quebrada**: 7 com `…` reescritas outcome-first ≤200 bytes;
+  `inserir-fase` perde o `": "` (`ex: 72.1` → `p.ex. 72.1`) que quebrava o parser YAML.
+
+### Docs
+
+- **README**: seção Content Packs atualizada (`pack add/remove/store/doctor` + lockfile + router bundle-aware)
+  e nota de consciência de custo em runtime (listagens, pré-flight, toggle, rodapé).
+
 ## [1.40.0] - 2026-06-14
 
 ### Added — Consciência de uso e custo nos recursos

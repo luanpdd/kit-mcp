@@ -60,6 +60,8 @@ Task(subagent_type=supabase-architect, prompt="Projete schema + RLS + topologia 
 ```
 
 Use o output do architect como base do `<decisions>` do CONTEXT.md em vez de fazer questionamento manual. **Para fases mistas** (parte Supabase, parte genérica) — use architect só para a parte Supabase, depois faça discussão padrão para o resto.
+
+**Fallback graceful (Content Packs):** `supabase-architect` vive no pack `supabase`, que pode não estar instalado. Antes de delegar, confirme que `.claude/agents/supabase-architect.md` existe. Se ausente, **não falhe** — faça a discussão Supabase você mesmo (tier Free/Pro, RLS multi-tenant, schema, realtime, custos) ou delegue via `subagent_type=general-purpose` lendo a skill `b2b-saas-architecture` se presente. Nunca chame um `subagent_type` que o projeto não tem.
 </supabase_detection>
 
 <gray_area_identification>

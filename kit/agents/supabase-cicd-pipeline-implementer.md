@@ -745,20 +745,9 @@ Se algum gate falhar → Verdict STRENGTHEN com diff explícito do que adicionar
 - Caller já invocou este agent para mesmo projeto no mesmo PR → evite loop
 - Repo público + intent backup.yml → REWRITE bloqueia (não materializar)
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-Span estruturado para cada invocação:
-
-- `agent.name = "supabase-cicd-pipeline-implementer"`
-- `caller.name` (upstream)
-- `verdict` (GO | STRENGTHEN | REWRITE)
-- `workflows_created_count` (7 | 8)
-- `workflows_skipped` (lista — database-tests, functions-tests)
-- `secrets_count` (6 canônicos)
-- `cross_suite_handoffs` (lista — migration-writer, release-auditor)
-- `audit_result` (ROBUST | ADEQUATE | FRAGILE | BROKEN)
-- `repo_visibility` (PRIVATE | PUBLIC)
-- `confirmation_required` (bool)
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Ver também
 
@@ -777,3 +766,12 @@ Span estruturado para cada invocação:
 - [lgpd-multi-tenant-compliance](../skills/lgpd-multi-tenant-compliance/SKILL.md) (v1.21) — backup criptografado per-tenant para compliance LGPD
 - [glossário compartilhado](../skills/_shared-supabase/glossary.md) — termos GitHub Actions Supabase, ci.yml, staging.yml, production.yml, backup 3-dump, never backup to public repo
 - Doc oficial: [Supabase GitHub Actions](https://supabase.com/docs/guides/deployment/ci), [GitHub Actions docs](https://docs.github.com/en/actions)
+
+<subagent_preflight>
+## Pré-flight de subagentes (custo)
+
+Antes de QUALQUER fan-out de `Task()` (sobretudo 2+ subagents, ou 1 subagent de cost_tier pesado que encadeia os seus), siga o protocolo canônico:
+@./.claude/framework/references/subagent-preflight.md
+
+Resumo: liste os subagents que vai disparar + o cost_tier de cada (leve/medio/pesado), respeite `workflow.cost_awareness` (silencioso → segue; resumo → mostra a lista e segue; confirmar → pede OK antes), e use a MCP tool `cost-estimate` para materializar o tier em USD aproximado quando útil. Não dispare N subagents sem o usuário saber que paga por N.
+</subagent_preflight>

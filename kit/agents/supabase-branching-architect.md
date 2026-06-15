@@ -537,17 +537,9 @@ Se algum gate falhar → Verdict STRENGTHEN com diff explícito do que adicionar
 - Projeto sem schema (sem migrations → branching não tem o que validar)
 - Setup de CI/CD geral sem branching context (use `release-pipeline-auditor` diretamente)
 
-## Observabilidade integrada
+## Observabilidade (pós-instalação)
 
-Span estruturado para cada invocação:
-
-- `agent.name = "supabase-branching-architect"`
-- `caller.name` (upstream)
-- `verdict` (GO | STRENGTHEN | REWRITE)
-- `decisions_collected` (count 1..4)
-- `integration_method` (GitHub | Dashboard | Hybrid)
-- `cost_estimate_monthly_usd` (numeric)
-- `confirmation_required` (bool)
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Ver também
 
@@ -562,3 +554,12 @@ Span estruturado para cada invocação:
 - [eliminating-toil](../skills/eliminating-toil/SKILL.md) — branching automatiza toil de deploy manual
 - [glossário compartilhado](../skills/_shared-supabase/glossary.md) — termos branching workflow, GitHub integration, Dashboard alpha, dotenvx, seed.sql, Branching Compute Hours
 - Doc oficial: [Supabase Branching](https://supabase.com/docs/guides/deployment/branching), [GitHub Integration](https://supabase.com/docs/guides/deployment/branching#github-integration), [Pricing](https://supabase.com/pricing)
+
+<subagent_preflight>
+## Pré-flight de subagentes (custo)
+
+Antes de QUALQUER fan-out de `Task()` (sobretudo 2+ subagents, ou 1 subagent de cost_tier pesado que encadeia os seus), siga o protocolo canônico:
+@./.claude/framework/references/subagent-preflight.md
+
+Resumo: liste os subagents que vai disparar + o cost_tier de cada (leve/medio/pesado), respeite `workflow.cost_awareness` (silencioso → segue; resumo → mostra a lista e segue; confirmar → pede OK antes), e use a MCP tool `cost-estimate` para materializar o tier em USD aproximado quando útil. Não dispare N subagents sem o usuário saber que paga por N.
+</subagent_preflight>
