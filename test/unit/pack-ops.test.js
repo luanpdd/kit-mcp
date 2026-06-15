@@ -116,6 +116,36 @@ test('removePacks deletes exclusive files, preserves shared + remaining', async 
   } finally { await fs.rm(tmp, { recursive: true, force: true }); }
 });
 
+test('removePacks — multi-rules target deletes per-agent rule stubs too (no orphans)', async () => {
+  // cursor uses rules.mode='multi' → one rule stub per agent at .cursor/rules/<a>.mdc.
+  const tmp = await tmpProject();
+  try {
+    await installPacks('cursor', { projectRoot: tmp, kitRoot: BUNDLED_KIT_ROOT, packs: 'core,legacy' });
+    const ruleStub = path.join(tmp, '.cursor', 'rules', 'legacy-characterizer.mdc');
+    const agentStub = path.join(tmp, '.cursor', 'agents', 'legacy-characterizer.md');
+    await fs.access(ruleStub);  // present after install
+    await fs.access(agentStub);
+    await removePacks(['legacy'], { projectRoot: tmp, kitRoot: BUNDLED_KIT_ROOT });
+    // both the agent file AND its sibling rule stub must be gone
+    await assert.rejects(fs.access(agentStub), 'agent stub deleted');
+    await assert.rejects(fs.access(ruleStub), 'orphan rule stub deleted');
+    // a remaining pack's rule stub stays
+    await fs.access(path.join(tmp, '.cursor', 'rules', 'planner.mdc'));
+  } finally { await fs.rm(tmp, { recursive: true, force: true }); }
+});
+
+test('removePacks — skill removal leaves no empty dir', async () => {
+  const tmp = await tmpProject();
+  try {
+    await installPacks('claude-code', { projectRoot: tmp, kitRoot: BUNDLED_KIT_ROOT, packs: 'core,legacy' });
+    // pick a legacy-exclusive skill dir
+    const skillDir = path.join(tmp, '.claude', 'skills', 'legacy-characterization-tests');
+    await fs.access(skillDir);
+    await removePacks(['legacy'], { projectRoot: tmp, kitRoot: BUNDLED_KIT_ROOT });
+    await assert.rejects(fs.access(skillDir), 'empty skill dir removed (not just SKILL.md)');
+  } finally { await fs.rm(tmp, { recursive: true, force: true }); }
+});
+
 test('removePacks refuses core', async () => {
   const tmp = await tmpProject();
   try {

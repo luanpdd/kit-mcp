@@ -148,11 +148,23 @@ export async function removePacks(packIds, opts = {}) {
     const exclusive = exclusiveFiles(lockfile, removedIds, remainingIds);
     const deleted = [];
     const preserved = [];
+    const failed = [];
     for (const relFile of exclusive) {
       const abs = path.join(projectRoot, relFile);
+      // Skills are projected as <name>/SKILL.md — remove the whole skill DIR so we
+      // don't leave an empty folder behind (matches removeFrom in sync.js). The
+      // stub check still reads the SKILL.md marker via the file path.
+      const isSkill = relFile.endsWith('/SKILL.md') || relFile.endsWith('\\SKILL.md');
+      const removeTarget = isSkill ? path.dirname(abs) : abs;
       if (await isManagedStub(abs)) {
-        await fs.rm(abs, { recursive: true, force: true }).catch(() => {});
-        deleted.push(relFile);
+        try {
+          await fs.rm(removeTarget, { recursive: true, force: true });
+          deleted.push(relFile);
+        } catch (e) {
+          // Don't report a file as deleted if rm actually failed (e.g. EPERM/EBUSY
+          // on a file locked by the IDE on Windows) — that would mislead the user.
+          failed.push(relFile);
+        }
       } else {
         preserved.push(relFile);
       }
@@ -166,7 +178,7 @@ export async function removePacks(packIds, opts = {}) {
 
     const lock = buildLockfile({ explicit: remainingExplicit, effective, catalog, kit, target, kitMcpVersion: PKG_VERSION });
     const lockfilePath = await writeLockfile(targetId, projectRoot, lock);
-    results.push({ target: targetId, removed: removedIds, deleted, preserved, remaining: effective, written: (sync.written || []).length, lockfile: lockfilePath });
+    results.push({ target: targetId, removed: removedIds, deleted, preserved, failed, remaining: effective, written: (sync.written || []).length, lockfile: lockfilePath });
   }
   return { results };
 }

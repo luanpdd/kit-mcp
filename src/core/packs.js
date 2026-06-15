@@ -290,9 +290,10 @@ export function explicitPacksFromLockfile(lockfile) {
 
 // Mirror of syncTo()'s path conventions (src/core/sync.js). Returns the project-
 // root-relative POSIX paths a single pack projects into a target — agents,
-// commands, skills (dir/SKILL.md), workflows. Rules/framework/hooks are NOT
-// per-pack (aggregated or always-core), so they are excluded from provenance.
-// A round-trip test asserts these stay ⊆ syncTo's written[] (drift guard).
+// commands, skills (dir/SKILL.md), workflows, and (for multi-rules targets) the
+// per-agent rule stubs. The single-file aggregated rules (CLAUDE.md/AGENTS.md)
+// and framework/hooks mirror-trees are NOT per-pack (regenerated/always-core),
+// so they're excluded. A round-trip test asserts these stay ⊆ syncTo's written[].
 export function packProjectedFiles(pack, kit, target) {
   const sel = buildSelector([pack.id], { [pack.id]: pack });
   const files = [];
@@ -300,6 +301,15 @@ export function packProjectedFiles(pack, kit, target) {
   if (target.agents) {
     const ext = target.agents.extension || '.md';
     for (const a of kit.agents) if (matchAny(a.name, sel.agents)) files.push(rel(target.agents.path, a.name + ext));
+  }
+  // Multi-rules targets (cursor/windsurf/antigravity/trae) write ONE rule stub
+  // per agent at <rules.path>/<agent>.<ext> (sync.js renderRuleStub). Those are
+  // per-pack (same agent membership), so removePack must be able to delete them —
+  // otherwise they orphan (esp. antigravity, where agents:null makes the rule
+  // stub the SOLE projection of an agent). mode==='single' aggregates → excluded.
+  if (target.rules && target.rules.mode === 'multi') {
+    const ext = target.rules.extension || '.md';
+    for (const a of kit.agents) if (matchAny(a.name, sel.agents)) files.push(rel(target.rules.path, a.name + ext));
   }
   if (target.commands) {
     const ext = target.commands.extension || '.md';

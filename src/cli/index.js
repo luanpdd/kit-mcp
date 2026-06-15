@@ -444,9 +444,10 @@ function renderPackResults(verb, v) {
   let s = `\n${c.green(icons.check)} pack ${verb}\n`;
   for (const r of v.results ?? []) {
     if (r.skipped) { s += `  ${c.dim(r.target)}: ${r.skipped}\n`; continue; }
+    const failedTxt = (r.failed || []).length ? c.yellow(`, ${r.failed.length} falharam`) : '';
     const detail = verb === 'add'
       ? `efetivos: ${(r.effective || []).join(', ')} (${r.written} arquivos)`
-      : `removidos: ${(r.removed || []).join(', ')} — ${(r.deleted || []).length} apagados, ${(r.preserved || []).length} preservados`;
+      : `removidos: ${(r.removed || []).join(', ')} — ${(r.deleted || []).length} apagados, ${(r.preserved || []).length} preservados${failedTxt}`;
     s += `  ${c.bold(r.target)}: ${detail}\n`;
   }
   return s + '\n';
