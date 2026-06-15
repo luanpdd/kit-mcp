@@ -963,6 +963,8 @@ function slim(x) {
   // #6 (v1.30.4): include `tier` when present (agents only) so clients can group.
   const out = { kind: x.kind, name: x.name };
   if (x.frontmatter?.tier) out.tier = x.frontmatter.tier;
+  // v1.41: cost-awareness — leve/medio/pesado, so AI clients can budget before invoking.
+  if (x.frontmatter?.cost_tier) out.cost_tier = x.frontmatter.cost_tier;
   out.description = summarize(x.description);
   return out;
 }

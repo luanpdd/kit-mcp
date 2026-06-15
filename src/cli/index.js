@@ -165,7 +165,11 @@ function slim(x) {
   // PERF-13-01: cap description at SUMMARY_MAX_CHARS via shared summarize()
   // helper from src/core/sync.js — keeps cross-surface behavior identical
   // (CLI listing == MCP listing). Full text remains in each item's source file.
-  return { kind: x.kind, name: x.name, description: summarize(x.description) };
+  // v1.41: include cost_tier (cost-awareness) when present — agents/skills only.
+  const out = { kind: x.kind, name: x.name };
+  if (x.frontmatter?.cost_tier) out.cost_tier = x.frontmatter.cost_tier;
+  out.description = summarize(x.description);
+  return out;
 }
 
 // PERF-15-01: terse variant — paridade com mcp-server slimTerse. CLI flag --terse

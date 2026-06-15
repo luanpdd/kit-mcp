@@ -481,6 +481,13 @@ async function mergePreservedPrologue(outPath, generated) {
   return `${prologue}\n\n${generated}`;
 }
 
+// v1.41 cost-awareness: compact cost_tier badge for the aggregated CLAUDE.md
+// listing (`leve`/`medio`/`pesado`), so the model sees per-resource cost inline.
+function costBadge(item) {
+  const t = item.frontmatter?.cost_tier;
+  return t ? ` \`${t}\`` : '';
+}
+
 function buildAggregatedRules(kit, target /* , kitRoot */) {
   const lines = [
     STUB_MARKER,
@@ -491,7 +498,7 @@ function buildAggregatedRules(kit, target /* , kitRoot */) {
     '## Agents',
   ];
   for (const a of kit.agents) {
-    lines.push(`- **${a.name}** — ${summarize(a.description) || '(no description)'}`);
+    lines.push(`- **${a.name}**${costBadge(a)} — ${summarize(a.description) || '(no description)'}`);
   }
   lines.push('', '## Commands');
   for (const c of kit.commands) {
@@ -499,7 +506,7 @@ function buildAggregatedRules(kit, target /* , kitRoot */) {
   }
   lines.push('', '## Skills');
   for (const s of [...kit.skills, ...kit.skillsExtras]) {
-    lines.push(`- **${s.name}** — ${summarize(s.description) || '(no description)'}`);
+    lines.push(`- **${s.name}**${costBadge(s)} — ${summarize(s.description) || '(no description)'}`);
   }
   // Workflows are only listed if the target supports them AND the kit ships some.
   // Listing them on unsupported targets would advertise capability the user can't reach.

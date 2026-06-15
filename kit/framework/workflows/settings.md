@@ -32,6 +32,7 @@ Analise os valores atuais (padrão para `true` se não presente):
 - `workflow.nyquist_validation` — pesquisa de arquitetura de validação durante plan-phase (padrão: true se ausente)
 - `workflow.ui_phase` — gerar contratos de design UI-SPEC.md para fases frontend (padrão: true se ausente)
 - `workflow.ui_safety_gate` — solicitar execução de /fase-ui antes de planejar fases frontend (padrão: true se ausente)
+- `workflow.cost_awareness` — pré-flight de subagentes: `silencioso` | `resumo` | `confirmar` (padrão: `resumo` se ausente)
 - `model_profile` — qual modelo cada agente usa (padrão: `balanced`)
 - `git.branching_strategy` — abordagem de branching (padrão: `"none"`)
 </step>
@@ -86,6 +87,16 @@ AskUserQuestion([
     options: [
       { label: "Não (Recomendado)", description: "/clear manual + colar entre estágios" },
       { label: "Sim", description: "Encadear estágios via subagentes Task() (mesma isolação)" }
+    ]
+  },
+  {
+    question: "Consciência de custo de subagentes? (controla o pré-flight antes de disparar Task() em massa)",
+    header: "Custo",
+    multiSelect: false,
+    options: [
+      { label: "Resumo (Recomendado)", description: "Antes de cada fan-out, lista os subagents + cost_tier (leve/medio/pesado) e segue. Equilíbrio transparência/atrito." },
+      { label: "Confirmar", description: "Pede confirmação explícita antes de cada fan-out de subagents (executor até ~10, implementers 3-6). Máxima transparência, mais atrito." },
+      { label: "Silencioso", description: "Sem pré-flight nem resumo — dispara direto (comportamento legado). Menor atrito, custo só visível no rodapé /custo-sessao." }
     ]
   },
   {
@@ -173,6 +184,7 @@ Mescle as novas configurações no config.json existente:
     "nyquist_validation": true/false,
     "ui_phase": true/false,
     "ui_safety_gate": true/false,
+    "cost_awareness": "silencioso" | "resumo" | "confirmar",
     "text_mode": true/false,
     "research_before_questions": true/false,
     "discuss_mode": "discuss" | "assumptions",
@@ -233,6 +245,7 @@ Escreva `~/.framework/defaults.json` com:
     "nyquist_validation": <atual>,
     "ui_phase": <atual>,
     "ui_safety_gate": <atual>,
+    "cost_awareness": <atual>,
     "skip_discuss": <atual>
   }
 }
@@ -254,6 +267,7 @@ Exiba:
 | Verificador de Plano      | {Ativo/Inativo} |
 | Verificador de Execução   | {Ativo/Inativo} |
 | Avanço Automático         | {Ativo/Inativo} |
+| Consciência de Custo      | {silencioso/resumo/confirmar} |
 | Validação Nyquist         | {Ativo/Inativo} |
 | Fase UI                   | {Ativo/Inativo} |
 | Gate UI                   | {Ativo/Inativo} |
@@ -276,7 +290,7 @@ Comandos rápidos:
 
 <success_criteria>
 - [ ] Config atual lido
-- [ ] Usuário apresentado com 10 configurações (perfil + 8 toggles de workflow + branching git)
+- [ ] Usuário apresentado com 11 configurações (perfil + 9 toggles de workflow + branching git)
 - [ ] Config atualizado com seções model_profile, workflow e git
 - [ ] Usuário ofereceu salvar como padrões globais (~/.framework/defaults.json)
 - [ ] Mudanças confirmadas ao usuário

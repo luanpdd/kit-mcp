@@ -1,6 +1,6 @@
 {
   "version": "1.40.0",
-  "timestamp": "2026-06-15T01:14:36.668Z",
+  "timestamp": "2026-06-15T01:19:14.033Z",
   "files": {
     "COMANDOS.md": "d24ec61a6ec35db314cc5f2ae287bfb927b794789c8f1d558c55862f5e6534b2",
     "COMPATIBILITY.md": "e6c180cd98b37b5b1e3f2d4e81c2ddef9c214d252603fb6ed0cb782bfee6d0cd",
@@ -297,7 +297,7 @@
     "framework/workflows/resume-project.md": "403a1ca693c60f302cdc0d9a93973f64c86a9cfd09df4995e6890b6b21192d58",
     "framework/workflows/review.md": "f98f320fc3cff00c1435fd6d61f5b7bba89b6e7c3031c354584702a8fca2e145",
     "framework/workflows/session-report.md": "b2b7e84b36c96b92a3eebf525dc3b532ee7e7801b32702e87fa76ffe9adcea09",
-    "framework/workflows/settings.md": "7a50a360c0407d199b4712994a55e7244281bd7a25e2dda4ae52669f06decd92",
+    "framework/workflows/settings.md": "e00b7892d8dd65dad318a7ae6f8d07a9fefc2f7b3509db06c45785350f1a5843",
     "framework/workflows/ship.md": "ca0cbf3d785e44c06227a1ddbab198ffcf6d7faed6cbdee66eb6831e56b2e45e",
     "framework/workflows/stats.md": "a3746f65703b5118e4944a58f263334059af41ff99f08c6b7d23fc130aade30b",
     "framework/workflows/transition.md": "3b605f5025f5ce8f4dc8b848cb3bd8fa869f21e9452a671ebc2ca0acb2fa5ecd",
@@ -309,7 +309,7 @@
     "framework/workflows/verify-work.md": "219b2e45782b0b9ef042b69f02c92232947b8144ac4f472a6f5a6577f21de8df",
     "hooks/check-update.js": "fcfef621bbaca7ad49297a0599b3c8a1b33b3c0544f8a93aa0ac8d464b1564b4",
     "hooks/context-monitor.js": "74838215d01d3be065c9a206b0f021565ed1504148dcc4ff347ed8afa7ccf7f2",
-    "hooks/kit-attribution-reminder.cjs": "9a9b14c1cca6d55903580d36de79683f5fd3d8d764938d44c9f88b1e983f741a",
+    "hooks/kit-attribution-reminder.cjs": "08fd1a771c5a3fde01e935ac582d244998b43741af4914505a1a2903e106613d",
     "hooks/kit-router.cjs": "9db81a3c19c76e9b183a0bb5798b80a9e8f58b7b419cdf9e8b7996f469b6c7d2",
     "hooks/post-apply-migration.js": "cd67f24ca9ba0a064087b9abeacee094ae24baad0cdc06f776d7a2f8ccad9685",
     "hooks/prompt-guard.js": "426f0240e3ee383571a48e062e6819d8fc3df456171fbc7e2aafb17889a9a389",
