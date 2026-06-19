@@ -28,6 +28,7 @@
       "advisor-researcher",
       "assumptions-analyzer",
       "codebase-mapper",
+      "commit-pr-conductor",
       "debugger",
       "example-reviewer",
       "executor",
