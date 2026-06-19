@@ -12,7 +12,7 @@
       "conflicts": [],
       "provides": [],
       "counts": {
-        "agents": 16,
+        "agents": 17,
         "commands": 59,
         "skills": 1,
         "workflows": 0
