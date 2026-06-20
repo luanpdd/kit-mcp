@@ -39,7 +39,7 @@ ALERT iff projected_remaining_at_lookahead < 0
 ## Regras absolutas
 
 - **Lookahead ≤ 4× baseline** — extrapolar 4 horas a partir de baseline 1h é confiável; extrapolar 1 dia a partir de 1h é flappy. (Sem ajuste de seasonality)
-- **Sliding window 30d** para o SLO — alinha com customer memory (skill [`event-based-slos`](../skills/event-based-slos/SKILL.md))
+- **Sliding window 30d** para o SLO — alinha com customer memory (skill [`event-based-slos`](../event-based-slos/SKILL.md))
 - **2 alertas por SLO** — short-term (page) + long-term (ticket). Não 1 só, não 5+.
 - **Short-term: lookahead 4h, baseline 1h** — paga on-call em horas
 - **Long-term: lookahead 3d, baseline 18h** — abre ticket, não acorda alguém

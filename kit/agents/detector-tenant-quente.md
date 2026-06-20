@@ -247,7 +247,7 @@ A skill `tenant-quente-mitigacao` documenta 5 estratégias canônicas. Map:
 
 **Estratégia sugerida:** <estratégia da skill tenant-quente-mitigacao>
 
-**Cross-suite handoff:** Para implementar mitigação, invocar [`supabase-migration-writer`](../kit/agents/supabase-migration-writer.md) (v1.8) para schema/partition changes OU [`supabase-edge-fn-writer`](../kit/agents/supabase-edge-fn-writer.md) (v1.8) para read replica routing logic. Ver skill [`tenant-quente-mitigacao`](../kit/skills/tenant-quente-mitigacao/SKILL.md) para detalhes da estratégia.
+**Cross-suite handoff:** Para implementar mitigação, invocar [`supabase-migration-writer`](../agents/supabase-migration-writer.md) (v1.8) para schema/partition changes OU [`supabase-edge-fn-writer`](../agents/supabase-edge-fn-writer.md) (v1.8) para read replica routing logic. Ver skill [`tenant-quente-mitigacao`](../skills/tenant-quente-mitigacao/SKILL.md) para detalhes da estratégia.
 
 ### 2. tenant `<org_id>` — score <z_score>
 
@@ -270,7 +270,7 @@ A skill `tenant-quente-mitigacao` documenta 5 estratégias canônicas. Map:
 
 ## Próximos passos
 
-1. Para cada CRITICAL tenant, escolher estratégia da skill [`tenant-quente-mitigacao`](../kit/skills/tenant-quente-mitigacao/SKILL.md)
+1. Para cada CRITICAL tenant, escolher estratégia da skill [`tenant-quente-mitigacao`](../skills/tenant-quente-mitigacao/SKILL.md)
 2. Invocar agent destino do cross-suite handoff (ver tabela acima)
 3. Re-auditar após mitigação para confirmar tenant saiu da banda CRITICAL
 ````

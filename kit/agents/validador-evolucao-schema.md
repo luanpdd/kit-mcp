@@ -272,7 +272,7 @@ Próxima ação:
   2. Re-validar nova migration via este agent
   3. Quando GO, prosseguir para apply
 
-Cross-suite handoff: invocar [supabase-migration-writer](kit/agents/supabase-migration-writer.md)
+Cross-suite handoff: invocar [supabase-migration-writer](./supabase-migration-writer.md)
 (v1.8) para gerar a migration corrigida com 3-step pattern.
 ```
 

@@ -21,7 +21,7 @@ LLM carrega esta skill ao definir/avaliar SLOs ou substituir alertas threshold p
 - **SLI sempre event-based, nunca time-based** — "% de eventos com `result.success=true` em 30d" > "% de janelas de 5min com p99 < 300ms"
 - **Sliding window 30d por default** — fixed window (calendário) gera comportamento perverso (cliente não esquece bug por causa de reset).
 - **Target ≤ 99.95%** — para SLO 99.99%+ você não tem tempo de reagir antes do budget acabar; use métricas/dashboards informativos em vez de SLO.
-- **Decouple "what" do "why"** — SLO alert diz que tem dor (sintoma); investigation descobre porquê (use [`core-analysis-loop`](../skills/core-analysis-loop/SKILL.md)). NUNCA misturar (anti-pattern: "alert se memória > 80% AND p99 > 300ms").
+- **Decouple "what" do "why"** — SLO alert diz que tem dor (sintoma); investigation descobre porquê (use [`core-analysis-loop`](../core-analysis-loop/SKILL.md)). NUNCA misturar (anti-pattern: "alert se memória > 80% AND p99 > 300ms").
 - **Customer-facing journey, não system metric** — SLI mede o que o cliente sente ("login funcionou em < 800ms"), não estado interno ("threads ativas").
 - **Granular por endpoint/feature** — 1 SLO por jornada crítica do user. Não SLO global "site availability" — específico demais para ser ignorável.
 - **Owner explícito** — cada SLO tem dono nomeado. Sem owner = sem ação = sem valor.
