@@ -25,6 +25,7 @@
   "provides": [],
   "resources": {
     "agents": [
+      "app-security-auditor",
       "burn-rate-forecaster",
       "cascading-failures-auditor",
       "golden-signals-instrumenter",
