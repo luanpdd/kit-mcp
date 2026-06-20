@@ -285,7 +285,7 @@ Skills, agents e commands são em PT-BR. Termos técnicos canônicos (RLS, SLO, 
 
 ```
 kit/
-├── agents/      74 agents executáveis (planner, executor, debugger, supabase-rls-hardener, …) — cada um com cost_tier
+├── agents/      75 agents executáveis (planner, executor, debugger, supabase-rls-hardener, …) — cada um com cost_tier
 ├── commands/    94 slash-commands (/discutir-fase, /planejar-fase, /executar-fase, …)
 ├── skills/      100 skills consultáveis (supabase-rls-policies, supabase-edge-functions-auth, …) — cada uma com cost_tier
 ├── packs/       manifestos dos Content Packs (core, supabase, observability, legacy, ui, cost-workflow)
