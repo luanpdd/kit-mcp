@@ -46,7 +46,7 @@
       "conflicts": [],
       "provides": [],
       "counts": {
-        "agents": 6,
+        "agents": 7,
         "commands": 8,
         "skills": 13,
         "workflows": 0
@@ -63,7 +63,7 @@
       "conflicts": [],
       "provides": [],
       "counts": {
-        "agents": 14,
+        "agents": 15,
         "commands": 18,
         "skills": 20,
         "workflows": 1
@@ -80,7 +80,7 @@
       "conflicts": [],
       "provides": [],
       "counts": {
-        "agents": 33,
+        "agents": 39,
         "commands": 3,
         "skills": 57,
         "workflows": 0
