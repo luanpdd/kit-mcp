@@ -14,7 +14,7 @@ Perfis de modelo controlam qual modelo Claude cada agente framework usa. Isso pe
 | research-synthesizer | sonnet | sonnet | haiku | inherit |
 | debugger | opus | sonnet | sonnet | inherit |
 | codebase-mapper | sonnet | haiku | haiku | inherit |
-| verifier | sonnet | sonnet | haiku | inherit |
+| verifier | sonnet | sonnet | sonnet | inherit |
 | plan-checker | sonnet | sonnet | haiku | inherit |
 | integration-checker | sonnet | sonnet | haiku | inherit |
 | nyquist-auditor | sonnet | sonnet | haiku | inherit |
@@ -34,7 +34,8 @@ Perfis de modelo controlam qual modelo Claude cada agente framework usa. Isso pe
 
 **budget** - Uso mínimo de Opus
 - Sonnet para qualquer coisa que escreva código
-- Haiku para pesquisa e verificação
+- Haiku para pesquisa e checks leves (plan-checker, integration-checker, nyquist)
+- **Sonnet para o `verifier`** mesmo no budget — auditoria de objetivo nunca cai abaixo de sonnet
 - Use quando: conservando cota, trabalho de alto volume, fases menos críticas
 
 **inherit** - Seguir o modelo de sessão atual
@@ -128,6 +129,9 @@ Executores seguem instruções explícitas do PLAN.md. O plano já contém o rac
 
 **Por que Sonnet (não Haiku) para verificadores no balanced?**
 A verificação requer raciocínio regressivo de objetivos — verificar se o código *entrega* o que a fase prometeu, não apenas correspondência de padrões. Sonnet lida bem com isso; Haiku pode perder lacunas sutis.
+
+**Por que o `verifier` nunca cai abaixo de Sonnet (nem no budget)?**
+Verificação É auditoria — decide se o código entrega o objetivo. Absorvido do padrão `improve` ("o modelo que AUDITA deve ser ao menos tão capaz quanto o que executou"): auditoria barata é auditoria que mente. Haiku perde stubs/HOLLOW props no rastreamento de fluxo de dados (nível 4), então o `verifier` resolve para `sonnet` em todos os perfis (budget incluído) e só sobe para opus no quality. Os checks mais leves (plan-checker, integration-checker, nyquist) seguem em haiku no budget — eles casam padrões, não auditam objetivo.
 
 **Por que Haiku para codebase-mapper?**
 Exploração somente-leitura e extração de padrões. Não requer raciocínio, apenas saída estruturada do conteúdo dos arquivos.

@@ -141,6 +141,8 @@ FEAT_COMMIT=$(git rev-parse --short HEAD)
 
 **Pitfalls a evitar:** misturar formatação com lógica (enterra o diff real); tipo errado (fix marcado como chore quebra changelog/SemVer); commit que não compila (envenena `git bisect`); subject vago ("fix stuff", "wip", "update code") — se não dá pra nomear a única mudança, o commit ainda não é atômico.
 
+**Pré-flight opcional `--branch-audit`:** se invocado com `--branch-audit`, antes de medir o tamanho despache o agent [`diff-auditor`](./diff-auditor.md) — auditoria escopada ao diff (introduced vs pre-existing) reusando o mesmo range `origin/main...HEAD` do Step 3. Findings `introduced` P0/P1 são apresentados ao usuário antes de prosseguir. Absorvido do `improve branch`.
+
 ### Step 3 — Medir o tamanho do PR (código-fonte LÍQUIDO)
 
 Tamanho = **adições + remoções** de arquivos de **código-fonte**, EXCLUINDO lockfiles, gerados, `.planning/`, docs/markdown puro e vendored. Comando exato:

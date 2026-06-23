@@ -1,7 +1,7 @@
 ---
 name: executar-fase
 description: Executa todos os planos de uma fase com paralelização por ondas
-argument-hint: "<phase-number> [--wave N] [--gaps-only] [--interactive]"
+argument-hint: "<phase-number> [--wave N] [--gaps-only] [--interactive] [modelo]"
 allowed-tools:
   - Read
   - Write
@@ -42,6 +42,7 @@ Fase: $ARGUMENTS
 - `--wave N` — Executar apenas a Onda `N` na fase. Use quando quiser controlar o ritmo da execução ou ficar dentro dos limites de uso.
 - `--gaps-only` — Executar apenas planos de fechamento de lacunas (planos com `gap_closure: true` no frontmatter). Use após verify-work criar planos de correção.
 - `--interactive` — Executar planos sequencialmente inline (sem subagentes) com checkpoints de usuário entre tarefas. Menor uso de tokens, estilo programação em par. Melhor para fases pequenas, correções de bugs e lacunas de verificação.
+- `[modelo]` — token de modelo no fim (`opus|sonnet|haiku|inherit` ou id do runtime, ex.: `/executar-fase 3 --wave 1 haiku`). Força o modelo do executor só nesta execução — override de prioridade máxima sobre o perfil. Absorvido do `execute <plano> <modelo>` do `improve`.
 
 **Flags ativas devem ser derivadas de `$ARGUMENTS`:**
 - `--wave N` está ativa somente se o token literal `--wave` estiver presente em `$ARGUMENTS`

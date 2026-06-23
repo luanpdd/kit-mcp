@@ -34,3 +34,11 @@ Se `model_profile` for `"inherit"`, todos os agentes resolvem para `"inherit"` (
 2. Armazene o valor do perfil
 3. Consulte o modelo de cada agente na tabela ao spawnar
 4. Passe o parâmetro model para cada chamada Task (valores: `"inherit"`, `"sonnet"`, `"haiku"`)
+
+## Override pontual por execução (despacho inline)
+
+Absorvido do `execute <plano> <modelo>` do padrão `improve`: além do perfil global, um plano específico pode ser despachado a um modelo **nomeado no ato**. Em `/executar-fase` e `/expresso`, um token de modelo (`opus|sonnet|haiku|inherit` ou um id de modelo do runtime) após o id do plano — ex.: `/executar-fase 3 02 haiku` ou `/expresso "ajuste trivial" haiku` — vira um override de **prioridade máxima** só para aquele despacho.
+
+**Precedência:** token inline na invocação **>** `model_overrides` (config) **>** tabela de perfil.
+
+Use para baratear execuções triviais (executor → `haiku`) ou encarecer pontualmente (debugger → `opus`) sem mexer no perfil do projeto. O override vale só para o(s) Task() daquela invocação; não persiste.

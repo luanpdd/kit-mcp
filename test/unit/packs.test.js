@@ -166,9 +166,9 @@ test('pack coverage — every kit resource belongs to at least one pack', async 
   assert.deepEqual(orphans, [], `recursos órfãos (em pack nenhum): ${orphans.join(', ')}`);
 });
 
-test('packResourceCounts — core 17 agents, supabase 39 agents', async () => {
+test('packResourceCounts — core 19 agents, supabase 39 agents', async () => {
   const cat = await catalog();
   const kit = await listKit(BUNDLED_KIT_ROOT);
-  assert.equal(packResourceCounts(cat.core, kit).agents, 17);
+  assert.equal(packResourceCounts(cat.core, kit).agents, 19);
   assert.equal(packResourceCounts(cat.supabase, kit).agents, 39);
 });

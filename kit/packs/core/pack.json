@@ -25,11 +25,13 @@
   "provides": [],
   "resources": {
     "agents": [
+      "advisor-auditor",
       "advisor-researcher",
       "assumptions-analyzer",
       "codebase-mapper",
       "commit-pr-conductor",
       "debugger",
+      "diff-auditor",
       "example-reviewer",
       "executor",
       "integration-checker",
@@ -50,6 +52,7 @@
       "adicionar-testes",
       "ajuda",
       "atualizar",
+      "auditar",
       "auditar-marco",
       "auditar-uat",
       "autonomo",

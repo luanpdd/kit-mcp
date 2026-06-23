@@ -45,6 +45,7 @@ Analisar `$ARGUMENTS` antes de carregar qualquer contexto:
 - Primeiro token posicional → `PHASE_ARG`
 - `--wave N` opcional → `WAVE_FILTER`
 - `--gaps-only` opcional mantém seu significado atual
+- Token de modelo final opcional (`opus|sonnet|haiku|inherit` ou id de modelo do runtime, ex.: `3 --wave 1 haiku`) → `MODEL_OVERRIDE`. Detectado só se o ÚLTIMO token casar com um modelo conhecido. Override de prioridade máxima sobre o perfil (ver `model-profile-resolution.md`).
 
 Se `--wave` estiver ausente, preservar o comportamento atual de executar todas as ondas incompletas na fase.
 </step>
@@ -59,6 +60,8 @@ AGENT_SKILLS=$(node "./.claude/framework/bin/tools.cjs" agent-skills executor 2>
 ```
 
 Analisar JSON para: `executor_model`, `verifier_model`, `commit_docs`, `parallelization`, `branching_strategy`, `branch_name`, `phase_found`, `phase_dir`, `phase_number`, `phase_name`, `phase_slug`, `plans`, `incomplete_plans`, `plan_count`, `incomplete_count`, `state_exists`, `roadmap_exists`, `phase_req_ids`.
+
+**Override de modelo inline:** se `MODEL_OVERRIDE` foi detectado no `parse_args`, sobrescreva `executor_model` com ele em todos os `Task()` desta invocação — prioridade máxima sobre o perfil e `model_overrides` (ver `model-profile-resolution.md`).
 
 **Se `phase_found` for false:** Erro — diretório de fase não encontrado.
 **Se `plan_count` for 0:** Erro — nenhum plano encontrado na fase.

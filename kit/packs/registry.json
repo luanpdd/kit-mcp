@@ -12,8 +12,8 @@
       "conflicts": [],
       "provides": [],
       "counts": {
-        "agents": 17,
-        "commands": 59,
+        "agents": 19,
+        "commands": 60,
         "skills": 3,
         "workflows": 0
       }
