@@ -12,9 +12,9 @@
       "conflicts": [],
       "provides": [],
       "counts": {
-        "agents": 19,
-        "commands": 60,
-        "skills": 3,
+        "agents": 20,
+        "commands": 62,
+        "skills": 4,
         "workflows": 0
       }
     },

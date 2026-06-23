@@ -10,7 +10,7 @@
 > Entregue como **MCP server**, **modular**: instale só os **packs** que você usa (Supabase, Observabilidade, Legacy, UI…) — o resto não entra no seu projeto. Use direto via `npx`, sem instalar nada.
 
 <!-- AUTOGEN-COUNTS-START -->
-**Bundled workflow:** 85 agents · 95 commands · 102 skills · 24 gates
+**Bundled workflow:** 86 agents · 97 commands · 103 skills · 24 gates
 <!-- AUTOGEN-COUNTS-END -->
 
 ---

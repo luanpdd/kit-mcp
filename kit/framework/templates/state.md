@@ -20,7 +20,7 @@ Ver: .planning/PROJECT.md (atualizado em [data])
 
 Fase: [X] de [Y] ([Nome da fase])
 Plano: [A] de [B] na fase atual
-Status: [Pronto para planejar / Planejando / Pronto para executar / Em andamento / Fase concluída]
+Status: [Pronto para planejar / Planejando / Pronto para executar / Em andamento / Fase concluída / Bloqueada / Defasada]
 Última atividade: [AAAA-MM-DD] — [O que aconteceu]
 
 Progresso: [░░░░░░░░░░] 0%

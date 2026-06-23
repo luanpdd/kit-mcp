@@ -143,6 +143,8 @@ FEAT_COMMIT=$(git rev-parse --short HEAD)
 
 **Pré-flight opcional `--branch-audit`:** se invocado com `--branch-audit`, antes de medir o tamanho despache o agent [`diff-auditor`](./diff-auditor.md) — auditoria escopada ao diff (introduced vs pre-existing) reusando o mesmo range `origin/main...HEAD` do Step 3. Findings `introduced` P0/P1 são apresentados ao usuário antes de prosseguir. Absorvido do `improve branch`.
 
+**Flag opcional `--issues`:** publica cada PLAN.md da fase como GitHub issue (o `.md` continua o source-of-truth), absorvido do `improve --issues`. Pré-flight: `gh auth status` OK + remote GitHub. Por plano: `gh issue create --title "<título do plano>" --body-file <plano> --label improve` (pula o label se não existir, não falha). **Guard:** se o repo é público E o plano contém finding sensível (security/secret), confirme com o usuário antes de publicar. Registre a URL da issue no bloco Status do plano.
+
 ### Step 3 — Medir o tamanho do PR (código-fonte LÍQUIDO)
 
 Tamanho = **adições + remoções** de arquivos de **código-fonte**, EXCLUINDO lockfiles, gerados, `.planning/`, docs/markdown puro e vendored. Comando exato:
