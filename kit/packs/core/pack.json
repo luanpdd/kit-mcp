@@ -105,7 +105,9 @@
       "verificar-trabalho"
     ],
     "skills": [
-      "example-skill"
+      "agent-safety-hard-rules",
+      "example-skill",
+      "leverage-scoring"
     ],
     "workflows": [],
     "hooks": []
