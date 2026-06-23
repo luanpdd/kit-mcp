@@ -16,9 +16,11 @@ Template para `.planning/phases/XX-name/{phase}-{plan}-PLAN.md` - planos de fase
 phase: XX-name
 plan: NN
 type: execute
+planned_at_sha:             # Commit-stamp `git rev-parse --short HEAD` no planejamento (drift-check do executor).
 wave: N                     # Wave de execução (1, 2, 3...). Pré-computado no momento do planejamento.
 depends_on: []              # IDs de planos que este plano requer (ex.: ["01-01"]).
-files_modified: []          # Arquivos que este plano modifica.
+files_modified: []          # Arquivos que este plano modifica (ALLOW-LIST de escopo).
+do_not_touch: []            # Arquivos/dirs proibidos (hard boundary; verifier Passo 7c bloqueia violação).
 autonomous: true            # false se o plano tem checkpoints que requerem interação do usuário
 requirements: []            # OBRIGATÓRIO — IDs de Requisitos do ROADMAP que este plano endereça. NÃO pode estar vazio.
 user_setup: []              # Configuração manual necessária que Claude não pode automatizar (ver abaixo)
@@ -29,6 +31,12 @@ must_haves:
   artifacts: []             # Arquivos que devem existir com implementação real
   key_links: []             # Conexões críticas entre artefatos
 ---
+
+<drift_check>
+ANTES de qualquer tarefa: rode `git rev-parse --short HEAD` e compare com `planned_at_sha` do frontmatter.
+- Igual → prossiga.
+- Diferente (ou `planned_at_sha` preenchido e o repo divergiu) → o codebase mudou desde o planejamento; `file:line`/excerpts podem estar obsoletos. PARE, reporte `STATUS=STOPPED` com razão `drift: HEAD <atual> != planned_at_sha <esperado>`, e peça re-planejamento. NÃO execute às cegas.
+</drift_check>
 
 <objective>
 [O que este plano realiza]
@@ -112,6 +120,15 @@ Antes de declarar o plano completo:
 - [ ] [Verificação de comportamento]
 </verification>
 
+<stop_conditions>
+PARE e reporte STATUS=STOPPED (não improvise) se:
+- o drift-check falhar (HEAD != `planned_at_sha`);
+- uma tarefa exigir tocar arquivo listado em `do_not_touch`;
+- a realidade divergir do `<action>`/`<read_first>` (símbolo/arquivo citado não existe mais);
+- um `<verify>` falhar 3× seguidas sem caminho claro.
+Reporte o que observou; o orquestrador decide (revisar plano / gap closure). Espelha as STOP Conditions do padrão `improve`.
+</stop_conditions>
+
 <success_criteria>
 
 - Todas as tarefas concluídas
@@ -136,7 +153,9 @@ After completion, create `.planning/phases/XX-name/{phase}-{plan}-SUMMARY.md`
 | `type` | Sim | Sempre `execute` para planos padrão, `tdd` para planos TDD |
 | `wave` | Sim | Número da wave de execução (1, 2, 3...). Pré-computado no momento do planejamento. |
 | `depends_on` | Sim | Array de IDs de planos que este plano requer. |
-| `files_modified` | Sim | Arquivos que este plano toca. |
+| `files_modified` | Sim | Arquivos que este plano toca (allow-list de escopo). |
+| `do_not_touch` | Não | Arquivos/dirs proibidos (hard boundary; verifier Passo 7c bloqueia violação). |
+| `planned_at_sha` | Não | Commit-stamp do planejamento para o drift-check do executor. |
 | `autonomous` | Sim | `true` se sem checkpoints, `false` se tem checkpoints |
 | `requirements` | Sim | **DEVE** listar IDs de requisitos do ROADMAP. Todo requisito do roadmap DEVE aparecer em pelo menos um plano. |
 | `user_setup` | Não | Array de itens de configuração manual necessária (serviços externos) |

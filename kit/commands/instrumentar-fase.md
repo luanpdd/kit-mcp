@@ -140,11 +140,11 @@ const shouldSample = (event: SpanLike): boolean => {
 
 ## Referências cruzadas
 
-- Skill [`structured-events`](../../../../kit/skills/structured-events/SKILL.md) — campos canônicos
-- Skill [`distributed-tracing`](../../../../kit/skills/distributed-tracing/SKILL.md) — propagação cross-service
-- Skill [`opentelemetry-standard`](../../../../kit/skills/opentelemetry-standard/SKILL.md) — SDK setup
-- Skill [`observability-driven-development`](../../../../kit/skills/observability-driven-development/SKILL.md) — 4 perguntas
-- Agente [`observability-instrumenter`](../../../../kit/agents/observability-instrumenter.md) — gera os patches durante `/executar-fase`
+- Skill [`structured-events`](../skills/structured-events/SKILL.md) — campos canônicos
+- Skill [`distributed-tracing`](../skills/distributed-tracing/SKILL.md) — propagação cross-service
+- Skill [`opentelemetry-standard`](../skills/opentelemetry-standard/SKILL.md) — SDK setup
+- Skill [`observability-driven-development`](../skills/observability-driven-development/SKILL.md) — 4 perguntas
+- Agente [`observability-instrumenter`](../agents/observability-instrumenter.md) — gera os patches durante `/executar-fase`
 
 ## Aceitação
 

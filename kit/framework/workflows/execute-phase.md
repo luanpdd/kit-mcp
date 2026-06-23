@@ -45,6 +45,7 @@ Analisar `$ARGUMENTS` antes de carregar qualquer contexto:
 - Primeiro token posicional → `PHASE_ARG`
 - `--wave N` opcional → `WAVE_FILTER`
 - `--gaps-only` opcional mantém seu significado atual
+- Token de modelo final opcional (`opus|sonnet|haiku|inherit` ou id de modelo do runtime, ex.: `3 --wave 1 haiku`) → `MODEL_OVERRIDE`. Detectado só se o ÚLTIMO token casar com um modelo conhecido. Override de prioridade máxima sobre o perfil (ver `model-profile-resolution.md`).
 
 Se `--wave` estiver ausente, preservar o comportamento atual de executar todas as ondas incompletas na fase.
 </step>
@@ -59,6 +60,8 @@ AGENT_SKILLS=$(node "./.claude/framework/bin/tools.cjs" agent-skills executor 2>
 ```
 
 Analisar JSON para: `executor_model`, `verifier_model`, `commit_docs`, `parallelization`, `branching_strategy`, `branch_name`, `phase_found`, `phase_dir`, `phase_number`, `phase_name`, `phase_slug`, `plans`, `incomplete_plans`, `plan_count`, `incomplete_count`, `state_exists`, `roadmap_exists`, `phase_req_ids`.
+
+**Override de modelo inline:** se `MODEL_OVERRIDE` foi detectado no `parse_args`, sobrescreva `executor_model` com ele em todos os `Task()` desta invocação — prioridade máxima sobre o perfil e `model_overrides` (ver `model-profile-resolution.md`).
 
 **Se `phase_found` for false:** Erro — diretório de fase não encontrado.
 **Se `plan_count` for 0:** Erro — nenhum plano encontrado na fase.
@@ -80,6 +83,8 @@ para cada plano.
 if [[ ! "$ARGUMENTS" =~ --auto ]]; then
   node "./.claude/framework/bin/tools.cjs" config-set workflow._auto_chain_active false 2>/dev/null
 fi
+# OBRIGATÓRIO: zera o contador de rounds de fechamento automático de lacunas a cada invocação fresca
+node "./.claude/framework/bin/tools.cjs" config-set workflow._gap_round 0 2>/dev/null
 ```
 </step>
 
@@ -668,6 +673,33 @@ Itens salvos em `{phase_num}-HUMAN-UAT.md` — aparecerão em `/progresso` e `/a
 **Se o usuário reportar problemas:** Prosseguir para gap closure como implementado atualmente.
 
 **Se gaps_found:**
+
+**Fechamento automático de lacunas (loop round-counter — absorvido do padrão `improve`: APPROVE | REVISE máx 2 | BLOCK).** Lê a config:
+```bash
+AUTO_GAP=$(node "./.claude/framework/bin/tools.cjs" config-get workflow.auto_gap_closure 2>/dev/null || echo "true")
+GAP_ROUND=$(node "./.claude/framework/bin/tools.cjs" config-get workflow._gap_round 2>/dev/null || echo "0")
+```
+
+**Se `AUTO_GAP` for `"true"` E `GAP_ROUND` < 2 → REVISE (mais um round, automático, sem pedir ao usuário):**
+
+1. Incrementar o contador: `node "./.claude/framework/bin/tools.cjs" config-set workflow._gap_round $((GAP_ROUND + 1))`.
+2. Logar: `🔄 Fechamento automático de lacunas — round $((GAP_ROUND + 1))/2 (verifier retornou gaps_found)`.
+3. **Planejar as lacunas inline:** ler e seguir `./.claude/framework/workflows/plan-phase.md` em modo `--gaps` para esta fase — lê o `VERIFICATION.md` recém-criado e gera planos com `gap_closure: true`. Equivale a `/planejar-fase {X} --gaps`, porém inline — o orquestrador NÃO para para o usuário.
+4. **Executar os planos de lacuna:** re-entrar em `discover_and_group_plans` → `execute_waves` com filtro `--gaps-only` (só planos `gap_closure: true`).
+5. **Re-verificar:** voltar ao início de `verify_phase_goal` (o verifier roda em modo re-verificação, focando os itens com falha). O loop repete até `passed` ou até `GAP_ROUND` atingir 2.
+
+Ao atingir `passed` dentro do loop: `node "./.claude/framework/bin/tools.cjs" config-set workflow._gap_round 0` e seguir para `update_roadmap`.
+
+**Se `AUTO_GAP` for `"true"` E `GAP_ROUND` >= 2 → BLOCKED (esgotou os 2 rounds automáticos):**
+- `node "./.claude/framework/bin/tools.cjs" config-set workflow._gap_round 0`.
+- **NÃO** marcar a fase como completa nem avançar automaticamente. Apresentar o bloco abaixo (caminho manual) precedido do aviso: `🛑 2 rounds automáticos de fechamento de lacunas não resolveram — intervenção humana necessária. Veja o VERIFICATION.md e replaneje o escopo.`
+- PARAR.
+
+**Se `AUTO_GAP` NÃO for `"true"` (usuário desativou o loop) → comportamento manual: apresentar o bloco abaixo.**
+
+> Config: `workflow.auto_gap_closure` (default `true`) liga/desliga este loop. Desligue com `node "./.claude/framework/bin/tools.cjs" config-set workflow.auto_gap_closure false` para voltar ao fluxo manual antigo.
+
+Bloco de apresentação (BLOCKED após 2 rounds, ou modo manual):
 ```
 ## ⚠ Fase {X}: {Nome} — Lacunas Encontradas
 

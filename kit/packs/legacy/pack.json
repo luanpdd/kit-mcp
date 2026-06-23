@@ -27,6 +27,7 @@
     "agents": [
       "ai-mutation-tester",
       "legacy-characterizer",
+      "llm-eval-harness-writer",
       "refactor-safety-auditor",
       "seam-finder",
       "shotgun-surgery-detector",

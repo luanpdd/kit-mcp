@@ -262,6 +262,8 @@ Camadas horizontais só quando há base compartilhada genuína (auth antes de fe
 
 Frontmatter `files_modified` declara propriedade exclusiva. Sem sobreposição entre planos → paralelo. Arquivo em múltiplos planos → plano posterior depende do anterior.
 
+**`do_not_touch` (escopo hermético — absorvido do `improve`):** preencha o frontmatter `do_not_touch` de cada plano com os `files_modified` dos OUTROS planos da mesma fase (mais dirs sensíveis fora do escopo). É a allow-list negativa que o `verifier` (Passo 7c) usa para bloquear mudança fora de escopo — mantém o executor nas raias mesmo sem contexto da sessão.
+
 </dependency_graph>
 
 <scope_estimation>
@@ -752,6 +754,8 @@ Use a estrutura de template para cada PLAN.md.
 Escreva em `.planning/phases/XX-nome/{phase}-{NN}-PLAN.md`
 
 Inclua todos os campos do frontmatter.
+
+**Commit-stamp (drift-check — absorvido do `improve`):** carimbe `planned_at_sha` no frontmatter de cada plano com o HEAD curto no momento do planejamento (`git rev-parse --short HEAD`). O executor compara contra o HEAD na execução (bloco `<drift_check>` do template) e PARA se divergiu — `file:line`/excerpts podem estar obsoletos.
 </step>
 
 <step name="validate_plan">

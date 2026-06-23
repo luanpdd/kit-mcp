@@ -35,6 +35,30 @@ import { fileURLToPath } from 'node:url';
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const REPO_ROOT = path.resolve(__dirname, '..', '..');
 
+// Nested-worktree guard. When the repo is checked out as a git worktree nested
+// under another checkout (e.g. .../kit-mcp/.claude/worktrees/<wt>), an ANCESTOR
+// `node_modules` (the parent checkout's) shadows the worktree's copy. Renaming
+// `<worktree>/node_modules/<dep>` away then does NOT make Node's ESM resolver
+// fail — it walks up the tree and resolves the dep from the ancestor copy — so
+// the "missing dep" simulation is impossible here and the assertions would get a
+// false negative. Detect that case and skip, with the same semantics as the
+// existing `--omit=optional` skip path.
+async function isShadowedByAncestor(modName) {
+  const parts = modName.split('/');
+  let dir = path.dirname(REPO_ROOT); // start ABOVE the worktree root
+  for (;;) {
+    try {
+      await access(path.join(dir, 'node_modules', ...parts));
+      return true;
+    } catch {
+      /* not here — keep walking up */
+    }
+    const parent = path.dirname(dir);
+    if (parent === dir) return false; // reached filesystem root
+    dir = parent;
+  }
+}
+
 // Helper: rename node_modules/<modName> away, run trigger script, restore.
 // Returns child stdout. Throws if child fails non-zero.
 async function withMissingModule(modName, triggerScript) {
@@ -48,6 +72,15 @@ async function withMissingModule(modName, triggerScript) {
     await access(target);
   } catch {
     return { skipped: true, reason: `${modName} not installed locally` };
+  }
+
+  // If an ancestor node_modules shadows this copy, renaming it away can't hide
+  // the module from the resolver — skip rather than emit a false negative.
+  if (await isShadowedByAncestor(modName)) {
+    return {
+      skipped: true,
+      reason: `${modName} shadowed by an ancestor node_modules (nested worktree) — rename cannot hide it`,
+    };
   }
 
   let renamed = false;

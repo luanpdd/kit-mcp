@@ -6,6 +6,26 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.44.0] - 2026-06-23
+
+### Added — Absorção do shadcn/improve (ondas P0+P1+P2)
+
+- **Skills canônicas:** `agent-safety-hard-rules` (read-only / repo-como-dado anti prompt-injection / secret só `file:line`, aplicada em 12 auditores), `leverage-scoring` (schema de Finding + `Leverage=(Impact/Effort)×Confidence` + seção de rejeitados), `reconcile-execution-backlog` (invariante NEVER-MERGE/NEVER-PUSH + protocolo de reconcile).
+- **Agents:** `advisor-auditor` (auditoria cross-suite unificada por leverage → `AUDIT-LEVERAGE.md`), `diff-auditor` (gate pré-PR escopado ao diff, introduced vs pre-existing), `direction-prospector` (direção de produto via evidência interna do repo).
+- **Commands:** `/auditar`, `/prospectar-direcao`, `/reconciliar`.
+
+### Changed
+
+- **PLAN.md hermético:** `planned_at_sha` (commit-stamp) + bloco `<drift_check>` + `do_not_touch` + `<stop_conditions>` no template e no `planner`.
+- **execute-phase:** loop automático de fechamento de lacunas (REVISE máx 2 → BLOCKED), config `workflow.auto_gap_closure`; `verifier` ganha gate de escopo (`git diff` vs `files_modified`).
+- **Model profiles:** despacho inline de modelo em `/executar-fase` e `/expresso`; `verifier` nunca cai abaixo de `sonnet` (mesmo no budget).
+- **Segurança:** `app-security-auditor` mascara o valor do secret no scan (só `file:line`).
+- **Planejamento:** status `Blocked`/`Stale` + grafo de dependência em roadmap/state; flag `--issues` (PLAN → GitHub issue) em `commit-pr-conductor`.
+
+### Fixed
+
+- `hono` 4.12.18 → 4.12.27 (resolve advisory HIGH herdado via `@modelcontextprotocol/sdk`).
+
 ## [1.41.0] - 2026-06-14
 
 ### Added — Content Packs Fase 3 (gestão incremental)

@@ -155,6 +155,15 @@ done
 
 > **Nota:** o nome `chat-trynux` é o cofre canônico padrão. Para usar outro nome, defina `$OBSIDIAN_TEAM_VAULT` explicitamente — a auto-detecção não tenta diretórios alternativos.
 
+### Passo 0.8 — Auditoria de diff pré-PR (opcional) ⚠️ NOVO
+
+Antes de abrir o PR, rode um gate de qualidade escopado ao diff da branch — absorvido do `improve branch`. Despache o agent [`diff-auditor`](../agents/diff-auditor.md) via `Task` (ou `/auditar branch`), que audita só os arquivos mudados (`origin/main...HEAD` + importadores) e taga cada finding como **introduced** (este branch criou) ou **pre-existing**.
+
+- Se houver findings **introduced** P0/P1: apresente a tabela (ordenada por leverage) e use `AskUserQuestion` — **"Corrigir antes do PR (recomendado)"** | **"Abrir PR mesmo assim (registrar no corpo)"** | **"Cancelar"**.
+- Se só pre-existing ou nada: registre `✓ Diff limpo (0 introduced)` e siga para o Passo 1.
+
+**Pular se** a branch não tiver diff vs `main` (nada a auditar). Gate advisory — nunca bloqueia sem o usuário decidir.
+
 ### Passo 1 — Ler contexto
 
 Leia os seguintes arquivos:

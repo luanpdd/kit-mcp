@@ -454,6 +454,41 @@ npm test -- --grep "$PHASE_TEST_PATTERN" 2>&1 | grep -q "passing"
 - Não modifique estado (sem escritas, mutações ou efeitos colaterais)
 - Se o projeto ainda não tiver pontos de entrada executáveis, pule com: "Step 7b: SKIPPED (no runnable entry points)"
 
+## Passo 7c: Gate de Escopo (arquivos fora do escopo declarado)
+
+**Princípio (absorvido do padrão `improve`):** o executor deve tocar SOMENTE os arquivos que o PLAN declarou em `files_modified`. Um arquivo mudado **fora** desse escopo é um **bloqueador** — mesmo que a mudança pareça plausível — porque indica desvio não-planejado que escapou da revisão. Isto torna automático no kit o "scope compliance via `git diff --stat`" que o `improve` faz no review de execução.
+
+**1. Coletar o escopo permitido** (união de `files_modified` de todos os PLANs da fase):
+
+```bash
+ALLOWED_FILES=$(awk '
+  /^files_modified:/ {f=1; next}
+  f && /^[a-zA-Z_]+:/ {f=0}
+  f && /^[[:space:]]*-[[:space:]]/ { gsub(/^[[:space:]]*-[[:space:]]*/,""); gsub(/["'"'"'`]/,""); print }
+' "$PHASE_DIR"/*-PLAN.md 2>/dev/null | sort -u)
+```
+
+**2. Coletar os arquivos realmente mudados pelos commits da fase:**
+
+```bash
+PHASE_COMMITS=$(git log --all --grep="${PHASE_NUMBER}-" --since="2 days ago" --format="%H" 2>/dev/null)
+CHANGED_FILES=$(for c in $PHASE_COMMITS; do git show --name-only --format="" "$c" 2>/dev/null; done | sort -u | sed '/^$/d')
+```
+
+**3. Detectar fora-de-escopo** (mudou, mas não estava em nenhum `files_modified`; ignorando artefatos de planejamento que o orquestrador legitimamente toca):
+
+```bash
+OUT_OF_SCOPE=$(comm -23 <(printf '%s\n' "$CHANGED_FILES") <(printf '%s\n' "$ALLOWED_FILES") \
+  | grep -vE '^\.planning/|-SUMMARY\.md$|-VERIFICATION\.md$|/STATE\.md$|/ROADMAP\.md$|/REQUIREMENTS\.md$|/PROJECT\.md$')
+```
+
+**4. Veredito do gate:**
+
+- `OUT_OF_SCOPE` **vazio** → ✓ escopo respeitado.
+- `OUT_OF_SCOPE` **não-vazio** → 🛑 **Bloqueador**. Registre cada arquivo na seção `### Anti-Patterns Found` com severidade Bloqueador e força `status: gaps_found`. Cada arquivo fora-de-escopo vira um item de `gaps` no frontmatter (truth `"Execução ficou dentro do escopo declarado"`, status `failed`, missing `"reverter/justificar mudança fora de escopo em <arquivo>"`).
+
+**Pular se:** não houver PLANs com `files_modified` (fase sem escopo declarado) — registre `Step 7c: SKIPPED (no files_modified declared)` e não bloqueie. Mudança fora de escopo **documentada e aprovada no mérito** (executor explicou o desvio em SUMMARY `## Deviations` e ele serve ao objetivo + é mínimo) pode ser rebaixada a ⚠️ Aviso — desvio **não-documentado** permanece bloqueador.
+
 ## Passo 8: Identificar Necessidades de Verificação Humana
 
 **Sempre necessita humano:** Aparência visual, conclusão de fluxo de usuário, comportamento em tempo real, integração com serviço externo, sensação de performance, clareza de mensagem de erro.
@@ -474,7 +509,7 @@ npm test -- --grep "$PHASE_TEST_PATTERN" 2>&1 | grep -q "passing"
 
 **Status: passed** — Todas as truths VERIFIED, todos os artefatos passam nos níveis 1-3, todos os key links WIRED, sem anti-padrões bloqueadores.
 
-**Status: gaps_found** — Uma ou mais truths FAILED, artefatos MISSING/STUB, key links NOT_WIRED, ou anti-padrões bloqueadores encontrados.
+**Status: gaps_found** — Uma ou mais truths FAILED, artefatos MISSING/STUB, key links NOT_WIRED, anti-padrões bloqueadores, **ou arquivos mudados fora do escopo declarado (Passo 7c)**.
 
 **Status: human_needed** — Todas as verificações automatizadas passam mas itens sinalizados para verificação humana.
 

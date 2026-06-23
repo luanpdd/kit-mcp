@@ -1,7 +1,7 @@
 ---
 name: expresso
 description: Executa uma tarefa rápida com garantias framework (commits atômicos, rastreamento de estado) mas pula agentes opcionais
-argument-hint: "[--full] [--discuss] [--research]"
+argument-hint: "[--full] [--discuss] [--research] [modelo]"
 allowed-tools:
   - Read
   - Write
@@ -29,6 +29,8 @@ Modo expresso é o mesmo sistema com um caminho mais curto:
 **Flag `--research`:** Invoca um agente de pesquisa focado antes do planejamento. Investiga abordagens de implementação, opções de biblioteca e armadilhas para a tarefa. Use quando não tem certeza da melhor abordagem.
 
 Flags são combináveis: `--discuss --research --full` dá discussão + pesquisa + verificação de plano + verificação.
+
+**Modelo inline (opcional):** um token de modelo no fim (`opus|sonnet|haiku|inherit` ou id do runtime) força o modelo do executor só nesta execução — ex.: `/expresso "ajuste trivial" haiku`. Override de prioridade máxima sobre o perfil (ver `model-profile-resolution.md`). Absorvido do `execute <plano> <modelo>` do `improve`.
 
 ## Quando usar
 

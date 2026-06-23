@@ -14,6 +14,8 @@ Iniciar um novo milestone: questionamento → pesquisa (opcional) → requisitos
 
 Equivalente brownfield do novo-projeto. O projeto existe, PROJECT.md tem histórico. Reúne "o que vem a seguir", atualiza PROJECT.md, então executa o ciclo requisitos → roadmap.
 
+**Dica (absorvido do `improve`):** se você não sabe "o que vem a seguir", rode `/prospectar-direcao` antes — o agent `direction-prospector` audita os sinais internos do repo (TODOs em cluster, promessas de README não entregues, superfícies incompletas) e sugere 4-6 direções com evidência `file:line`.
+
 **Cria/Atualiza:**
 - `.planning/PROJECT.md` — atualizado com novos objetivos do milestone
 - `.planning/research/` — pesquisa de domínio (opcional, apenas para NOVOS recursos)

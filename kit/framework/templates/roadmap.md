@@ -131,7 +131,15 @@ As fases executam em ordem numérica: 2 → 2.1 → 2.2 → 3 → 3.1 → 4
 - `In progress` - Em andamento
 - `Complete` - Concluída (adicionar data de conclusão)
 - `Deferred` - Diferida (com motivo)
+- `Blocked` - Bloqueada (loop de fechamento de lacunas esgotou os 2 rounds ou STOP do executor; ver VERIFICATION.md)
+- `Stale` - Defasada (commit-stamp do plano divergiu do HEAD; `/reconciliar` re-verifica)
 </status_values>
+
+<dependency_graph_and_staleness>
+**Grafo de dependência (absorvido do `improve`):** além de "Depende de" por fase, renderize o grafo explícito na seção Progresso quando o fluxo for não-linear — ex.: `1 → 2 → 3 → 4`, com `2.1 (inserida)` ramificando de `2`. Lista ou mermaid.
+
+**Staleness:** um plano/fase fica `Stale` quando o `planned_at_sha` do plano diverge do HEAD (codebase mudou desde o planejamento). `/reconciliar` detecta e re-verifica — refresca o SHA ou marca `Rejected` se a finding foi resolvida incidentalmente. `Blocked` = loop de gap-closure esgotou os 2 rounds ou houve STOP do executor.
+</dependency_graph_and_staleness>
 
 ## Roadmap Agrupado por Milestone (Após o v1.0 Ser Entregue)
 

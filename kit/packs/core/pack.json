@@ -25,10 +25,14 @@
   "provides": [],
   "resources": {
     "agents": [
+      "advisor-auditor",
       "advisor-researcher",
       "assumptions-analyzer",
       "codebase-mapper",
+      "commit-pr-conductor",
       "debugger",
+      "diff-auditor",
+      "direction-prospector",
       "example-reviewer",
       "executor",
       "integration-checker",
@@ -49,6 +53,7 @@
       "adicionar-testes",
       "ajuda",
       "atualizar",
+      "auditar",
       "auditar-marco",
       "auditar-uat",
       "autonomo",
@@ -84,11 +89,13 @@
       "planejar-lacunas",
       "plantar-ideia",
       "progresso",
+      "prospectar-direcao",
       "proximo",
       "publicar",
       "publicar-rapido",
       "rapido",
       "reaplicar-patches",
+      "reconciliar",
       "relatorio-sessao",
       "remover-fase",
       "remover-workspace",
@@ -104,7 +111,10 @@
       "verificar-trabalho"
     ],
     "skills": [
-      "example-skill"
+      "agent-safety-hard-rules",
+      "example-skill",
+      "leverage-scoring",
+      "reconcile-execution-backlog"
     ],
     "workflows": [],
     "hooks": []

@@ -122,7 +122,7 @@ Deno.test('notes — só vê suas próprias notas (RLS)', async () => {
 
 ## Pattern 4 — Test determinístico para função API-only (adapter pattern)
 
-Para Edge Function que wrappa API externa (OpenAI, Stripe, Resend), injetar fake provider via env. Ver [`legacy-api-only-applications`](../legacy-api-only-applications/SKILL.md) e [`llm-as-dependency`](../skills/llm-as-dependency/SKILL.md).
+Para Edge Function que wrappa API externa (OpenAI, Stripe, Resend), injetar fake provider via env. Ver [`legacy-api-only-applications`](../legacy-api-only-applications/SKILL.md) e [`llm-as-dependency`](../llm-as-dependency/SKILL.md).
 
 ```ts
 // supabase/functions/_shared/openai-adapter.ts
