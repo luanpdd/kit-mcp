@@ -16,6 +16,12 @@
 //
 // Throws if the block markers are absent — README must already contain them
 // (Task 1 of plan 86-01 establishes the block once).
+//
+// DIR-01: also rewrites the counts inside the "Estrutura do kit" ASCII tree
+// (`├── agents/  {N} agents executáveis`, `{N} slash-commands`,
+// `{N} skills consultáveis`) so the README can never self-contradict again.
+// Throws if any of these tree mentions is absent — same contract as the
+// AUTOGEN block, keeping every count mention under this script's guard.
 
 import { readdir, readFile, writeFile } from 'node:fs/promises';
 import path from 'node:path';
@@ -26,6 +32,14 @@ const REPO_ROOT_DEFAULT = path.resolve(path.dirname(__filename), '..');
 
 const START = '<!-- AUTOGEN-COUNTS-START -->';
 const END = '<!-- AUTOGEN-COUNTS-END -->';
+
+// DIR-01: count mentions in the "Estrutura do kit" ASCII tree. Each regex must
+// match the README exactly once; the number between the anchors is rewritten.
+const TREE_MENTIONS = [
+  { label: 'agents', re: /(agents\/\s+)\d+( agents executáveis)/, pick: (c) => c.agents },
+  { label: 'commands', re: /(commands\/\s+)\d+( slash-commands)/, pick: (c) => c.commands },
+  { label: 'skills', re: /(skills\/\s+)\d+( skills consultáveis)/, pick: (c) => c.skills },
+];
 
 async function countMdIn(dirAbs) {
   const ents = await readdir(dirAbs, { withFileTypes: true });
@@ -87,7 +101,23 @@ export async function updateReadmeCounts(repoRoot = REPO_ROOT_DEFAULT) {
     eol +
     END;
 
-  const after = before.slice(0, startIdx) + newBlock + before.slice(endIdx + END.length);
+  let after = before.slice(0, startIdx) + newBlock + before.slice(endIdx + END.length);
+
+  // DIR-01: keep the "Estrutura do kit" tree counts in sync with the same
+  // source of truth. Missing mention = hard error, so a README reword cannot
+  // silently drop a count out of this guard.
+  for (const mention of TREE_MENTIONS) {
+    if (!mention.re.test(after)) {
+      throw new Error(
+        'README.md missing "Estrutura do kit" count mention for ' +
+          mention.label +
+          ' (expected pattern ' +
+          mention.re +
+          ') — restore the tree line or update TREE_MENTIONS in scripts/update-readme-counts.js.'
+      );
+    }
+    after = after.replace(mention.re, (_m, p1, p2) => p1 + mention.pick(counts) + p2);
+  }
 
   if (after === before) {
     return { changed: false, counts };
