@@ -6,6 +6,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.44.1] - 2026-07-01
+
+### Changed
+
+- Nenhuma mudança funcional no pacote publicado (`bin/`, `src/`, `kit/`, `gates/` inalterados). Housekeeping de repositório — adiciona `PROJETOS.md` (registro canônico de projetos exigido pela regra global do kit-mcp) e ajusta `.gitignore` para não versionar marcadores locais de instalação (`.claude/.kit-mcp-version`, `.claude/.kit-mcp-restart-required`).
+
 ## [1.44.0] - 2026-06-23
 
 ### Added — Absorção do shadcn/improve (ondas P0+P1+P2)
