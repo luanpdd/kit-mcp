@@ -352,7 +352,7 @@ CERTO: FakeStripeAdapter implementa interface NÃO depende de Stripe.
 - [`supabase-edge-functions`](../supabase-edge-functions/SKILL.md) (v1.8) — Edge Functions são API-only paradigmáticas; adapter pattern aplicável
 - [`supabase-edge-fn-writer`](../../agents/supabase-edge-fn-writer.md) (v1.8) — patch v1.12: adapter pattern como template default
 - [`four-golden-signals`](../four-golden-signals/SKILL.md) (v1.10) — adapter é lugar canônico de instrumentation
-- [`retry-strategies`](../retry-strategies/SKILL.md) (v1.11 — quando entregar) — retry pattern aplicado dentro do adapter
+- [`retry-strategies`](../retry-strategies/SKILL.md) (v1.11) — retry pattern aplicado dentro do adapter
 - [`llm-as-dependency`](../llm-as-dependency/SKILL.md) — caso especial de API-only para LLM providers
 
 *Material-fonte: Working Effectively with Legacy Code — Feathers, 2004 — Cap 15: "My Application Is All API Calls".*

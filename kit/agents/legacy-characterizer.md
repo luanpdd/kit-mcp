@@ -365,6 +365,7 @@ Steps:
 - [`legacy-effect-analysis`](../skills/legacy-effect-analysis/SKILL.md) — sketch identifica inputs prioritários (inflection points)
 - [`legacy-seams-and-test-harness`](../skills/legacy-seams-and-test-harness/SKILL.md) — break-deps quando código não está testável
 - [`refactor-safety-auditor`](./refactor-safety-auditor.md) — gate consume output deste agent
+- [`ai-mutation-tester`](./ai-mutation-tester.md) — próxima etapa: valida que a suite gerada aqui mata mutants comportamentais (cobertura real, não só line coverage)
 - [`seam-finder`](./seam-finder.md) — invocar PRIMEIRO se código não tem seams testáveis
 - [`observability-instrumenter`](./observability-instrumenter.md) (v1.9) — para captura de payloads reais via instrumentation
 - [`production-readiness-review`](../skills/production-readiness-review/SKILL.md) (v1.10) — PRR Axe 5 (Change Management) verifica characterization para mudanças aceitas

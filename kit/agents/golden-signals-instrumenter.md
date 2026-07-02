@@ -213,7 +213,7 @@ import { metrics } from 'npm:@opentelemetry/api@1.9.0'
 
 ## Próximos passos
 
-1. Rodar `kit gates run` (auditoria de descrição/sintaxe)
+1. Rodar `kit gates run golden-signals-coverage` (valida presença dos 4 signals no código tocado)
 2. Smoke local: enviar request e verificar histogram/counter/gauge no backend OTel
 3. Cross-ref com `observability-instrumenter` se spans/wide events ainda ausentes
 ```

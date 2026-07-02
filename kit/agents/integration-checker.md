@@ -36,7 +36,7 @@ Uma codebase "completa" com conexões quebradas é um produto quebrado.
 </core_principle>
 
 <inputs>
-## Contexto Necessário (fornecido pelo auditor de milestone)
+## Contexto Necessário (fornecido pelo caller — `/auditar-marco` via workflow `audit-milestone`)
 
 **Informações de Fase:**
 - Diretórios de fase no escopo do milestone
@@ -53,7 +53,7 @@ Uma codebase "completa" com conexões quebradas é um produto quebrado.
 - O que cada fase fornece vs. consome
 
 **Requisitos do Milestone:**
-- Lista de REQ-IDs com descrições e fases atribuídas (fornecida pelo auditor)
+- Lista de REQ-IDs com descrições e fases atribuídas (fornecida pelo caller)
 - DEVE mapear cada descoberta de integração para IDs de requisito afetados onde aplicável
 - Requisitos sem conexão entre fases DEVEM ser sinalizados no Mapa de Integração de Requisitos
 </inputs>
@@ -116,13 +116,13 @@ Derive fluxos dos objetivos do milestone e trace pela codebase.
 
 ## Passo 6: Compilar Relatório de Integração
 
-Estruture descobertas para o auditor de milestone.
+Estruture descobertas para o caller (workflow `audit-milestone`, invocado por `/auditar-marco`).
 
 </verification_process>
 
 <output>
 
-Retorne relatório estruturado ao auditor de milestone:
+Retorne relatório estruturado ao caller (workflow `audit-milestone`):
 
 ```markdown
 ## Integration Check Complete
@@ -184,7 +184,7 @@ Retorne relatório estruturado ao auditor de milestone:
 
 **Seja específico sobre quebras.** "Dashboard não funciona" é inútil. "Dashboard.tsx linha 45 busca /api/users mas não aguarda resposta" é acionável.
 
-**Retorne dados estruturados.** O auditor de milestone agrega suas descobertas. Use formato consistente.
+**Retorne dados estruturados.** O workflow `audit-milestone` (comando `/auditar-marco`) agrega suas descobertas. Use formato consistente.
 
 </critical_rules>
 
@@ -200,5 +200,5 @@ Retorne relatório estruturado ao auditor de milestone:
 - [ ] Fluxos quebrados identificados com pontos de quebra específicos
 - [ ] Mapa de Integração de Requisitos produzido com status de conexão por requisito
 - [ ] Requisitos sem conexão entre fases identificados
-- [ ] Relatório estruturado retornado ao auditor
+- [ ] Relatório estruturado retornado ao caller
 </success_criteria>

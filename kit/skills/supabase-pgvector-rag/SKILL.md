@@ -242,7 +242,7 @@ create index documents_embedding_hnsw_idx on documents using hnsw (embedding vec
 
 ## Notas de futuro
 
-- **Hybrid search** (FTS + vector com RRF — Reciprocal Rank Fusion) está coberto em skill `supabase-fts` (defer v1.9 — full-text search standalone).
+- **Hybrid search** (FTS + vector com RRF — Reciprocal Rank Fusion) ainda não tem skill dedicada no kit — se precisar agora, combine `tsvector`/`ts_rank` (FTS nativo do Postgres) com o `match_documents` desta skill e funda os dois rankings via RRF manualmente.
 - **Vector Buckets** e **Analytics Buckets** ainda em alpha em 2026 — mencione como existência mas não detalhe (pattern canônico evoluindo).
 
 ## Ver também

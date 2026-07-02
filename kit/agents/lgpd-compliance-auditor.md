@@ -202,10 +202,9 @@ Se ausente OU regions diferentes de `gru1` / `sa-east-1` → P2 informacional.
 - App não tem usuários brasileiros (sem nexus LGPD) — out of scope
 - Recém-criou app (sem dados ainda) — overhead, audit é mais útil pré-launch
 
-## Observabilidade
+## Observabilidade (pós-instalação)
 
-- Counter `lgpd.audit.gaps.found{severity}` por execução
-- Histogram `lgpd.audit.duration_ms`
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Cooperative handoff to supabase-rls-hardener (v1.23)
 
