@@ -19,8 +19,12 @@
       "trae"
     ]
   },
-  "requires": [],
-  "recommends": [],
+  "requires": [
+    "observability"
+  ],
+  "recommends": [
+    "legacy"
+  ],
   "conflicts": [],
   "provides": [],
   "resources": {

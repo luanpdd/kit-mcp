@@ -364,8 +364,8 @@ export function exclusiveFiles(lockfile, removedIds, remainingIds) {
 
 /**
  * Reverse dependency closure: which installed packs (hard `requires`) would be
- * orphaned if `removedIds` go away. First-party packs declare no requires, so
- * this is empty in practice — but it guards future third-party packs.
+ * orphaned if `removedIds` go away. First-party: supabase requires observability
+ * (grafo Fase 4 — test/unit/pack-graph.test.js); also guards third-party packs.
  */
 export function reverseDependents(removedIds, installedIds, catalog) {
   const removedSet = new Set(removedIds);

@@ -41,12 +41,20 @@ test('matchAny — empty patterns never match', () => {
   assert.equal(matchAny('anything', undefined), false);
 });
 
-// --- self-containment invariant (no inter-pack deps) -------------------------
+// --- dependency graph invariant (Fase 4 — DIR-03) ----------------------------
+// requires/recommends agora refletem o grafo REAL de dispatches/links entre os
+// packs (matriz + gates em test/unit/pack-graph.test.js). Única hard dep
+// first-party: supabase → observability (handoff obrigatório do
+// supabase-cicd-pipeline-implementer para release-pipeline-auditor).
 
-test('packs — NO first-party pack declares requires (self-contained)', async () => {
+test('packs — só supabase declara requires; core nunca declara', async () => {
   const cat = await catalog();
   for (const [id, p] of Object.entries(cat)) {
-    assert.deepEqual(p.requires ?? [], [], `pack "${id}" não deve ter requires (deve ser autossuficiente)`);
+    if (id === 'supabase') {
+      assert.deepEqual(p.requires, ['observability'], 'supabase requer observability (dispatch real)');
+    } else {
+      assert.deepEqual(p.requires ?? [], [], `pack "${id}" não deve ter requires (sem dispatch cross-pack)`);
+    }
   }
 });
 
@@ -56,11 +64,18 @@ test('resolvePacks — core always included', async () => {
   assert.ok(r.effective.includes(CORE_PACK_ID));
 });
 
-test('resolvePacks — selecting a domain pack pulls only it + core (no extra deps)', async () => {
+test('resolvePacks — pack sem requires puxa só ele + core', async () => {
+  const cat = await catalog();
+  const r = resolvePacks(['legacy'], cat);
+  assert.deepEqual(r.effective.sort(), ['core', 'legacy']);
+  assert.deepEqual(r.added, []); // nada auto-incluído por dependência
+});
+
+test('resolvePacks — supabase puxa observability via requires (hard dep real)', async () => {
   const cat = await catalog();
   const r = resolvePacks(['supabase'], cat);
-  assert.deepEqual(r.effective.sort(), ['core', 'supabase']);
-  assert.deepEqual(r.added, []); // nada auto-incluído por dependência
+  assert.deepEqual(r.effective.sort(), ['core', 'observability', 'supabase']);
+  assert.deepEqual(r.added, ['observability']);
 });
 
 test('resolvePacks — legacy does not pull supabase', async () => {
