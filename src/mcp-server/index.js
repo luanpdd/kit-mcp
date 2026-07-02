@@ -5,6 +5,7 @@
 //   gates            action: list | get | for-stage
 //   forensics        action: collect | summarize | write-learnings | list-replays | record-replay | load-replay
 //   install          action: targets | install | dry-run                    (registers this MCP into an IDE)
+//   projects         action: list | get | doctor                             (DIR-05 — registro canônico PROJETOS.md)
 //   metrics-snapshot (parameterless)                                          (OBS-18 four-golden-signals readout)
 //
 // Transport: stdio (MCP standard).
@@ -28,6 +29,10 @@ import { sanitizeMcpError } from '../core/error-redaction.js';
 import { listGates, getGate, gatesForStage } from '../core/gates.js';
 import { runGate } from '../core/gate-runner.js';
 import { collectFailures, summarizeByAgent, writeLearnings } from '../core/failures.js';
+// DIR-05 (multi-projeto): parser puro do registro canônico PROJETOS.md.
+// A tool `projects` consome o arquivo em runtime (list/get/doctor) — o fs
+// (leitura do arquivo + existência de paths no doctor) fica todo no handler.
+import { parseProjects, isValidRepoUrl } from '../core/projects.js';
 import { reflect } from '../core/reflect.js';
 import { recordReplay, listReplays, loadReplay, annotateReplay } from '../core/replays.js';
 import { installMcp, listInstallTargets } from './install.js';
@@ -282,6 +287,23 @@ const TOOLS = [
     },
   },
   {
+    // DIR-05 (multi-projeto como produto): expõe o registro canônico
+    // PROJETOS.md (criado/gerido pelo comando /base) como capability runtime.
+    // Read-only — list/get leem e parseiam o arquivo; doctor adiciona checks
+    // de existência dos paths locais via fs. Nenhuma action escreve em disco.
+    name: 'projects',
+    description: 'Consome o registro de projetos (PROJETOS.md na raiz, gerido pelo comando /base) em runtime. action=list retorna projeto principal + projetos conectados com status de completude por projeto; get busca um projeto pelo nome (pasta local, repositório, documentação local); doctor gera relatório de validação — campos obrigatórios, existência das pastas locais no disco e shape https?:// das URLs. Triggers: "registro de projetos", "projetos conectados", "PROJETOS.md", "/base", "projeto principal", "onde fica o projeto X".',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        action:      { type: 'string', enum: ['list', 'get', 'doctor'] },
+        name:        { type: 'string', description: 'For action=get — nome do projeto como registrado no PROJETOS.md (case-insensitive).' },
+        projectRoot: { type: 'string', description: 'Raiz onde está o PROJETOS.md. Default: cwd.' },
+      },
+      required: ['action'],
+    },
+  },
+  {
     name: 'cost-estimate',
     description: 'Estima custo USD de um prompt ANTES de mandar para Claude. Heurística chars/4 com range ±30% (sem tokenizer real na v1.37.0 — debt em SKILL.md). Retorna estimated_input_tokens, estimated_output_tokens, estimated_usd, estimated_usd_range:[low,high], disclaimer. Triggers: "quanto vai custar", "estimativa de prompt", "estimate cost", "price this prompt".',
     inputSchema: {
@@ -522,6 +544,112 @@ async function handlePack(args = {}) {
     }
     case 'store':
       return { error: 'pack store requer TTY interativo; use `kit pack store` no CLI ou pack add/remove com ids explícitos.' };
+    default: return { error: `Unknown action: ${action}` };
+  }
+}
+
+// DIR-05: tool `projects` — consome o registro canônico PROJETOS.md em runtime.
+// Read-only (mesmo perfil de handlePack action=doctor): projectRoot cai em cwd
+// sem o guard SEC-14-03 porque nenhuma action escreve em disco. O parse é 100%
+// delegado a src/core/projects.js (puro); aqui fica só o fs.
+async function handleProjects(args = {}) {
+  const action = args.action;
+  const projectRoot = args.projectRoot || process.cwd();
+  const fs = await import('node:fs/promises');
+  const file = path.join(projectRoot, 'PROJETOS.md');
+
+  let raw = null;
+  try {
+    raw = await fs.readFile(file, 'utf8');
+  } catch (e) {
+    if (e.code !== 'ENOENT') return { error: `Falha ao ler PROJETOS.md: ${e.message}` };
+  }
+  if (raw === null) {
+    return {
+      projectRoot,
+      file,
+      exists: false,
+      error: 'PROJETOS.md não encontrado na raiz — rode /base init para criar o registro canônico.',
+    };
+  }
+
+  const { principal, conectados, issues } = parseProjects(raw);
+  const projetos = [...(principal ? [principal] : []), ...conectados];
+
+  switch (action) {
+    case 'list':
+      return { projectRoot, file, exists: true, projetos, issues };
+    case 'get': {
+      if (typeof args.name !== 'string' || args.name.trim() === '') {
+        return { error: 'action=get requer name (nome do projeto no registro).' };
+      }
+      const wanted = args.name.trim().toLowerCase();
+      const projeto = projetos.find((p) => p.nome.toLowerCase() === wanted);
+      if (!projeto) {
+        return { error: `Projeto não encontrado: ${args.name}. Disponíveis: ${projetos.map((p) => p.nome).join(', ') || '(nenhum)'}` };
+      }
+      return {
+        projectRoot,
+        file,
+        projeto,
+        issues: issues.filter((i) => i.projeto === projeto.nome),
+      };
+    }
+    case 'doctor': {
+      // Relatório de validação: obrigatórios (do parser) + existência dos
+      // paths locais via fs + shape das URLs. Cada check é { campo, tipo,
+      // ok, detalhe } para o cliente renderizar tabela por projeto.
+      const report = [];
+      for (const p of projetos) {
+        const checks = [];
+        for (const campo of ['pasta_local', 'repositorio', 'documentacao_local']) {
+          checks.push({
+            campo,
+            tipo: 'obrigatorio',
+            ok: p.campos[campo] !== null,
+            detalhe: p.campos[campo] !== null ? 'preenchido' : 'vazio ou placeholder',
+          });
+        }
+        for (const campo of ['pasta_local', 'documentacao_local']) {
+          const valor = p.campos[campo];
+          if (valor === null) continue; // já reprovado no check obrigatorio
+          let existe = false;
+          try { await fs.stat(valor); existe = true; } catch { /* não existe */ }
+          checks.push({
+            campo,
+            tipo: 'path',
+            ok: existe,
+            detalhe: existe ? 'existe no disco' : `não encontrado no disco: ${valor}`,
+          });
+        }
+        for (const campo of ['repositorio', 'repositorio_documentacao']) {
+          const valor = p.campos[campo];
+          if (valor === null) continue; // opcional vazio (ou obrigatorio já reprovado)
+          const urlOk = isValidRepoUrl(valor);
+          checks.push({
+            campo,
+            tipo: 'url',
+            ok: urlOk,
+            detalhe: urlOk ? 'shape https?:// válido' : `sem shape https?://: ${valor}`,
+          });
+        }
+        report.push({
+          nome: p.nome,
+          principal: p.principal,
+          completo: p.completo,
+          checks,
+          ok: p.completo && checks.every((c) => c.ok),
+        });
+      }
+      return {
+        projectRoot,
+        file,
+        exists: true,
+        ok: issues.length === 0 && report.length > 0 && report.every((r) => r.ok),
+        projetos: report,
+        issues,
+      };
+    }
     default: return { error: `Unknown action: ${action}` };
   }
 }
@@ -925,6 +1053,7 @@ const HANDLERS = {
   forensics:          handleForensics,
   install:            handleInstall,
   pack:               handlePack,
+  projects:           handleProjects,
   'metrics-snapshot': handleMetricsSnapshot,
   'auto-install':     handleAutoInstall,
   'ack-restart':      handleAckRestart,
@@ -941,6 +1070,8 @@ const HANDLERS = {
 export const __TEST_HANDLERS = {
   handleAutoInstall,
   handleAckRestart,
+  // DIR-05 — tool projects exposta para cobertura unit sem transport stdio.
+  handleProjects,
   // Phase 172 — cost handlers exposed for direct unit/integration coverage
   // without spinning the stdio transport.
   handleCostToday,
