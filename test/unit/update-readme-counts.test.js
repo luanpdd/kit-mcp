@@ -153,7 +153,7 @@ test('updateReadmeCounts: real repo — counts match disk and is no-op', async (
   const r = await updateReadmeCounts(repoRoot);
   assert.equal(r.changed, false, 'live README is out of sync — Task 1/2 incomplete');
   assert.equal(r.counts.agents, 86);
-  assert.equal(r.counts.commands, 98);
+  assert.equal(r.counts.commands, 99);
   assert.equal(r.counts.skills, 103);
   assert.equal(r.counts.gates, 24);
 });

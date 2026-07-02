@@ -844,10 +844,10 @@ Esta skill é o **3º pilar do CI/CD canônico Supabase**:
 - **`supabase-config-toml-remotes` (Phase 150)** — descreve **como** configurar branch-specific overrides + secrets per-branch
 - **`supabase-ci-cd-github-actions` (Phase 151, ESTA)** — descreve **como** automatizar via GitHub Actions workflows
 
-Cross-refs com skills futuras v1.27:
+Cross-refs com skills v1.27:
 
-- **`supabase-pgtap-testing` (Phase 152, futura)** — detalhes completos pgTAP que CI-05 (`database-tests.yml`) executa
-- **`supabase-migration-repair` (Phase 153, futura)** — `migration repair` em workflow para recovery quando `db push` falha drift
+- **`supabase-pgtap-testing` (Phase 152)** — detalhes completos pgTAP que CI-05 (`database-tests.yml`) executa
+- **`supabase-migration-repair` (Phase 153)** — `migration repair` em workflow para recovery quando `db push` falha drift
 
 Cross-refs com skills existentes v1.x:
 
@@ -857,9 +857,9 @@ Cross-refs com skills existentes v1.x:
 - **`supabase-migrations` (v1.23)** — migration arquivos que `db push` consome
 - **`supabase-postgres-roles` (v1.26)** — roles dumps em `backup.yml` Pattern 7
 
-Base para agent novo v1.27:
+Agent que materializa esta skill:
 
-- **`supabase-cicd-pipeline-implementer` (Phase 154, futura)** — recebe spec via `Task()` e materializa `.github/workflows/*.yml` + `[remotes.<branch>]` blocks + secrets configuration
+- **`supabase-cicd-pipeline-implementer` (Phase 154)** — recebe spec via `Task()` e materializa `.github/workflows/*.yml` + `[remotes.<branch>]` blocks + secrets configuration
 
 Pattern de handoff cooperativo herdado v1.23-v1.26: **architect** projeta strategy → **cicd-pipeline-implementer** materializa workflows → **release-pipeline-auditor** (v1.10) audita hermeticidade do pipeline final. Nenhum agente descarta upstream — handoff cooperativo (princípio canônico v1.23).
 
@@ -867,8 +867,8 @@ Pattern de handoff cooperativo herdado v1.23-v1.26: **architect** projeta strate
 
 - [supabase-branching-workflow](../supabase-branching-workflow/SKILL.md) (v1.27, Phase 149) — preview branches que ci.yml + notify-failure.yaml validam
 - [supabase-config-toml-remotes](../supabase-config-toml-remotes/SKILL.md) (v1.27, Phase 150) — secrets management dotenvx + `[remotes]` blocks per-branch que workflows consomem
-- [supabase-pgtap-testing](../supabase-pgtap-testing/SKILL.md) (v1.27, Phase 152, futura) — sintaxe pgTAP + setup que database-tests.yml roda
-- [supabase-migration-repair](../supabase-migration-repair/SKILL.md) (v1.27, Phase 153, futura) — recovery quando db push falha em CI por drift
+- [supabase-pgtap-testing](../supabase-pgtap-testing/SKILL.md) (v1.27, Phase 152) — sintaxe pgTAP + setup que database-tests.yml roda
+- [supabase-migration-repair](../supabase-migration-repair/SKILL.md) (v1.27, Phase 153) — recovery quando db push falha em CI por drift
 - [supabase-migrations](../supabase-migrations/SKILL.md) (v1.23) — migration files que db push aplica
 - [supabase-postgres-roles](../supabase-postgres-roles/SKILL.md) (v1.26) — roles dumps em backup.yml Pattern 7
 - [supabase-edge-functions](../supabase-edge-functions/SKILL.md) — Edge Functions que functions-tests.yml testa via Deno

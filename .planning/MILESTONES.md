@@ -2,7 +2,9 @@
 
 ## v1.28 → v1.45 — reconciliação retroativa (registrada em 2026-07-01)
 
-> Releases v1.28→v1.45 foram shippadas por PR direto, fora do fluxo de fases do framework.
+> Releases v1.28→v1.45 registradas retroativamente — a maioria shippada por PR direto,
+> fora do fluxo de fases do framework (exceções com fases: v1.28 fases 156-165, v1.29
+> fases 166-171, v1.37 fase 172 Cost Tracking).
 > Registro de 1 linha por release; fonte de verdade: `git tag` + `CHANGELOG.md` (datas do
 > CHANGELOG quando a entry existe; datas de tag quando não). Sem detalhe inventado.
 

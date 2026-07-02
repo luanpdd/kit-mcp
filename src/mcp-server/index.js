@@ -591,6 +591,7 @@ async function handleProjects(args = {}) {
       return {
         projectRoot,
         file,
+        exists: true,
         projeto,
         issues: issues.filter((i) => i.projeto === projeto.nome),
       };
@@ -613,6 +614,17 @@ async function handleProjects(args = {}) {
         for (const campo of ['pasta_local', 'documentacao_local']) {
           const valor = p.campos[campo];
           if (valor === null) continue; // já reprovado no check obrigatorio
+          // O schema exige caminho ABSOLUTO — um relativo resolveria contra o
+          // cwd do servidor MCP (não do projeto), dando resultado enganoso.
+          if (!path.isAbsolute(valor)) {
+            checks.push({
+              campo,
+              tipo: 'path',
+              ok: false,
+              detalhe: `caminho não é absoluto: ${valor}`,
+            });
+            continue;
+          }
           let existe = false;
           try { await fs.stat(valor); existe = true; } catch { /* não existe */ }
           checks.push({

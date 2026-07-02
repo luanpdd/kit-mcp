@@ -52,7 +52,7 @@
     "regen-packs": "node scripts/regen-pack-registry.js",
     "regen-version": "node scripts/regen-version.js",
     "gate:frontmatter": "node scripts/check-resource-frontmatter.mjs",
-    "version": "node scripts/regen-version.js && git add kit/framework/VERSION kit/packs/*/pack.json",
+    "version": "node scripts/regen-version.js && node scripts/regen-pack-registry.js && node scripts/regen-manifest.js && node scripts/update-readme-counts.js && git add kit/framework/VERSION kit/packs/*/pack.json kit/packs/registry.json kit/file-manifest.json README.md",
     "prepublishOnly": "node scripts/regen-version.js --check && node scripts/check-resource-frontmatter.mjs && node scripts/regen-pack-registry.js && node scripts/regen-manifest.js && node scripts/update-readme-counts.js && node test/run.mjs test/unit && node test/run.mjs test/integration"
   },
   "dependencies": {

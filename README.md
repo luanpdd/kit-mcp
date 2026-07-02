@@ -10,7 +10,7 @@
 > Entregue como **MCP server**, **modular**: instale só os **packs** que você usa (Supabase, Observabilidade, Legacy, UI…) — o resto não entra no seu projeto. Use direto via `npx`, sem instalar nada.
 
 <!-- AUTOGEN-COUNTS-START -->
-**Bundled workflow:** 86 agents · 98 commands · 103 skills · 24 gates
+**Bundled workflow:** 86 agents · 99 commands · 103 skills · 24 gates
 <!-- AUTOGEN-COUNTS-END -->
 
 ---
@@ -286,7 +286,7 @@ Skills, agents e commands são em PT-BR. Termos técnicos canônicos (RLS, SLO, 
 ```
 kit/
 ├── agents/      86 agents executáveis (planner, executor, debugger, supabase-rls-hardener, …) — cada um com cost_tier
-├── commands/    98 slash-commands (/discutir-fase, /planejar-fase, /executar-fase, …)
+├── commands/    99 slash-commands (/discutir-fase, /planejar-fase, /executar-fase, …)
 ├── skills/      103 skills consultáveis (supabase-rls-policies, supabase-edge-functions-auth, …) — cada uma com cost_tier
 ├── packs/       manifestos dos Content Packs (core, supabase, observability, legacy, ui, cost-workflow)
 ├── framework/   workflows e templates que os agents delegam

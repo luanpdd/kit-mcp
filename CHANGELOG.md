@@ -6,6 +6,28 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.46.0] - 2026-07-02
+
+> Release consolidada: as 6 direções do `.planning/DIRECTION.md` (carteira do
+> direction-prospector) implementadas em paralelo via Dynamic Workflow — 6 worktrees
+> isolados + verificação adversarial por branch — e integradas numa única atualização.
+
+### Added
+
+- **DIR-05 — MCP tool `projects`** — o registro canônico `PROJETOS.md` (comando `/base`) agora é consumível em runtime: `list` (projetos + status de completude), `get` (projeto por nome) e `doctor` (relatório de validação — obrigatórios, existência das pastas locais, shape das URLs, caminhos absolutos exigidos). Parser puro em `src/core/projects.js` (22 testes).
+- **DIR-06 — Workflow flagship `mapear-codebase`** — primeiro Dynamic Workflow embarcado além do PoC: `kit/workflows/mapear-codebase.workflow.js` (pattern Fanout-Synthesize — 4 mappers paralelos stack/architecture/conventions/concerns + synthesizer) + comando companion `/mapear-codebase-workflow` (99 comandos agora).
+- **DIR-01 — `scripts/regen-version.js`** — single-source de versão: `package.json.version` propaga para `kit/framework/VERSION` e `kit/packs/*/pack.json`; gate `--check` no `prepublishOnly` e no CI; hook `npm version` regenera todos os derivados (VERSION, packs, registry, manifest, README) no próprio commit de bump.
+
+### Fixed
+
+- **DIR-01** — drift de versão zerado: `kit/framework/VERSION` 1.44.0→sync, packs 1.39.0→sync; contagens da árvore do README (75/94/100 → reais) agora reescritas/validadas por `update-readme-counts.js`.
+- **DIR-03 — grafo de dependências dos packs** — `requires`/`recommends` preenchidos nos 6 packs a partir do grafo real de dispatches e cross-links (ex.: supabase→observability por dispatch de `release-pipeline-auditor`); teste `pack-graph` impede regressão.
+- **DIR-04 — P1 da auditoria de recursos** — seções de observabilidade aspiracional removidas/reescritas, handoffs quebrados corrigidos para recursos existentes, markers "futura" stale limpos (14 recursos tocados).
+
+### Changed
+
+- **DIR-02 — dogfooding do `.planning/`** — STATE.md, ROADMAP.md e MILESTONES.md reconciliados com a realidade v1.45 (histórico retroativo v1.28→v1.45 com fonte git tag + CHANGELOG; próximo milestone "A definir — ver DIRECTION.md"); restaura a correlação do `cost-phase`.
+
 ## [1.45.0] - 2026-07-01
 
 ### Added
