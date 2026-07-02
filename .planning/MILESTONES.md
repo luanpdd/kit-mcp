@@ -1,5 +1,35 @@
 # MILESTONES.md — Histórico de releases
 
+## v1.28 → v1.45 — reconciliação retroativa (registrada em 2026-07-01)
+
+> Releases v1.28→v1.45 foram shippadas por PR direto, fora do fluxo de fases do framework.
+> Registro de 1 linha por release; fonte de verdade: `git tag` + `CHANGELOG.md` (datas do
+> CHANGELOG quando a entry existe; datas de tag quando não). Sem detalhe inventado.
+
+- **v1.45.0** (2026-07-01) — Comando `/base`: gestão do registro canônico `PROJETOS.md` (listar/adicionar/editar/remover/init, projetos conectados multi-projeto).
+- **v1.44.1** (2026-07-01) — Housekeeping: `PROJETOS.md` no repo + `.gitignore` para marcadores locais de instalação; sem mudança funcional no pacote.
+- **v1.44.0** (2026-06-23) — Absorção do shadcn/improve (ondas P0+P1+P2): skills `agent-safety-hard-rules`/`leverage-scoring`/`reconcile-execution-backlog`, agents `advisor-auditor`/`diff-auditor`/`direction-prospector`, commands `/auditar`/`/prospectar-direcao`/`/reconciliar`; PLAN.md hermético; fix advisory HIGH do `hono`.
+- **v1.43.0** (2026-06-19) — 8 agents novos da auditoria do kit (KIT-AUDIT) + gate de integridade de cross-links `.md` + fix de 25 cross-links + sync `VERSION` 1.42.0. *(Sem entry no CHANGELOG; fonte: `git log v1.42.0..v1.43.0`.)*
+- **v1.42.0** (2026-06-19) — Agent `commit-pr-conductor` + drift-guards de contagem de packs. *(Sem entry no CHANGELOG; fonte: `git log v1.41.0..v1.42.0`.)*
+- **v1.41.0** (2026-06-14) — Content Packs Fase 3 (lockfile por pack/target, `kit pack add/remove/store/doctor`) + consciência de custo em runtime (`cost_tier` nas listagens, pré-flight de subagentes) + gate bloqueante `resource-frontmatter` + router bundle-aware.
+- **v1.40.0** (2026-06-14) — Consciência de uso e custo nos recursos: `cost_tier` em 174 agents/skills, descriptions outcome-first ≤200 chars, `docs/audit-recursos-melhorias.md` (auditoria multi-agente).
+- **v1.39.0** (2026-06-14) — Content Packs (instalação modular/seletiva): 6 packs autossuficientes, `kit pack list/info`, gate de cobertura; fix `bin/mcp.js` dual-mode CLI/stdio.
+- **v1.38.0** (2026-06-13) — Suporte ao Google Antigravity 2.0 (IDE + CLI, MCP config compartilhado); remoção do target `gemini-cli` e da flag `--gemini` de `/revisar`.
+- **v1.37.0** (2026-06-05) — Cost Tracking Suite (Phase 172): 5 MCP tools `cost-*`, CLI `kit cost` (7 sub-actions), statusline, skill `cost-tracking`, GH Action de refresh do pricing snapshot.
+- **v1.36.0** (2026-06-05) — Hardening do `workflow-generator`: templates copiáveis + bloco anti-patterns + validação obrigatória contra os 3 bugs estruturais fatais de `.workflow.js` da v1.35. *(Sem git tag; fonte: CHANGELOG.)*
+- **v1.35.0** (2026-06-05) — Workflow Generator: geração de Dynamic Workflows sob demanda seguindo os 6 patterns canônicos da Anthropic. *(Sem git tag; fonte: CHANGELOG.)*
+- **v1.34.0** (2026-06-05) — Dynamic Workflows capability: loader `kit/workflows/`, sync/reverse-sync de `*.workflow.js`, 1º workflow embarcado (`auditar-observabilidade-cobertura`). *(Sem git tag; fonte: CHANGELOG.)*
+- **v1.33.0** (2026-05-25) — Suíte de design UI ("fluência de design para IA"): skills de design + agent materializador, arquitetura Ensinar/Comandar/Detectar.
+- **v1.32.0** (2026-05-19) — Suíte de autenticação Supabase: expansão da cobertura a partir da doc oficial (auth básico/sessões, social/OAuth/SSO, MFA/segurança).
+- **v1.31.0** (2026-05-18) — Density & routing hardening: resposta à análise de 10 pontos ("kit denso, agents não chamados corretamente").
+- **v1.30.2** (2026-05-13) — Always-emit attribution + auto-registro do hook `UserPromptSubmit` no `auto-install`.
+- **v1.30.1** (2026-05-13) — Kit Attribution & First-Tool Browser Open (visibilidade de uso real do kit).
+- **v1.30.0** (2026-05-13) — Edge Functions 2026 Modernization: 5 skills novas + agent `supabase-edge-fn-tester` + 18 gaps da doc oficial fechados.
+- **v1.29.0** (2026-05-12) — MCP-Native Discovery via Auto-Sync: 6 fases (166-171), 25 REQs — roots capability, tool `auto-install`, restart signal, resources, doctor drift check.
+- **v1.28.0** (2026-05-12) — UX & Onboarding: developer experience do MCP stdio server, redução de TTFU; primeiro milestone não-content desde v1.20.
+
+---
+
 ## v1.27 Supabase Branching & CI/CD Workflow (Shipped: 2026-05-11)
 
 **Phases completed:** 7 phases (149-155), 45 REQs covered (100%), 20 atomic commits
@@ -89,6 +119,12 @@
 - Agents Supabase v1.8 existentes atualizados: `supabase-rls-writer` emite GRANTs + IS NOT NULL opcional via input `include_is_not_null_check` + gera views `security_invoker=true` quando aplicável; `supabase-migration-writer` recebe draft via `Task()` upstream context, auto-chain cooperativo para hardener em CREATE TABLE, devolve SQL + nota de divergências quando intent conflita; command `/supabase` documentado como **serviço de materialização** (nunca bloqueia upstream) com subcomando novo `hardener` para dispatch direto.
 - Glossário compartilhado `_shared-supabase/glossary.md` ganhou 6 termos novos com tag `(v1.23)`: defense-in-depth, hardener, cooperative-handoff, event-trigger-rls-auto-enable, bypassrls, security_invoker — cross-refs ativos para skill defense-in-depth e agent hardener.
 - AUTOGEN-COUNTS regen: 60→**61 agents** (+1: supabase-rls-hardener), 89 commands (mantido), 67→**68 skills** (+1: supabase-rls-defense-in-depth), 23 gates (mantido); file-manifest 367→**369 files** hashed. Stable API v1.0+ preservada cross-11-releases (v1.13→v1.23). PRR 30/30 mantido (content-only milestone). Próximo marco parqueado: v1.24 Segurança em Nível de Coluna (Column-Level Security).
+
+---
+
+## v1.22 Suíte DDIA Foundations (Shipped: 2026-05-10)
+
+- 8ª suíte do kit, derivada de *Designing Data-Intensive Applications* (Kleppmann, 2017) — consistência, partitioning, isolation, distributed systems traps e event streams sobre as suítes Supabase v1.8 + Multi-Tenant v1.21. 7 phases (117-123), 60 REQs. *(Entrada reconciliada em 2026-07-01; fonte: CHANGELOG + ROADMAP arquivado.)*
 
 ---
 
@@ -222,6 +258,24 @@
 - Backfill de 3 entries de release ausentes (v1.11.0, v1.12.0, v1.12.1) em CHANGELOG.md + transformação do awk-extract gate de warn em hard-fail para final tags, fechando DRIFT-13-01.
 - Substituição estática de 10 contadores hardcoded em README.md (drift +147% / +45% / +4800% / +300%) pelos valores reais do filesystem (47 agents, 87 commands, 49 skills, 20 gates) — DRIFT-13-02 fechado.
 - MCP server reads `serverInfo.version` from package.json at boot via `readPkgVersion()` mirroring bin/cli.js:43-51, plus 4-case regression test guarding against drift recurrence
+
+---
+
+## v1.12.1 Hotfix sidecar-tool-publisher (Shipped: 2026-05-08)
+
+- Corrige race condition no hook `sidecar-tool-publisher.js` — `tool_invocation` events dropados antes do TCP flush completar quando `process.exit(0)` seguia `socket.write`. *(Entrada reconciliada em 2026-07-01; fonte: CHANGELOG.)*
+
+---
+
+## v1.12 Suíte Legacy Code Mastery & AI-Era Refactoring (Shipped: 2026-05-08)
+
+- Técnicas de *Working Effectively with Legacy Code* (Michael Feathers, 2004) modernizadas para a era IA/Supabase (2026). 38 REQs em 31 fases (48-78), 5 ondas; cada artefato distingue "Feathers original (2004)" vs "extensão IA/Supabase (2026)". *(Entrada reconciliada em 2026-07-01; fonte: CHANGELOG.)*
+
+---
+
+## v1.11 Suíte SRE Resilience & Release Engineering (Shipped: 2026-05-08)
+
+- 2ª camada SRE derivada do livro Google SRE — caps 22 (Cascading Failures) + 8 (Release Engineering). 24 REQs em 6 fases (42-47), content-only, Stable API v1.0+ preservada. *(Entrada reconciliada em 2026-07-01; fonte: CHANGELOG.)*
 
 ---
 
@@ -402,9 +456,13 @@ Série de patches feitos fora do framework — UI redesign, framework velocity, 
 
 ## Em andamento
 
-(nada — v1.9.0 concluído)
+(nada — v1.45.0 concluído em 2026-07-01; próximo milestone a definir via `.planning/DIRECTION.md`)
 
 ## Backlog macro (não-priorizado)
+
+> Reavaliado em 2026-07-01 (reconcile DIR-02): sem evidência de dor atual (zero issues, zero
+> menções recentes) — itens mantidos estacionados. Ver `.planning/DIRECTION.md`, seção
+> "Considerado e rejeitado".
 
 - **CLI awkwardness do double-`kit`**: `kit kit list-agents`, `kit kit search`, `kit kit get` — o grupo "kit" repete o nome do binário. Considerar achatar (alias top-level: `kit list-agents` direto, mantendo `kit kit ...` como compatibilidade) ou renomear o grupo (`kit browse list-agents`?). Detectado em smoke da v1.1.0.
 - **HTTP transport** para IDEs que não falam stdio MCP.
