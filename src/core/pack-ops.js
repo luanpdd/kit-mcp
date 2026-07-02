@@ -132,7 +132,7 @@ export async function removePacks(packIds, opts = {}) {
     const removableHere = ids.filter((id) => installed.includes(id));
     if (removableHere.length === 0) { results.push({ target: targetId, skipped: 'pack(s) não instalados neste target' }); continue; }
 
-    // Reverse-dep guard (first-party packs have no requires; protects 3rd-party).
+    // Reverse-dep guard (first-party: supabase requires observability; also 3rd-party).
     const dependents = reverseDependents(removableHere, installed, catalog);
     if (dependents.length && !cascade) {
       throw Object.assign(

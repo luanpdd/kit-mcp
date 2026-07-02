@@ -20,7 +20,12 @@
     ]
   },
   "requires": [],
-  "recommends": [],
+  "recommends": [
+    "legacy",
+    "observability",
+    "supabase",
+    "ui"
+  ],
   "conflicts": [],
   "provides": [],
   "resources": {

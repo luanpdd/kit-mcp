@@ -45,9 +45,12 @@ test('exclusiveFiles — only files unique to removed packs', () => {
   assert.deepEqual(exclusiveFiles(lf, ['legacy', 'supabase'], ['core']).sort(), ['leg1.md', 'shared.md', 'sup1.md']);
 });
 
-test('reverseDependents — first-party packs have none', async () => {
+test('reverseDependents — supabase não tem dependentes; observability tem supabase', async () => {
   const cat = await catalog();
   assert.deepEqual(reverseDependents(['supabase'], Object.keys(cat), cat), []);
+  // Fase 4 (DIR-03): supabase → requires observability ⇒ remover observability
+  // com supabase instalado deve apontar o dependente (EPACKDEPENDED no removePacks).
+  assert.deepEqual(reverseDependents(['observability'], Object.keys(cat), cat), ['supabase']);
 });
 
 test('reverseDependents — synthetic third-party dep', () => {

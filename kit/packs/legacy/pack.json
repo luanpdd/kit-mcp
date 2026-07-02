@@ -20,7 +20,10 @@
     ]
   },
   "requires": [],
-  "recommends": [],
+  "recommends": [
+    "observability",
+    "supabase"
+  ],
   "conflicts": [],
   "provides": [],
   "resources": {
