@@ -34,6 +34,12 @@ Subcomandos:
 - ✅ Adicionar um projeto conectado (multi-repo, VPS, docs separados) — `/base adicionar`
 - ✅ Link de repo/docs mudou — `/base editar`
 - ❌ Editar campos à mão sem validação — o comando valida obrigatórios e formatos
+
+O registro também é consumível em runtime pela MCP tool `projects` do kit
+(`mcp__kit__projects`): `list` retorna os projetos com status de completude,
+`get` busca um projeto pelo nome e `doctor` gera o relatório de validação
+(obrigatórios, existência das pastas locais, shape das URLs) — útil quando
+agents precisam resolver contexto de projetos conectados sem parsear o markdown.
 </objective>
 
 <schema>
