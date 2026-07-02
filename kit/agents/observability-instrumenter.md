@@ -180,9 +180,8 @@ Cole em `instrumentation.ts` (Node) ou no topo da Edge Function:
 
 ## Próximos passos
 
-1. Rodar `kit gates run` (auditoria de descrição/sintaxe)
-2. Smoke local: enviar request e verificar `select * from spans where service_name='{name}'`
-3. Comparar `build_id` antes/depois deploy
+1. Smoke local: enviar request e verificar `select * from spans where service_name='{name}'`
+2. Comparar `build_id` antes/depois deploy
 ```
 
 ## Quando NÃO invocar

@@ -319,7 +319,8 @@ Status: [GREEN | YELLOW | RED]
 - [`burn-rate-alerting`](../skills/burn-rate-alerting/SKILL.md) (v1.9)
 - [`observability-maturity-model`](../skills/observability-maturity-model/SKILL.md) (v1.9)
 - [`legacy-characterization-tests`](../skills/legacy-characterization-tests/SKILL.md) (v1.12)
-- [`omm-auditor`](./omm-auditor.md) (v1.9) — consume este agent para Capacidade 5
-- [`prr-conductor`](./prr-conductor.md) (v1.10) — consume para Axe 2 e 4
+- [`advisor-auditor`](./advisor-auditor.md) — caller real da área observability via `/auditar` (despacha este agent + omm-auditor)
+- [`omm-auditor`](./omm-auditor.md) (v1.9) — complementar: pontua maturidade (OMM-REPORT.md) de forma independente, não invoca este agent — rode os dois para snapshot completo
+- [`prr-conductor`](./prr-conductor.md) (v1.10) — complementar: PRR Axe 2 (Instrumentation) cobre requisito similar pré-produção, não invoca este agent
 
 *Modernização 2026 — combina cross-suite v1.9 + v1.10 + v1.12 em audit único.*

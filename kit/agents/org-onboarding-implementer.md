@@ -103,7 +103,9 @@ Anti-pitfalls (verificar):
 ### Step 5 — Delegar para supabase-migration-writer
 
 ```typescript
-Task(
+// Capture o output: o SQL retornado vira {generated_signup_migration_sql}
+// no handoff cooperativo ao supabase-rls-hardener (seção abaixo)
+generated_signup_migration_sql = Task(
   subagent_type='supabase-migration-writer',
   prompt=<migration brief acima>
 )
