@@ -191,7 +191,7 @@ jobs:
 ### Caveats canônicos
 
 - **`develop` como branch de staging** é convenção GitFlow; alguns times usam `main` para staging e tag-based deploy para production — adapte conforme convention
-- `db push` consulta `supabase_migrations.schema_migrations` (tabela do Supabase) para determinar quais migrations aplicar — se há drift entre history local e remote, o push falha (cross-ref skill futura `supabase-migration-repair` Phase 153)
+- `db push` consulta `supabase_migrations.schema_migrations` (tabela do Supabase) para determinar quais migrations aplicar — se há drift entre history local e remote, o push falha (cross-ref skill [`supabase-migration-repair`](../supabase-migration-repair/SKILL.md))
 - Permissões: o token `SUPABASE_ACCESS_TOKEN` precisa de permissão `db` no projeto staging (default em personal tokens)
 
 ### Idempotência
@@ -326,7 +326,7 @@ Manter um único nome (`types.gen.ts` OU `schema.gen.ts`, não os dois) é impor
 
 ## Pattern 5: `database-tests.yml` — pgTAP runner (CI-05)
 
-Workflow para rodar testes pgTAP no DB local em CI (cross-ref skill futura `supabase-pgtap-testing` Phase 152):
+Workflow para rodar testes pgTAP no DB local em CI (cross-ref skill [`supabase-pgtap-testing`](../supabase-pgtap-testing/SKILL.md)):
 
 ```yaml
 name: 'database-tests'
@@ -352,7 +352,7 @@ jobs:
 
 ### Anatomy de um teste pgTAP
 
-Arquivo `supabase/tests/users.test.sql` (cross-ref skill futura Phase 152 para detalhes):
+Arquivo `supabase/tests/users.test.sql` (cross-ref skill `supabase-pgtap-testing` para detalhes):
 
 ```sql
 begin;
@@ -376,9 +376,9 @@ select * from finish();
 rollback;
 ```
 
-### Cross-ref skill futura — supabase-pgtap-testing (Phase 152)
+### Cross-ref — [supabase-pgtap-testing](../supabase-pgtap-testing/SKILL.md) (Phase 152)
 
-Detalhes completos de pgTAP estarão em skill dedicada (Phase 152) — esta skill (Phase 151) cobre apenas a **integração CI**:
+Detalhes completos de pgTAP estão na skill dedicada `supabase-pgtap-testing` — esta skill (Phase 151) cobre apenas a **integração CI**:
 
 - Setup pgTAP extension (`create extension pgtap`)
 - Sintaxe canônica de testes (plan, ok, is, throws_ok, finish)
@@ -743,7 +743,7 @@ Próximo `db push` via workflow (Pattern 2 ou 3):
    # alter table public.users add column avatar_url text;
    ```
 2. **Aplicar via PR** + workflow Pattern 1 (CI) valida + workflow Pattern 3 (production.yml) aplica
-3. **Se mudança emergencial via Dashboard foi inevitável** — criar migration arquivo retrospectivo + usar `supabase migration repair` (cross-ref skill futura `supabase-migration-repair` Phase 153) para sincronizar history
+3. **Se mudança emergencial via Dashboard foi inevitável** — criar migration arquivo retrospectivo + usar `supabase migration repair` (cross-ref skill [`supabase-migration-repair`](../supabase-migration-repair/SKILL.md)) para sincronizar history
 
 ### Anti-pattern 3: Concurrent `db push` from different machines
 

@@ -783,13 +783,13 @@ Esta skill é par-conjugado com `supabase-branching-workflow` (Phase 149) — br
 Cross-refs canônicas com outras skills v1.27 (Phases 150-153):
 
 - **supabase-branching-workflow** (Phase 149) — Deploy DAG step 4 (configure) lê `[remotes.<branch>]` block desta skill
-- **supabase-ci-cd-github-actions** (Phase 151, futura) — 8 workflows GitHub Actions que exportam env vars + rodam `supabase db push` com `--env-file` (cross-ref Pattern 3 + Pattern 4)
-- **supabase-pgtap-testing** (Phase 152, futura) — testes pgTAP que rodam em remote branches via `--db-url` derivada de `[remotes.<branch>]`
-- **supabase-migration-repair** (Phase 153, futura) — `migration repair` per `[remotes.<branch>]` quando drift detectado
+- **supabase-ci-cd-github-actions** (Phase 151) — 8 workflows GitHub Actions que exportam env vars + rodam `supabase db push` com `--env-file` (cross-ref Pattern 3 + Pattern 4)
+- **supabase-pgtap-testing** (Phase 152) — testes pgTAP que rodam em remote branches via `--db-url` derivada de `[remotes.<branch>]`
+- **supabase-migration-repair** (Phase 153) — `migration repair` per `[remotes.<branch>]` quando drift detectado
 
-Base para agent novo v1.27:
+Base para o agent v1.27:
 
-- **supabase-cicd-pipeline-implementer** (Phase 154, futura) — recebe spec via `Task()` e materializa `[remotes.<branch>]` blocks na config + GitHub Actions workflows com dotenvx integration
+- **supabase-cicd-pipeline-implementer** (Phase 154) — recebe spec via `Task()` e materializa `[remotes.<branch>]` blocks na config + GitHub Actions workflows com dotenvx integration
 
 Pattern de handoff cooperativo herdado v1.23-v1.26: **architect** projeta strategy → **cicd-pipeline-implementer** materializa → **release-pipeline-auditor** (v1.10) audita hermeticidade. Nenhum agente descarta upstream — handoff cooperativo SQL (princípio canônico v1.23).
 
