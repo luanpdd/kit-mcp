@@ -134,13 +134,9 @@ CRM-PIPELINE-IMPLEMENTER · output
 - App sem CRM (gerenciamento de leads) → escopo errado
 - Já tem CRM legacy diferente — analisar primeiro
 
-## Observabilidade
+## Observabilidade (pós-instalação)
 
-- Counter `crm.lead.created.count{org_id, source}`
-- Counter `crm.lead.stage_change.count{org_id, from_stage, to_stage}`
-- Counter `crm.lead.ownership_transfer.count{org_id}`
-- Histogram `crm.lead.time_to_close_days{org_id, won_or_lost}`
-- Alarme se `crm.lead.stage_change.count{to_stage='lost'} > baseline` → review pipeline
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## SELECT FOR UPDATE em Stage Transition (v1.22+ — default agora)
 

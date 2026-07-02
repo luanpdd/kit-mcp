@@ -314,13 +314,9 @@ BILLING-IMPLEMENTER · output
 - **Só precisa de RBAC ou entitlement de feature flag sem cobrança** → use o agent de RBAC; billing pressupõe pagamento real.
 - **Reimplementar invite/RBAC** → fora de escopo; delega a [`super-admin-implementer`](./super-admin-implementer.md) / agent de RBAC e a skill [`member-invite-flow`](../skills/member-invite-flow/SKILL.md).
 
-## Observabilidade
+## Observabilidade (pós-instalação)
 
-- Counter `billing.webhook.received.count{type}` e `billing.webhook.deduped.count` (eventos repetidos descartados)
-- Counter `billing.subscription.transition.count{from_status, to_status}`
-- Counter `billing.dunning.attempt.count{org_id, outcome}` (recovered / failed / canceled)
-- Histogram `billing.dunning.recovery_days{org_id}` (tempo past_due → active)
-- Alarme se `billing.subscription.transition.count{to_status='canceled', reason='dunning_exhausted'}` > baseline → revisar fluxo de pagamento
+Este agent materializa o recurso, mas não emite telemetria própria. Para instrumentar o que ele criou com os 4 golden signals (latency, traffic, errors, saturation), rode `/golden-signals` no serviço ou Edge Function resultante — ver skill `four-golden-signals`.
 
 ## Ver também
 
