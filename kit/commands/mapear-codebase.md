@@ -11,6 +11,8 @@ allowed-tools:
   - Task
 ---
 
+> **Variante Dynamic Workflows embarcada (Opus 4.8+):** [`/mapear-codebase-workflow`](./mapear-codebase-workflow.md) roda o mesmo mapeamento via `Workflow()` — 4 mappers em paralelo + synthesizer que verifica os 7 docs e roda secret scan (`kit/workflows/mapear-codebase.workflow.js`). Use-a para comparar wall-clock/qualidade contra esta versão.
+
 <objective>
 Analisar a base de código existente usando agentes codebase-mapper paralelos para produzir documentos estruturados.
 

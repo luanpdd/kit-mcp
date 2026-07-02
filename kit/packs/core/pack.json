@@ -84,6 +84,7 @@
       "listar-hipoteses-fase",
       "listar-workspaces",
       "mapear-codebase",
+      "mapear-codebase-workflow",
       "nota",
       "novo-marco",
       "novo-projeto",
@@ -122,7 +123,9 @@
       "leverage-scoring",
       "reconcile-execution-backlog"
     ],
-    "workflows": [],
+    "workflows": [
+      "mapear-codebase"
+    ],
     "hooks": []
   }
 }
