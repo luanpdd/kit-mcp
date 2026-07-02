@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "observability",
   "name": "Observabilidade & SRE",
-  "version": "1.45.0",
+  "version": "1.46.0",
   "description": "OpenTelemetry, golden signals, SLO/burn-rate, toil, postmortem, PRR, cascading failures, load shedding, release audit. Stack-agnostic.",
   "publisher": "luanpdd",
   "kind": "domain",

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "cost-workflow",
   "name": "Custo & Workflows",
-  "version": "1.45.0",
+  "version": "1.46.0",
   "description": "Telemetria de custo USD/tokens do Claude Code + gerador de Dynamic Workflows. Utilitários sem dependência de stack.",
   "publisher": "luanpdd",
   "kind": "domain",

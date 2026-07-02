@@ -3,7 +3,7 @@
   "packs": {
     "core": {
       "name": "Núcleo — Framework de Fases",
-      "version": "1.45.0",
+      "version": "1.46.0",
       "description": "Motor do framework (discutir→planejar→executar→verificar), roadmap/milestone, debugging e mapeamento de codebase. Stack-agnostic. Base obrigatória, sempre instalada.",
       "kind": "core",
       "removable": false,
@@ -25,7 +25,7 @@
     },
     "cost-workflow": {
       "name": "Custo & Workflows",
-      "version": "1.45.0",
+      "version": "1.46.0",
       "description": "Telemetria de custo USD/tokens do Claude Code + gerador de Dynamic Workflows. Utilitários sem dependência de stack.",
       "kind": "domain",
       "removable": true,
@@ -42,7 +42,7 @@
     },
     "legacy": {
       "name": "Código Legado (Feathers)",
-      "version": "1.45.0",
+      "version": "1.46.0",
       "description": "Characterization tests, seams, gate de refactor seguro, detecção de duplicação, storytelling de codebase, mutation testing. Aplica a qualquer codebase.",
       "kind": "domain",
       "removable": true,
@@ -62,7 +62,7 @@
     },
     "observability": {
       "name": "Observabilidade & SRE",
-      "version": "1.45.0",
+      "version": "1.46.0",
       "description": "OpenTelemetry, golden signals, SLO/burn-rate, toil, postmortem, PRR, cascading failures, load shedding, release audit. Stack-agnostic.",
       "kind": "domain",
       "removable": true,
@@ -82,7 +82,7 @@
     },
     "supabase": {
       "name": "Supabase (completo)",
-      "version": "1.45.0",
+      "version": "1.46.0",
       "description": "Tudo para apps Supabase, autossuficiente: schema/RLS/migrations/Edge Functions/Auth/Storage/Realtime + B2B multi-tenant (org/RBAC/convite/onboarding/super-admin/LGPD/CRM/WhatsApp) + auditoria de dados distribuídos (consistência, isolamento, hot-tenant, evolução de schema). Não usa Supabase? Não instale este pack.",
       "kind": "domain",
       "removable": true,
@@ -103,7 +103,7 @@
     },
     "ui": {
       "name": "UI & Design",
-      "version": "1.45.0",
+      "version": "1.46.0",
       "description": "Fluência de design para IA: contrato UI-SPEC, verificação, auditoria visual, designer guiado por MARCA.md. Stack-agnostic (React/shadcn).",
       "kind": "domain",
       "removable": true,

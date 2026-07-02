@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "legacy",
   "name": "Código Legado (Feathers)",
-  "version": "1.45.0",
+  "version": "1.46.0",
   "description": "Characterization tests, seams, gate de refactor seguro, detecção de duplicação, storytelling de codebase, mutation testing. Aplica a qualquer codebase.",
   "publisher": "luanpdd",
   "kind": "domain",

@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "supabase",
   "name": "Supabase (completo)",
-  "version": "1.45.0",
+  "version": "1.46.0",
   "description": "Tudo para apps Supabase, autossuficiente: schema/RLS/migrations/Edge Functions/Auth/Storage/Realtime + B2B multi-tenant (org/RBAC/convite/onboarding/super-admin/LGPD/CRM/WhatsApp) + auditoria de dados distribuídos (consistência, isolamento, hot-tenant, evolução de schema). Não usa Supabase? Não instale este pack.",
   "publisher": "luanpdd",
   "kind": "domain",
