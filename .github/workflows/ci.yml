@@ -225,13 +225,16 @@ jobs:
           fi
           echo "OK: line coverage $LINE_COV% ≥ $THRESHOLD% threshold"
 
-      - name: Audit — drift gate (manifest + README counts) (REQ DX-15-02)
+      - name: Audit — drift gate (manifest + README counts + versions) (REQ DX-15-02, DIR-01)
         if: matrix.target == 'claude-code'
         shell: bash
         run: |
           # DX-15-02: prepublishOnly regenerates kit/file-manifest.json + README
           # AUTOGEN counts. If a PR forgot to run them locally, this gate fails
           # before the package would ship stale.
+          # DIR-01: version single-source — kit/framework/VERSION and every
+          # kit/packs/*/pack.json must match package.json.version.
+          node scripts/regen-version.js --check
           node scripts/regen-manifest.js
           node scripts/update-readme-counts.js
           if ! git diff --exit-code kit/file-manifest.json README.md; then
@@ -239,7 +242,7 @@ jobs:
             git --no-pager diff --stat kit/file-manifest.json README.md || true
             exit 1
           fi
-          echo "OK: manifest + README counts in sync with kit/"
+          echo "OK: manifest + README counts + versions in sync with kit/"
 
       - name: CLI smoke
         if: matrix.target == 'claude-code'

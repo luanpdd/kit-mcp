@@ -2,7 +2,7 @@
   "schemaVersion": 1,
   "id": "ui",
   "name": "UI & Design",
-  "version": "1.39.0",
+  "version": "1.45.0",
   "description": "Fluência de design para IA: contrato UI-SPEC, verificação, auditoria visual, designer guiado por MARCA.md. Stack-agnostic (React/shadcn).",
   "publisher": "luanpdd",
   "kind": "domain",
