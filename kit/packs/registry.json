@@ -13,7 +13,7 @@
       "provides": [],
       "counts": {
         "agents": 20,
-        "commands": 62,
+        "commands": 63,
         "skills": 4,
         "workflows": 0
       }

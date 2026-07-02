@@ -6,6 +6,12 @@ Format: [Keep a Changelog](https://keepachangelog.com/en/1.1.0/) · Versioning: 
 
 ## [Unreleased]
 
+## [1.45.0] - 2026-07-01
+
+### Added
+
+- **Comando `/base`** (pack `core`) — gerencia a configuração base do projeto, o registro canônico `PROJETOS.md`: `listar` (status de completude ✅/⚠️ por projeto), `adicionar <nome>`, `editar <nome> [campo]`, `remover <nome>` e `init` (cria do template e garante a regra global em `~/.claude/CLAUDE.md`). Valida campos obrigatórios (pasta local existente, URL http(s) do repositório, documentação local) antes de qualquer gravação; nunca inventa valores — auto-preenche só o verificável (repository do package.json, pasta docs/) e confirma com o usuário. Suporta projetos conectados para devs multi-projeto (multi-repo, VPS, docs/Obsidian separados).
+
 ## [1.44.1] - 2026-07-01
 
 ### Changed
