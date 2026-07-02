@@ -1,0 +1,2105 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>kit-mcp · sidecar</title>
+<style>
+/* ───────────────────────── tokens ───────────────────────── */
+:root {
+  /* surfaces */
+  --bg: #000000;
+  --surface-1: #0b0d10;
+  --surface-2: #11141a;
+  --surface-3: #171b22;
+  --hover: #1c2129;
+
+  /* lines + text */
+  --line: rgba(255, 255, 255, 0.06);
+  --line-strong: rgba(255, 255, 255, 0.12);
+  --text: #e6e8eb;
+  --text-2: #a8adb6;
+  --text-3: #6c7280;
+  --text-4: #4a4f57;
+
+  /* states */
+  --accent-h: 130;
+  --accent: oklch(82% 0.18 var(--accent-h));
+  --accent-soft: oklch(82% 0.18 var(--accent-h) / 0.16);
+  --accent-glow: oklch(82% 0.18 var(--accent-h) / 0.42);
+  --ok: #d4d8df;
+  --err: oklch(70% 0.18 25);
+  --err-soft: oklch(70% 0.18 25 / 0.14);
+  --warn: oklch(82% 0.14 75);
+  --info: oklch(78% 0.10 250);
+
+  /* type */
+  --sans: -apple-system, "Segoe UI", system-ui, "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, "SF Mono", "JetBrains Mono", Menlo, Consolas, monospace;
+
+  /* shape */
+  --radius: 10px;
+  --radius-sm: 6px;
+
+  /* motion */
+  --ease: cubic-bezier(.2,.7,.2,1);
+
+  /* layout */
+  --pad: 16px;
+  --pad-tight: 10px;
+}
+
+@media (prefers-color-scheme: light) {
+  :root {
+    --bg: #fbfbfa;
+    --surface-1: #ffffff;
+    --surface-2: #f7f7f6;
+    --surface-3: #f1f1f0;
+    --hover: #ebebea;
+    --line: rgba(0,0,0,.07);
+    --line-strong: rgba(0,0,0,.14);
+    --text: #15171a;
+    --text-2: #54585f;
+    --text-3: #80858d;
+    --text-4: #a8adb4;
+    --accent: oklch(58% 0.18 var(--accent-h));
+    --accent-soft: oklch(58% 0.18 var(--accent-h) / 0.10);
+    --accent-glow: oklch(58% 0.18 var(--accent-h) / 0.30);
+  }
+}
+
+/* density tweak */
+:root[data-density="compact"]  { --pad: 10px; --pad-tight: 6px; }
+:root[data-density="comfy"]    { --pad: 20px; --pad-tight: 14px; }
+
+/* ───────────────────────── base ───────────────────────── */
+* { box-sizing: border-box; }
+html, body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--sans);
+  font-size: 13px;
+  line-height: 1.4;
+  -webkit-font-smoothing: antialiased;
+  text-rendering: optimizeLegibility;
+}
+body {
+  min-height: 100vh;
+  font-feature-settings: "ss01", "cv11";
+}
+button { font: inherit; color: inherit; background: none; border: 0; cursor: pointer; padding: 0; }
+::selection { background: var(--accent-soft); color: var(--text); }
+
+/* scrollbar */
+::-webkit-scrollbar { width: 10px; height: 10px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--line-strong); border-radius: 10px; border: 2px solid var(--bg); }
+::-webkit-scrollbar-thumb:hover { background: var(--text-4); }
+
+/* ───────────────────────── shell ───────────────────────── */
+.app {
+  display: grid;
+  grid-template-rows: auto auto 1fr auto;
+  min-height: 100vh;
+  max-width: 980px;
+  margin: 0 auto;
+  padding: 18px 22px 0;
+}
+
+@media (max-width: 520px) {
+  .app { padding: 12px 14px 0; }
+}
+
+/* ───────────────────────── header ───────────────────────── */
+.header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 6px 0 16px;
+  border-bottom: 1px solid var(--line);
+  margin-bottom: 16px;
+}
+.logo {
+  width: 22px; height: 22px;
+  display: grid; place-items: center;
+  border-radius: 6px;
+  background: var(--accent-soft);
+  color: var(--accent);
+  flex-shrink: 0;
+}
+.logo svg { width: 14px; height: 14px; }
+.brand {
+  display: flex; flex-direction: column; gap: 1px;
+  min-width: 0;
+}
+.brand-row {
+  display: flex; align-items: baseline; gap: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: -0.01em;
+}
+.brand-name { color: var(--text); font-weight: 500; }
+.brand-meta { color: var(--text-3); font-size: 11px; }
+.brand-sub {
+  font-size: 11px;
+  color: var(--text-3);
+}
+.spacer { flex: 1; }
+.conn {
+  display: inline-flex; align-items: center; gap: 6px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
+  padding: 4px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-1);
+}
+.conn .dot {
+  width: 6px; height: 6px; border-radius: 999px;
+  background: var(--accent);
+  box-shadow: 0 0 0 0 var(--accent-glow);
+  animation: connpulse 2.4s ease-out infinite;
+}
+@keyframes connpulse {
+  0%   { box-shadow: 0 0 0 0 var(--accent-glow); }
+  70%  { box-shadow: 0 0 0 6px transparent; }
+  100% { box-shadow: 0 0 0 0 transparent; }
+}
+.conn[data-state="off"] .dot { background: var(--text-4); animation: none; }
+.conn[data-state="off"] { color: var(--text-3); }
+
+/* ───────────────────────── toolbar ───────────────────────── */
+.toolbar {
+  display: flex; align-items: center; gap: 8px;
+  margin-bottom: 16px;
+}
+.search {
+  flex: 1;
+  display: flex; align-items: center; gap: 8px;
+  padding: 7px 10px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  background: var(--surface-1);
+  transition: border-color .15s var(--ease), background .15s var(--ease);
+}
+.search:focus-within { border-color: var(--line-strong); background: var(--surface-2); }
+.search svg { width: 13px; height: 13px; color: var(--text-3); flex-shrink: 0; }
+.search input {
+  flex: 1;
+  background: transparent; border: 0; outline: 0; color: var(--text);
+  font: inherit;
+  font-size: 12px;
+}
+.search input::placeholder { color: var(--text-3); }
+.search kbd {
+  font-family: var(--mono);
+  font-size: 10px;
+  padding: 2px 5px;
+  border-radius: 3px;
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  color: var(--text-3);
+}
+
+.iconbtn {
+  display: grid; place-items: center;
+  width: 30px; height: 30px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--line);
+  background: var(--surface-1);
+  color: var(--text-2);
+  transition: all .15s var(--ease);
+}
+.iconbtn:hover { color: var(--text); background: var(--surface-2); border-color: var(--line-strong); }
+.iconbtn[aria-pressed="true"] { color: var(--accent); border-color: var(--accent-soft); background: var(--accent-soft); }
+.iconbtn svg { width: 13px; height: 13px; }
+
+/* filter popover */
+.filter-wrap { position: relative; }
+.filter-pop {
+  position: absolute;
+  top: calc(100% + 6px); right: 0;
+  min-width: 200px;
+  padding: 6px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: var(--radius);
+  box-shadow: 0 8px 28px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.02);
+  z-index: 30;
+  display: none;
+}
+.filter-pop.open { display: block; animation: pop-in .14s var(--ease); }
+@keyframes pop-in { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: none; } }
+.fp-title { font-size: 10px; text-transform: uppercase; letter-spacing: .08em; color: var(--text-3); padding: 6px 8px 4px; }
+.fp-row {
+  display: flex; align-items: center; gap: 8px;
+  padding: 6px 8px;
+  border-radius: 6px;
+  font-size: 12px;
+  color: var(--text-2);
+  cursor: pointer;
+  user-select: none;
+}
+.fp-row:hover { background: var(--surface-3); color: var(--text); }
+.fp-row[data-on="true"] { color: var(--text); }
+.fp-row[data-on="true"] .fp-check { color: var(--accent); }
+.fp-check { width: 12px; opacity: 0; }
+.fp-row[data-on="true"] .fp-check { opacity: 1; }
+.fp-row .fp-glyph { font-family: var(--mono); width: 12px; text-align: center; color: var(--text-3); }
+
+/* ───────────────────────── active runs hero ───────────────────────── */
+.active-region {
+  margin-bottom: 18px;
+  display: flex; flex-direction: column; gap: 10px;
+}
+
+.run-card {
+  position: relative;
+  padding: var(--pad);
+  background:
+    radial-gradient(120% 80% at 0% 0%, var(--accent-soft) 0%, transparent 45%),
+    var(--surface-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  overflow: hidden;
+  isolation: isolate;
+}
+.run-card.enter { animation: run-in .35s var(--ease); }
+@keyframes run-in {
+  from { opacity: 0; transform: translateY(6px) scale(.995); }
+  to   { opacity: 1; transform: none; }
+}
+
+/* ambient running glow on the card edge */
+.run-card::before {
+  content: "";
+  position: absolute; inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: conic-gradient(from var(--ang, 0deg),
+    transparent 0deg, transparent 280deg,
+    var(--accent) 320deg, var(--accent) 340deg, transparent 360deg);
+  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  opacity: .8;
+  pointer-events: none;
+  animation: spin 4s linear infinite;
+}
+@property --ang { syntax: "<angle>"; initial-value: 0deg; inherits: false; }
+@keyframes spin { to { --ang: 360deg; } }
+
+:root[data-motion="subtle"] .run-card::before { animation: none; opacity: .4; }
+
+.rc-head {
+  display: flex; align-items: center; gap: 10px;
+  margin-bottom: 12px;
+}
+.rc-icon {
+  width: 32px; height: 32px;
+  border-radius: 8px;
+  display: grid; place-items: center;
+  background: var(--surface-3);
+  color: var(--text);
+  font-family: var(--mono);
+  font-size: 12px;
+  font-weight: 600;
+  border: 1px solid var(--line-strong);
+  position: relative;
+  flex-shrink: 0;
+}
+.rc-icon svg { width: 15px; height: 15px; }
+.rc-icon[data-tool="sync"]    { color: var(--accent); }
+.rc-icon[data-tool="reverse"] { color: oklch(78% 0.14 280); }
+.rc-icon[data-tool="gates"]   { color: oklch(82% 0.14 75); }
+
+.rc-title-block { min-width: 0; flex: 1; }
+.rc-tool {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+  letter-spacing: -0.01em;
+}
+.rc-title {
+  font-size: 16px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -0.01em;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.rc-elapsed {
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-2);
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+  flex-shrink: 0;
+  display: flex; flex-direction: column; align-items: flex-end; gap: 2px;
+}
+.rc-elapsed .em { color: var(--accent); }
+.rc-elapsed .em.warn { color: var(--warn); }
+.rc-elapsed small { color: var(--text-3); font-size: 10px; text-transform: uppercase; letter-spacing: .08em; }
+
+/* progress */
+.rc-progress {
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 10px;
+}
+.rc-bar {
+  flex: 1;
+  height: 6px;
+  border-radius: 999px;
+  background: var(--surface-3);
+  overflow: hidden;
+  position: relative;
+}
+.rc-bar-fill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--accent) 0%, oklch(88% 0.16 calc(var(--accent-h) + 30)) 100%);
+  border-radius: inherit;
+  transition: width .6s var(--ease);
+  position: relative;
+}
+.rc-bar-fill::after {
+  content: "";
+  position: absolute; inset: 0;
+  background: linear-gradient(90deg, transparent 0%, rgba(255,255,255,.35) 50%, transparent 100%);
+  animation: shimmer 2s linear infinite;
+  mix-blend-mode: overlay;
+}
+@keyframes shimmer { from { transform: translateX(-100%); } to { transform: translateX(100%); } }
+:root[data-motion="subtle"] .rc-bar-fill::after { display: none; }
+
+.rc-pct {
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text);
+  font-variant-numeric: tabular-nums;
+  min-width: 38px;
+  text-align: right;
+}
+
+/* current step caption */
+.rc-step {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--mono);
+  font-size: 12px;
+  color: var(--text-2);
+  padding: 8px 10px;
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  white-space: nowrap; overflow: hidden;
+}
+.rc-step .glyph {
+  color: var(--accent);
+  display: inline-grid; place-items: center;
+  width: 12px; height: 12px;
+  flex-shrink: 0;
+}
+.rc-step .glyph svg { width: 12px; height: 12px; animation: spin-slow 1.4s linear infinite; }
+@keyframes spin-slow { to { transform: rotate(360deg); } }
+
+.rc-step-text {
+  flex: 1;
+  overflow: hidden; text-overflow: ellipsis;
+  transition: opacity .25s var(--ease);
+}
+.rc-step-text.fade { opacity: 0.3; }
+
+.rc-step-count {
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  font-size: 11px;
+  flex-shrink: 0;
+}
+
+/* run id chip */
+.rc-foot {
+  display: flex; align-items: center; gap: 10px;
+  margin-top: 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+}
+.rc-runid {
+  padding: 2px 6px;
+  border-radius: 4px;
+  background: var(--surface-3);
+  border: 1px solid var(--line);
+  color: var(--text-2);
+}
+.rc-foot .sep { color: var(--text-4); }
+
+/* multiple active runs => stack 'em */
+.active-region[data-count="2"] .run-card,
+.active-region[data-count="3"] .run-card { padding: 12px; }
+.active-region[data-count="2"] .run-card .rc-title,
+.active-region[data-count="3"] .run-card .rc-title { font-size: 14px; }
+
+/* ───────────────────────── log section ───────────────────────── */
+.section-head {
+  display: flex; align-items: baseline; gap: 8px;
+  margin: 8px 0 10px;
+  padding: 0 2px;
+}
+.section-title {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .12em;
+  color: var(--text-3);
+}
+.section-count {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-4);
+}
+
+/* timeline */
+.timeline {
+  position: relative;
+  padding: 0 0 32px 0;
+}
+.tl-day {
+  display: flex; align-items: center; gap: 8px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  padding: 14px 0 10px;
+  position: sticky;
+  top: 0;
+  background: linear-gradient(var(--bg) 70%, transparent);
+  z-index: 1;
+}
+.tl-day::before, .tl-day::after {
+  content: ""; flex: 1;
+  border-top: 1px dashed var(--line);
+}
+
+.tl-row {
+  display: grid;
+  grid-template-columns: 64px 18px minmax(0, 1fr);
+  gap: 0;
+  padding: var(--pad-tight) 12px;
+  position: relative;
+  border-radius: 4px;
+  transition: background .15s var(--ease);
+}
+.tl-row.enter { animation: row-in .35s var(--ease); }
+.tl-row:hover { background: var(--surface-1); }
+@keyframes row-in {
+  from { opacity: 0; transform: translateX(-4px); }
+  to { opacity: 1; transform: none; }
+}
+.tl-row.is-new { background: var(--accent-soft); }
+.tl-row.is-new::after {
+  content: "novo";
+  position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+  font-family: var(--mono);
+  font-size: 9px;
+  text-transform: uppercase;
+  letter-spacing: .1em;
+  color: var(--accent);
+  animation: fade-out 2.4s 1s forwards;
+}
+@keyframes fade-out { to { opacity: 0; } }
+
+.tl-time {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-3);
+  font-variant-numeric: tabular-nums;
+  padding-top: 1px;
+  padding-right: 8px;
+  text-align: left;
+}
+
+/* rail with node */
+.tl-rail {
+  position: relative;
+  display: flex; justify-content: center;
+}
+.tl-rail::before {
+  content: "";
+  position: absolute;
+  top: -10px; bottom: -10px;
+  left: 50%; width: 1px;
+  background: var(--line);
+  transform: translateX(-.5px);
+}
+.tl-row:first-of-type .tl-rail::before { top: 8px; }
+.tl-row:last-of-type .tl-rail::before { bottom: calc(100% - 8px); }
+
+.tl-node {
+  position: relative;
+  z-index: 1;
+  width: 7px; height: 7px;
+  border-radius: 999px;
+  margin-top: 5px;
+  background: var(--text-4);
+  border: 2px solid var(--bg);
+  box-sizing: content-box;
+}
+.tl-row[data-type="run.start"] .tl-node { background: var(--accent); box-shadow: 0 0 0 3px var(--accent-soft); }
+.tl-row[data-type="run.end"] .tl-node { background: var(--text-2); }
+.tl-row[data-type="run.end"][data-ok="false"] .tl-node { background: var(--err); }
+.tl-row[data-type="error"] .tl-node { background: var(--err); box-shadow: 0 0 0 3px var(--err-soft); }
+.tl-row[data-type="milestone"] .tl-node { background: var(--accent); }
+.tl-row[data-type="progress"] .tl-node { width: 5px; height: 5px; margin-top: 6px; }
+
+/* group runId connector — visually subtle indent */
+.tl-row[data-grouped="true"] .tl-node { background: var(--text-3); }
+
+.tl-content {
+  display: flex; align-items: baseline; gap: 8px;
+  padding-left: 8px;
+  padding-right: 4px;
+  min-width: 0;
+  overflow: hidden;
+}
+.tl-content > .tokens-chip,
+.tl-content > .tl-runid { flex-shrink: 0; }
+
+.tl-badge {
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .04em;
+  padding: 1px 6px;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  background: var(--surface-1);
+  flex-shrink: 0;
+  display: inline-flex; align-items: center; gap: 4px;
+}
+.tl-badge .g { font-family: var(--mono); }
+
+.tl-row[data-type="run.start"] .tl-badge { color: var(--accent); border-color: var(--accent-soft); background: var(--accent-soft); }
+.tl-row[data-type="error"] .tl-badge { color: var(--err); border-color: var(--err-soft); background: var(--err-soft); }
+.tl-row[data-type="milestone"] .tl-badge { color: var(--accent); border-color: var(--accent-soft); background: var(--accent-soft); }
+.tl-row[data-type="run.end"][data-ok="true"] .tl-badge { color: var(--text); }
+.tl-row[data-type="run.end"][data-ok="false"] .tl-badge { color: var(--err); border-color: var(--err-soft); background: var(--err-soft); }
+
+.tl-msg {
+  flex: 1;
+  min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+  font-size: 12px;
+  color: var(--text);
+}
+.tl-row[data-type="progress"] .tl-msg { color: var(--text-2); }
+
+.tl-msg .path,
+.tl-msg .ident {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
+  background: var(--surface-2);
+  padding: 1px 5px;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+}
+.tl-msg .arrow { color: var(--text-3); margin: 0 4px; }
+
+.tl-runid {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-4);
+  flex-shrink: 0;
+}
+
+/* Source pill: identifies which terminal/IDE/PID emitted this event.
+   Used by the sidecar-tool-publisher hook (v1.6+) and any future multi-source clients. */
+.tl-source {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  background: var(--surface-2);
+  border: 1px solid var(--line);
+  border-radius: 3px;
+  padding: 1px 6px;
+  flex-shrink: 0;
+}
+.tl-source[data-ide="claude-code"] { color: var(--accent); border-color: var(--accent-soft); }
+.tl-source[data-ide="cursor"]      { color: #8be9fd; }
+.tl-source[data-ide="vscode"]      { color: #58a6ff; }
+.tl-source[data-ide="jetbrains"]   { color: #ff9d76; }
+
+/* ───────────────────────── empty state ───────────────────────── */
+.empty {
+  margin: 32px 0;
+  padding: 48px 24px;
+  border: 1px dashed var(--line);
+  border-radius: var(--radius);
+  background:
+    radial-gradient(60% 40% at 50% 50%, var(--accent-soft) 0%, transparent 70%),
+    var(--surface-1);
+  display: flex; flex-direction: column; align-items: center; gap: 16px;
+  text-align: center;
+}
+.empty-viz {
+  width: 200px; height: 60px;
+  display: flex; align-items: center; justify-content: center;
+  gap: 4px;
+}
+.empty-viz .bar {
+  width: 4px;
+  background: var(--accent);
+  border-radius: 2px;
+  opacity: .5;
+  animation: heartbeat 1.6s var(--ease) infinite;
+}
+.empty-viz .bar:nth-child(1)  { animation-delay: 0.0s; height: 12px; }
+.empty-viz .bar:nth-child(2)  { animation-delay: 0.05s; height: 18px; }
+.empty-viz .bar:nth-child(3)  { animation-delay: 0.10s; height: 28px; }
+.empty-viz .bar:nth-child(4)  { animation-delay: 0.15s; height: 40px; }
+.empty-viz .bar:nth-child(5)  { animation-delay: 0.20s; height: 52px; }
+.empty-viz .bar:nth-child(6)  { animation-delay: 0.25s; height: 40px; }
+.empty-viz .bar:nth-child(7)  { animation-delay: 0.30s; height: 28px; }
+.empty-viz .bar:nth-child(8)  { animation-delay: 0.35s; height: 18px; }
+.empty-viz .bar:nth-child(9)  { animation-delay: 0.40s; height: 12px; }
+.empty-viz .bar:nth-child(10) { animation-delay: 0.45s; height: 22px; }
+.empty-viz .bar:nth-child(11) { animation-delay: 0.50s; height: 36px; }
+.empty-viz .bar:nth-child(12) { animation-delay: 0.55s; height: 24px; }
+.empty-viz .bar:nth-child(13) { animation-delay: 0.60s; height: 14px; }
+
+@keyframes heartbeat {
+  0%, 100% { transform: scaleY(0.5); opacity: 0.3; }
+  50%      { transform: scaleY(1.0); opacity: 0.9; }
+}
+
+.empty h2 {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 500;
+  color: var(--text);
+  letter-spacing: -.01em;
+}
+.empty p {
+  margin: 0;
+  font-size: 12px;
+  color: var(--text-3);
+  max-width: 320px;
+}
+.empty .hint {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-4);
+  display: flex; align-items: center; gap: 6px;
+  margin-top: 4px;
+}
+.empty .hint kbd {
+  font-family: var(--mono);
+  padding: 1px 5px;
+  border: 1px solid var(--line-strong);
+  border-bottom-width: 2px;
+  border-radius: 3px;
+  color: var(--text-2);
+}
+
+/* ───────────────────────── footer ───────────────────────── */
+.footer {
+  padding: 16px 0;
+  margin-top: auto;
+  border-top: 1px solid var(--line);
+  display: flex; align-items: center; gap: 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-4);
+}
+.footer .sep { color: var(--text-4); }
+.footer .live { color: var(--accent); }
+
+/* ───────────────────────── tweaks panel ───────────────────────── */
+.tweaks {
+  position: fixed;
+  right: 16px; bottom: 16px;
+  width: 280px;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.02);
+  z-index: 50;
+  overflow: hidden;
+  display: none;
+  animation: tweaks-in .25s var(--ease);
+}
+.tweaks.open { display: block; }
+@keyframes tweaks-in {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: none; }
+}
+.tweaks h3 {
+  margin: 0;
+  padding: 14px 14px 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--text-3);
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--line);
+}
+.tweaks h3 .close {
+  margin-left: auto;
+  width: 18px; height: 18px;
+  display: grid; place-items: center;
+  border-radius: 4px;
+  color: var(--text-3);
+}
+.tweaks h3 .close:hover { background: var(--surface-3); color: var(--text); }
+.tweaks-body { padding: 8px 14px 14px; display: flex; flex-direction: column; gap: 14px; }
+.tw-group { display: flex; flex-direction: column; gap: 6px; }
+.tw-label {
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  color: var(--text-3);
+}
+.seg {
+  display: grid;
+  grid-auto-flow: column;
+  grid-auto-columns: 1fr;
+  gap: 2px;
+  padding: 2px;
+  background: var(--surface-3);
+  border-radius: 6px;
+  border: 1px solid var(--line);
+}
+.seg button {
+  padding: 5px 8px;
+  font-size: 11px;
+  color: var(--text-2);
+  border-radius: 4px;
+  transition: all .12s var(--ease);
+  font-family: var(--sans);
+}
+.seg button[aria-pressed="true"] {
+  background: var(--surface-1);
+  color: var(--text);
+  box-shadow: 0 1px 0 rgba(255,255,255,.04), 0 1px 4px rgba(0,0,0,.4);
+}
+.seg button:not([aria-pressed="true"]):hover { color: var(--text); }
+
+.swatches {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+.swatches button {
+  height: 22px;
+  border-radius: 4px;
+  border: 1px solid var(--line);
+  position: relative;
+}
+.swatches button[aria-pressed="true"] {
+  border-color: var(--text);
+  outline: 2px solid var(--text);
+  outline-offset: -3px;
+}
+
+.tw-actions {
+  display: flex; gap: 6px;
+  padding-top: 4px;
+  border-top: 1px solid var(--line);
+  margin-top: 4px;
+}
+.tw-actions button {
+  flex: 1;
+  padding: 6px;
+  font-size: 11px;
+  border-radius: 6px;
+  border: 1px solid var(--line);
+  color: var(--text-2);
+  background: var(--surface-1);
+  transition: all .12s var(--ease);
+  font-family: var(--mono);
+}
+.tw-actions button:hover { color: var(--text); background: var(--surface-3); }
+
+/* ───────────── tokens chips ───────────── */
+.tokens-chip {
+  display: inline-flex; align-items: center; gap: 4px;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
+  padding: 1px 6px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  background: var(--surface-2);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.tokens-chip::before {
+  content: "⌬";
+  color: var(--text-3);
+  font-size: 10px;
+}
+.rc-tokens {
+  margin-top: 6px;
+  font-family: var(--mono);
+  color: var(--text-3);
+  font-size: 11px;
+  display: flex; gap: 14px;
+  align-items: center;
+}
+.rc-tokens .num { color: var(--text-2); font-variant-numeric: tabular-nums; }
+
+/* ───────────── history drawer ───────────── */
+.history {
+  position: fixed;
+  right: 16px; bottom: 16px;
+  width: 360px;
+  max-height: 70vh;
+  background: var(--surface-2);
+  border: 1px solid var(--line-strong);
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(0,0,0,.6), 0 0 0 1px rgba(255,255,255,.02);
+  z-index: 50;
+  overflow: hidden;
+  display: none;
+  flex-direction: column;
+  animation: tweaks-in .25s var(--ease);
+}
+.history.open { display: flex; }
+.history h3 {
+  margin: 0;
+  padding: 12px 14px;
+  font-family: var(--mono);
+  font-size: 10px;
+  text-transform: uppercase;
+  letter-spacing: .14em;
+  color: var(--text-3);
+  display: flex; align-items: center; gap: 8px;
+  border-bottom: 1px solid var(--line);
+  flex-shrink: 0;
+}
+.history h3 .hist-meta {
+  color: var(--text-2);
+  font-size: 10px;
+  font-weight: 400;
+  text-transform: none;
+  letter-spacing: .04em;
+  margin-left: auto;
+}
+.history h3 .close {
+  width: 18px; height: 18px;
+  display: grid; place-items: center;
+  border-radius: 4px;
+  color: var(--text-3);
+}
+.history h3 .close:hover { background: var(--surface-3); color: var(--text); }
+.history-body { padding: 8px; overflow-y: auto; flex: 1; }
+.hist-empty {
+  padding: 24px 12px;
+  text-align: center;
+  color: var(--text-3);
+  font-size: 12px;
+}
+.hist-row {
+  display: grid;
+  grid-template-columns: 22px 1fr auto;
+  gap: 4px 10px;
+  padding: 10px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  margin-bottom: 6px;
+  background: var(--surface-1);
+  transition: border-color .15s var(--ease);
+  cursor: pointer;
+}
+.hist-row:hover { border-color: var(--line-strong); background: var(--surface-3); }
+.hist-row[data-status="error"] { border-left: 3px solid var(--err); }
+.hist-row[data-status="ok"]    { border-left: 3px solid var(--accent); }
+.hist-status {
+  width: 18px; height: 18px;
+  display: grid; place-items: center;
+  border-radius: 999px;
+  font-family: var(--mono);
+  font-size: 10px;
+  font-weight: 700;
+  grid-row: 1 / span 1;
+}
+.hist-row[data-status="ok"]    .hist-status { color: var(--accent); background: var(--accent-soft); }
+.hist-row[data-status="error"] .hist-status { color: var(--err); background: var(--err-soft); }
+.hist-row[data-status="running"] .hist-status { color: var(--text-2); background: var(--surface-3); }
+.hist-title {
+  font-size: 13px;
+  color: var(--text);
+  font-weight: 500;
+  min-width: 0;
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.hist-when {
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+  text-align: right;
+  grid-row: 1 / span 1;
+}
+.hist-meta-row {
+  grid-column: 2 / span 2;
+  display: flex; gap: 12px; flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--text-3);
+}
+.hist-meta-row .num { color: var(--text-2); font-variant-numeric: tabular-nums; }
+.hist-detail {
+  grid-column: 1 / -1;
+  margin-top: 6px;
+  padding: 8px;
+  border: 1px solid var(--line);
+  border-radius: 6px;
+  background: var(--surface-2);
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text-2);
+  max-height: 240px;
+  overflow-y: auto;
+  display: none;
+}
+.hist-row.expanded .hist-detail { display: block; }
+.hist-detail-row { padding: 2px 0; display: flex; gap: 6px; }
+.hist-detail-row .pct { color: var(--accent); flex-shrink: 0; min-width: 36px; font-variant-numeric: tabular-nums; }
+.hist-detail-row .lbl { color: var(--text-2); flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.hist-detail-row .tok { color: var(--text-3); flex-shrink: 0; }
+
+/* density-driven log padding handled via --pad-tight above */
+
+/* ───────────────────────── reduced motion ───────────────────────── */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: .01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: .01ms !important;
+  }
+}
+</style>
+</head>
+<body>
+
+<div class="app">
+
+  <!-- HEADER -->
+  <header class="header">
+    <div class="logo" aria-hidden="true">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M4 7h16M4 12h10M4 17h16"/>
+      </svg>
+    </div>
+    <div class="brand">
+      <div class="brand-row">
+        <span class="brand-name">kit-mcp</span>
+        <span class="brand-meta" id="brand-meta">sidecar</span>
+      </div>
+      <div class="brand-sub">127.0.0.1:7100</div>
+    </div>
+    <div class="spacer"></div>
+    <div class="conn" id="conn" data-state="on" title="Conexão SSE">
+      <span class="dot"></span>
+      <span id="conn-label">conectado</span>
+    </div>
+  </header>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <label class="search">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="11" cy="11" r="7"/><path d="m21 21-4.3-4.3"/>
+      </svg>
+      <input id="q" type="text" placeholder="buscar tool, runId, caminho…" autocomplete="off" spellcheck="false" />
+      <kbd>/</kbd>
+    </label>
+    <div class="filter-wrap">
+      <button class="iconbtn" id="filter-btn" aria-pressed="false" aria-label="Filtros" title="Filtros">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <path d="M3 6h18M6 12h12M10 18h4"/>
+        </svg>
+      </button>
+      <div class="filter-pop" id="filter-pop" role="menu">
+        <div class="fp-title">Tipos</div>
+        <div class="fp-row" data-on="true" data-filter="run.start"><span class="fp-check">✓</span><span class="fp-glyph">▸</span>Iniciado</div>
+        <div class="fp-row" data-on="true" data-filter="progress"><span class="fp-check">✓</span><span class="fp-glyph">⟳</span>Em andamento</div>
+        <div class="fp-row" data-on="true" data-filter="milestone"><span class="fp-check">✓</span><span class="fp-glyph">★</span>Marco</div>
+        <div class="fp-row" data-on="true" data-filter="run.end"><span class="fp-check">✓</span><span class="fp-glyph">✓</span>Finalizado</div>
+        <div class="fp-row" data-on="true" data-filter="error"><span class="fp-check">✓</span><span class="fp-glyph">✕</span>Erro</div>
+      </div>
+    </div>
+    <button class="iconbtn" id="pause-btn" aria-pressed="false" aria-label="Pausar stream" title="Pausar stream">
+      <svg id="pause-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>
+      </svg>
+    </button>
+    <button class="iconbtn" id="history-btn" aria-pressed="false" aria-label="Histórico desta sessão" title="Histórico desta sessão">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M3 12a9 9 0 1 0 3-7"/><path d="M3 4v5h5"/><path d="M12 7v5l3 2"/>
+      </svg>
+    </button>
+    <button class="iconbtn" id="tweaks-btn" aria-pressed="false" aria-label="Tweaks" title="Tweaks">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+        <circle cx="12" cy="12" r="3"/>
+        <path d="M12 2v3M12 19v3M4.2 4.2l2.1 2.1M17.7 17.7l2.1 2.1M2 12h3M19 12h3M4.2 19.8l2.1-2.1M17.7 6.3l2.1-2.1"/>
+      </svg>
+    </button>
+  </div>
+
+  <!-- ACTIVE + LOG -->
+  <main>
+    <section id="active-region" class="active-region" data-count="0" aria-live="polite"></section>
+
+    <div class="section-head" id="log-head" hidden>
+      <span class="section-title">Linha do tempo</span>
+      <span class="section-count" id="log-count">0 eventos</span>
+    </div>
+
+    <section id="timeline" class="timeline"></section>
+
+    <section id="empty" class="empty">
+      <div class="empty-viz" aria-hidden="true">
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+        <span class="bar"></span><span class="bar"></span><span class="bar"></span>
+        <span class="bar"></span>
+      </div>
+      <h2>Aguardando o primeiro evento</h2>
+      <p>O sidecar está escutando em <span style="font-family:var(--mono);color:var(--text-2)">/events</span>. Rode qualquer comando do kit-mcp e ele aparece aqui ao vivo.</p>
+      <div class="hint">
+        Tente <kbd>kit sync</kbd> · <kbd>kit gates</kbd>
+      </div>
+    </section>
+  </main>
+
+  <!-- FOOTER -->
+  <footer class="footer">
+    <span id="evt-count">0 eventos</span>
+    <span class="sep">·</span>
+    <span>fonte: <span class="live" id="src-label">ao vivo</span></span>
+    <span class="sep">·</span>
+    <span id="last-seen">aguardando…</span>
+    <span class="sep" id="footer-tokens-sep" hidden>·</span>
+    <span id="footer-tokens" hidden>0 tokens</span>
+    <span class="sep">·</span>
+    <span id="footer-runs">0 runs concluídas</span>
+  </footer>
+
+</div>
+
+<!-- TWEAKS -->
+<aside class="tweaks" id="tweaks" role="dialog" aria-label="Tweaks">
+  <h3>
+    Tweaks
+    <button class="close" id="tweaks-close" aria-label="Fechar">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </h3>
+  <div class="tweaks-body">
+    <div class="tw-group">
+      <span class="tw-label">Acento</span>
+      <div class="swatches" id="tw-accent">
+        <button data-h="130" style="background:oklch(82% 0.18 130)" aria-label="Lima"></button>
+        <button data-h="220" style="background:oklch(78% 0.16 220)" aria-label="Azul"></button>
+        <button data-h="290" style="background:oklch(78% 0.18 290)" aria-label="Roxo"></button>
+        <button data-h="20"  style="background:oklch(78% 0.18 20)"  aria-label="Laranja"></button>
+        <button data-h="340" style="background:oklch(78% 0.18 340)" aria-label="Magenta"></button>
+        <button data-h="180" style="background:oklch(80% 0.14 180)" aria-label="Ciano"></button>
+      </div>
+    </div>
+
+    <div class="tw-group">
+      <span class="tw-label">Densidade</span>
+      <div class="seg" id="tw-density">
+        <button data-v="compact">Compacta</button>
+        <button data-v="normal" aria-pressed="true">Normal</button>
+        <button data-v="comfy">Confortável</button>
+      </div>
+    </div>
+
+    <div class="tw-group">
+      <span class="tw-label">Movimento</span>
+      <div class="seg" id="tw-motion">
+        <button data-v="subtle">Sutil</button>
+        <button data-v="medium" aria-pressed="true">Médio</button>
+        <button data-v="rich">Rico</button>
+      </div>
+    </div>
+
+    <div class="tw-actions">
+      <button id="tw-clear">limpar tela</button>
+    </div>
+  </div>
+</aside>
+
+<!-- HISTORY DRAWER -->
+<aside class="history" id="history" role="dialog" aria-label="Histórico da sessão">
+  <h3>
+    Histórico desta sessão
+    <span class="hist-meta" id="hist-meta">0 runs</span>
+    <button class="close" id="history-close" aria-label="Fechar">
+      <svg width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+    </button>
+  </h3>
+  <div class="history-body" id="history-body">
+    <div class="hist-empty">Nada por aqui ainda. Quando uma run terminar, ela aparece aqui.</div>
+  </div>
+</aside>
+
+<!-- SVG sprite (in-doc, no external) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true">
+  <defs>
+    <symbol id="i-sync" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M3 12a9 9 0 0 1 15-6.7L21 8"/><path d="M21 3v5h-5"/>
+      <path d="M21 12a9 9 0 0 1-15 6.7L3 16"/><path d="M3 21v-5h5"/>
+    </symbol>
+    <symbol id="i-reverse" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M7 7h10l-3-3"/><path d="M17 17H7l3 3"/>
+    </symbol>
+    <symbol id="i-gates" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <rect x="4" y="4" width="16" height="16" rx="2"/><path d="M4 10h16M10 4v16"/>
+    </symbol>
+    <symbol id="i-spin" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round">
+      <path d="M12 3a9 9 0 1 0 9 9" />
+    </symbol>
+    <symbol id="i-bolt" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M13 2 4 14h7l-1 8 9-12h-7l1-8Z"/>
+    </symbol>
+  </defs>
+</svg>
+
+<script>
+/* ──────────────────────────────────────────────────────────
+   kit-mcp sidecar — production client
+   SEC-14-01 (Phase 82): All event-derived content rendered via escapeHtml()
+   before insertion into innerHTML. CSP without 'unsafe-inline' in script-src
+   is primary defense; escapeHtml() is defense-in-depth.
+   When adding new innerHTML sites, always escape dynamic fields.
+   ────────────────────────────────────────────────────────── */
+
+/* ──────────────────────────────────────────────────────────
+   SEC-14-02 (Phase 82 / Plan 02): auth token from URL query param.
+   Server (Plan 01) requires Bearer token on /publish, /shutdown, /state
+   and ?t= on /events. This block extracts ?t= once at boot, scrubs it
+   from the address bar (so it doesn't leak via screen-share / browser
+   history copy-paste), and exposes helpers for fetch + EventSource.
+   Variable scoped to closure (not sessionStorage) — reload re-handshakes.
+   ────────────────────────────────────────────────────────── */
+const __sidecarToken = (() => {
+  try {
+    const params = new URLSearchParams(window.location.search);
+    const t = params.get("t");
+    if (t && /^[0-9a-f]{64}$/.test(t)) {
+      // Scrub from URL so re-share / screenshot doesn't leak it.
+      params.delete("t");
+      const newSearch = params.toString();
+      const newUrl = window.location.pathname + (newSearch ? "?" + newSearch : "") + window.location.hash;
+      window.history.replaceState(null, "", newUrl);
+      return t;
+    }
+  } catch (_) { /* fall through */ }
+  return null;
+})();
+
+function authedFetch(input, init = {}) {
+  const opts = { ...init, headers: { ...(init.headers || {}) } };
+  if (__sidecarToken) {
+    opts.headers["Authorization"] = "Bearer " + __sidecarToken;
+  }
+  return fetch(input, opts);
+}
+
+function authedEventSourceUrl(path) {
+  if (!__sidecarToken) return path;
+  const sep = path.includes("?") ? "&" : "?";
+  return path + sep + "t=" + encodeURIComponent(__sidecarToken);
+}
+
+/* ---------- humanize helpers (preserved API) ---------- */
+const TYPE_LABELS = {
+  "run.start":      "INICIADO",
+  "run.end":        "FINALIZADO",
+  "tool_invocation":"INVOCADO",
+  "progress":       "EM ANDAMENTO",
+  "milestone":      "MARCO",
+  "error":          "ERRO",
+  "shutdown":       "ENCERRADO",
+};
+const TOOL_LABELS = {
+  "sync.install":         "Sincronizando kit",
+  "sync.preview":         "Prévia de sincronização",
+  "reverse.scan":         "Escaneando agentes",
+  "reverse.merge":        "Mesclando alterações",
+  "gates.run":            "Executando gates",
+  "gates.lint":           "Lint dos agentes",
+  "kit.list":             "Listando kit",
+};
+const TOOL_FAMILIES = {
+  "sync.install":  "sync",
+  "sync.preview":  "sync",
+  "reverse.scan":  "reverse",
+  "reverse.merge": "reverse",
+  "gates.run":     "gates",
+  "gates.lint":    "gates",
+  "kit.list":      "sync",
+};
+function humanizeEventType(t) { return TYPE_LABELS[t] || t.toUpperCase(); }
+function humanizeTool(t)      { return TOOL_LABELS[t] || t; }
+function humanizePath(p) {
+  if (!p) return "";
+  // collapse leading paths, keep last 2 segments
+  const parts = p.split("/").filter(Boolean);
+  if (parts.length <= 2) return p;
+  return "…/" + parts.slice(-2).join("/");
+}
+
+/* ---------- relative time ---------- */
+function relTime(ms) {
+  const s = Math.floor(ms / 1000);
+  if (s < 5)   return "agora";
+  if (s < 60)  return `há ${s}s`;
+  const m = Math.floor(s / 60);
+  if (m < 60)  return `há ${m}m`;
+  const h = Math.floor(m / 60);
+  if (h < 24)  return `há ${h}h`;
+  const d = Math.floor(h / 24);
+  return `há ${d}d`;
+}
+function clockTime(ts) {
+  const d = new Date(ts);
+  return `${String(d.getHours()).padStart(2,"0")}:${String(d.getMinutes()).padStart(2,"0")}:${String(d.getSeconds()).padStart(2,"0")}`;
+}
+
+/* ---------- state ---------- */
+const state = {
+  events: [],          // newest first
+  runs: new Map(),     // runId → { startTs, tool, lastProgress, lastLabel, ended, ok, current, total, tokens, endTs }
+  filterText: "",
+  // tool_invocation + shutdown não têm chip de filtro, mas devem aparecer por default
+  filters: new Set(["run.start","progress","milestone","run.end","error","tool_invocation","shutdown"]),
+  paused: false,
+  totalTokens: 0,      // soma de payload.tokens em TODOS os eventos da sessão
+  history: [],         // runs já concluídas neste tab — persistido em sessionStorage
+};
+
+/* ---------- DOM refs ---------- */
+const $ = (s) => document.querySelector(s);
+const els = {
+  active: $("#active-region"),
+  timeline: $("#timeline"),
+  empty: $("#empty"),
+  evtCount: $("#evt-count"),
+  logCount: $("#log-count"),
+  logHead: $("#log-head"),
+  lastSeen: $("#last-seen"),
+  conn: $("#conn"),
+  connLabel: $("#conn-label"),
+  q: $("#q"),
+  pauseBtn: $("#pause-btn"),
+  pauseIcon: $("#pause-icon"),
+  filterBtn: $("#filter-btn"),
+  filterPop: $("#filter-pop"),
+  tweaksBtn: $("#tweaks-btn"),
+  tweaks: $("#tweaks"),
+  tweaksClose: $("#tweaks-close"),
+  srcLabel: $("#src-label"),
+  historyBtn: $("#history-btn"),
+  history: $("#history"),
+  historyClose: $("#history-close"),
+  historyBody: $("#history-body"),
+  histMeta: $("#hist-meta"),
+  footerTokens: $("#footer-tokens"),
+  footerTokensSep: $("#footer-tokens-sep"),
+  footerRuns: $("#footer-runs"),
+};
+
+/* ---------- ingest one event ---------- */
+function ingest(evt) {
+  if (state.paused) return;
+  state.events.unshift(evt);
+  if (state.events.length > 200) state.events.length = 200;
+
+  // tokens — soma global da sessão + por run
+  const tk = readTokens(evt);
+  if (tk > 0) state.totalTokens += tk;
+
+  // run tracking
+  if (evt.runId) {
+    let run = state.runs.get(evt.runId);
+    if (!run) {
+      run = { runId: evt.runId, startTs: evt.ts, tool: null, lastProgress: 0, lastLabel: "", ended: false, ok: true, current: 0, total: 0, tokens: 0, events: [], lastTs: evt.ts };
+      state.runs.set(evt.runId, run);
+    }
+    run.lastTs = evt.ts;
+    run.tokens = (run.tokens || 0) + tk;
+    // store a slimmed-down record of every event in the run so the history
+    // drawer can show what happened later
+    run.events.push({ ts: evt.ts, type: evt.type, percent: evt.payload?.percent, label: evt.payload?.label, name: evt.payload?.name, message: evt.payload?.message, tokens: tk });
+    if (evt.type === "run.start") {
+      run.tool = evt.payload?.tool || run.tool;
+      run.startTs = evt.ts;
+    } else if (evt.type === "progress") {
+      if (typeof evt.payload?.percent === "number") run.lastProgress = evt.payload.percent;
+      if (evt.payload?.label) run.lastLabel = evt.payload.label;
+      if (evt.payload?.current) run.current = evt.payload.current;
+      if (evt.payload?.total)   run.total = evt.payload.total;
+    } else if (evt.type === "run.end") {
+      run.ended = true;
+      run.ok = !!evt.payload?.ok;
+      run.endTs = evt.ts;
+      run.lastProgress = run.ok ? 100 : run.lastProgress;
+      // arquive into history (client-only, sessionStorage)
+      archiveRun(run);
+    } else if (evt.type === "error") {
+      // não termina o run; só registra
+      run.lastError = evt.payload?.message || "erro";
+    }
+  }
+
+  render();
+  els.lastSeen.textContent = "último: " + clockTime(evt.ts);
+}
+
+/* ---------- helpers — tokens & history ---------- */
+function readTokens(evt) {
+  // Aceita várias chaves comuns: payload.tokens (preferido), payload.usage.total_tokens, payload.cost.tokens
+  const p = evt.payload || {};
+  if (typeof p.tokens === "number") return p.tokens;
+  if (p.usage && typeof p.usage.total_tokens === "number") return p.usage.total_tokens;
+  if (p.cost && typeof p.cost.tokens === "number") return p.cost.tokens;
+  return 0;
+}
+
+function fmtTokens(n) {
+  if (n < 1000) return String(n);
+  if (n < 10_000) return (n / 1000).toFixed(1).replace(/\.0$/, "") + "k";
+  if (n < 1_000_000) return Math.round(n / 1000) + "k";
+  return (n / 1_000_000).toFixed(1).replace(/\.0$/, "") + "M";
+}
+
+function archiveRun(run) {
+  // Snapshot leve da run completa — o que vai pra sessionStorage tem que ser serializável.
+  const entry = {
+    runId: run.runId,
+    tool: run.tool,
+    startTs: run.startTs,
+    endTs: run.endTs,
+    durationMs: (run.endTs || Date.now()) - run.startTs,
+    ok: run.ok,
+    tokens: run.tokens || 0,
+    eventsCount: run.events.length,
+    events: run.events.slice(-100), // últimos 100 eventos da run pra detalhe
+  };
+  state.history.unshift(entry);
+  // cap em 50 runs pra não estourar sessionStorage
+  if (state.history.length > 50) state.history.length = 50;
+  saveHistory();
+}
+
+function saveHistory() {
+  try {
+    sessionStorage.setItem("kit-mcp-history", JSON.stringify(state.history));
+  } catch (_) { /* quota? sem espaço? sem stress. */ }
+}
+
+function loadHistory() {
+  try {
+    const raw = sessionStorage.getItem("kit-mcp-history");
+    if (raw) state.history = JSON.parse(raw) || [];
+  } catch (_) { state.history = []; }
+}
+
+/* ---------- render ---------- */
+function passesFilter(evt) {
+  if (!state.filters.has(evt.type)) return false;
+  if (!state.filterText) return true;
+  const q = state.filterText.toLowerCase();
+  const blob = JSON.stringify(evt).toLowerCase();
+  return blob.includes(q);
+}
+
+function render() {
+  renderActive();
+  renderTimeline();
+  const total = state.events.length;
+  els.evtCount.textContent = `${total} evento${total === 1 ? "" : "s"}`;
+  els.logCount.textContent = `${total} evento${total === 1 ? "" : "s"}`;
+  // Tokens (mostra só quando algum evento da sessão veio com payload.tokens)
+  if (state.totalTokens > 0) {
+    els.footerTokens.hidden = false;
+    els.footerTokensSep.hidden = false;
+    els.footerTokens.textContent = `${fmtTokens(state.totalTokens)} tokens nesta sessão`;
+  } else {
+    els.footerTokens.hidden = true;
+    els.footerTokensSep.hidden = true;
+  }
+  const completed = state.history.length;
+  els.footerRuns.textContent = `${completed} run${completed === 1 ? "" : "s"} concluída${completed === 1 ? "" : "s"}`;
+  if (els.histMeta) els.histMeta.textContent = `${completed} run${completed === 1 ? "" : "s"}`;
+}
+
+/* ---------- history drawer renderer ---------- */
+function renderHistory() {
+  if (!els.historyBody) return;
+  if (state.history.length === 0) {
+    els.historyBody.innerHTML = `<div class="hist-empty">Nada por aqui ainda. Quando uma run terminar, ela aparece aqui.</div>`;
+    return;
+  }
+  const rows = state.history.map((h) => historyRowHtml(h)).join("");
+  els.historyBody.innerHTML = rows;
+  els.historyBody.querySelectorAll(".hist-row").forEach((row) => {
+    row.addEventListener("click", () => row.classList.toggle("expanded"));
+  });
+}
+
+function historyRowHtml(h) {
+  const status = h.ok === true ? "ok" : h.ok === false ? "error" : "running";
+  const statusGlyph = status === "ok" ? "✓" : status === "error" ? "✕" : "·";
+  const title = humanizeTool(safeStr(h.tool || "")) || safeStr(h.tool) || "Processo";
+  const dur = formatElapsed(h.durationMs || 0);
+  const when = clockTime(h.startTs);
+  const tokens = h.tokens > 0 ? `<span class="num">${fmtTokens(h.tokens)}</span> tokens` : "<span>sem tokens registrados</span>";
+  const detailRows = (h.events || [])
+    .filter((e) => e.type === "progress" || e.type === "milestone" || e.type === "error" || e.type === "run.end")
+    .map((e) => {
+      const pct = typeof e.percent === "number" ? `${Math.round(e.percent)}%` : "·";
+      const lbl = safeStr(e.label) || safeStr(e.name) || safeStr(e.message) || humanizeEventType(e.type);
+      const tk = e.tokens > 0 ? fmtTokens(e.tokens) : "";
+      return `<div class="hist-detail-row"><span class="pct">${escapeHtml(pct)}</span><span class="lbl">${escapeHtml(lbl)}</span>${tk ? `<span class="tok">${tk}t</span>` : ""}</div>`;
+    })
+    .join("");
+  // SEC-14-01: every dynamic field escaped before injection into the
+  // history-row template. status/statusGlyph/dur/when/tokens are computed
+  // locally (string enum or pre-built HTML literal) so are safe by construction;
+  // h.runId and h.eventsCount cross the publisher boundary and MUST be escaped
+  // even though they should normally be benign — defense in depth.
+  return `
+    <div class="hist-row" data-status="${escapeHtml(status)}" data-runid="${escapeHtml(h.runId)}">
+      <div class="hist-status">${statusGlyph}</div>
+      <div class="hist-title">${escapeHtml(title)}</div>
+      <div class="hist-when">${when}</div>
+      <div class="hist-meta-row">
+        <span><span class="num">${dur}</span> dur</span>
+        <span>${tokens}</span>
+        <span><span class="num">${escapeHtml(String(h.eventsCount || 0))}</span> eventos</span>
+        <span class="num">id ${escapeHtml(String(h.runId).slice(0,8))}</span>
+      </div>
+      <div class="hist-detail">${detailRows || '<div class="hist-detail-row"><span class="lbl">(sem progresso registrado)</span></div>'}</div>
+    </div>
+  `;
+}
+
+function renderActive() {
+  const active = [...state.runs.values()].filter((r) => !r.ended).sort((a, b) => b.startTs - a.startTs);
+  els.active.dataset.count = active.length;
+
+  // remove cards that are no longer active
+  els.active.querySelectorAll(".run-card").forEach((card) => {
+    const id = card.dataset.runid;
+    if (!active.find((r) => r.runId === id)) card.remove();
+  });
+
+  // upsert each active run
+  active.forEach((run) => {
+    let card = els.active.querySelector(`[data-runid="${run.runId}"]`);
+    if (!card) {
+      const wrap = document.createElement("div");
+      wrap.innerHTML = activeCardHtml(run);
+      card = wrap.firstElementChild;
+      card.classList.add("enter");
+      card.addEventListener("animationend", () => card.classList.remove("enter"), { once: true });
+      setTimeout(() => card.classList.remove("enter"), 600);
+      els.active.appendChild(card);
+    }
+    updateActiveCard(card, run);
+  });
+}
+
+/**
+ * Sanitização: remove o "U+FFFD replacement character" e variantes que
+ * indicam mojibake — eventos vindos de publishers em locale ruim podem
+ * vazar bytes corrompidos. Em vez de mostrar `�`, devolvemos string vazia
+ * e deixamos o fallback escolher um nome decente.
+ */
+function safeStr(s) {
+  if (typeof s !== "string") return "";
+  // remove FFFD (U+FFFD) e null bytes
+  const cleaned = s.replace(/�+/g, "").replace(/ +/g, "").trim();
+  return cleaned;
+}
+
+/**
+ * Resolve o melhor título legível para uma run, NUNCA devolve "—" sozinho.
+ * Cascata: humanizeTool(payload.tool) → payload.title → payload.label →
+ * payload.name → "Processo".
+ */
+function runTitle(run) {
+  const t = humanizeTool(safeStr(run.tool || ""));
+  if (t && t !== "—") return t;
+  const fallback = safeStr(run.lastTitle) || safeStr(run.lastLabel) || safeStr(run.lastName);
+  if (fallback) return fallback;
+  return "Processo";
+}
+
+function updateActiveCard(card, run) {
+  const family = TOOL_FAMILIES[run.tool] || "sync";
+  const percent = Math.max(0, Math.min(100, Math.round(run.lastProgress)));
+  const elapsed = Date.now() - run.startTs;
+  const longRunning = elapsed > 30_000;
+  const stepLabel = humanizePath(safeStr(run.lastLabel)) || "iniciando…";
+  const stepCount = run.total ? `${run.current}/${run.total}` : "";
+
+  const set = (sel, fn) => { const n = card.querySelector(sel); if (n) fn(n); };
+  set(".rc-icon", (n) => { n.dataset.tool = family; n.querySelector("use")?.setAttribute("href", `#i-${family}`); });
+  set(".rc-tool", (n) => { n.textContent = safeStr(run.tool) || "processo"; });
+  set(".rc-title", (n) => { n.textContent = runTitle(run); });
+  set(".rc-bar-fill", (n) => { n.style.width = percent + "%"; });
+  set(".rc-pct", (n) => { n.textContent = percent + "%"; });
+  set(".rc-step-text", (n) => { if (n.textContent !== stepLabel) n.textContent = stepLabel; });
+  set(".rc-step-count", (n) => { n.textContent = stepCount; });
+  set(".rc-elapsed-val", (n) => { n.textContent = formatElapsed(elapsed); });
+  set(".rc-elapsed .em", (n) => n.classList.toggle("warn", longRunning));
+  set(".rc-runid", (n) => { n.textContent = "id " + run.runId.slice(0, 8); });
+  set(".rc-tokens-val", (n) => { n.textContent = run.tokens > 0 ? fmtTokens(run.tokens) : "—"; });
+  set(".rc-tokens", (n) => { n.classList.toggle("hidden", !(run.tokens > 0)); });
+}
+
+function activeCardHtml(run) {
+  const family = TOOL_FAMILIES[run.tool] || "sync";
+  const iconHref = `#i-${family}`;
+  const title = runTitle(run);
+  const stepLabel = humanizePath(safeStr(run.lastLabel)) || "iniciando…";
+  const percent = Math.max(0, Math.min(100, Math.round(run.lastProgress)));
+  const elapsed = Date.now() - run.startTs;
+  const longRunning = elapsed > 30_000;
+  const stepCount = run.total ? `${run.current}/${run.total}` : "";
+  const showTokens = run.tokens > 0;
+  // SEC-14-01: family/iconHref/title/stepLabel/stepCount/percent are computed
+  // locally; runId crosses the publisher boundary and is escaped before any
+  // injection (data-attribute or text). Defense in depth: even string enums
+  // (family) get escaped to ensure regression resistance.
+  return `
+    <article class="run-card" data-runid="${escapeHtml(run.runId)}">
+      <div class="rc-head">
+        <div class="rc-icon" data-tool="${escapeHtml(family)}"><svg><use href="${escapeHtml(iconHref)}"/></svg></div>
+        <div class="rc-title-block">
+          <div class="rc-tool">${escapeHtml(safeStr(run.tool) || "processo")}</div>
+          <div class="rc-title">${escapeHtml(title)}</div>
+        </div>
+        <div class="rc-elapsed">
+          <span class="em ${longRunning ? "warn" : ""}"><span class="rc-elapsed-val">${formatElapsed(elapsed)}</span></span>
+          <small>decorrido</small>
+        </div>
+      </div>
+
+      <div class="rc-progress">
+        <div class="rc-bar"><div class="rc-bar-fill" style="width:${percent}%"></div></div>
+        <div class="rc-pct">${percent}%</div>
+      </div>
+
+      <div class="rc-step">
+        <span class="glyph"><svg><use href="#i-spin"/></svg></span>
+        <span class="rc-step-text">${escapeHtml(stepLabel)}</span>
+        ${stepCount ? `<span class="rc-step-count">${escapeHtml(stepCount)}</span>` : ""}
+      </div>
+
+      <div class="rc-tokens" ${showTokens ? "" : "style=\"display:none\""}>
+        <span class="tokens-chip"><span class="rc-tokens-val">${showTokens ? fmtTokens(run.tokens) : "—"}</span></span>
+        <span>tokens nesta run</span>
+      </div>
+
+      <div class="rc-foot">
+        <span class="rc-runid">id ${escapeHtml(String(run.runId).slice(0, 8))}</span>
+        <span class="sep">·</span>
+        <span>${escapeHtml(safeStr(run.tool) || "")}</span>
+      </div>
+    </article>
+  `;
+}
+
+function formatElapsed(ms) {
+  const s = Math.floor(ms / 1000);
+  if (s < 60) return `${s}s`;
+  const m = Math.floor(s / 60);
+  const r = s % 60;
+  return `${m}m ${String(r).padStart(2,"0")}s`;
+}
+
+function renderTimeline() {
+  const visible = state.events.filter(passesFilter);
+  if (state.events.length === 0) {
+    els.empty.style.display = "";
+    els.timeline.innerHTML = "";
+    els.logHead.hidden = true;
+    return;
+  }
+  els.empty.style.display = "none";
+  els.logHead.hidden = false;
+
+  // diff by event ts+type+runId — only animate truly new rows
+  const keyOf = (e) => `${e.ts}|${e.type}|${e.runId || ""}`;
+  const seen = state._seenKeys || (state._seenKeys = new Set());
+  const existing = new Map();
+  els.timeline.querySelectorAll(".tl-row").forEach((r) => existing.set(r.dataset.key, r));
+
+  // Build a desired ordered list. Insert new rows at their correct position
+  // WITHOUT detaching existing rows — that would retrigger CSS animations.
+  let prevNode = null;
+  visible.forEach((evt, idx) => {
+    const key = keyOf(evt);
+    let row = existing.get(key);
+    if (row) {
+      existing.delete(key);
+      // reorder only if not already in the right place
+      const expectedNext = prevNode ? prevNode.nextSibling : els.timeline.firstChild;
+      if (row !== expectedNext) {
+        els.timeline.insertBefore(row, expectedNext);
+      }
+    } else {
+      const wrap = document.createElement("div");
+      wrap.innerHTML = rowHtml(evt, idx, visible[idx - 1]);
+      row = wrap.firstElementChild;
+      row.dataset.key = key;
+      if (!seen.has(key)) {
+        row.classList.add("enter", "is-new");
+        seen.add(key);
+        // strip the one-shot class once the animation completes,
+        // so reattachment / reorder won't restart it.
+        row.addEventListener("animationend", () => row.classList.remove("enter"), { once: true });
+        setTimeout(() => row.classList.remove("enter"), 600);
+      }
+      els.timeline.insertBefore(row, prevNode ? prevNode.nextSibling : els.timeline.firstChild);
+    }
+    const grouped = !!(visible[idx - 1] && visible[idx - 1].runId === evt.runId);
+    row.dataset.grouped = grouped;
+    prevNode = row;
+  });
+  // remove any leftover rows that no longer match
+  existing.forEach((r) => r.remove());
+}
+
+function rowHtml(evt, idx, prev) {
+  const grouped = !!(prev && prev.runId === evt.runId);
+  const ok = evt.payload?.ok;
+  const time = clockTime(evt.ts);
+  const rel = relTime(Date.now() - evt.ts);
+  const badge = humanizeEventType(evt.type);
+  const tk = readTokens(evt);
+  const tokenChip = tk > 0 ? ` <span class="tokens-chip" title="tokens">${fmtTokens(tk)}</span>` : "";
+  /**
+   * Cascata defensiva pra NUNCA renderizar uma row sem texto:
+   * 1) campo específico do tipo (name pra milestone, message pra error, …)
+   * 2) payload.label
+   * 3) payload.title
+   * 4) humanizeTool(payload.tool)
+   * 5) o tipo humanizado em si (último recurso — "Marco", "Erro", "Iniciado")
+   */
+  const fallback = (...candidates) => {
+    for (const c of candidates) {
+      const s = safeStr(typeof c === "string" ? c : (c == null ? "" : String(c)));
+      if (s) return s;
+    }
+    return badge.toLowerCase();
+  };
+
+  let msg = "";
+  switch (evt.type) {
+    case "run.start": {
+      const tool = safeStr(evt.payload?.tool || "");
+      const title = humanizeTool(tool) || fallback(evt.payload?.title, evt.payload?.label, evt.payload?.name);
+      const ident = tool ? ` <span class="ident">${escapeHtml(tool)}</span>` : "";
+      const target = evt.payload?.target ? ` <span class="arrow">→</span> <span class="ident">${escapeHtml(safeStr(evt.payload.target))}</span>` : "";
+      msg = `<strong>${escapeHtml(title)}</strong>${ident}${target}`;
+      break;
+    }
+    case "run.end": {
+      const dur = evt.payload?.duration_ms;
+      const tool = safeStr(evt.payload?.tool || "");
+      const title = humanizeTool(tool) || fallback(evt.payload?.title, evt.payload?.label, evt.payload?.name);
+      msg = `<strong>${escapeHtml(title)}</strong> ${ok ? "concluído" : "falhou"}${dur ? ` <span class="ident">${(dur/1000).toFixed(2)}s</span>` : ""}`;
+      break;
+    }
+    case "progress": {
+      const pct = typeof evt.payload?.percent === "number" ? `${Math.round(evt.payload.percent)}%` : "";
+      const lbl = fallback(evt.payload?.label, evt.payload?.title, evt.payload?.name, "em andamento");
+      const ct = evt.payload?.current && evt.payload?.total ? ` <span class="ident">${evt.payload.current}/${evt.payload.total}</span>` : "";
+      msg = `${pct ? `<strong>${pct}</strong> ` : ""}<span class="path">${escapeHtml(humanizePath(lbl))}</span>${ct}`;
+      break;
+    }
+    case "milestone": {
+      const lbl = fallback(evt.payload?.name, evt.payload?.title, evt.payload?.label, "marco");
+      msg = `<strong>${escapeHtml(lbl)}</strong>`;
+      break;
+    }
+    case "error": {
+      const lbl = fallback(evt.payload?.message, evt.payload?.title, evt.payload?.label, evt.payload?.name, "erro");
+      const code = evt.payload?.code ? ` <span class="ident">${escapeHtml(safeStr(evt.payload.code))}</span>` : "";
+      msg = `<strong>${escapeHtml(lbl)}</strong>${code}`;
+      break;
+    }
+    case "tool_invocation": {
+      const tool = safeStr(evt.payload?.tool || "");
+      const title = humanizeTool(tool) || fallback(evt.payload?.title, evt.payload?.label, "ferramenta invocada");
+      const argsHint = renderArgsSummary(evt.payload?.argsSummary);
+      msg = `<strong>${escapeHtml(title)}</strong>${tool ? ` <span class="ident">${escapeHtml(tool)}</span>` : ""}${argsHint}`;
+      break;
+    }
+    case "shutdown": {
+      msg = `<strong>${escapeHtml(fallback(evt.payload?.message, "sidecar encerrado"))}</strong>`;
+      break;
+    }
+    default:
+      msg = `<span class="ident">${escapeHtml(badge.toLowerCase())}</span>`;
+  }
+  const sourcePill = renderSourcePill(evt.payload?.source);
+  // SEC-14-01: evt.type and evt.runId cross publisher boundary → escape.
+  // msg/tokenChip/sourcePill are pre-built HTML literals where each interpolation
+  // already used escapeHtml() — safe by construction.
+  return `
+    <div class="tl-row" data-type="${escapeHtml(evt.type)}" data-ok="${ok}" data-grouped="${grouped}">
+      <div class="tl-time" title="${time}">${rel}</div>
+      <div class="tl-rail"><div class="tl-node"></div></div>
+      <div class="tl-content">
+        <span class="tl-badge">${badge}</span>
+        <span class="tl-msg">${msg}</span>
+        ${tokenChip}
+        ${sourcePill}
+        ${evt.runId ? `<span class="tl-runid">${escapeHtml(String(evt.runId).slice(0,6))}</span>` : ""}
+      </div>
+    </div>
+  `;
+}
+
+function renderArgsSummary(args) {
+  if (!args || typeof args !== "object") return "";
+  const bits = [];
+  if (args.file_path) bits.push(`<span class="path">${escapeHtml(safeStr(args.file_path))}</span>`);
+  if (args.command)   bits.push(`<span class="ident">${escapeHtml(safeStr(args.command))}</span>`);
+  if (args.pattern)   bits.push(`<span class="ident">/${escapeHtml(safeStr(args.pattern))}/</span>`);
+  if (args.url)       bits.push(`<span class="ident">${escapeHtml(safeStr(args.url))}</span>`);
+  if (args.description) bits.push(`<span class="ident">${escapeHtml(safeStr(args.description))}</span>`);
+  if (args.action_count) bits.push(`<span class="ident">×${args.action_count}</span>`);
+  return bits.length ? ` ${bits.join(" ")}` : "";
+}
+
+function renderSourcePill(source) {
+  if (!source || typeof source !== "object") return "";
+  const ide = safeStr(source.ide || "");
+  const id = safeStr(source.id || "") || (source.pid ? `${ide}:${source.pid}` : ide);
+  if (!id) return "";
+  return `<span class="tl-source" data-ide="${escapeHtml(ide)}" title="${escapeHtml(id)}">${escapeHtml(id)}</span>`;
+}
+
+function escapeHtml(s) {
+  return String(s ?? "").replace(/[&<>"']/g, (c) => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
+}
+
+/* ---------- elapsed ticker ---------- */
+setInterval(() => {
+  for (const run of state.runs.values()) {
+    if (run.ended) continue;
+    const el = els.active.querySelector(`[data-runid="${run.runId}"] .rc-elapsed-val`);
+    if (!el) continue;
+    const elapsed = Date.now() - run.startTs;
+    el.textContent = formatElapsed(elapsed);
+    const wrap = el.closest(".em");
+    if (wrap) wrap.classList.toggle("warn", elapsed > 30_000);
+  }
+  // refresh relative time on log rows (cheap: only update visible)
+  els.timeline.querySelectorAll(".tl-time").forEach((node, i) => {
+    const evt = state.events.filter(passesFilter)[i];
+    if (evt) node.textContent = relTime(Date.now() - evt.ts);
+  });
+}, 1000);
+
+/* ───────────────────── view actions ───────────────────── */
+/* "limpar tela" zera o que está VISÍVEL (eventos correntes + cards ativos),
+   mas NUNCA toca o histórico de runs concluídas — esse é o ponto do drawer. */
+function clearAll() {
+  state.events = [];
+  state.runs.clear();
+  state._seenKeys = new Set();
+  state.totalTokens = 0;
+  els.active.innerHTML = "";
+  render();
+  els.lastSeen.textContent = "aguardando…";
+}
+
+/* ───────────────────── tweaks wiring ───────────────────── */
+els.tweaksBtn.addEventListener("click", () => {
+  const open = els.tweaks.classList.toggle("open");
+  els.tweaksBtn.setAttribute("aria-pressed", open);
+});
+els.tweaksClose.addEventListener("click", () => {
+  els.tweaks.classList.remove("open");
+  els.tweaksBtn.setAttribute("aria-pressed", "false");
+});
+
+document.querySelectorAll("#tw-accent button").forEach((b) => {
+  b.addEventListener("click", () => {
+    document.querySelectorAll("#tw-accent button").forEach(x => x.setAttribute("aria-pressed","false"));
+    b.setAttribute("aria-pressed","true");
+    document.documentElement.style.setProperty("--accent-h", b.dataset.h);
+  });
+});
+document.querySelector('#tw-accent button[data-h="130"]').setAttribute("aria-pressed","true");
+
+function wireSeg(rootSel, attr, fn) {
+  document.querySelectorAll(`${rootSel} button`).forEach((b) => {
+    b.addEventListener("click", () => {
+      document.querySelectorAll(`${rootSel} button`).forEach(x => x.setAttribute("aria-pressed","false"));
+      b.setAttribute("aria-pressed","true");
+      fn(b.dataset.v);
+    });
+  });
+}
+wireSeg("#tw-density", "v", (v) => document.documentElement.dataset.density = v);
+wireSeg("#tw-motion",  "v", (v) => document.documentElement.dataset.motion = v);
+
+document.documentElement.dataset.density = "normal";
+document.documentElement.dataset.motion = "medium";
+
+document.getElementById("tw-clear").addEventListener("click", clearAll);
+
+/* ───────────────────── history wiring ───────────────────── */
+els.historyBtn.addEventListener("click", () => {
+  const open = els.history.classList.toggle("open");
+  els.historyBtn.setAttribute("aria-pressed", open);
+  if (open) renderHistory();
+});
+els.historyClose.addEventListener("click", () => {
+  els.history.classList.remove("open");
+  els.historyBtn.setAttribute("aria-pressed", "false");
+});
+// Esc fecha o drawer se ele estiver aberto e nada mais focado
+document.addEventListener("keydown", (e) => {
+  if (e.key === "Escape" && els.history.classList.contains("open") && document.activeElement !== els.q) {
+    els.history.classList.remove("open");
+    els.historyBtn.setAttribute("aria-pressed", "false");
+  }
+});
+
+/* ───────────────────── toolbar wiring ───────────────────── */
+els.q.addEventListener("input", (e) => { state.filterText = e.target.value.trim(); render(); });
+document.addEventListener("keydown", (e) => {
+  if (e.key === "/" && document.activeElement !== els.q) {
+    e.preventDefault();
+    els.q.focus();
+  }
+  if (e.key === "Escape" && document.activeElement === els.q) {
+    els.q.value = ""; state.filterText = ""; els.q.blur(); render();
+  }
+});
+
+els.filterBtn.addEventListener("click", (e) => {
+  e.stopPropagation();
+  const open = els.filterPop.classList.toggle("open");
+  els.filterBtn.setAttribute("aria-pressed", open);
+});
+document.addEventListener("click", (e) => {
+  if (!els.filterPop.contains(e.target) && e.target !== els.filterBtn) {
+    els.filterPop.classList.remove("open");
+    els.filterBtn.setAttribute("aria-pressed", "false");
+  }
+});
+els.filterPop.querySelectorAll(".fp-row").forEach((row) => {
+  row.addEventListener("click", () => {
+    const f = row.dataset.filter;
+    const on = row.dataset.on === "true";
+    row.dataset.on = on ? "false" : "true";
+    if (on) state.filters.delete(f); else state.filters.add(f);
+    render();
+  });
+});
+
+els.pauseBtn.addEventListener("click", () => {
+  state.paused = !state.paused;
+  els.pauseBtn.setAttribute("aria-pressed", state.paused);
+  els.pauseIcon.innerHTML = state.paused
+    ? '<polygon points="6,5 19,12 6,19" fill="currentColor"/>'
+    : '<rect x="6" y="5" width="4" height="14" rx="1"/><rect x="14" y="5" width="4" height="14" rx="1"/>';
+  els.conn.dataset.state = state.paused ? "off" : "on";
+  els.connLabel.textContent = state.paused ? "pausado" : "conectado";
+  els.srcLabel.textContent = state.paused ? "pausado" : "ao vivo";
+});
+
+/* ───────────────────── real source: SSE + /state hydrate ───────────────────── */
+/* The prototype above keeps mock scenarios available via the tweaks panel. In
+   production we connect to /events for the live feed and to /state to backfill
+   the ring buffer on first paint and after reconnect. */
+
+let evtSource = null;
+let lastConnectedAt = 0;
+
+function applyConnState(s) {
+  // s ∈ { 'connecting', 'open', 'closed', 'paused', 'shutdown' }
+  if (s === "open") {
+    els.conn.dataset.state = "on";
+    els.connLabel.textContent = "conectado";
+    if (els.srcLabel) els.srcLabel.textContent = "ao vivo";
+    // Healthy => banner stale. Independente de qual caminho colocou ele lá
+    // (shutdown event antigo, race, hydrate trazendo shutdown histórico),
+    // estar conectado significa que o aviso "Reabra com kit ui start" não
+    // serve mais — remova sempre.
+    const banner = document.getElementById("shutdown-banner");
+    if (banner) banner.remove();
+  } else if (s === "connecting") {
+    els.conn.dataset.state = "off";
+    els.connLabel.textContent = "conectando";
+    if (els.srcLabel) els.srcLabel.textContent = "conectando";
+  } else if (s === "closed") {
+    els.conn.dataset.state = "off";
+    els.connLabel.textContent = "desconectado";
+    if (els.srcLabel) els.srcLabel.textContent = "offline";
+  } else if (s === "shutdown") {
+    els.conn.dataset.state = "off";
+    els.connLabel.textContent = "encerrado";
+    if (els.srcLabel) els.srcLabel.textContent = "encerrado";
+  } else if (s === "paused") {
+    els.conn.dataset.state = "off";
+    els.connLabel.textContent = "pausado";
+    if (els.srcLabel) els.srcLabel.textContent = "pausado";
+  }
+}
+
+async function hydrateFromState() {
+  try {
+    const res = await authedFetch("/state", { credentials: "omit" });
+    if (!res.ok) return;
+    const j = await res.json();
+    if (j.port && document.querySelector(".brand-sub")) {
+      document.querySelector(".brand-sub").textContent = "127.0.0.1:" + j.port;
+    }
+    if (j.version && document.getElementById("brand-meta")) {
+      document.getElementById("brand-meta").textContent = "sidecar · v" + j.version;
+    }
+    if (Array.isArray(j.events)) {
+      // Replay through ingest. The dedup key (ts|type|runId) prevents
+      // double-counting if SSE later delivers the same event.
+      for (const evt of j.events) ingest(evt);
+    }
+  } catch (_) { /* fine — SSE may still work */ }
+}
+
+function connectRealSource() {
+  applyConnState("connecting");
+  if (evtSource) try { evtSource.close(); } catch (_) {}
+
+  evtSource = new EventSource(authedEventSourceUrl("/events"));
+
+  evtSource.addEventListener("open", () => {
+    lastConnectedAt = Date.now();
+    applyConnState("open");
+    stopHealthPoll();    // já tá conectado, não precisa pollar
+  });
+
+  evtSource.addEventListener("error", () => {
+    // EventSource auto-retries; nós só atualizamos o estado visível e iniciamos
+    // o poll-de-saúde paralelo, que cobre o caso "server reiniciou" — o native
+    // retry às vezes gruda em CONNECTING sem nunca virar OPEN, e o poll detecta
+    // quando o /healthz volta a responder e força um connectRealSource() limpo.
+    applyConnState("closed");
+    startHealthPoll();
+  });
+
+  // Listen for each typed event the server emits.
+  const handler = (msg) => {
+    try {
+      const data = JSON.parse(msg.data);
+      if (data && data.type === "shutdown") {
+        applyConnState("shutdown");
+        showShutdownBanner();
+        // Mesmo após shutdown, um novo `kit ui start` faz o server voltar.
+        // Continue tentando reconectar — usuário não precisa recarregar a aba.
+        startHealthPoll();
+      }
+      ingest(data);
+    } catch (_) { /* swallow malformed */ }
+  };
+  ["run.start", "run.end", "tool_invocation", "progress", "milestone", "error", "shutdown"].forEach((t) =>
+    evtSource.addEventListener(t, handler)
+  );
+  evtSource.onmessage = handler; // fallback for unnamed
+}
+
+/* ───────────────────── health-poll auto-reconnect ─────────────────────
+   Quando o EventSource cai e fica preso (server reiniciado, sidecar `kit ui
+   stop` seguido de `kit ui start`, network blip), o native retry pode estagnar
+   em CONNECTING. Esse poll roda em segundo plano em paralelo: quando o /healthz
+   volta a responder 200, fechamos o EventSource antigo, hidratamos /state, e
+   abrimos um novo. Para de pollar assim que conectamos com sucesso. */
+let healthPollTimer = null;
+function startHealthPoll() {
+  if (healthPollTimer) return;
+  healthPollTimer = setInterval(async () => {
+    if (els.conn.dataset.state === "on") { stopHealthPoll(); return; }
+    try {
+      const res = await fetch("/healthz", { credentials: "omit", cache: "no-store" });
+      if (res.ok) {
+        stopHealthPoll();
+        // Banner de shutdown é stale agora que o server voltou — remova.
+        const banner = document.getElementById("shutdown-banner");
+        if (banner) banner.remove();
+        await hydrateFromState();
+        connectRealSource();
+      }
+    } catch (_) { /* server ainda não voltou — keep tentando */ }
+  }, 3000);
+}
+function stopHealthPoll() {
+  if (healthPollTimer) { clearInterval(healthPollTimer); healthPollTimer = null; }
+}
+
+/* Background-tab recovery — quando o tab volta a ficar visível e estamos fora
+   do estado conectado, força um reconnect imediato em vez de esperar o próximo
+   tick de health poll. */
+document.addEventListener("visibilitychange", () => {
+  if (document.visibilityState !== "visible") return;
+  if (els.conn.dataset.state !== "on") {
+    stopHealthPoll();
+    hydrateFromState().then(connectRealSource);
+  }
+});
+
+/* ───────────────────── shutdown banner ───────────────────── */
+function showShutdownBanner() {
+  if (document.getElementById("shutdown-banner")) return;
+  const banner = document.createElement("div");
+  banner.id = "shutdown-banner";
+  banner.innerHTML = `
+    <strong>Sidecar encerrou.</strong>
+    Reabra com <span style="font-family:var(--mono);color:var(--text-2)">kit ui start</span> e atualize esta página.
+  `;
+  Object.assign(banner.style, {
+    margin: "0 0 16px",
+    padding: "12px 14px",
+    border: "1px solid var(--err-soft)",
+    borderRadius: "var(--radius)",
+    background: "color-mix(in srgb, var(--err) 10%, var(--surface-1))",
+    color: "var(--err)",
+    fontSize: "12px",
+    display: "flex",
+    alignItems: "center",
+    gap: "8px",
+  });
+  const main = document.querySelector("main");
+  if (main) main.insertBefore(banner, main.firstChild);
+}
+
+/* ───────────────────── boot ───────────────────── */
+/* `/events` SSE é a única fonte de verdade. Nenhum mock no boot. */
+
+loadHistory();          // restaura o histórico desta sessão (sessionStorage)
+(async () => {
+  await hydrateFromState();
+  connectRealSource();
+  render();             // pinta footer + drawer mesmo antes do primeiro evento real
+})();
+</script>
+</body>
+</html>

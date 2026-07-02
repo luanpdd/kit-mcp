@@ -1,0 +1,42 @@
+{
+  "total_usd": 41.00038820000001,
+  "by_model": {
+    "claude-haiku-4-5": {
+      "usd": 2.257111099999998,
+      "input_tokens": 729626,
+      "output_tokens": 303621,
+      "cache_creation_tokens": 3598,
+      "cache_read_tokens": 48826,
+      "entry_count": 280
+    },
+    "claude-sonnet-4-5": {
+      "usd": 5.5428700500000065,
+      "input_tokens": 600620,
+      "output_tokens": 246666,
+      "cache_creation_tokens": 8145,
+      "cache_read_tokens": 34921,
+      "entry_count": 244
+    },
+    "claude-3-7-sonnet-20250219": {
+      "usd": 5.070727050000001,
+      "input_tokens": 579378,
+      "output_tokens": 220371,
+      "cache_creation_tokens": 4235,
+      "cache_read_tokens": 37156,
+      "entry_count": 228
+    },
+    "claude-opus-4-1": {
+      "usd": 28.129679999999997,
+      "input_tokens": 608271,
+      "output_tokens": 250930,
+      "cache_creation_tokens": 6552,
+      "cache_read_tokens": 42010,
+      "entry_count": 248
+    }
+  },
+  "entry_count": 1000,
+  "unknown_models": [],
+  "pricing_source": "snapshot",
+  "generator": "scripts/gen-paridade-fixture.mjs",
+  "note": "Independent oracle pending ccusage devDep install + generate-oracle-paridade.mjs run."
+}

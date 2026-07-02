@@ -1,0 +1,70 @@
+{
+  "name": "@luanpdd/kit-mcp",
+  "version": "1.44.0",
+  "description": "Generic infrastructure to ship YOUR personal kit of agents/commands/skills as an MCP server, with cross-IDE sync (Claude Code, Cursor, Codex, Windsurf, Antigravity, Copilot, Trae).",
+  "type": "module",
+  "bin": {
+    "kit-mcp": "bin/mcp.js",
+    "kit": "bin/cli.js"
+  },
+  "publishConfig": {
+    "access": "public"
+  },
+  "files": [
+    "bin/",
+    "src/",
+    "src/core/cost/",
+    "kit/",
+    "gates/",
+    "README.md",
+    "LICENSE"
+  ],
+  "keywords": [
+    "mcp",
+    "model-context-protocol",
+    "claude",
+    "cursor",
+    "codex",
+    "antigravity",
+    "agents",
+    "skills",
+    "workflows",
+    "dynamic-workflows"
+  ],
+  "author": "luanpdd",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/luanpdd/kit-mcp.git"
+  },
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node bin/mcp.js",
+    "cli": "node bin/cli.js",
+    "smoke": "node bin/cli.js kit list-agents | head -5",
+    "test": "node test/run.mjs test/unit",
+    "test:all": "node test/run.mjs test",
+    "test:integration": "node test/run.mjs test/integration",
+    "test:mutation": "stryker run",
+    "regen-pricing": "node scripts/regen-pricing.mjs",
+    "regen-packs": "node scripts/regen-pack-registry.js",
+    "gate:frontmatter": "node scripts/check-resource-frontmatter.mjs",
+    "prepublishOnly": "node scripts/check-resource-frontmatter.mjs && node scripts/regen-pack-registry.js && node scripts/regen-manifest.js && node scripts/update-readme-counts.js && node test/run.mjs test/unit && node test/run.mjs test/integration"
+  },
+  "dependencies": {
+    "@modelcontextprotocol/sdk": "^1.0.0",
+    "commander": "^15.0.0",
+    "picocolors": "^1.1.1"
+  },
+  "optionalDependencies": {
+    "@inquirer/prompts": "^8.4.2",
+    "chokidar": "^5.0.0",
+    "open": "^11.0.0"
+  },
+  "devDependencies": {
+    "@stryker-mutator/core": "9.6.1",
+    "ccusage": "^20.0.6"
+  }
+}

@@ -1,0 +1,64 @@
+{
+  "schemaVersion": 1,
+  "id": "legacy",
+  "name": "Código Legado (Feathers)",
+  "version": "1.39.0",
+  "description": "Characterization tests, seams, gate de refactor seguro, detecção de duplicação, storytelling de codebase, mutation testing. Aplica a qualquer codebase.",
+  "publisher": "luanpdd",
+  "kind": "domain",
+  "removable": true,
+  "compat": {
+    "kitMcp": ">=1.39.0",
+    "targets": [
+      "claude-code",
+      "cursor",
+      "codex",
+      "windsurf",
+      "antigravity",
+      "copilot",
+      "trae"
+    ]
+  },
+  "requires": [],
+  "recommends": [],
+  "conflicts": [],
+  "provides": [],
+  "resources": {
+    "agents": [
+      "ai-mutation-tester",
+      "legacy-characterizer",
+      "llm-eval-harness-writer",
+      "refactor-safety-auditor",
+      "seam-finder",
+      "shotgun-surgery-detector",
+      "storytelling-analyst"
+    ],
+    "commands": [
+      "auditar-refactor",
+      "caracterizar",
+      "caracterizar-prompt",
+      "detectar-duplicacao",
+      "encontrar-seams",
+      "legacy",
+      "refactor-seguro",
+      "storytelling"
+    ],
+    "skills": [
+      "ai-prompt-characterization",
+      "legacy-api-only-applications",
+      "legacy-characterization-tests",
+      "legacy-effect-analysis",
+      "legacy-extract-class",
+      "legacy-monster-methods",
+      "legacy-programming-by-difference",
+      "legacy-seams-and-test-harness",
+      "legacy-shotgun-surgery",
+      "legacy-sprout-wrap-techniques",
+      "legacy-storytelling-naked-crc",
+      "llm-as-dependency",
+      "pre-refactor-characterization"
+    ],
+    "workflows": [],
+    "hooks": []
+  }
+}

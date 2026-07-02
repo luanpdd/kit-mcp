@@ -1,0 +1,87 @@
+# OBS-18-03 — kit-mcp tool availability SLO.
+#
+# Phase 95.01 (v1.18 Eat Your Own Dog Food). Applies skill `event-based-slos`
+# to the kit-mcp server itself: every MCP tool dispatch is one event, the
+# central catch wrap from Phase 94.01 emits success or error, and the ratio
+# of (good / total) over a 30d sliding window is the SLI.
+#
+# Why event-based, not time-based: per the canonical event-based-slos skill,
+# pre-aggregated time windows lose fidelity (one outlier minute dominates a
+# 5-min p99). Counters in src/core/metrics.js already record one event per
+# dispatch with a binary outcome, so event-based SLI is the natural fit.
+#
+# Why 99.5% (not 99.9% or 99.99%): kit-mcp is a developer tool launched on
+# demand by an IDE. The risk continuum (sre-risk-management skill) places
+# "internal tools, beta tier" at 99% and "free-tier production" at 99.5%.
+# kit-mcp is closer to the latter — used in real workflows but not customer-
+# revenue-critical, and the operator IS the developer running it. 99.5%
+# leaves 3.6h of monthly budget, plenty to absorb a typo'd tool name or a
+# transient gate guard fail without paging the maintainer.
+#
+# Owner is the maintainer team (single repo, single human today). The skill
+# requires an explicit owner — without one, alerts fire into the void.
+
+slo:
+  name: mcp-tool-availability
+  service: kit-mcp
+  description: "Ratio of successful MCP tool invocations across all exposed tools."
+  owner: kit-mcp-maintainers@github.com
+
+sli:
+  type: event-based
+  event_source: src/core/metrics.js (counters Map)
+  good_events: counters[*:ok] sum across all tools
+  total_events: counters[*:ok] + counters[*:error] sum across all tools
+  ratio: good_events / total_events
+  # The dispatcher in src/mcp-server/index.js wraps the central catch with
+  # incrementInvocation(tool, 'ok'|'error') on every path including
+  # unknown-tool-name (counted as error against the spelled name — see
+  # 94-01-SUMMARY decision 4).
+
+target: 0.995  # 99.5% — three nines minus a half. Rationale above.
+window: 30d_sliding  # never fixed/calendar — the skill calls fixed windows a behavioral hazard.
+
+error_budget:
+  # Budget = (1 - target) * total_events. With ~1000 dispatches per dev-day
+  # at sustained use, 30d gives ~30000 events, so budget ≈ 150 bad events
+  # per month. Re-derive in /burn-rate-status when the actual baseline is
+  # known.
+  monthly_ratio: 0.005  # 0.5%
+
+  # Alert thresholds in burn-rate multiples (skill burn-rate-alerting).
+  # Multiplier 14.4 ≈ 2% of monthly budget burned in 1h (page — fast burn).
+  # Multiplier 6   ≈ 10% of monthly budget burned in 6h  (ticket — slow burn).
+  # Both numbers are the canonical Honeycomb/Google SRE recommendations
+  # carried in the burn-rate-alerting skill; we adopt them verbatim until a
+  # future phase tunes them against measured volume.
+  alert_thresholds:
+    page:
+      burn_rate_multiplier: 14.4
+      lookahead: 1h
+      baseline: 5m
+      severity: page
+      condition: "2% of monthly budget burned in 1h"
+    ticket:
+      burn_rate_multiplier: 6
+      lookahead: 6h
+      baseline: 30m
+      severity: ticket
+      condition: "10% of monthly budget burned in 6h"
+
+data_retention:
+  # In-memory only today (Phase 94.01 design): counters Map and per-tool
+  # histograms with FIFO cap=1000. Process restart clears state. The
+  # metrics-snapshot MCP tool is the single read interface; long-term log-to-
+  # disk persistence is on the v1.19+ roadmap (see 95-CONTEXT.md <deferred>).
+  in_memory:
+    counters: unbounded Map (one entry per `${tool}:${status}` pair)
+    histograms: FIFO cap N=1000 per tool (bounded memory across long sessions)
+  long_term: not yet implemented (v1.19+ roadmap — log-to-disk via metrics-snapshot tool)
+
+# Cross-references — these are READMEs/skills that explain the math, not
+# YAML keys consumed by tooling. The /burn-rate-status command reads this
+# file to render burn-rate tables (skill: burn-rate-alerting).
+references:
+  skill: kit/skills/event-based-slos/SKILL.md
+  source_phase: .planning/phases/94-golden-signals-mcp-server/94-01-SUMMARY.md
+  consumer_command: .claude/commands/burn-rate-status.md

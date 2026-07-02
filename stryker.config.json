@@ -1,0 +1,29 @@
+{
+  "$schema": "./node_modules/@stryker-mutator/core/schema/stryker-schema.json",
+  "_comment": "kit-mcp Phase 101 (INFRA-20-02) — baseline mutation testing scoped to src/core/. CI execution is opt-in (npm run test:mutation). Reports to reports/mutation/ (gitignored). Baseline doc em .planning/audits/v1.20/MUTATION-BASELINE.md.",
+  "packageManager": "npm",
+  "mutate": [
+    "src/core/**/*.js",
+    "!src/core/**/*.test.js"
+  ],
+  "testRunner": "command",
+  "commandRunner": {
+    "command": "node test/run-mutation.mjs test/unit"
+  },
+  "coverageAnalysis": "off",
+  "reporters": [
+    "html",
+    "json",
+    "clear-text"
+  ],
+  "htmlReporter": {
+    "fileName": "reports/mutation/mutation-report.html"
+  },
+  "jsonReporter": {
+    "fileName": "reports/mutation/mutation-report.json"
+  },
+  "tempDirName": ".stryker-tmp",
+  "timeoutMS": 60000,
+  "concurrency": 4,
+  "logLevel": "info"
+}

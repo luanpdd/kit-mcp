@@ -1,0 +1,119 @@
+name: Publish to npm
+
+# Triggered by pushing a tag like v0.1.6, v1.0.0, etc.
+# Setup (one-time):
+#   1. Generate an npm Granular Access Token with bypass-2FA enabled at
+#      https://www.npmjs.com/settings/<user>/tokens
+#   2. Add it to this repo's secrets as NPM_TOKEN
+#      (gh secret set NPM_TOKEN  ← paste token when prompted)
+#
+# Release flow:
+#   npm version patch          (or minor/major) — bumps + commits + tags
+#   git push --follow-tags     — pushes the commit AND the tag
+#   ↑ this workflow runs and publishes the new version
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write   # to create GitHub Release objects after publish
+      id-token: write   # for npm provenance
+
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v6
+        with:
+          node-version: '20'
+          registry-url: 'https://registry.npmjs.org'
+
+      - name: Install
+        # SEC-13-03: strict — fail hard on lockfile drift, no silent install fallback
+        run: npm ci
+
+      - name: Sanity — version in package.json matches tag
+        run: |
+          PKG_VERSION=$(node -p "require('./package.json').version")
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          if [ "$PKG_VERSION" != "$TAG_VERSION" ]; then
+            echo "::error::package.json version ($PKG_VERSION) does not match tag ($TAG_VERSION)"
+            exit 1
+          fi
+          echo "✓ version $PKG_VERSION matches tag v$TAG_VERSION"
+
+      - name: Smoke test
+        run: |
+          node bin/cli.js kit list-agents | head -5
+          node bin/cli.js sync targets    | head -5
+          node bin/cli.js gates list      | head -5
+
+      - name: Tests (unit)
+        # SEC-13-04: never publish without unit tests passing — v1.12.1 race condition escaped exactly here
+        run: npm test
+
+      - name: Tests (integration)
+        # SEC-13-04: never publish without integration tests passing
+        run: npm run test:integration
+
+      - name: Audit — npm audit (high/critical CVEs in runtime deps)
+        # SEC-13-04: never publish if runtime deps have HIGH or CRITICAL CVEs
+        shell: bash
+        run: |
+          set +e
+          npm audit --omit=dev --audit-level=high
+          STATUS=$?
+          set -e
+          if [ "$STATUS" -ne 0 ]; then
+            echo "::error::npm audit found high/critical CVEs in runtime deps. Bump dep or wait for fix advisory before publishing."
+            exit 1
+          fi
+          echo "OK: no high/critical CVEs in runtime deps"
+
+      - name: Publish to npm
+        run: npm publish --access public --provenance
+        env:
+          NODE_AUTH_TOKEN: ${{ secrets.NPM_TOKEN }}
+
+      - name: Extract notes from CHANGELOG for this tag
+        id: notes
+        run: |
+          TAG_VERSION="${GITHUB_REF_NAME#v}"
+          NOTES_FILE="$RUNNER_TEMP/release-notes-${TAG_VERSION}.md"
+          # Awk extracts the body between this version's heading and the next ## [ heading.
+          # Note: ver passes only the version string; we wrap with [[] and []] (bracket
+          # classes that match a literal `[` and `]`) so the heading regex doesn't
+          # collapse `[1.5.2]` into a char-class of digits-and-dots (the v1.5.2-and-prior bug).
+          awk -v ver="${TAG_VERSION}" '
+            $0 ~ "^## [[]" ver "[]]" { found=1; next }
+            found && /^## \[/ { exit }
+            found { print }
+          ' CHANGELOG.md > "$NOTES_FILE"
+          if [ ! -s "$NOTES_FILE" ]; then
+            # DRIFT-13-01: hard fail for final tags (vX.Y.Z) — silent fallback caused 3
+            # consecutive releases (v1.11.0/v1.12.0/v1.12.1) to ship with placeholder notes.
+            # Pre-release tags (-rcN/-betaN/-alphaN) keep the graceful fallback since
+            # those are by definition transient and may not warrant a CHANGELOG entry.
+            if [[ "$TAG_VERSION" =~ ^[0-9]+\.[0-9]+\.[0-9]+$ ]]; then
+              echo "::error::CHANGELOG entry missing for ## [$TAG_VERSION]. Add entry to CHANGELOG.md before tagging final release. Pre-release tags (vX.Y.Z-rcN) bypass this check."
+              exit 1
+            fi
+            echo "::warning::No CHANGELOG entry found for ## [$TAG_VERSION] (pre-release) — falling back to tag-derived notes"
+            echo "Release v${TAG_VERSION}." > "$NOTES_FILE"
+          fi
+          echo "notes_file=$NOTES_FILE" >> "$GITHUB_OUTPUT"
+          echo "--- notes preview ---"
+          head -30 "$NOTES_FILE"
+
+      - name: Create GitHub Release
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          gh release create "${GITHUB_REF_NAME}" \
+            --title "${GITHUB_REF_NAME} — kit-mcp" \
+            --notes-file "${{ steps.notes.outputs.notes_file }}" \
+            --latest
