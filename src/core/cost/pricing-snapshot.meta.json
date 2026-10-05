@@ -1,9 +1,9 @@
 {
-  "sha256": "8056e8e3deeea419aa104dca21b22294d46776b2e8f09319b470f22aafb3b9de",
-  "fetched_at": "2026-06-05T22:35:19.069Z",
+  "sha256": "d9895c57efc50fde8f85d23f448f3557e1e1f7afc71135878910c634f486c472",
+  "fetched_at": "2026-10-05T04:58:28.876Z",
   "source_url": "https://raw.githubusercontent.com/BerriAI/litellm/main/model_prices_and_context_window.json",
-  "model_count": 261,
-  "litellm_commit": "5be0797d24a2f26eb2123e13788f90055a59d91d",
+  "model_count": 387,
+  "litellm_commit": "be4481779ee8a73579af82a3b5394f62f4e4b057",
   "generator": "scripts/regen-pricing.mjs",
   "schema_version": 1
 }
